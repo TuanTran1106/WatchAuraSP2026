@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ChucVuRepository extends JpaRepository<ChucVu, Integer> {
-    boolean CheckByTenChucVu(String tenChucVu);
+    boolean existsByTenChucVu(String tenChucVu);
 }
 
