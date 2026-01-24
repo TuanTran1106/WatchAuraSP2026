@@ -25,7 +25,7 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Override
     public KhachHang create(KhachHang khachHang) {
-        if (khachHangRepository.checkMa(khachHang.getMaNguoiDung())) {
+        if (khachHangRepository.existsByMaNguoiDung(khachHang.getMaNguoiDung())) {
             throw new RuntimeException("Mã Khách Hàng Đã Tồn Tại");
         }
         khachHang.setTrangThai(true);
