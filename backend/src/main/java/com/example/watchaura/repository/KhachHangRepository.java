@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
+    boolean checkMa(String maNguoiDung);
 }
 
