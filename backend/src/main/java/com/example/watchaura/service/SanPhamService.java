@@ -23,6 +23,7 @@ public class SanPhamService {
     private final SanPhamRepository sanPhamRepository;
     private final ThuongHieuRepository thuongHieuRepository;
     private final DanhMucRepository danhMucRepository;
+    private final FileUploadService fileUploadService;
 
     /**
      * Lấy tất cả sản phẩm
@@ -123,6 +124,28 @@ public class SanPhamService {
             throw new RuntimeException("Không tìm thấy sản phẩm với ID: " + id);
         }
         sanPhamRepository.deleteById(id);
+    }
+
+    /**
+     * Cập nhật ảnh sản phẩm
+     */
+    @Transactional
+    public SanPhamDTO updateSanPhamImage(Integer id, String newFilePath) {
+        // Tìm sản phẩm cần cập nhật
+        SanPham sanPham = sanPhamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+
+        // Xóa ảnh cũ nếu có
+        if (sanPham.getHinhAnh() != null && !sanPham.getHinhAnh().isEmpty()) {
+            fileUploadService.deleteFile(sanPham.getHinhAnh());
+        }
+
+        // Cập nhật ảnh mới
+        sanPham.setHinhAnh(newFilePath);
+
+        // Lưu vào database
+        SanPham updatedSanPham = sanPhamRepository.save(sanPham);
+        return convertToDTO(updatedSanPham);
     }
 
     /**

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh Mục</title>
+</head>
+<body>
+<h1>QUẢN LÝ DANH MỤC</h1>
+
+<!-- Form thêm/sửa danh mục -->
+<h2 id="formTitle">THÊM MỚI DANH MỤC</h2>
+<form id="danhMucForm">
+    <input type="hidden" id="danhMucId">
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <td><label>Tên danh mục:</label></td>
+            <td><input type="text" id="tenDanhMuc" required></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <button type="submit" id="btnSubmit">Thêm mới</button>
+                <button type="button" onclick="resetForm()">Hủy</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<hr>
+
+<!-- Danh sách danh mục -->
+<h2>DANH SÁCH DANH MỤC</h2>
+<table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên danh mục</th>
+        <th colspan="2">Thao tác</th>
+    </tr>
+    </thead>
+    <tbody id="danhMucTableBody">
+    <tr>
+        <td colspan="3">Đang tải dữ liệu...</td>
+    </tr>
+    </tbody>
+</table>
+
+<script>
+    const API_URL = 'http://localhost:8080/api';
+    let isEditing = false;
+
+    // Tải danh sách danh mục
+    async function loadDanhMuc() {
+        try {
+            const response = await fetch(`${API_URL}/danh-muc`);
+            const danhMucs = await response.json();
+
+            const tbody = document.getElementById('danhMucTableBody');
+
+            if (danhMucs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">Không có dữ liệu</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = danhMucs.map(dm => `
+                    <tr>
+                        <td>${dm.id}</td>
+                        <td>${dm.tenDanhMuc || ''}</td>
+                        <td colspan="2">
+                            <button onclick="editDanhMuc(${dm.id})">Sửa</button>
+                            <button onclick="deleteDanhMuc(${dm.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `).join('');
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách:', error);
+            alert('Không thể tải danh sách danh mục');
+        }
+    }
+
+    // Submit form (Thêm/Sửa)
+    document.getElementById('danhMucForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('danhMucId').value;
+        const data = {
+            tenDanhMuc: document.getElementById('tenDanhMuc').value
+        };
+
+        try {
+            let response;
+            if (isEditing && id) {
+                // Cập nhật
+                response = await fetch(`${API_URL}/danh-muc/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                // Thêm mới
+                response = await fetch(`${API_URL}/danh-muc`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            }
+
+            if (response.ok) {
+                alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+                resetForm();
+                loadDanhMuc();
+            } else {
+                const error = await response.text();
+                alert('Lỗi: ' + error);
+            }
+        } catch (error) {
+            console.error('Lỗi:', error);
+            alert('Có lỗi xảy ra!');
+        }
+    });
+
+    // Sửa danh mục
+    async function editDanhMuc(id) {
+        try {
+            const response = await fetch(`${API_URL}/danh-muc/${id}`);
+            const danhMuc = await response.json();
+
+            document.getElementById('danhMucId').value = danhMuc.id;
+            document.getElementById('tenDanhMuc').value = danhMuc.tenDanhMuc;
+
+            document.getElementById('formTitle').innerText = 'CẬP NHẬT DANH MỤC';
+            document.getElementById('btnSubmit').innerText = 'Cập nhật';
+            isEditing = true;
+
+            window.scrollTo(0, 0);
+        } catch (error) {
+            console.error('Lỗi:', error);
+            alert('Không thể tải thông tin danh mục');
+        }
+    }
+
+    // Xóa danh mục
+    async function deleteDanhMuc(id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/danh-muc/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Xóa thành công!');
+                loadDanhMuc();
+            } else {
+                const error = await response.text();
+                alert('Lỗi: ' + error);
+            }
+        } catch (error) {
+            console.error('Lỗi:', error);
+            alert('Có lỗi xảy ra khi xóa!');
+        }
+    }
+
+    // Reset form
+    function resetForm() {
+        document.getElementById('danhMucForm').reset();
+        document.getElementById('danhMucId').value = '';
+        document.getElementById('formTitle').innerText = 'THÊM MỚI DANH MỤC';
+        document.getElementById('btnSubmit').innerText = 'Thêm mới';
+        isEditing = false;
+    }
+
+    // Khởi tạo khi trang load
+    window.onload = function() {
+        loadDanhMuc();
+    };
+</script>
+</body>
+</html>

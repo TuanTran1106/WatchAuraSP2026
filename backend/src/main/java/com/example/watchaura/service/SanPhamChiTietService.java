@@ -41,6 +41,20 @@ public class SanPhamChiTietService {
     }
 
     /**
+     * Lấy danh sách sản phẩm chi tiết theo ID sản phẩm
+     */
+    public List<SanPhamChiTietDTO> getSanPhamChiTietBySanPhamId(Integer sanPhamId) {
+        // Kiểm tra sản phẩm tồn tại
+        if (!sanPhamRepository.existsById(sanPhamId)) {
+            throw new RuntimeException("Không tìm thấy sản phẩm với ID: " + sanPhamId);
+        }
+        
+        return sanPhamChiTietRepository.findBySanPhamId(sanPhamId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Tạo mới sản phẩm chi tiết
      */
     @Transactional
