@@ -10,7 +10,6 @@ public class AdminController {
 
     @GetMapping
     public String getAdminPage() {
-        // Trả về template: src/main/resources/templates/admin/admin.html
         return "admin/admin";
     }
 }
