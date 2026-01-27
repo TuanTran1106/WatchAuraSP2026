@@ -20,11 +20,12 @@ public class HoaDonController {
     private final HoaDonService hoaDonService;
 
     @GetMapping
-    public ResponseEntity<List<HoaDonDTO>> getAll() {
+    public ResponseEntity<?> getAll() {
         try {
             return ResponseEntity.ok(hoaDonService.getAll());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi lấy danh sách hóa đơn: " + e.getMessage());
         }
     }
 
