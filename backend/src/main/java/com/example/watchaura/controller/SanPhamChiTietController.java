@@ -53,10 +53,22 @@ public class SanPhamChiTietController {
     }
 
     /**
-     * POST: Tạo mới sản phẩm chi tiết
-     * URL: POST /api/san-pham-chi-tiet
-     * Body: SanPhamChiTietRequest (JSON)
-     */
+
+    @GetMapping("/san-pham/{sanPhamId}")
+    public ResponseEntity<?> getSanPhamChiTietBySanPhamId(@PathVariable Integer sanPhamId) {
+        try {
+            List<SanPhamChiTietDTO> list = sanPhamChiTietService.getSanPhamChiTietBySanPhamId(sanPhamId);
+            return ResponseEntity.ok(list);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi hệ thống");
+        }
+    }
+
+    
     @PostMapping
     public ResponseEntity<?> createSanPhamChiTiet(@Valid @RequestBody SanPhamChiTietRequest request) {
         try {

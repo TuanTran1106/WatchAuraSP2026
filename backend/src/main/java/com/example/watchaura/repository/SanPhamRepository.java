@@ -184,9 +184,16 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
             "GROUP BY sp.danhMuc.tenDanhMuc")
     List<Object[]> countByDanhMuc();
 
+
     /**
      * Kiểm tra mã sản phẩm đã tồn tại (ngoại trừ ID hiện tại - dùng khi update)
      */
     boolean existsByMaSanPhamAndIdNot(String maSanPham, Integer id);
 }
 
+
+    /**
+     * Kiểm tra mã sản phẩm đã tồn tại (ngoại trừ ID hiện tại - dùng khi update)
+     */
+    boolean existsByMaSanPhamAndIdNot(String maSanPham, Integer id);
+}

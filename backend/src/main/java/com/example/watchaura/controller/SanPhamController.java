@@ -4,11 +4,21 @@ package com.example.watchaura.controller;
 import com.example.watchaura.dto.SanPhamDTO;
 import com.example.watchaura.dto.SanPhamRequest;
 import com.example.watchaura.service.SanPhamService;
+import com.example.watchaura.service.FileUploadService;
+
+
+import com.example.watchaura.dto.SanPhamDTO;
+import com.example.watchaura.dto.SanPhamRequest;
+import com.example.watchaura.service.SanPhamService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.web.multipart.MultipartFile;
+
 
 import java.util.List;
 
@@ -19,6 +29,9 @@ import java.util.List;
 public class SanPhamController {
 
     private final SanPhamService sanPhamService;
+
+    private final FileUploadService fileUploadService;
+
 
     /**
      * GET: Lấy tất cả sản phẩm
@@ -109,4 +122,56 @@ public class SanPhamController {
                     .body("Lỗi hệ thống");
         }
     }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String filePath = fileUploadService.uploadFile(file);
+            return ResponseEntity.ok(new UploadResponse(filePath, "Upload thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Lỗi khi upload file"));
+        }
+    }
+
+
+    @PutMapping("/{id}/upload")
+    public ResponseEntity<?> updateProductImage(
+            @PathVariable Integer id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            String newFilePath = fileUploadService.uploadFile(file);
+            sanPhamService.updateSanPhamImage(id, newFilePath);
+            return ResponseEntity.ok(new UploadResponse(newFilePath, "Cập nhật ảnh thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Lỗi khi cập nhật ảnh"));
+        }
+    }
+
+    // Helper classes for response
+    public static class UploadResponse {
+        public String filePath;
+        public String message;
+
+        public UploadResponse(String filePath, String message) {
+            this.filePath = filePath;
+            this.message = message;
+        }
+    }
+
+    public static class ErrorResponse {
+        public String error;
+
+        public ErrorResponse(String error) {
+            this.error = error;
+        }
+    }
+
 }
