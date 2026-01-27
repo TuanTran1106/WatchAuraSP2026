@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+
 import com.example.watchaura.dto.SanPhamChiTietDTO;
 import com.example.watchaura.dto.SanPhamChiTietRequest;
 import com.example.watchaura.service.SanPhamChiTietService;
@@ -52,9 +53,7 @@ public class SanPhamChiTietController {
     }
 
     /**
-     * GET: Lấy danh sách sản phẩm chi tiết theo ID sản phẩm
-     * URL: GET /api/san-pham-chi-tiet/san-pham/{sanPhamId}
-     */
+
     @GetMapping("/san-pham/{sanPhamId}")
     public ResponseEntity<?> getSanPhamChiTietBySanPhamId(@PathVariable Integer sanPhamId) {
         try {
@@ -69,11 +68,7 @@ public class SanPhamChiTietController {
         }
     }
 
-    /**
-     * POST: Tạo mới sản phẩm chi tiết
-     * URL: POST /api/san-pham-chi-tiet
-     * Body: SanPhamChiTietRequest (JSON)
-     */
+    
     @PostMapping
     public ResponseEntity<?> createSanPhamChiTiet(@Valid @RequestBody SanPhamChiTietRequest request) {
         try {

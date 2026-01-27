@@ -11,7 +11,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/danh-muc")
+
 @CrossOrigin(origins = "*")
+
 public class DanhMucController {
 
     @Autowired

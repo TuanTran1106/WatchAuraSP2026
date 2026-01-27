@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="admin-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar__brand">
+          <span class="sidebar__logo">WA</span>
+          <span class="sidebar__title">WatchAura Admin</span>
+        </div>
+        <nav class="sidebar__nav">
+          <a href="#" class="sidebar__link sidebar__link--active" data-page="dashboard"
+            >Dashboard</a
+          >
+          <a href="#" class="sidebar__link" data-page="users">Khách Hàng</a>
+          <a href="#" class="sidebar__link" data-page="orders">Hóa Đơn</a>
+          <a href="#" class="sidebar__link" data-page="products">Sản Phẩm</a>
+          <a href="#" class="sidebar__link" data-page="settings">Cài Đặt</a>
+        </nav>
+      </aside>
+
+      <!-- Main -->
+      <div class="main">
+        <!-- Header -->
+        <header class="header">
+          <button class="header__menu-btn" id="sidebarToggle">☰</button>
+          <div class="header__left">
+            <h1 class="header__title" id="pageTitle">Dashboard</h1>
+          </div>
+          <div class="header__right">
+            <div class="header__search">
+              <input type="text" placeholder="Search..." />
+            </div>
+            <div class="header__user">
+              <span class="header__user-name">Admin</span>
+              <img
+                src="https://via.placeholder.com/32"
+                alt="avatar"
+                class="header__avatar"
+              />
+            </div>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content" id="content">
+          <!-- Dashboard default content -->
+          <div class="content__grid">
+            <section class="card">
+              <h2 class="card__title">Total Users</h2>
+              <p class="card__value">1,234</p>
+            </section>
+            <section class="card">
+              <h2 class="card__title">Total Orders</h2>
+              <p class="card__value">567</p>
+            </section>
+            <section class="card">
+              <h2 class="card__title">Revenue</h2>
+              <p class="card__value">$12,345</p>
+            </section>
+            <section class="card">
+              <h2 class="card__title">Conversion</h2>
+              <p class="card__value">4.5%</p>
+            </section>
+          </div>
+
+          <section class="card card--full">
+            <h2 class="card__title">Recent Orders</h2>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>#001</td>
+                  <td>John Doe</td>
+                  <td>$120</td>
+                  <td><span class="badge badge--success">Completed</span></td>
+                  <td>2026-01-25</td>
+                </tr>
+                <tr>
+                  <td>#002</td>
+                  <td>Jane Smith</td>
+                  <td>$80</td>
+                  <td><span class="badge badge--warning">Pending</span></td>
+                  <td>2026-01-25</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <span>© 2026 WatchAura Admin. All rights reserved.</span>
+        </footer>
+      </div>
+    </div>
+
+    <script src="/admin/admin.js"></script>
+  </body>
+</html>
+

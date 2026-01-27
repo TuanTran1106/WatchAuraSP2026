@@ -1,14 +1,14 @@
-package com.example.watchaura.service;
+package com.example.watchaura.service.impl;
 
 import com.example.watchaura.dto.SanPhamDTO;
 import com.example.watchaura.dto.SanPhamRequest;
-
+import com.example.watchaura.entity.DanhMuc;
 import com.example.watchaura.entity.SanPham;
 import com.example.watchaura.entity.ThuongHieu;
-import com.example.watchaura.entity.DanhMuc;
+import com.example.watchaura.repository.DanhMucRepository;
 import com.example.watchaura.repository.SanPhamRepository;
 import com.example.watchaura.repository.ThuongHieuRepository;
-import com.example.watchaura.repository.DanhMucRepository;
+import com.example.watchaura.service.SanPhamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,50 +19,41 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class SanPhamService {
+public class SanPhamServiceImpl implements SanPhamService {
 
     private final SanPhamRepository sanPhamRepository;
     private final ThuongHieuRepository thuongHieuRepository;
     private final DanhMucRepository danhMucRepository;
-    private final FileUploadService fileUploadService;
 
-    /**
-     * Lấy tất cả sản phẩm
-     */
+    @Override
     public List<SanPhamDTO> getAllSanPham() {
-        return sanPhamRepository.findAll().stream()
+        return sanPhamRepository.findAll()
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Lấy sản phẩm theo ID
-     */
+    @Override
     public SanPhamDTO getSanPhamById(Integer id) {
         SanPham sanPham = sanPhamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
         return convertToDTO(sanPham);
     }
 
-    /**
-     * Tạo mới sản phẩm
-     */
+    @Override
     @Transactional
     public SanPhamDTO createSanPham(SanPhamRequest request) {
-        // Kiểm tra mã sản phẩm đã tồn tại
+
         if (sanPhamRepository.existsByMaSanPham(request.getMaSanPham())) {
             throw new RuntimeException("Mã sản phẩm đã tồn tại: " + request.getMaSanPham());
         }
 
-        // Kiểm tra thương hiệu tồn tại
         ThuongHieu thuongHieu = thuongHieuRepository.findById(request.getIdThuongHieu())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu với ID: " + request.getIdThuongHieu()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
-        // Kiểm tra danh mục tồn tại
         DanhMuc danhMuc = danhMucRepository.findById(request.getIdDanhMuc())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + request.getIdDanhMuc()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
 
-        // Tạo entity
         SanPham sanPham = new SanPham();
         sanPham.setMaSanPham(request.getMaSanPham());
         sanPham.setTenSanPham(request.getTenSanPham());
@@ -74,34 +65,26 @@ public class SanPhamService {
         sanPham.setTrangThai(request.getTrangThai());
         sanPham.setNgayTao(LocalDateTime.now());
 
-        // Lưu vào database
-        SanPham savedSanPham = sanPhamRepository.save(sanPham);
-        return convertToDTO(savedSanPham);
+        return convertToDTO(sanPhamRepository.save(sanPham));
     }
 
-    /**
-     * Cập nhật sản phẩm
-     */
+    @Override
     @Transactional
     public SanPhamDTO updateSanPham(Integer id, SanPhamRequest request) {
-        // Tìm sản phẩm cần cập nhật
-        SanPham sanPham = sanPhamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
 
-        // Kiểm tra mã sản phẩm trùng (ngoại trừ chính nó)
+        SanPham sanPham = sanPhamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
         if (sanPhamRepository.existsByMaSanPhamAndIdNot(request.getMaSanPham(), id)) {
             throw new RuntimeException("Mã sản phẩm đã tồn tại: " + request.getMaSanPham());
         }
 
-        // Kiểm tra thương hiệu tồn tại
         ThuongHieu thuongHieu = thuongHieuRepository.findById(request.getIdThuongHieu())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu với ID: " + request.getIdThuongHieu()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
-        // Kiểm tra danh mục tồn tại
         DanhMuc danhMuc = danhMucRepository.findById(request.getIdDanhMuc())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + request.getIdDanhMuc()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
 
-        // Cập nhật thông tin
         sanPham.setMaSanPham(request.getMaSanPham());
         sanPham.setTenSanPham(request.getTenSanPham());
         sanPham.setMoTa(request.getMoTa());
@@ -111,14 +94,10 @@ public class SanPhamService {
         sanPham.setPhongCach(request.getPhongCach());
         sanPham.setTrangThai(request.getTrangThai());
 
-        // Lưu vào database
-        SanPham updatedSanPham = sanPhamRepository.save(sanPham);
-        return convertToDTO(updatedSanPham);
+        return convertToDTO(sanPhamRepository.save(sanPham));
     }
 
-    /**
-     * Xóa sản phẩm
-     */
+    @Override
     @Transactional
     public void deleteSanPham(Integer id) {
         if (!sanPhamRepository.existsById(id)) {
@@ -127,31 +106,6 @@ public class SanPhamService {
         sanPhamRepository.deleteById(id);
     }
 
-    /**
-     * Cập nhật ảnh sản phẩm
-     */
-    @Transactional
-    public SanPhamDTO updateSanPhamImage(Integer id, String newFilePath) {
-        // Tìm sản phẩm cần cập nhật
-        SanPham sanPham = sanPhamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
-
-        // Xóa ảnh cũ nếu có
-        if (sanPham.getHinhAnh() != null && !sanPham.getHinhAnh().isEmpty()) {
-            fileUploadService.deleteFile(sanPham.getHinhAnh());
-        }
-
-        // Cập nhật ảnh mới
-        sanPham.setHinhAnh(newFilePath);
-
-        // Lưu vào database
-        SanPham updatedSanPham = sanPhamRepository.save(sanPham);
-        return convertToDTO(updatedSanPham);
-    }
-
-    /**
-     * Convert Entity sang DTO
-     */
     private SanPhamDTO convertToDTO(SanPham sanPham) {
         SanPhamDTO dto = new SanPhamDTO();
         dto.setId(sanPham.getId());
@@ -175,22 +129,3 @@ public class SanPhamService {
         return dto;
     }
 }
-
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-
-public interface SanPhamService {
-
-    List<SanPhamDTO> getAllSanPham();
-
-    SanPhamDTO getSanPhamById(Integer id);
-
-    SanPhamDTO createSanPham(SanPhamRequest request);
-
-    SanPhamDTO updateSanPham(Integer id, SanPhamRequest request);
-
-    void deleteSanPham(Integer id);
-}
-

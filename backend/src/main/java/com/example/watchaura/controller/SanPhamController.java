@@ -1,15 +1,24 @@
 package com.example.watchaura.controller;
 
+
 import com.example.watchaura.dto.SanPhamDTO;
 import com.example.watchaura.dto.SanPhamRequest;
 import com.example.watchaura.service.SanPhamService;
 import com.example.watchaura.service.FileUploadService;
+
+
+import com.example.watchaura.dto.SanPhamDTO;
+import com.example.watchaura.dto.SanPhamRequest;
+import com.example.watchaura.service.SanPhamService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.util.List;
 
@@ -20,7 +29,9 @@ import java.util.List;
 public class SanPhamController {
 
     private final SanPhamService sanPhamService;
+
     private final FileUploadService fileUploadService;
+
 
     /**
      * GET: Lấy tất cả sản phẩm
@@ -112,11 +123,6 @@ public class SanPhamController {
         }
     }
 
-    /**
-     * POST: Upload ảnh sản phẩm
-     * URL: POST /api/san-pham/upload
-     * Body: form-data (file)
-     */
     @PostMapping("/upload")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
@@ -131,11 +137,7 @@ public class SanPhamController {
         }
     }
 
-    /**
-     * PUT: Cập nhật ảnh sản phẩm
-     * URL: PUT /api/san-pham/{id}/upload
-     * Body: form-data (file)
-     */
+
     @PutMapping("/{id}/upload")
     public ResponseEntity<?> updateProductImage(
             @PathVariable Integer id,
@@ -171,4 +173,5 @@ public class SanPhamController {
             this.error = error;
         }
     }
+
 }

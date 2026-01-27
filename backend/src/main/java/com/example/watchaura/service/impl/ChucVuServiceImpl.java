@@ -46,7 +46,7 @@ public class ChucVuServiceImpl implements ChucVuService {
 
     @Override
     public void delete(Integer id) {
-        getById(id); // check tồn tại
+        getById(id);
         chucVuRepository.deleteById(id);
     }
 }
