@@ -5,9 +5,10 @@ import com.example.watchaura.entity.ChucVu;
 import com.example.watchaura.repository.ChucVuRepository;
 import com.example.watchaura.service.ChucVuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Service
 public class ChucVuServiceImpl implements ChucVuService {
     @Autowired
     private ChucVuRepository chucVuRepository;
@@ -27,7 +28,7 @@ public class ChucVuServiceImpl implements ChucVuService {
     @Override
     public ChucVu create(ChucVu chucVu) {
 
-        if (chucVuRepository.CheckByTenChucVu(chucVu.getTenChucVu())) {
+        if (chucVuRepository.existsByTenChucVu(chucVu.getTenChucVu())) {
             throw new RuntimeException("Tên chức vụ đã tồn tại");
         }
 
@@ -46,7 +47,7 @@ public class ChucVuServiceImpl implements ChucVuService {
 
     @Override
     public void delete(Integer id) {
-        getById(id); // check tồn tại
+        getById(id);
         chucVuRepository.deleteById(id);
     }
 }

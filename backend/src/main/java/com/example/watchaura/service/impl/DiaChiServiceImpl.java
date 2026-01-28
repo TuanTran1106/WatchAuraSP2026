@@ -7,9 +7,10 @@ import com.example.watchaura.repository.DiaChiRepository;
 import com.example.watchaura.repository.KhachHangRepository;
 import com.example.watchaura.service.DiaChiService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Service
 public class DiaChiServiceImpl implements DiaChiService {
     @Autowired
     private DiaChiRepository diaChiRepository;
