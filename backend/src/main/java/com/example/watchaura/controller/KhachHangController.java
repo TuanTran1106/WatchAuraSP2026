@@ -1,3 +1,4 @@
+/*
 package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.KhachHang;
@@ -40,3 +41,4 @@ public class KhachHangController {
         khachHangService.delete(id);
     }
 }
+*/

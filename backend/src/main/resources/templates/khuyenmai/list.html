@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý khuyến mãi</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body class="container mt-4">
+
+<h3 class="mb-3">Danh sách khuyến mãi</h3>
+
+<a th:href="@{/admin/khuyen-mai/them}" class="btn btn-primary mb-3">
+    + Thêm khuyến mãi
+</a>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
+    <tr>
+        <th>ID</th>
+        <th>Mã KM</th>
+        <th>Tên chương trình</th>
+        <th>Loại giảm</th>
+        <th>Giá trị giảm</th>
+        <th>Giảm tối đa</th>
+        <th>Thời gian</th>
+        <th>Trạng thái</th>
+        <th width="150">Hành động</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="km : ${listKhuyenMai}">
+        <td th:text="${km.id}"></td>
+        <td th:text="${km.maKhuyenMai}"></td>
+        <td th:text="${km.tenChuongTrinh}"></td>
+
+        <td th:text="${km.loaiGiam}"></td>
+
+        <td th:text="${km.giaTriGiam}"></td>
+        <td th:text="${km.giamToiDa}"></td>
+
+        <td>
+            <span th:text="${#temporals.format(km.ngayBatDau,'dd/MM/yyyy')}"></span>
+            -
+            <span th:text="${#temporals.format(km.ngayKetThuc,'dd/MM/yyyy')}"></span>
+        </td>
+
+        <td>
+            <span th:if="${km.trangThai}" class="badge bg-success">Đang áp dụng</span>
+            <span th:if="${!km.trangThai}" class="badge bg-secondary">Ngừng</span>
+        </td>
+
+        <td>
+            <a th:href="@{'/admin/khuyen-mai/sua/' + ${km.id}}"
+               class="btn btn-warning btn-sm">Sửa</a>
+
+            <a th:href="@{'/admin/khuyen-mai/xoa/' + ${km.id}}"
+               onclick="return confirm('Bạn có chắc muốn xóa?')"
+               class="btn btn-danger btn-sm">Xóa</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

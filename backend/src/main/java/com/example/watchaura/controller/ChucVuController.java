@@ -1,3 +1,4 @@
+/*
 package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.ChucVu;
@@ -58,3 +59,4 @@ public class ChucVuController {
     }
 }
 
+*/
