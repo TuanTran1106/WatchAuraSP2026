@@ -3,14 +3,10 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.SanPhamDTO;
 import com.example.watchaura.dto.SanPhamRequest;
-import com.example.watchaura.service.SanPhamService;
 import com.example.watchaura.service.FileUploadService;
 
 
-import com.example.watchaura.dto.SanPhamDTO;
-import com.example.watchaura.dto.SanPhamRequest;
 import com.example.watchaura.service.SanPhamService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -173,5 +169,4 @@ public class SanPhamController {
             this.error = error;
         }
     }
-
 }

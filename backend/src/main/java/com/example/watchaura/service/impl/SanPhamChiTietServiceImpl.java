@@ -3,8 +3,7 @@ package com.example.watchaura.service.impl;
 
 import com.example.watchaura.dto.SanPhamChiTietDTO;
 import com.example.watchaura.dto.SanPhamChiTietRequest;
-import com.example.watchaura.entity.SanPham;
-import com.example.watchaura.entity.SanPhamChiTiet;
+import com.example.watchaura.entity.*;
 import com.example.watchaura.repository.*;
 import com.example.watchaura.service.SanPhamChiTietService;
 import jakarta.transaction.Transactional;
@@ -16,7 +15,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
-
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final SanPhamRepository sanPhamRepository;
     private final MauSacRepository mauSacRepository;
@@ -24,57 +22,74 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
     private final ChatLieuDayRepository chatLieuDayRepository;
     private final LoaiMayRepository loaiMayRepository;
 
-    @Override
+    /**
+     * Lấy tất cả sản phẩm chi tiết
+     */
     public List<SanPhamChiTietDTO> getAllSanPhamChiTiet() {
-        return sanPhamChiTietRepository.findAllWithDetails()
-                .stream()
+        return sanPhamChiTietRepository.findAllWithDetails().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    @Override
+    /**
+     * Lấy sản phẩm chi tiết theo ID
+     */
     public SanPhamChiTietDTO getSanPhamChiTietById(Integer id) {
         SanPhamChiTiet spct = sanPhamChiTietRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + id));
         return convertToDTO(spct);
     }
 
-    @Override
+    /**
+     * Lấy danh sách sản phẩm chi tiết theo ID sản phẩm
+     */
+    public List<SanPhamChiTietDTO> getSanPhamChiTietBySanPhamId(Integer sanPhamId) {
+        // Kiểm tra sản phẩm tồn tại
+        if (!sanPhamRepository.existsById(sanPhamId)) {
+            throw new RuntimeException("Không tìm thấy sản phẩm với ID: " + sanPhamId);
+        }
+
+        return sanPhamChiTietRepository.findBySanPhamId(sanPhamId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Tạo mới sản phẩm chi tiết
+     */
     @Transactional
     public SanPhamChiTietDTO createSanPhamChiTiet(SanPhamChiTietRequest request) {
-
+        // Kiểm tra sản phẩm tồn tại
         SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + request.getIdSanPham()));
 
+        // Tạo entity
         SanPhamChiTiet spct = new SanPhamChiTiet();
         spct.setSanPham(sanPham);
 
+        // Set các thuộc tính optional
         if (request.getIdMauSac() != null) {
-            spct.setMauSac(
-                    mauSacRepository.findById(request.getIdMauSac())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc"))
-            );
+            MauSac mauSac = mauSacRepository.findById(request.getIdMauSac())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc với ID: " + request.getIdMauSac()));
+            spct.setMauSac(mauSac);
         }
 
         if (request.getIdKichThuoc() != null) {
-            spct.setKichThuoc(
-                    kichThuocRepository.findById(request.getIdKichThuoc())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước"))
-            );
+            KichThuoc kichThuoc = kichThuocRepository.findById(request.getIdKichThuoc())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước với ID: " + request.getIdKichThuoc()));
+            spct.setKichThuoc(kichThuoc);
         }
 
         if (request.getIdChatLieuDay() != null) {
-            spct.setChatLieuDay(
-                    chatLieuDayRepository.findById(request.getIdChatLieuDay())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu dây"))
-            );
+            ChatLieuDay chatLieuDay = chatLieuDayRepository.findById(request.getIdChatLieuDay())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu dây với ID: " + request.getIdChatLieuDay()));
+            spct.setChatLieuDay(chatLieuDay);
         }
 
         if (request.getIdLoaiMay() != null) {
-            spct.setLoaiMay(
-                    loaiMayRepository.findById(request.getIdLoaiMay())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy"))
-            );
+            LoaiMay loaiMay = loaiMayRepository.findById(request.getIdLoaiMay())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy với ID: " + request.getIdLoaiMay()));
+            spct.setLoaiMay(loaiMay);
         }
 
         spct.setSoLuongTon(request.getSoLuongTon());
@@ -85,32 +100,58 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         spct.setTrongLuong(request.getTrongLuong());
         spct.setTrangThai(request.getTrangThai());
 
-        return convertToDTO(sanPhamChiTietRepository.save(spct));
+        // Lưu vào database
+        SanPhamChiTiet savedSpct = sanPhamChiTietRepository.save(spct);
+        return convertToDTO(savedSpct);
     }
 
-    @Override
+    /**
+     * Cập nhật sản phẩm chi tiết
+     */
     @Transactional
     public SanPhamChiTietDTO updateSanPhamChiTiet(Integer id, SanPhamChiTietRequest request) {
-
+        // Tìm sản phẩm chi tiết cần cập nhật
         SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + id));
 
+        // Kiểm tra sản phẩm tồn tại
         SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + request.getIdSanPham()));
 
         spct.setSanPham(sanPham);
 
-        spct.setMauSac(request.getIdMauSac() == null ? null :
-                mauSacRepository.findById(request.getIdMauSac()).orElseThrow());
+        // Cập nhật các thuộc tính optional
+        if (request.getIdMauSac() != null) {
+            MauSac mauSac = mauSacRepository.findById(request.getIdMauSac())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc với ID: " + request.getIdMauSac()));
+            spct.setMauSac(mauSac);
+        } else {
+            spct.setMauSac(null);
+        }
 
-        spct.setKichThuoc(request.getIdKichThuoc() == null ? null :
-                kichThuocRepository.findById(request.getIdKichThuoc()).orElseThrow());
+        if (request.getIdKichThuoc() != null) {
+            KichThuoc kichThuoc = kichThuocRepository.findById(request.getIdKichThuoc())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước với ID: " + request.getIdKichThuoc()));
+            spct.setKichThuoc(kichThuoc);
+        } else {
+            spct.setKichThuoc(null);
+        }
 
-        spct.setChatLieuDay(request.getIdChatLieuDay() == null ? null :
-                chatLieuDayRepository.findById(request.getIdChatLieuDay()).orElseThrow());
+        if (request.getIdChatLieuDay() != null) {
+            ChatLieuDay chatLieuDay = chatLieuDayRepository.findById(request.getIdChatLieuDay())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu dây với ID: " + request.getIdChatLieuDay()));
+            spct.setChatLieuDay(chatLieuDay);
+        } else {
+            spct.setChatLieuDay(null);
+        }
 
-        spct.setLoaiMay(request.getIdLoaiMay() == null ? null :
-                loaiMayRepository.findById(request.getIdLoaiMay()).orElseThrow());
+        if (request.getIdLoaiMay() != null) {
+            LoaiMay loaiMay = loaiMayRepository.findById(request.getIdLoaiMay())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy với ID: " + request.getIdLoaiMay()));
+            spct.setLoaiMay(loaiMay);
+        } else {
+            spct.setLoaiMay(null);
+        }
 
         spct.setSoLuongTon(request.getSoLuongTon());
         spct.setGiaBan(request.getGiaBan());
@@ -120,18 +161,25 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         spct.setTrongLuong(request.getTrongLuong());
         spct.setTrangThai(request.getTrangThai());
 
-        return convertToDTO(sanPhamChiTietRepository.save(spct));
+        // Lưu vào database
+        SanPhamChiTiet updatedSpct = sanPhamChiTietRepository.save(spct);
+        return convertToDTO(updatedSpct);
     }
 
-    @Override
+    /**
+     * Xóa sản phẩm chi tiết
+     */
     @Transactional
     public void deleteSanPhamChiTiet(Integer id) {
         if (!sanPhamChiTietRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy sản phẩm chi tiết");
+            throw new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + id);
         }
         sanPhamChiTietRepository.deleteById(id);
     }
 
+    /**
+     * Convert Entity sang DTO
+     */
     private SanPhamChiTietDTO convertToDTO(SanPhamChiTiet spct) {
         SanPhamChiTietDTO dto = new SanPhamChiTietDTO();
         dto.setId(spct.getId());
@@ -171,4 +219,5 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
 
         return dto;
     }
+
 }
