@@ -192,8 +192,3 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
 }
 
 
-    /**
-     * Kiểm tra mã sản phẩm đã tồn tại (ngoại trừ ID hiện tại - dùng khi update)
-     */
-    boolean existsByMaSanPhamAndIdNot(String maSanPham, Integer id);
-}
