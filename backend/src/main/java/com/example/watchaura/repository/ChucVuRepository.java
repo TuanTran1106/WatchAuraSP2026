@@ -1,3 +1,4 @@
+/*
 package com.example.watchaura.repository;
 
 import com.example.watchaura.entity.ChucVu;
@@ -9,3 +10,4 @@ public interface ChucVuRepository extends JpaRepository<ChucVu, Integer> {
     boolean existsByTenChucVu(String tenChucVu);
 }
 
+*/

@@ -1,3 +1,4 @@
+/*
 package com.example.watchaura.service.impl;
 
 import com.example.watchaura.entity.ChucVu;
@@ -50,3 +51,4 @@ public class ChucVuServiceImpl implements ChucVuService {
         chucVuRepository.deleteById(id);
     }
 }
+*/

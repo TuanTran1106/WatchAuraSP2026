@@ -1,3 +1,4 @@
+/*
 package com.example.watchaura.service.impl;
 
 import com.example.watchaura.entity.ChucVu;
@@ -84,3 +85,4 @@ public class KhachHangServiceImpl implements KhachHangService {
         khachHangRepository.deleteById(id);
     }
 }
+*/
