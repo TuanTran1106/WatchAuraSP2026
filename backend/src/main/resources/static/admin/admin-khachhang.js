@@ -1,6 +1,7 @@
 const KhachHangModule = (() => {
   const API_BASE = "/api/khach-hang";
 
+
   let customers = [];
 
   const els = {};
@@ -21,8 +22,11 @@ const KhachHangModule = (() => {
     els.email = qs("kh-email");
     els.sdt = qs("kh-sdt");
     els.matKhau = qs("kh-matkhau");
+    els.ngaySinh = qs("kh-ngaysinh");
     els.gioiTinh = qs("kh-gioitinh");
     els.trangThai = qs("kh-trangthai");
+    els.chucVu = qs("kh-chucvu");
+
     els.error = qs("kh-error");
     els.saveBtn = qs("kh-save-btn");
     els.resetBtn = qs("kh-reset-btn");
@@ -61,6 +65,7 @@ const KhachHangModule = (() => {
           <td>${kh.email || ""}</td>
           <td>${kh.sdt || ""}</td>
           <td>${kh.gioiTinh || ""}</td>
+           <td>${kh.ngaySinh || ""}</td>
           <td>
             <span class="badge ${
               kh.trangThai ? "badge--success" : "badge--warning"
@@ -68,7 +73,7 @@ const KhachHangModule = (() => {
           </td>
           <td>
             <button class="btn-link" data-action="edit">Sửa</button>
-            <button class="btn-link btn-link--danger" data-action="delete">Xóa</button>
+       
           </td>
         </tr>
       `
@@ -126,6 +131,7 @@ const KhachHangModule = (() => {
       els.ten.value = "";
       els.email.value = "";
       els.sdt.value = "";
+      els.ngaySinh.value = "";
       els.matKhau.value = "";
       els.gioiTinh.value = "";
       els.trangThai.value = "true";
@@ -134,8 +140,12 @@ const KhachHangModule = (() => {
       els.ma.value = kh.maNguoiDung || "";
       els.ten.value = kh.tenNguoiDung || "";
       els.email.value = kh.email || "";
-      els.sdt.value = kh.sdt || "";
       els.matKhau.value = kh.matKhau || "";
+      els.sdt.value = kh.sdt || "";
+      els.ngaySinh.value = kh.ngaySinh
+          ? kh.ngaySinh.substring(0, 10)
+          : "";
+
       els.gioiTinh.value = kh.gioiTinh || "";
       els.trangThai.value = String(kh.trangThai);
     }
@@ -163,10 +173,21 @@ const KhachHangModule = (() => {
       tenNguoiDung: els.ten.value.trim(),
       email: els.email.value.trim() || null,
       sdt: els.sdt.value.trim() || null,
+      ngaySinh: els.ngaySinh.value || null,
       matKhau: els.matKhau.value,
       gioiTinh: els.gioiTinh.value || null,
       trangThai: els.trangThai.value === "true"
     };
+    if (!els.chucVu || !els.chucVu.value) {
+      els.error.hidden = false;
+      els.error.textContent = "Vui lòng chọn chức vụ";
+      return;
+    }
+
+    payload.chucVu = {
+      id: Number(els.chucVu.value)
+    };
+
 
     const mode = els.form.dataset.mode || "create";
     let url = API_BASE;
@@ -275,4 +296,8 @@ const KhachHangModule = (() => {
 window.initKhachHangPage = () => {
   KhachHangModule.init();
 };
+
+
+
+
 

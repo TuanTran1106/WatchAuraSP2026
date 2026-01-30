@@ -8,7 +8,10 @@ window.initVoucherPage = function () {
             <div class="card__header-row">
                 <h2 class="card__title"></h2>
                 <input id="voucher-search" class="input input--sm input--search-wide" placeholder="Tìm kiếm voucher..." style="margin-right: 12px;" />
-                <button id="voucher-add-btn" class="btn btn--primary btn--sm" title="Thêm voucher"><span style="font-size: 20px; font-weight: bold;">+</span></button>
+                <button id="voucher-add-btn" class="btn btn--primary btn--sm btn-toggle-form" title="Thêm voucher">
+                 <span>+</span>
+                </button>
+    
             </div>
             <form id="voucher-form" class="kh-form kh-form--hidden" data-visible="false" style="margin-bottom: 24px;">
                 <input type="hidden" id="voucher-id" />
@@ -128,16 +131,24 @@ window.initVoucherPage = function () {
 
     document.getElementById("voucher-add-btn").onclick = function () {
         const form = document.getElementById("voucher-form");
-        if (form.dataset.visible === "true") {
+        const icon = this.querySelector("span");
+        const isVisible = form.dataset.visible === "true";
+
+        if (isVisible) {
+            // Đang mở → đóng
             form.classList.add("kh-form--hidden");
             form.dataset.visible = "false";
+            icon.textContent = "+";
         } else {
+            // Đang đóng → mở (thêm mới)
             form.reset();
             document.getElementById("voucher-id").value = "";
             form.classList.remove("kh-form--hidden");
             form.dataset.visible = "true";
+            icon.textContent = "×";
         }
     };
+
 
     document.getElementById("voucher-cancel-btn").onclick = function () {
         document.getElementById("voucher-form").classList.add("kh-form--hidden");

@@ -15,4 +15,7 @@ public interface KhachHangService {
     KhachHang update(Integer id, KhachHang khachHang);
 
     void delete(Integer id);
+
+    List<KhachHang> getByTenChucVu(String tenChucVu);
+
 }
