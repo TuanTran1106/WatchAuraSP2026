@@ -39,5 +39,11 @@ public class KhachHangController {
     public void delete(@PathVariable Integer id) {
         khachHangService.delete(id);
     }
+
+    @GetMapping("/by-chuc-vu")
+    public List<KhachHang> getByChucVu(@RequestParam String ten) {
+        return khachHangService.getByTenChucVu(ten);
+    }
+
 }
 

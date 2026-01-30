@@ -8,7 +8,11 @@ window.initBlogPage = function () {
             <div class="card__header-row">
                 <h2 class="card__title"></h2>
                 <input id="blog-search" class="input input--sm input--search-wide" placeholder="Tìm kiếm blog..." style="margin-right: 12px;" />
-                <button id="blog-add-btn" class="btn btn--primary btn--sm" title="Thêm blog"><span style="font-size: 20px; font-weight: bold;">+</span></button>
+                 <button id="blog-add-btn" class="btn btn--primary btn--sm btn-toggle-form" title="Thêm blog">
+                    <span>+</span>
+                   </button>
+
+
             </div>
             <form id="blog-form" class="kh-form kh-form--hidden" data-visible="false" style="margin-bottom: 24px;">
                 <input type="hidden" id="blog-id" />
@@ -87,16 +91,22 @@ window.initBlogPage = function () {
 
     document.getElementById("blog-add-btn").onclick = function () {
         const form = document.getElementById("blog-form");
-        if (form.dataset.visible === "true") {
+        const icon = this.querySelector("span");
+        const isVisible = form.dataset.visible === "true";
+
+        if (isVisible) {
             form.classList.add("kh-form--hidden");
             form.dataset.visible = "false";
+            icon.textContent = "+";
         } else {
             form.reset();
             document.getElementById("blog-id").value = "";
             form.classList.remove("kh-form--hidden");
             form.dataset.visible = "true";
+            icon.textContent = "×";
         }
     };
+
 
     document.getElementById("blog-cancel-btn").onclick = function () {
         document.getElementById("blog-form").classList.add("kh-form--hidden");

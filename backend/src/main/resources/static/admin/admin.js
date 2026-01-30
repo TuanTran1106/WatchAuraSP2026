@@ -106,17 +106,38 @@ const pages = {
             <label for="kh-sdt">Số điện thoại</label>
             <input id="kh-sdt" type="text" />
           </div>
+            <div class="form-control">
+             <label for="kh-ngaysinh">Ngày sinh</label>
+            <input id="kh-ngaysinh" type="date" />
+            </div>
           <div class="form-control">
-            <label for="kh-matkhau">Mật khẩu</label>
-            <input id="kh-matkhau" type="password" required />
+             <label for="kh-matkhau">Mật Khẩu</label>
+            <input id="kh-matkhau" type="password" />
           </div>
+            <div class="form-control">
+  <label for="Kh-chucvu">Chức Vụ</label>
+<select id="kh-chucvu">
+  <option value="">-- Chọn chức vụ --</option>
+  <option value="2">Khách hàng</option>
+  <option value="3">Nhân viên</option>
+</select>
+
+
+
+</div>
+
+<!--<div class="form-control">-->
+<!--  <label for="nguoi-dung">Người dùng</label>-->
+<!--  <select id="nguoi-dung"></select>-->
+<!--</div>-->
+
           <div class="form-control">
             <label for="kh-gioitinh">Giới tính</label>
             <select id="kh-gioitinh">
               <option value="">-- Chọn --</option>
               <option value="Nam">Nam</option>
               <option value="Nữ">Nữ</option>
-              <option value="Khác">Khác</option>
+         
             </select>
           </div>
           <div class="form-control">

@@ -1,6 +1,8 @@
 package com.example.watchaura.service.impl;
 
+import com.example.watchaura.entity.ChucVu;
 import com.example.watchaura.entity.KhachHang;
+import com.example.watchaura.repository.ChucVuRepository;
 import com.example.watchaura.repository.KhachHangRepository;
 import com.example.watchaura.service.KhachHangService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,9 @@ import java.util.List;
 public class KhachHangServiceImpl implements KhachHangService {
     @Autowired
     private KhachHangRepository khachHangRepository;
+
+    @Autowired
+    private ChucVuRepository chucVuRepository;
     @Override
     public List<KhachHang> getAll() {
         return khachHangRepository.findAll();
@@ -28,7 +33,18 @@ public class KhachHangServiceImpl implements KhachHangService {
         if (khachHangRepository.existsByMaNguoiDung(khachHang.getMaNguoiDung())) {
             throw new RuntimeException("Mã Khách Hàng Đã Tồn Tại");
         }
+        if (khachHang.getChucVu() == null ||
+                khachHang.getChucVu().getId() == null) {
+            throw new RuntimeException("Chưa chọn chức vụ");
+        }
+
+        ChucVu chucVu = chucVuRepository.findById(
+                khachHang.getChucVu().getId()
+        ).orElseThrow(() -> new RuntimeException("Chức vụ không tồn tại"));
+
+        khachHang.setChucVu(chucVu);
         khachHang.setTrangThai(true);
+
         return khachHangRepository.save(khachHang);
     }
 
@@ -44,7 +60,6 @@ public class KhachHangServiceImpl implements KhachHangService {
         kh.setNgaySinh(khachHang.getNgaySinh());
         kh.setHinhAnh(khachHang.getHinhAnh());
         kh.setTrangThai(khachHang.getTrangThai());
-        kh.setNgayTao(khachHang.getNgayTao());
         kh.setChucVu(khachHang.getChucVu());
 
 
@@ -55,4 +70,9 @@ public class KhachHangServiceImpl implements KhachHangService {
     public void delete(Integer id) {
         khachHangRepository.deleteById(id);
     }
+    @Override
+    public List<KhachHang> getByTenChucVu(String tenChucVu) {
+        return khachHangRepository.findByChucVu_TenChucVu(tenChucVu);
+    }
+
 }

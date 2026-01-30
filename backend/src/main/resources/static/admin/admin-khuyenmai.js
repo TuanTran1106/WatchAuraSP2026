@@ -8,7 +8,10 @@ window.initKhuyenMaiPage = function () {
             <div class="card__header-row">
                 <h2 class="card__title"></h2>
                 <input id="promotion-search" class="input input--sm input--search-wide" placeholder="Tìm kiếm khuyến mãi..." style="margin-right: 12px;" />
-                <button id="promotion-add-btn" class="btn btn--primary btn--sm" title="Thêm khuyến mãi"><span style="font-size: 20px; font-weight: bold;">+</span></button>
+             <button id="promotion-add-btn" class="btn btn--primary btn--sm btn-toggle-form" title="Thêm Khuyến Mãi">
+                    <span>+</span>
+                   </button>
+            
             </div>
             <form id="promotion-form" class="kh-form kh-form--hidden" data-visible="false" style="margin-bottom: 24px;">
                 <input type="hidden" id="promotion-id" />
@@ -109,11 +112,28 @@ window.initKhuyenMaiPage = function () {
     fetchPromotions();
 
     document.getElementById("promotion-add-btn").onclick = function () {
-        document.getElementById("promotion-form").reset();
-        document.getElementById("promotion-id").value = "";
-        document.getElementById("promotion-form").classList.remove("kh-form--hidden");
-        document.getElementById("promotion-form").dataset.visible = "true";
+        const form = document.getElementById("promotion-form");
+        const btn = document.getElementById("promotion-add-btn");
+        const icon = btn.querySelector("span");
+
+        const isVisible = form.dataset.visible === "true";
+
+        if (isVisible) {
+            // 👉 ĐANG MỞ → ĐÓNG
+            form.classList.add("kh-form--hidden");
+            form.dataset.visible = "false";
+            icon.textContent = "+";
+        } else {
+            // 👉 ĐANG ĐÓNG → MỞ (THÊM MỚI)
+            form.reset();
+            document.getElementById("promotion-id").value = "";
+            form.classList.remove("kh-form--hidden");
+            form.dataset.visible = "true";
+            icon.textContent = "×";
+        }
     };
+
+
 
     document.getElementById("promotion-cancel-btn").onclick = function () {
         document.getElementById("promotion-form").classList.add("kh-form--hidden");
