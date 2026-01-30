@@ -25,6 +25,7 @@ public class SanPhamServiceImpl implements SanPhamService {
     private final ThuongHieuRepository thuongHieuRepository;
     private final DanhMucRepository danhMucRepository;
     private final FileUploadService fileUploadService;
+    private final com.example.watchaura.repository.SanPhamChiTietRepository sanPhamChiTietRepository;
 
     /**
      * Lấy tất cả sản phẩm
@@ -124,6 +125,8 @@ public class SanPhamServiceImpl implements SanPhamService {
         if (!sanPhamRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy sản phẩm với ID: " + id);
         }
+        // Xóa tất cả chi tiết sản phẩm liên quan trước
+        sanPhamChiTietRepository.deleteAll(sanPhamChiTietRepository.findBySanPhamId(id));
         sanPhamRepository.deleteById(id);
     }
 

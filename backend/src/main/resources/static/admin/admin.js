@@ -13,9 +13,6 @@ const navLinks = document.querySelectorAll(".sidebar__link");
 const pageTitle = document.getElementById("pageTitle");
 const content = document.getElementById("content");
 
-let invoices = [];
-let selectedInvoice = null;
-
 const pages = {
   dashboard: `
     <div class="content__grid">
@@ -69,648 +66,366 @@ const pages = {
   `,
   users: `
     <section class="card card--full">
-      <div class="card__header">
-        <h2 class="card__title">Quản lý khách hàng</h2>
-      </div>
-
-      <div class="card__toolbar">
-        <div class="card__toolbar-left">
+      <div class="card__header-row">
+        <div class="card__search-group">
           <input
             type="text"
-            id="userSearch"
-            class="input"
-            placeholder="Tìm theo tên, email, SĐT..."
+            id="kh-search"
+            class="input input--sm input--search-wide"
+            placeholder="Tìm theo mã, tên, email, SĐT..."
           />
+          <select id="kh-status-filter" class="input input--sm">
+            <option value="all">Tất cả</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngưng hoạt động</option>
+          </select>
         </div>
-        <div class="card__toolbar-right">
-          <button
-            type="button"
-            id="toggleUserFormBtn"
-            class="btn btn--icon"
-            title="Thêm khách hàng"
-          >
+        <div class="card__actions">
+          <button type="button" class="btn btn--primary btn--sm" id="kh-add-btn">
             +
           </button>
         </div>
       </div>
 
-      <form id="userForm" class="form-grid" hidden>
-        <input type="hidden" id="userId" />
-        <div class="form-group">
-          <label for="maNguoiDung">Mã khách hàng</label>
-          <input type="text" id="maNguoiDung" required />
+      <form id="kh-form" class="kh-form kh-form--hidden" data-visible="false">
+        <input type="hidden" id="kh-id" />
+        <div class="form-grid">
+          <div class="form-control">
+            <label for="kh-ma">Mã khách hàng</label>
+            <input id="kh-ma" type="text" required />
+          </div>
+          <div class="form-control">
+            <label for="kh-ten">Tên khách hàng</label>
+            <input id="kh-ten" type="text" required />
+          </div>
+          <div class="form-control">
+            <label for="kh-email">Email</label>
+            <input id="kh-email" type="email" />
+          </div>
+          <div class="form-control">
+            <label for="kh-sdt">Số điện thoại</label>
+            <input id="kh-sdt" type="text" />
+          </div>
+          <div class="form-control">
+            <label for="kh-matkhau">Mật khẩu</label>
+            <input id="kh-matkhau" type="password" required />
+          </div>
+          <div class="form-control">
+            <label for="kh-gioitinh">Giới tính</label>
+            <select id="kh-gioitinh">
+              <option value="">-- Chọn --</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="kh-trangthai">Trạng thái</label>
+            <select id="kh-trangthai">
+              <option value="true">Đang hoạt động</option>
+              <option value="false">Ngưng hoạt động</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="tenNguoiDung">Họ tên</label>
-          <input type="text" id="tenNguoiDung" required />
-        </div>
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" />
-        </div>
-        <div class="form-group">
-          <label for="sdt">Số điện thoại</label>
-          <input type="text" id="sdt" />
-        </div>
-        <div class="form-group">
-          <label for="matKhau">Mật khẩu</label>
-          <input type="password" id="matKhau" required />
-        </div>
-        <div class="form-group">
-          <label for="gioiTinh">Giới tính</label>
-          <select id="gioiTinh">
-            <option value="">Chọn</option>
-            <option value="Nam">Nam</option>
-            <option value="Nữ">Nữ</option>
-            <option value="Khác">Khác</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="ngaySinh">Ngày sinh</label>
-          <input type="date" id="ngaySinh" />
-        </div>
-        <div class="form-group">
-          <label for="trangThai">Trạng thái</label>
-          <select id="trangThai">
-            <option value="true">Hoạt động</option>
-            <option value="false">Khóa</option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn--primary">Lưu</button>
+        <div class="kh-form__actions">
+          <p class="form-error" id="kh-error" hidden></p>
+          <div class="kh-form__buttons">
+            <button type="button" class="btn btn--ghost btn--sm" id="kh-reset-btn">Làm mới</button>
+            <button type="submit" class="btn btn--primary btn--sm" id="kh-save-btn">Lưu</button>
+          </div>
         </div>
       </form>
+    </section>
 
+    <section class="card card--full">
+      <div class="card__header-row">
+        <div>
+          <h2 class="card__title">Danh sách khách hàng</h2>
+        </div>
+      </div>
       <div class="table-wrapper">
-        <table class="table" id="usersTable">
+        <table class="table">
           <thead>
             <tr>
               <th>Mã</th>
-              <th>Họ tên</th>
+              <th>Tên</th>
               <th>Email</th>
               <th>SĐT</th>
               <th>Giới tính</th>
-              <th>Ngày sinh</th>
               <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
           </thead>
-          <tbody id="usersTableBody"></tbody>
+          <tbody id="kh-table-body">
+            <tr>
+              <td colspan="7" style="text-align:center; padding: 16px;">Đang tải dữ liệu...</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </section>
   `,
   orders: `
     <section class="card card--full">
-      <h2 class="card__title">Hóa đơn</h2>
-      <div id="ordersTableContainer"></div>
-      <div id="orderDetailContainer" style="margin-top: 12px;"></div>
-      <h2 class="card__title">Đơn Hàng</h2>
-      <p>Danh sách đơn hàng.</p>
+      <div class="card__header-row">
+        <div class="card__search-group">
+          <input
+            type="text"
+            id="hd-search"
+            class="input input--sm input--search-wide"
+            placeholder="Tìm theo mã đơn, tên khách, SĐT..."
+          />
+          <select id="hd-status-filter" class="input input--sm">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="CHO_XAC_NHAN">Chờ xác nhận</option>
+            <option value="DANG_XU_LY">Đang xử lý</option>
+            <option value="DANG_GIAO">Đang giao</option>
+            <option value="DA_GIAO">Đã giao</option>
+            <option value="DA_HUY">Đã hủy</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>SĐT</th>
+              <th>Tổng thanh toán</th>
+              <th>Trạng thái</th>
+              <th>Ngày đặt</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="hd-table-body">
+            <tr>
+              <td colspan="7" style="text-align:center; padding: 16px;">Đang tải dữ liệu...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card card--full" id="hd-detail-box">
+      <div class="card__header-row">
+        <div>
+          <h3 class="card__title" id="hd-detail-title">Chi tiết hóa đơn</h3>
+        </div>
+      </div>
+      <div class="hd-detail__body" id="hd-detail-body">
+        <p style="font-size:12px; color: var(--text-soft); margin: 0;">
+          Chọn một hóa đơn bên trên để xem chi tiết.
+        </p>
+      </div>
     </section>
   `,
   products: `
     <section class="card card--full">
-      <h2 class="card__title">Sản Phẩm</h2>
-      <p>Danh sách sản phẩm.</p>
+      <div class="card__header-row">
+        <div class="card__search-group">
+          <input
+            type="text"
+            id="sp-search"
+            class="input input--sm input--search-wide"
+            placeholder="Tìm theo mã, tên sản phẩm..."
+          />
+          <select id="sp-category-filter" class="input input--sm">
+            <option value="all">Tất cả danh mục</option>
+          </select>
+        </div>
+        <div class="card__actions">
+          <button type="button" class="btn btn--primary btn--sm" id="sp-add-btn">
+            +
+          </button>
+        </div>
+      </div>
+
+      <form id="sp-form" class="sp-form sp-form--hidden" data-visible="false">
+        <input type="hidden" id="sp-id" />
+        <div class="form-grid">
+          <div class="form-control">
+            <label for="sp-ma">Mã sản phẩm</label>
+            <input id="sp-ma" type="text" required />
+          </div>
+          <div class="form-control">
+            <label for="sp-ten">Tên sản phẩm</label>
+            <input id="sp-ten" type="text" required />
+          </div>
+          <div class="form-control">
+            <label for="sp-giaban">Giá bán</label>
+            <input id="sp-giaban" type="number" min="0" step="1000" />
+          </div>
+          <div class="form-control">
+            <label for="sp-soluongton">Số lượng tồn</label>
+            <input id="sp-soluongton" type="number" min="0" step="1" value="0" />
+          </div>
+          <div class="form-control">
+            <label for="sp-danhmuc">Danh mục</label>
+            <select id="sp-danhmuc" required>
+              <option value="">-- Chọn danh mục --</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="sp-mausac">Màu sắc</label>
+            <select id="sp-mausac">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="sp-kichthuoc">Kích thước</label>
+            <select id="sp-kichthuoc">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="sp-chatlieuday">Chất liệu dây</label>
+            <select id="sp-chatlieuday">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="sp-loaimay">Loại máy</label>
+            <select id="sp-loaimay">
+              <option value="">-- Chọn --</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="sp-phongcach">Phong cách</label>
+            <input id="sp-phongcach" type="text" />
+          </div>
+          <div class="form-control">
+            <label for="sp-duongkinh">Đường kính (mm)</label>
+            <input id="sp-duongkinh" type="number" min="0" step="0.1" />
+          </div>
+          <div class="form-control">
+            <label for="sp-dochiunuoc">Độ chịu nước (m)</label>
+            <input id="sp-dochiunuoc" type="number" min="0" step="1" />
+          </div>
+          <div class="form-control">
+            <label for="sp-berongday">Bề rộng dây (mm)</label>
+            <input id="sp-berongday" type="number" min="0" step="0.1" />
+          </div>
+          <div class="form-control">
+            <label for="sp-trongluong">Trọng lượng (g)</label>
+            <input id="sp-trongluong" type="number" min="0" step="0.1" />
+          </div>
+          <div class="form-control">
+            <label for="sp-trangthai">Trạng thái</label>
+            <select id="sp-trangthai">
+              <option value="true">Đang bán</option>
+              <option value="false">Ngưng</option>
+            </select>
+          </div>
+          <div class="form-control" style="grid-column: 1 / -1;">
+            <label for="sp-mota">Mô tả</label>
+            <textarea
+              id="sp-mota"
+              rows="2"
+              style="width: 100%; resize: vertical; background:#020617; border-radius:8px; border:1px solid var(--border-soft); padding:6px 8px; color:var(--text); font-size:13px;"
+            ></textarea>
+          </div>
+        </div>
+        <div class="sp-form__actions">
+          <p class="form-error" id="sp-error" hidden></p>
+          <div class="sp-form__buttons">
+            <button type="button" class="btn btn--ghost btn--sm" id="sp-reset-btn">Làm mới</button>
+            <button type="submit" class="btn btn--primary btn--sm" id="sp-save-btn">Lưu sản phẩm</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tên sản phẩm</th>
+              <th>Danh mục</th>
+              <th>Thương hiệu</th>
+              <th>Phong cách</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="sp-table-body">
+            <tr>
+              <td colspan="7" style="text-align:center; padding: 16px;">Đang tải dữ liệu...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   `,
-  settings: `
+  categories: `
     <section class="card card--full">
-      <h2 class="card__title">Cài Đặt</h2>
-      <p>Các thiết lập hệ thống.</p>
-    </section>
-  `
-};
-
-
-function getStatusBadgeClass(trangThaiDonHang) {
-  if (!trangThaiDonHang) return "";
-  if (trangThaiDonHang === "CHO_XU_LY" || trangThaiDonHang === "CHO_XAC_NHAN") {
-    return "badge badge--warning";
-  }
-  if (trangThaiDonHang === "DA_XAC_NHAN" || trangThaiDonHang === "DA_THANH_TOAN") {
-    return "badge badge--success";
-  }
-  return "badge";
-}
-
-function getStatusLabel(trangThaiDonHang) {
-  switch (trangThaiDonHang) {
-    case "CHO_XU_LY":
-      return "Chờ xử lý";
-    case "CHO_XAC_NHAN":
-      return "Chờ xác nhận";
-    case "DA_XAC_NHAN":
-      return "Đã xác nhận";
-    case "DA_THANH_TOAN":
-      return "Đã thanh toán";
-    default:
-      return trangThaiDonHang || "Không rõ";
-  }
-}
-
-function formatCurrency(value) {
-  if (value == null) return "-";
-  try {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND"
-    }).format(value);
-  } catch (e) {
-    return value;
-  }
-}
-
-function formatDateTime(isoString) {
-  if (!isoString) return "-";
-  try {
-    const d = new Date(isoString);
-    const date = d.toLocaleDateString("vi-VN");
-    const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    return `${date} ${time}`;
-  } catch (e) {
-    return isoString;
-  }
-}
-
-function renderInvoiceTable(tableContainer, detailContainer) {
-  if (!tableContainer) return;
-
-  if (!Array.isArray(invoices) || invoices.length === 0) {
-    tableContainer.innerHTML =
-      '<p style="font-size: 13px; color: var(--text-soft);">Chưa có hóa đơn nào.</p>';
-    if (detailContainer) {
-      detailContainer.innerHTML =
-        '<p style="font-size: 13px; color: var(--text-soft);">Chọn "Xem" để xem chi tiết hóa đơn.</p>';
-    }
-    return;
-  }
-
-  const rowsHtml = invoices
-    .map(
-      (hd) => `
-      <tr>
-        <td>${hd.maDonHang || "-"}</td>
-        <td>${hd.tenKhachHang || "-"}</td>
-        <td>${formatDateTime(hd.ngayDat)}</td>
-        <td>${formatCurrency(hd.tongTienThanhToan)}</td>
-        <td>
-          <span class="${getStatusBadgeClass(hd.trangThaiDonHang)}">
-            ${getStatusLabel(hd.trangThaiDonHang)}
-          </span>
-        </td>
-        <td>
-          <button class="btn btn--primary btn--sm" data-invoice-view data-id="${hd.id}">
-            Xem
+      <div class="card__header-row">
+        <div class="card__search-group">
+          <input
+            type="text"
+            id="dm-search"
+            class="input input--sm input--search-wide"
+            placeholder="Tìm theo tên danh mục..."
+          />
+        </div>
+        <div class="card__actions">
+          <button type="button" class="btn btn--primary btn--sm" id="dm-add-btn">
+            +
           </button>
-        </td>
-      </tr>
-    `
-    )
-    .join("");
-
-  tableContainer.innerHTML = `
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Mã hóa đơn</th>
-          <th>Khách hàng</th>
-          <th>Ngày tạo</th>
-          <th>Tổng tiền</th>
-          <th>Trạng thái</th>
-          <th>Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml}
-      </tbody>
-    </table>
-  `;
-
-  tableContainer.querySelectorAll("[data-invoice-view]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-id");
-      if (!id) return;
-      const numericId = Number(id);
-      loadInvoiceDetail(numericId, detailContainer);
-    });
-  });
-}
-
-function renderInvoiceDetail(invoice, detailContainer) {
-  if (!detailContainer) return;
-  if (!invoice) {
-    detailContainer.innerHTML =
-      '<p style="font-size: 13px; color: var(--text-soft);">Chọn "Xem" để xem chi tiết hóa đơn.</p>';
-    return;
-  }
-
-  const status = invoice.trangThaiDonHang;
-  const canConfirm = status === "CHO_XAC_NHAN" || status === "CHO_XU_LY";
-  const canComplete = status === "DA_XAC_NHAN";
-
-  detailContainer.innerHTML = `
-    <section class="card">
-      <h3 class="card__title">Chi tiết hóa đơn</h3>
-      <div class="invoice-detail">
-        <div class="invoice-detail__row">
-          <span class="invoice-detail__label">Mã hóa đơn:</span>
-          <span class="invoice-detail__value">${invoice.maDonHang || "-"}</span>
-        </div>
-        <div class="invoice-detail__row">
-          <span class="invoice-detail__label">Khách hàng:</span>
-          <span class="invoice-detail__value">${invoice.tenKhachHang || "-"}</span>
-        </div>
-        <div class="invoice-detail__row">
-          <span class="invoice-detail__label">Tổng tiền:</span>
-          <span class="invoice-detail__value">${formatCurrency(invoice.tongTienThanhToan)}</span>
-        </div>
-        <div class="invoice-detail__row">
-          <span class="invoice-detail__label">Trạng thái:</span>
-          <span class="invoice-detail__value">
-            <span class="${getStatusBadgeClass(invoice.trangThaiDonHang)}">
-              ${getStatusLabel(invoice.trangThaiDonHang)}
-            </span>
-          </span>
         </div>
       </div>
-      <div class="invoice-detail__actions">
-        ${
-          canConfirm
-            ? `<button class="btn btn--primary" id="btnConfirmOrder" data-id="${invoice.id}">
-                Xác nhận đơn
-              </button>`
-            : canComplete
-              ? `<button class="btn btn--primary" id="btnCompleteOrder" data-id="${invoice.id}">
-                  Hoàn thành
-                </button>`
-              : `<span class="invoice-detail__note">Không có hành động khả dụng.</span>`
-        }
+
+      <form id="dm-form" class="dm-form dm-form--hidden" data-visible="false">
+        <input type="hidden" id="dm-id" />
+        <div class="form-grid">
+          <div class="form-control" style="grid-column: 1 / -1;">
+            <label for="dm-ten">Tên danh mục</label>
+            <input id="dm-ten" type="text" required />
+          </div>
+        </div>
+        <div class="dm-form__actions">
+          <p class="form-error" id="dm-error" hidden></p>
+          <div class="dm-form__buttons">
+            <button type="button" class="btn btn--ghost btn--sm" id="dm-reset-btn">Làm mới</button>
+            <button type="submit" class="btn btn--primary btn--sm" id="dm-save-btn">Lưu danh mục</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tên danh mục</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="dm-table-body">
+            <tr>
+              <td colspan="3" style="text-align:center; padding: 16px;">Đang tải dữ liệu...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
-  `;
-
-  if (canConfirm) {
-    const btnConfirm = document.getElementById("btnConfirmOrder");
-    if (btnConfirm) {
-      btnConfirm.addEventListener("click", () => {
-        const id = btnConfirm.getAttribute("data-id");
-        if (!id) return;
-        updateInvoiceStatus(Number(id), detailContainer, "DA_XAC_NHAN", btnConfirm);
-      });
-    }
-  } else if (canComplete) {
-    const btnComplete = document.getElementById("btnCompleteOrder");
-    if (btnComplete) {
-      btnComplete.addEventListener("click", () => {
-        const id = btnComplete.getAttribute("data-id");
-        if (!id) return;
-        updateInvoiceStatus(Number(id), detailContainer, "DA_THANH_TOAN", btnComplete);
-      });
-    }
-  }
-}
-
-function loadInvoiceDetail(id, detailContainer) {
-  if (!detailContainer) return;
-  detailContainer.innerHTML =
-    '<p style="font-size: 13px; color: var(--text-soft);">Đang tải chi tiết hóa đơn...</p>';
-
-  fetch(`/api/hoa-don/${id}`)
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Không tải được chi tiết hóa đơn");
-      }
-      return res.json();
-    })
-    .then((data) => {
-      selectedInvoice = data;
-      renderInvoiceDetail(selectedInvoice, detailContainer);
-    })
-    .catch(() => {
-      detailContainer.innerHTML =
-        '<p style="font-size: 13px; color: #ef4444;">Lỗi khi tải chi tiết hóa đơn.</p>';
-    });
-}
-
-function updateInvoiceStatus(id, detailContainer, newStatus, btn) {
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Đang xử lý...";
-  }
-
-  fetch(`/api/hoa-don/${id}/trang-thai?trangThaiDonHang=${encodeURIComponent(newStatus)}`, {
-    method: "PUT"
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Không thể cập nhật trạng thái");
-      }
-      return res.json();
-    })
-    .then((updated) => {
-      selectedInvoice = updated;
-      invoices = invoices.map((hd) => (hd.id === updated.id ? updated : hd));
-
-      const tableContainer = document.getElementById("ordersTableContainer");
-      renderInvoiceTable(tableContainer, detailContainer);
-      renderInvoiceDetail(selectedInvoice, detailContainer);
-    })
-    .catch(() => {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "Thử lại";
-      }
-      if (detailContainer) {
-        detailContainer.insertAdjacentHTML(
-          "beforeend",
-          '<p style="font-size: 13px; color: #ef4444; margin-top: 6px;">Lỗi khi cập nhật trạng thái đơn.</p>'
-        );
-      }
-    });
-}
-
-function initOrdersPage() {
-  const tableContainer = document.getElementById("ordersTableContainer");
-  const detailContainer = document.getElementById("orderDetailContainer");
-
-  if (!tableContainer || !detailContainer) return;
-
-  tableContainer.innerHTML =
-    '<p style="font-size: 13px; color: var(--text-soft);">Đang tải dữ liệu hóa đơn...</p>';
-  detailContainer.innerHTML =
-    '<p style="font-size: 13px; color: var(--text-soft);">Chọn "Xem" để xem chi tiết hóa đơn.</p>';
-
-  fetch("/api/hoa-don")
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Không tải được danh sách hóa đơn");
-      }
-      return res.json();
-    })
-    .then((data) => {
-      invoices = Array.isArray(data) ? data : [];
-      renderInvoiceTable(tableContainer, detailContainer);
-    })
-    .catch(() => {
-      tableContainer.innerHTML =
-        '<p style="font-size: 13px; color: #ef4444;">Lỗi khi tải danh sách hóa đơn.</p>';
-    });
-}
-
-// ---------------------- Users (Khách hàng) page logic ----------------------
-
-function getToastContainer() {
-  let container = document.querySelector(".toast-container");
-  if (!container) {
-    container = document.createElement("div");
-    container.className = "toast-container";
-    document.body.appendChild(container);
-  }
-  return container;
-}
-
-function showToast(type, message) {
-  const container = getToastContainer();
-  const toast = document.createElement("div");
-  toast.className = `toast toast--${type}`;
-
-  const iconSpan = document.createElement("span");
-  iconSpan.className = "toast__icon";
-  iconSpan.textContent = type === "success" ? "✓" : "⚠";
-
-  const textSpan = document.createElement("span");
-  textSpan.textContent = message;
-
-  toast.appendChild(iconSpan);
-  toast.appendChild(textSpan);
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-    if (!container.childElementCount) {
-      container.remove();
-    }
-  }, 3000);
-}
-
-let customersCache = [];
-
-async function fetchCustomers() {
-  try {
-    const res = await fetch("/api/khach-hang");
-    if (!res.ok) throw new Error("Không thể tải danh sách khách hàng");
-    const data = await res.json();
-    customersCache = Array.isArray(data) ? data : [];
-    renderCustomers(customersCache);
-  } catch (error) {
-    console.error(error);
-    showToast("error", "Lỗi khi tải danh sách khách hàng.");
-  }
-}
-
-function renderCustomers(list) {
-  const tbody = document.getElementById("usersTableBody");
-  if (!tbody) return;
-
-  if (!list.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" style="text-align:center;">Không có khách hàng.</td>
-      </tr>
-    `;
-    return;
-  }
-
-  tbody.innerHTML = list
-    .map((c) => {
-      const ngaySinhDisplay = c.ngaySinh ? c.ngaySinh : "";
-      const trangThaiText = c.trangThai ? "Hoạt động" : "Khóa";
-      return `
-        <tr data-id="${c.id}">
-          <td>${c.maNguoiDung ?? ""}</td>
-          <td>${c.tenNguoiDung ?? ""}</td>
-          <td>${c.email ?? ""}</td>
-          <td>${c.sdt ?? ""}</td>
-          <td>${c.gioiTinh ?? ""}</td>
-          <td>${ngaySinhDisplay}</td>
-          <td>${trangThaiText}</td>
-          <td>
-            <button type="button" class="btn btn--small btn-edit" data-id="${c.id}">Sửa</button>
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
-}
-
-function fillUserForm(customer) {
-  const idEl = document.getElementById("userId");
-  const maEl = document.getElementById("maNguoiDung");
-  const tenEl = document.getElementById("tenNguoiDung");
-  const emailEl = document.getElementById("email");
-  const sdtEl = document.getElementById("sdt");
-  const matKhauEl = document.getElementById("matKhau");
-  const gioiTinhEl = document.getElementById("gioiTinh");
-  const ngaySinhEl = document.getElementById("ngaySinh");
-  const trangThaiEl = document.getElementById("trangThai");
-
-  if (!idEl) return;
-
-  idEl.value = customer.id ?? "";
-  if (maEl) maEl.value = customer.maNguoiDung ?? "";
-  if (tenEl) tenEl.value = customer.tenNguoiDung ?? "";
-  if (emailEl) emailEl.value = customer.email ?? "";
-  if (sdtEl) sdtEl.value = customer.sdt ?? "";
-  if (matKhauEl) matKhauEl.value = customer.matKhau ?? "";
-  if (gioiTinhEl) gioiTinhEl.value = customer.gioiTinh ?? "";
-  if (ngaySinhEl) ngaySinhEl.value = customer.ngaySinh ?? "";
-  if (trangThaiEl)
-    trangThaiEl.value =
-      customer.trangThai === null || customer.trangThai === undefined
-        ? "true"
-        : String(customer.trangThai);
-}
-
-function resetUserForm() {
-  const form = document.getElementById("userForm");
-  const idEl = document.getElementById("userId");
-  if (form) form.reset();
-  if (idEl) idEl.value = "";
-}
-
-function initUsersPage() {
-  fetchCustomers();
-
-  const form = document.getElementById("userForm");
-  const searchInput = document.getElementById("userSearch");
-  const toggleFormBtn = document.getElementById("toggleUserFormBtn");
-  const tbody = document.getElementById("usersTableBody");
-
-  if (toggleFormBtn && form) {
-    toggleFormBtn.addEventListener("click", () => {
-      const willShow = form.hidden;
-      if (willShow) {
-        resetUserForm();
-        form.hidden = false;
-        form.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        form.hidden = true;
-      }
-    });
-  }
-
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const id = document.getElementById("userId").value;
-      const maNguoiDung = document.getElementById("maNguoiDung").value.trim();
-      const tenNguoiDung = document.getElementById("tenNguoiDung").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const sdt = document.getElementById("sdt").value.trim();
-      const matKhau = document.getElementById("matKhau").value;
-      const gioiTinh = document.getElementById("gioiTinh").value;
-      const ngaySinh = document.getElementById("ngaySinh").value;
-      const trangThai = document.getElementById("trangThai").value === "true";
-
-      if (!maNguoiDung || !tenNguoiDung || !matKhau) {
-        showToast("error", "Vui lòng nhập đủ Mã KH, Họ tên và Mật khẩu.");
-        return;
-      }
-
-      const payload = {
-        id: id || null,
-        maNguoiDung,
-        tenNguoiDung,
-        email: email || null,
-        sdt: sdt || null,
-        matKhau,
-        gioiTinh: gioiTinh || null,
-        ngaySinh: ngaySinh || null,
-        hinhAnh: null,
-        trangThai,
-        chucVu: null
-      };
-
-      try {
-        let res;
-        if (id) {
-          res = await fetch(`/api/khach-hang/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-        } else {
-          res = await fetch("/api/khach-hang", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-        }
-
-        if (!res.ok) throw new Error("Lưu khách hàng thất bại");
-
-        await fetchCustomers();
-        resetUserForm();
-        showToast("success", "Lưu khách hàng thành công.");
-      } catch (error) {
-        console.error(error);
-        showToast("error", "Đã xảy ra lỗi khi lưu khách hàng.");
-      }
-    });
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      const keyword = searchInput.value.toLowerCase();
-      const filtered = customersCache.filter((c) => {
-        const name = (c.tenNguoiDung || "").toLowerCase();
-        const email = (c.email || "").toLowerCase();
-        const phone = (c.sdt || "").toLowerCase();
-        return (
-          name.includes(keyword) ||
-          email.includes(keyword) ||
-          phone.includes(keyword)
-        );
-      });
-      renderCustomers(filtered);
-    });
-  }
-
-  if (tbody) {
-    tbody.addEventListener("click", async (e) => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-
-      const id = target.getAttribute("data-id");
-      if (!id) return;
-
-      if (target.classList.contains("btn-edit")) {
-        const customer = customersCache.find((c) => String(c.id) === id);
-        if (customer) {
-          const form = document.getElementById("userForm");
-          if (form && form.hidden) {
-            form.hidden = false;
-          }
-          fillUserForm(customer);
-          if (form) {
-            form.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }
-      }
-
-    });
-  }
-}
-
-// ---------------------- Sidebar navigation / simple routing ----------------------
+  `,
+  promotions: `<div></div>`,
+  vouchers: `<div></div>`,
+  blog: `<div></div>`
+};
 
 navLinks.forEach((link) => {
   link.addEventListener("click", (e) => {
     e.preventDefault();
     const page = link.getAttribute("data-page");
+
+    // Cập nhật URL trên trình duyệt
+    const newUrl = `/admin/${page}`;
+    if (window.location.pathname !== newUrl) {
+      window.history.pushState({ page }, "", newUrl);
+    }
 
     // Active state
     navLinks.forEach((l) => l.classList.remove("sidebar__link--active"));
@@ -720,19 +435,28 @@ navLinks.forEach((link) => {
     if (pageTitle) pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
     if (content && pages[page]) {
       content.innerHTML = pages[page];
-      if (page === "orders") {
-        initOrdersPage();
-    if (pageTitle)
-      pageTitle.textContent =
-        page === "users"
-          ? "Khách hàng"
-          : page.charAt(0).toUpperCase() + page.slice(1);
-    if (content && pages[page]) {
-      content.innerHTML = pages[page];
 
-      // Khởi tạo logic riêng cho từng trang nếu cần
-      if (page === "users") {
-        initUsersPage();
+      // ...existing code...
+      if (page === "users" && typeof window.initKhachHangPage === "function") {
+        window.initKhachHangPage();
+      }
+      if (page === "orders" && typeof window.initHoaDonPage === "function") {
+        window.initHoaDonPage();
+      }
+      if (page === "products" && typeof window.initSanPhamPage === "function") {
+        window.initSanPhamPage();
+      }
+      if (page === "categories" && typeof window.initDanhMucPage === "function") {
+        window.initDanhMucPage();
+      }
+      if (page === "promotions" && typeof window.initKhuyenMaiPage === "function") {
+        window.initKhuyenMaiPage();
+      }
+      if (page === "vouchers" && typeof window.initVoucherPage === "function") {
+        window.initVoucherPage();
+      }
+      if (page === "blog" && typeof window.initBlogPage === "function") {
+        window.initBlogPage();
       }
     }
 
@@ -742,4 +466,47 @@ navLinks.forEach((link) => {
     }
   });
 });
+
+
+// Hàm render trang dựa trên URL (không cần click sidebar)
+function renderPageFromPath() {
+  const path = window.location.pathname.replace(/^\/admin\/?/, "");
+  const page = path.split("/")[0] || "dashboard";
+  // Active sidebar
+  document.querySelectorAll(".sidebar__link").forEach(l => {
+    if (l.getAttribute("data-page") === page) {
+      l.classList.add("sidebar__link--active");
+    } else {
+      l.classList.remove("sidebar__link--active");
+    }
+  });
+  // Đổi title + content
+  if (pageTitle) pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+  if (content && pages[page]) {
+    content.innerHTML = pages[page];
+    if (page === "users" && typeof window.initKhachHangPage === "function") {
+      window.initKhachHangPage();
+    }
+    if (page === "orders" && typeof window.initHoaDonPage === "function") {
+      window.initHoaDonPage();
+    }
+    if (page === "products" && typeof window.initSanPhamPage === "function") {
+      window.initSanPhamPage();
+    }
+    if (page === "categories" && typeof window.initDanhMucPage === "function") {
+      window.initDanhMucPage();
+    }
+    if (page === "promotions" && typeof window.initKhuyenMaiPage === "function") {
+      window.initKhuyenMaiPage();
+    }
+    if (page === "vouchers" && typeof window.initVoucherPage === "function") {
+      window.initVoucherPage();
+    }
+    if (page === "blog" && typeof window.initBlogPage === "function") {
+      window.initBlogPage();
+    }
+  }
+}
+window.addEventListener("DOMContentLoaded", renderPageFromPath);
+window.addEventListener("popstate", renderPageFromPath);
 

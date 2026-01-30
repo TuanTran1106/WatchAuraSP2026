@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface KhuyenMaiRepository extends JpaRepository<KhuyenMai, Integer> {
 
-    Optional<KhuyenMai> findByMaKhuyenMai(String maKhuyenMai);
-
     boolean existsByMaKhuyenMai(String maKhuyenMai);
+
+    boolean existsByMaKhuyenMaiAndIdNot(String maKhuyenMai, Integer id);
 }

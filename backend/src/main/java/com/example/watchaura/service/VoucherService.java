@@ -5,16 +5,13 @@ import com.example.watchaura.entity.Voucher;
 import java.util.List;
 
 public interface VoucherService {
+    List<Voucher> getAll();
 
-    List<Voucher> findAll();
+    Voucher getById(Integer id);
 
-    Voucher findById(Integer id);
-
-    Voucher save(Voucher voucher);
+    Voucher create(Voucher voucher);
 
     Voucher update(Integer id, Voucher voucher);
 
     void delete(Integer id);
-
-    boolean existsByMaVoucher(String maVoucher);
 }

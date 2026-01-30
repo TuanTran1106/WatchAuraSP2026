@@ -6,15 +6,13 @@ import java.util.List;
 
 public interface KhuyenMaiService {
 
-    List<KhuyenMai> findAll();
+    List<KhuyenMai> getAll();
 
-    KhuyenMai findById(Integer id);
+    KhuyenMai getById(Integer id);
 
-    KhuyenMai save(KhuyenMai khuyenMai);
+    KhuyenMai create(KhuyenMai khuyenMai);
 
     KhuyenMai update(Integer id, KhuyenMai khuyenMai);
 
     void delete(Integer id);
-
-    boolean existsByMaKhuyenMai(String maKhuyenMai);
 }
