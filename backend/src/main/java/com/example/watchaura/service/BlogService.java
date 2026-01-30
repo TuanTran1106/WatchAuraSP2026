@@ -6,11 +6,11 @@ import java.util.List;
 
 public interface BlogService {
 
-    List<Blog> findAll();
+    List<Blog> getAll();
 
-    Blog findById(Integer id);
+    Blog getById(Integer id);
 
-    Blog save(Blog blog);
+    Blog create(Blog blog);
 
     Blog update(Integer id, Blog blog);
 

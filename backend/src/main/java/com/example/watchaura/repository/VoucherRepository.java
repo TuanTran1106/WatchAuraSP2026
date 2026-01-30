@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
 
-    Optional<Voucher> findByMaVoucher(String maVoucher);
-
     boolean existsByMaVoucher(String maVoucher);
+
+    boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id);
 }

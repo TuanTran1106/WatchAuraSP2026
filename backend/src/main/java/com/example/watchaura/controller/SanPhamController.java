@@ -109,13 +109,13 @@ public class SanPhamController {
     public ResponseEntity<?> deleteSanPham(@PathVariable Integer id) {
         try {
             sanPhamService.deleteSanPham(id);
-            return ResponseEntity.ok("Xóa sản phẩm thành công");
+            return ResponseEntity.ok(java.util.Map.of("message", "Xóa sản phẩm thành công"));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
+                    .body(java.util.Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Lỗi hệ thống");
+                    .body(java.util.Map.of("error", "Lỗi hệ thống"));
         }
     }
 

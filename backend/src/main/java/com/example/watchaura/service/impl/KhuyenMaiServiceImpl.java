@@ -3,42 +3,56 @@ package com.example.watchaura.service.impl;
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.repository.KhuyenMaiRepository;
 import com.example.watchaura.service.KhuyenMaiService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
-    @Autowired
-    private KhuyenMaiRepository khuyenMaiRepository;
+    private final KhuyenMaiRepository khuyenMaiRepository;
 
     @Override
-    public List<KhuyenMai> findAll() {
+    public List<KhuyenMai> getAll() {
         return khuyenMaiRepository.findAll();
     }
 
     @Override
-    public KhuyenMai findById(Integer id) {
-        return khuyenMaiRepository.findById(id).orElse(null);
+    public KhuyenMai getById(Integer id) {
+        return khuyenMaiRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi ID: " + id));
     }
 
     @Override
-    public KhuyenMai save(KhuyenMai khuyenMai) {
+    @Transactional
+    public KhuyenMai create(KhuyenMai khuyenMai) {
+
+        if (khuyenMaiRepository.existsByMaKhuyenMai(khuyenMai.getMaKhuyenMai())) {
+            throw new RuntimeException("Mã khuyến mãi đã tồn tại");
+        }
+
         khuyenMai.setNgayTao(LocalDateTime.now());
         khuyenMai.setNgayCapNhat(LocalDateTime.now());
+
         return khuyenMaiRepository.save(khuyenMai);
     }
 
     @Override
+    @Transactional
     public KhuyenMai update(Integer id, KhuyenMai khuyenMai) {
-        KhuyenMai existing = khuyenMaiRepository.findById(id).orElse(null);
-        if (existing == null) {
-            return null;
+
+        KhuyenMai existing = getById(id);
+
+        if (khuyenMaiRepository.existsByMaKhuyenMaiAndIdNot(
+                khuyenMai.getMaKhuyenMai(), id)) {
+            throw new RuntimeException("Mã khuyến mãi đã tồn tại");
         }
 
+        existing.setMaKhuyenMai(khuyenMai.getMaKhuyenMai());
         existing.setTenChuongTrinh(khuyenMai.getTenChuongTrinh());
         existing.setMoTa(khuyenMai.getMoTa());
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
@@ -53,12 +67,11 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
+        if (!khuyenMaiRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy khuyến mãi để xóa");
+        }
         khuyenMaiRepository.deleteById(id);
-    }
-
-    @Override
-    public boolean existsByMaKhuyenMai(String maKhuyenMai) {
-        return khuyenMaiRepository.existsByMaKhuyenMai(maKhuyenMai);
     }
 }

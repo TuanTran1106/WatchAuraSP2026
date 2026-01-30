@@ -3,69 +3,46 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.service.KhuyenMaiService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/admin/khuyen-mai")
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/khuyen-mai")
 public class KhuyenMaiController {
 
     @Autowired
     private KhuyenMaiService khuyenMaiService;
 
-    // ================== LIST ==================
+    // GET ALL
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("listKhuyenMai", khuyenMaiService.findAll());
-        return "khuyenmai/list";
+    public List<KhuyenMai> getAll() {
+        return khuyenMaiService.getAll();
     }
 
-    // ================== ADD FORM ==================
-    @GetMapping("/them")
-    public String showAddForm(Model model) {
-        model.addAttribute("khuyenMai", new KhuyenMai());
-        return "khuyenmai/form";
+    // GET BY ID
+    @GetMapping("/{id}")
+    public KhuyenMai getById(@PathVariable Integer id) {
+        return khuyenMaiService.getById(id);
     }
 
-    // ================== SAVE ==================
-    @PostMapping("/luu")
-    public String save(@ModelAttribute("khuyenMai") KhuyenMai khuyenMai,
-                       Model model) {
-
-        if (khuyenMaiService.existsByMaKhuyenMai(khuyenMai.getMaKhuyenMai())) {
-            model.addAttribute("error", "Mã khuyến mãi đã tồn tại!");
-            return "khuyenmai/form";
-        }
-
-        khuyenMaiService.save(khuyenMai);
-        return "redirect:/admin/khuyen-mai";
+    // CREATE
+    @PostMapping
+    public KhuyenMai create(@RequestBody KhuyenMai khuyenMai) {
+        return khuyenMaiService.create(khuyenMai);
     }
 
-    // ================== EDIT FORM ==================
-    @GetMapping("/sua/{id}")
-    public String showEditForm(@PathVariable Integer id, Model model) {
-        KhuyenMai khuyenMai = khuyenMaiService.findById(id);
-        if (khuyenMai == null) {
-            return "redirect:/admin/khuyen-mai";
-        }
-        model.addAttribute("khuyenMai", khuyenMai);
-        return "khuyenmai/form";
+    // UPDATE
+    @PutMapping("/{id}")
+    public KhuyenMai update(
+            @PathVariable Integer id,
+            @RequestBody KhuyenMai khuyenMai) {
+        return khuyenMaiService.update(id, khuyenMai);
     }
 
-    // ================== UPDATE ==================
-    @PostMapping("/cap-nhat/{id}")
-    public String update(@PathVariable Integer id,
-                         @ModelAttribute("khuyenMai") KhuyenMai khuyenMai) {
-
-        khuyenMaiService.update(id, khuyenMai);
-        return "redirect:/admin/khuyen-mai";
-    }
-
-    // ================== DELETE ==================
-    @GetMapping("/xoa/{id}")
-    public String delete(@PathVariable Integer id) {
+    // DELETE
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Integer id) {
         khuyenMaiService.delete(id);
-        return "redirect:/admin/khuyen-mai";
     }
 }

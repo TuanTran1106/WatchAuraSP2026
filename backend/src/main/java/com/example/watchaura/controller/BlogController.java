@@ -3,62 +3,42 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.Blog;
 import com.example.watchaura.service.BlogService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/admin/blog")
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/blog")
 public class BlogController {
 
     @Autowired
     private BlogService blogService;
 
-    // ================== LIST ==================
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("listBlog", blogService.findAll());
-        return "blog/list";
+    public List<Blog> getAll() {
+        return blogService.getAll();
     }
 
-    // ================== ADD FORM ==================
-    @GetMapping("/them")
-    public String showAddForm(Model model) {
-        model.addAttribute("blog", new Blog());
-        return "blog/form";
+    @GetMapping("/{id}")
+    public Blog getById(@PathVariable Integer id) {
+        return blogService.getById(id);
     }
 
-    // ================== SAVE ==================
-    @PostMapping("/luu")
-    public String save(@ModelAttribute("blog") Blog blog) {
-        blogService.save(blog);
-        return "redirect:/admin/blog";
+    @PostMapping
+    public Blog create(@RequestBody Blog blog) {
+        return blogService.create(blog);
     }
 
-    // ================== EDIT FORM ==================
-    @GetMapping("/sua/{id}")
-    public String showEditForm(@PathVariable Integer id, Model model) {
-        Blog blog = blogService.findById(id);
-        if (blog == null) {
-            return "redirect:/admin/blog";
-        }
-        model.addAttribute("blog", blog);
-        return "blog/form";
+    @PutMapping("/{id}")
+    public Blog update(
+            @PathVariable Integer id,
+            @RequestBody Blog blog) {
+        return blogService.update(id, blog);
     }
 
-    // ================== UPDATE ==================
-    @PostMapping("/cap-nhat/{id}")
-    public String update(@PathVariable Integer id,
-                         @ModelAttribute("blog") Blog blog) {
-
-        blogService.update(id, blog);
-        return "redirect:/admin/blog";
-    }
-
-    // ================== DELETE ==================
-    @GetMapping("/xoa/{id}")
-    public String delete(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Integer id) {
         blogService.delete(id);
-        return "redirect:/admin/blog";
     }
 }
+

@@ -3,6 +3,8 @@ package com.example.watchaura.service.impl;
 import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.service.VoucherService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,36 +12,49 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class VoucherServiceImpl implements VoucherService {
 
-    @Autowired
-    private VoucherRepository voucherRepository;
+    private final VoucherRepository voucherRepository;
 
     @Override
-    public List<Voucher> findAll() {
+    public List<Voucher> getAll() {
         return voucherRepository.findAll();
     }
 
     @Override
-    public Voucher findById(Integer id) {
-        return voucherRepository.findById(id).orElse(null);
+    public Voucher getById(Integer id) {
+        return voucherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy voucher ID: " + id));
     }
 
     @Override
-    public Voucher save(Voucher voucher) {
+    @Transactional
+    public Voucher create(Voucher voucher) {
+
+        if (voucherRepository.existsByMaVoucher(voucher.getMaVoucher())) {
+            throw new RuntimeException("Mã voucher đã tồn tại");
+        }
+
         voucher.setSoLuongDaDung(0);
         voucher.setNgayTao(LocalDateTime.now());
         voucher.setNgayCapNhat(LocalDateTime.now());
+
         return voucherRepository.save(voucher);
     }
 
     @Override
+    @Transactional
     public Voucher update(Integer id, Voucher voucher) {
-        Voucher existing = voucherRepository.findById(id).orElse(null);
-        if (existing == null) {
-            return null;
+
+        Voucher existing = getById(id);
+
+        if (voucherRepository.existsByMaVoucherAndIdNot(
+                voucher.getMaVoucher(), id)) {
+            throw new RuntimeException("Mã voucher đã tồn tại");
         }
 
+        existing.setMaVoucher(voucher.getMaVoucher());
         existing.setTenVoucher(voucher.getTenVoucher());
         existing.setMoTa(voucher.getMoTa());
         existing.setLoaiVoucher(voucher.getLoaiVoucher());
@@ -56,12 +71,11 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
+        if (!voucherRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy voucher để xóa");
+        }
         voucherRepository.deleteById(id);
-    }
-
-    @Override
-    public boolean existsByMaVoucher(String maVoucher) {
-        return voucherRepository.existsByMaVoucher(maVoucher);
     }
 }

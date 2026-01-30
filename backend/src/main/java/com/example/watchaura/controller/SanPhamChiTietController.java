@@ -68,26 +68,28 @@ public class SanPhamChiTietController {
     }
 
     /**
+     * POST: Tạo mới sản phẩm chi tiết
+     * URL: POST /api/san-pham-chi-tiet
+     * Body: SanPhamChiTietRequest (JSON)
+     */
+    @PostMapping
+    public ResponseEntity<?> createSanPhamChiTiet(@Valid @RequestBody SanPhamChiTietRequest request) {
+        try {
+            SanPhamChiTietDTO spct = sanPhamChiTietService.createSanPhamChiTiet(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(spct);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi hệ thống");
+        }
+    }
 
-
-     @PostMapping
-     public ResponseEntity<?> createSanPhamChiTiet(@Valid @RequestBody SanPhamChiTietRequest request) {
-     try {
-     SanPhamChiTietDTO spct = sanPhamChiTietService.createSanPhamChiTiet(request);
-     return ResponseEntity.status(HttpStatus.CREATED).body(spct);
-     } catch (RuntimeException e) {
-     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-     .body(e.getMessage());
-     } catch (Exception e) {
-     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-     .body("Lỗi hệ thống");
-     }
-     }
-
-     /**
-      * PUT: Cập nhật sản phẩm chi tiết
-      * URL: PUT /api/san-pham-chi-tiet/{id}
-      * Body: SanPhamChiTietRequest (JSON)
+    /**
+     * PUT: Cập nhật sản phẩm chi tiết
+     * URL: PUT /api/san-pham-chi-tiet/{id}
+     * Body: SanPhamChiTietRequest (JSON)
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateSanPhamChiTiet(
