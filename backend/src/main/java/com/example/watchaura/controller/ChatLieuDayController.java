@@ -3,90 +3,67 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.ChatLieuDay;
 import com.example.watchaura.repository.ChatLieuDayRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/chat-lieu-day")
+@Controller
+@RequestMapping("/admin/chat-lieu-day")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ChatLieuDayController {
 
     private final ChatLieuDayRepository chatLieuDayRepository;
 
-    /**
-     * GET: Lấy tất cả chất liệu dây
-     */
     @GetMapping
-    public ResponseEntity<List<ChatLieuDay>> getAllChatLieuDay() {
-        try {
-            List<ChatLieuDay> chatLieuDays = chatLieuDayRepository.findAll();
-            return ResponseEntity.ok(chatLieuDays);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public String list(Model model) {
+        List<ChatLieuDay> list = chatLieuDayRepository.findAll();
+        model.addAttribute("title", "Chất liệu dây");
+        model.addAttribute("content", "admin/chatlieuday-list");
+        model.addAttribute("list", list);
+        return "layout/admin-layout";
     }
 
-    /**
-     * GET: Lấy chất liệu dây theo ID
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getChatLieuDayById(@PathVariable Integer id) {
-        try {
-            return chatLieuDayRepository.findById(id)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @GetMapping("/them")
+    public String formCreate(Model model) {
+        model.addAttribute("title", "Thêm chất liệu dây");
+        model.addAttribute("content", "admin/chatlieuday-form");
+        model.addAttribute("chatLieuDay", new ChatLieuDay());
+        model.addAttribute("formAction", "/admin/chat-lieu-day");
+        return "layout/admin-layout";
     }
 
-    /**
-     * POST: Tạo mới chất liệu dây
-     */
+    @GetMapping("/{id}/sua")
+    public String formEdit(@PathVariable Integer id, Model model) {
+        ChatLieuDay chatLieuDay = chatLieuDayRepository.findById(id).orElseThrow();
+        model.addAttribute("title", "Sửa chất liệu dây");
+        model.addAttribute("content", "admin/chatlieuday-form");
+        model.addAttribute("chatLieuDay", chatLieuDay);
+        model.addAttribute("formAction", "/admin/chat-lieu-day/" + id);
+        return "layout/admin-layout";
+    }
+
     @PostMapping
-    public ResponseEntity<?> createChatLieuDay(@RequestBody ChatLieuDay chatLieuDay) {
-        try {
-            ChatLieuDay saved = chatLieuDayRepository.save(chatLieuDay);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public String create(@ModelAttribute ChatLieuDay chatLieuDay, RedirectAttributes redirect) {
+        chatLieuDayRepository.save(chatLieuDay);
+        redirect.addFlashAttribute("message", "Thêm chất liệu dây thành công.");
+        return "redirect:/admin/chat-lieu-day";
     }
 
-    /**
-     * PUT: Cập nhật chất liệu dây
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateChatLieuDay(@PathVariable Integer id, @RequestBody ChatLieuDay chatLieuDay) {
-        try {
-            return chatLieuDayRepository.findById(id)
-                    .map(existing -> {
-                        chatLieuDay.setId(id);
-                        return ResponseEntity.ok(chatLieuDayRepository.save(chatLieuDay));
-                    })
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    @PostMapping("/{id}")
+    public String update(@PathVariable Integer id, @ModelAttribute ChatLieuDay chatLieuDay, RedirectAttributes redirect) {
+        chatLieuDay.setId(id);
+        chatLieuDayRepository.save(chatLieuDay);
+        redirect.addFlashAttribute("message", "Cập nhật chất liệu dây thành công.");
+        return "redirect:/admin/chat-lieu-day";
     }
 
-    /**
-     * DELETE: Xóa chất liệu dây
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteChatLieuDay(@PathVariable Integer id) {
-        try {
-            if (chatLieuDayRepository.existsById(id)) {
-                chatLieuDayRepository.deleteById(id);
-                return ResponseEntity.ok("Xóa thành công");
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @PostMapping("/{id}/xoa")
+    public String delete(@PathVariable Integer id, RedirectAttributes redirect) {
+        chatLieuDayRepository.deleteById(id);
+        redirect.addFlashAttribute("message", "Xóa chất liệu dây thành công.");
+        return "redirect:/admin/chat-lieu-day";
     }
 }

@@ -2,6 +2,7 @@ package com.example.watchaura.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PastOrPresent;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class KhachHang {
     private String gioiTinh;
 
     @Column(name = "ngay_sinh")
+    @PastOrPresent(message = "Ngày sinh không được ở tương lai")
     private LocalDate ngaySinh;
 
     @Column(name = "hinh_anh", length = 255)

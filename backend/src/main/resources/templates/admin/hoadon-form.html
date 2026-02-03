@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title" th:text="${hoaDonId != null ? 'Sửa hóa đơn' : 'Thêm hóa đơn'}">Form</h2>
+        <form th:action="${formAction}" th:object="${hoaDon}" method="post">
+            <div>
+                <label>Khách hàng</label>
+                <select th:field="*{khachHangId}" required>
+                    <option value="">-- Chọn --</option>
+                    <option th:each="kh : ${khachHangList}" th:value="${kh.id}" th:text="${kh.tenNguoiDung}"></option>
+                </select>
+            </div>
+            <div>
+                <label>Voucher</label>
+                <select th:field="*{voucherId}">
+                    <option value="">-- Không dùng --</option>
+                    <option th:each="v : ${voucherList}" th:value="${v.id}" th:text="${v.maVoucher}"></option>
+                </select>
+            </div>
+            <div>
+                <label>Phương thức thanh toán</label>
+                <input type="text" th:field="*{phuongThucThanhToan}" required />
+            </div>
+            <div>
+                <label>Loại hóa đơn</label>
+                <input type="text" th:field="*{loaiHoaDon}" required />
+            </div>
+            <div>
+                <label>Địa chỉ</label>
+                <input type="text" th:field="*{diaChi}" required />
+            </div>
+            <div>
+                <label>Tên khách hàng</label>
+                <input type="text" th:field="*{tenKhachHang}" required />
+            </div>
+            <div>
+                <label>SĐT khách hàng</label>
+                <input type="text" th:field="*{sdtKhachHang}" required />
+            </div>
+            <div>
+                <label>Ghi chú</label>
+                <input type="text" th:field="*{ghiChu}" />
+            </div>
+            <div>
+                <button type="submit">Lưu</button>
+                <a th:href="@{/admin/hoa-don}">Hủy</a>
+            </div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

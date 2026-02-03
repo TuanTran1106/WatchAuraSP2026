@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <a th:href="@{/admin/hoa-don}">← Danh sách</a>
+    <section class="card card--full">
+        <h2 class="card__title">Chi tiết hóa đơn #<span th:text="${hoaDon.maDonHang}"></span></h2>
+        <p><strong>Khách hàng:</strong> <span th:text="${hoaDon.tenKhachHang}"></span></p>
+        <p><strong>SĐT:</strong> <span th:text="${hoaDon.sdtKhachHang}"></span></p>
+        <p><strong>Địa chỉ:</strong> <span th:text="${hoaDon.diaChi}"></span></p>
+        <p><strong>Tổng tiền:</strong> <span th:text="${hoaDon.tongTienThanhToan}"></span></p>
+        <p><strong>Trạng thái:</strong> <span th:text="${hoaDon.trangThaiDonHang}"></span></p>
+        <p><strong>Ngày đặt:</strong> <span th:text="${hoaDon.ngayDat != null ? #temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm') : ''}"></span></p>
+        <h3>Chi tiết sản phẩm</h3>
+        <table class="table" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="ct : ${hoaDon.items}">
+                    <td th:text="${ct.tenSanPham}"></td>
+                    <td th:text="${ct.soLuong}"></td>
+                    <td th:text="${ct.donGia}"></td>
+                    <td th:text="${ct.thanhTien}"></td>
+                </tr>
+            </tbody>
+        </table>
+        <a class="btn-icon btn-icon--edit" th:href="@{/admin/hoa-don/{id}/sua(id=${hoaDon.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+    </section>
+</div>
+</body>
+</html>

@@ -2,43 +2,67 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.Blog;
 import com.example.watchaura.service.BlogService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/blog")
+@Controller
+@RequestMapping("/admin/blog")
+@RequiredArgsConstructor
 public class BlogController {
 
-    @Autowired
-    private BlogService blogService;
+    private final BlogService blogService;
 
     @GetMapping
-    public List<Blog> getAll() {
-        return blogService.getAll();
+    public String list(Model model) {
+        List<Blog> list = blogService.getAll();
+        model.addAttribute("title", "Blog");
+        model.addAttribute("content", "admin/blog-list");
+        model.addAttribute("list", list);
+        return "layout/admin-layout";
     }
 
-    @GetMapping("/{id}")
-    public Blog getById(@PathVariable Integer id) {
-        return blogService.getById(id);
+    @GetMapping("/them")
+    public String formCreate(Model model) {
+        model.addAttribute("title", "Thêm blog");
+        model.addAttribute("content", "admin/blog-form");
+        model.addAttribute("blog", new Blog());
+        model.addAttribute("formAction", "/admin/blog");
+        return "layout/admin-layout";
+    }
+
+    @GetMapping("/{id}/sua")
+    public String formEdit(@PathVariable Integer id, Model model) {
+        Blog blog = blogService.getById(id);
+        model.addAttribute("title", "Sửa blog");
+        model.addAttribute("content", "admin/blog-form");
+        model.addAttribute("blog", blog);
+        model.addAttribute("formAction", "/admin/blog/" + id);
+        return "layout/admin-layout";
     }
 
     @PostMapping
-    public Blog create(@RequestBody Blog blog) {
-        return blogService.create(blog);
+    public String create(@ModelAttribute Blog blog, RedirectAttributes redirect) {
+        blogService.create(blog);
+        redirect.addFlashAttribute("message", "Thêm blog thành công.");
+        return "redirect:/admin/blog";
     }
 
-    @PutMapping("/{id}")
-    public Blog update(
-            @PathVariable Integer id,
-            @RequestBody Blog blog) {
-        return blogService.update(id, blog);
+    @PostMapping("/{id}")
+    public String update(@PathVariable Integer id, @ModelAttribute Blog blog, RedirectAttributes redirect) {
+        blogService.update(id, blog);
+        redirect.addFlashAttribute("message", "Cập nhật blog thành công.");
+        return "redirect:/admin/blog";
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
+    @PostMapping("/{id}/xoa")
+    public String delete(@PathVariable Integer id, RedirectAttributes redirect) {
         blogService.delete(id);
+        redirect.addFlashAttribute("message", "Xóa blog thành công.");
+        return "redirect:/admin/blog";
     }
 }
-

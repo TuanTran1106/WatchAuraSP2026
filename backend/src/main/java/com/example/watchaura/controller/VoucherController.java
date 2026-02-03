@@ -2,47 +2,67 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.service.VoucherService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/voucher")
+@Controller
+@RequestMapping("/admin/voucher")
+@RequiredArgsConstructor
 public class VoucherController {
 
-    @Autowired
-    private VoucherService voucherService;
+    private final VoucherService voucherService;
 
-    // GET ALL
     @GetMapping
-    public List<Voucher> getAll() {
-        return voucherService.getAll();
+    public String list(Model model) {
+        List<Voucher> list = voucherService.getAll();
+        model.addAttribute("title", "Voucher");
+        model.addAttribute("content", "admin/voucher-list");
+        model.addAttribute("list", list);
+        return "layout/admin-layout";
     }
 
-    // GET BY ID
-    @GetMapping("/{id}")
-    public Voucher getById(@PathVariable Integer id) {
-        return voucherService.getById(id);
+    @GetMapping("/them")
+    public String formCreate(Model model) {
+        model.addAttribute("title", "Thêm voucher");
+        model.addAttribute("content", "admin/voucher-form");
+        model.addAttribute("voucher", new Voucher());
+        model.addAttribute("formAction", "/admin/voucher");
+        return "layout/admin-layout";
     }
 
-    // CREATE
+    @GetMapping("/{id}/sua")
+    public String formEdit(@PathVariable Integer id, Model model) {
+        Voucher voucher = voucherService.getById(id);
+        model.addAttribute("title", "Sửa voucher");
+        model.addAttribute("content", "admin/voucher-form");
+        model.addAttribute("voucher", voucher);
+        model.addAttribute("formAction", "/admin/voucher/" + id);
+        return "layout/admin-layout";
+    }
+
     @PostMapping
-    public Voucher create(@RequestBody Voucher voucher) {
-        return voucherService.create(voucher);
+    public String create(@ModelAttribute Voucher voucher, RedirectAttributes redirect) {
+        voucherService.create(voucher);
+        redirect.addFlashAttribute("message", "Thêm voucher thành công.");
+        return "redirect:/admin/voucher";
     }
 
-    // UPDATE
-    @PutMapping("/{id}")
-    public Voucher update(
-            @PathVariable Integer id,
-            @RequestBody Voucher voucher) {
-        return voucherService.update(id, voucher);
+    @PostMapping("/{id}")
+    public String update(@PathVariable Integer id, @ModelAttribute Voucher voucher, RedirectAttributes redirect) {
+        voucherService.update(id, voucher);
+        redirect.addFlashAttribute("message", "Cập nhật voucher thành công.");
+        return "redirect:/admin/voucher";
     }
 
-    // DELETE
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
+    @PostMapping("/{id}/xoa")
+    public String delete(@PathVariable Integer id, RedirectAttributes redirect) {
         voucherService.delete(id);
+        redirect.addFlashAttribute("message", "Xóa voucher thành công.");
+        return "redirect:/admin/voucher";
     }
 }

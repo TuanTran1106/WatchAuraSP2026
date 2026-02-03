@@ -1,0 +1,40 @@
+.user-header {
+    background: #111;
+    color: #fff;
+}
+
+.header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 64px;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+}
+
+.nav a {
+    margin: 0 10px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.header-actions a {
+    margin-left: 10px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.btn-login {
+    color: #fff;
+}
+
+.btn-register {
+    background: #ff9800;
+    color: #000;
+}

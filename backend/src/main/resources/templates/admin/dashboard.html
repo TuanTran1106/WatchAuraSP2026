@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="content__grid">
+        <section class="card">
+            <h2 class="card__title">Tổng khách hàng</h2>
+            <p class="card__value" th:text="${totalKhachHang}">0</p>
+        </section>
+        <section class="card">
+            <h2 class="card__title">Tổng hóa đơn</h2>
+            <p class="card__value" th:text="${totalHoaDon}">0</p>
+        </section>
+        <section class="card">
+            <h2 class="card__title">Tổng sản phẩm</h2>
+            <p class="card__value" th:text="${totalSanPham}">0</p>
+        </section>
+    </div>
+    <section class="card card--full">
+        <h2 class="card__title">Dashboard</h2>
+        <p>Chào mừng đến trang quản trị WatchAura.</p>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+.user-footer {
+    background: #222;
+    color: #ddd;
+    padding: 40px 0 20px;
+}
+
+.footer-inner {
+    display: flex;
+    justify-content: space-between;
+}
+
+.footer-inner h4 {
+    margin-bottom: 10px;
+}
+
+.footer-inner a {
+    display: block;
+    color: #ddd;
+    text-decoration: none;
+    margin-bottom: 5px;
+}
+
+copyright {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
