@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title" th:text="${voucher.id != null ? 'Sửa voucher' : 'Thêm voucher'}">Form</h2>
+        <form th:action="${formAction}" th:object="${voucher}" method="post">
+            <input th:if="${voucher.id != null}" type="hidden" th:field="*{id}" />
+            <div><label>Mã voucher</label><input type="text" th:field="*{maVoucher}" required /></div>
+            <div><label>Tên voucher</label><input type="text" th:field="*{tenVoucher}" required /></div>
+            <div><label>Mô tả</label><input type="text" th:field="*{moTa}" /></div>
+            <div><label>Loại voucher</label><input type="text" th:field="*{loaiVoucher}" required /></div>
+            <div><label>Giá trị</label><input type="number" step="0.01" th:field="*{giaTri}" required /></div>
+            <div><label>Giá trị tối đa</label><input type="number" step="0.01" th:field="*{giaTriToiDa}" /></div>
+            <div><label>Đơn hàng tối thiểu</label><input type="number" step="0.01" th:field="*{donHangToiThieu}" /></div>
+            <div><label>Ngày bắt đầu</label><input type="datetime-local" th:field="*{ngayBatDau}" /></div>
+            <div><label>Ngày kết thúc</label><input type="datetime-local" th:field="*{ngayKetThuc}" /></div>
+            <div><label>Trạng thái</label><input type="checkbox" th:field="*{trangThai}" /></div>
+            <div><button type="submit">Lưu</button><a th:href="@{/admin/voucher}">Hủy</a></div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

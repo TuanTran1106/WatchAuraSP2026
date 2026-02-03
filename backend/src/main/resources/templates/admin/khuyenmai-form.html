@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title" th:text="${khuyenMai.id != null ? 'Sửa khuyến mãi' : 'Thêm khuyến mãi'}">Form</h2>
+        <form th:action="${formAction}" th:object="${khuyenMai}" method="post">
+            <input th:if="${khuyenMai.id != null}" type="hidden" th:field="*{id}" />
+            <div><label>Mã khuyến mãi</label><input type="text" th:field="*{maKhuyenMai}" /></div>
+            <div><label>Tên chương trình</label><input type="text" th:field="*{tenChuongTrinh}" required /></div>
+            <div><label>Mô tả</label><textarea th:field="*{moTa}"></textarea></div>
+            <div><label>Loại giảm</label><input type="text" th:field="*{loaiGiam}" required /></div>
+            <div><label>Giá trị giảm</label><input type="number" step="0.01" th:field="*{giaTriGiam}" required /></div>
+            <div><label>Giảm tối đa</label><input type="number" step="0.01" th:field="*{giamToiDa}" /></div>
+            <div><label>Ngày bắt đầu</label><input type="datetime-local" th:field="*{ngayBatDau}" /></div>
+            <div><label>Ngày kết thúc</label><input type="datetime-local" th:field="*{ngayKetThuc}" /></div>
+            <div><label>Trạng thái</label><input type="checkbox" th:field="*{trangThai}" /></div>
+            <div><button type="submit">Lưu</button><a th:href="@{/admin/khuyen-mai}">Hủy</a></div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

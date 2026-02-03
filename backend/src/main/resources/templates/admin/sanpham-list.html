@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <p th:if="${message}" class="message" th:text="${message}"></p>
+    <a th:href="@{/admin/san-pham/them}" class="btn btn--primary">Thêm sản phẩm</a>
+    <section class="card card--full">
+        <h2 class="card__title">Danh sách sản phẩm</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Mã</th>
+                    <th>Tên</th>
+                    <th>Thương hiệu</th>
+                    <th>Danh mục</th>
+                    <th>Ảnh</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${list}">
+                    <td th:text="${item.id}"></td>
+                    <td th:text="${item.maSanPham}"></td>
+                    <td th:text="${item.tenSanPham}"></td>
+                    <td th:text="${item.tenThuongHieu}"></td>
+                    <td th:text="${item.tenDanhMuc}"></td>
+                    <td><img th:if="${item.hinhAnh}" th:src="${item.hinhAnh}" alt="Ảnh" style="max-width:50px;" /></td>
+                    <td>
+                        <div class="table-actions">
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/san-pham/{id}/sua(id=${item.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                            <form th:action="@{/admin/san-pham/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa sản phẩm này?');">
+                                <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+</body>
+</html>

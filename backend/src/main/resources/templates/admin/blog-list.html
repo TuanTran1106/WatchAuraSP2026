@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <p th:if="${message}" class="message" th:text="${message}"></p>
+    <a th:href="@{/admin/blog/them}" class="btn btn--primary">Thêm blog</a>
+    <section class="card card--full">
+        <h2 class="card__title">Danh sách blog</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tiêu đề</th>
+                    <th>Ngày đăng</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${list}">
+                    <td th:text="${item.id}"></td>
+                    <td th:text="${item.tieuDe}"></td>
+                    <td th:text="${item.ngayDang != null ? #temporals.format(item.ngayDang, 'dd/MM/yyyy') : ''}"></td>
+                    <td>
+                        <div class="table-actions">
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/blog/{id}/sua(id=${item.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                            <form th:action="@{/admin/blog/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa?');">
+                                <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+</body>
+</html>

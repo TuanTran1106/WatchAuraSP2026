@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <p th:if="${message}" class="message" th:text="${message}"></p>
+    <a th:href="@{/admin/danh-muc/them}" class="btn btn--primary">Thêm danh mục</a>
+    <section class="card card--full">
+        <h2 class="card__title">Danh sách danh mục</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên danh mục</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${list}">
+                    <td th:text="${item.id}"></td>
+                    <td th:text="${item.tenDanhMuc}"></td>
+                    <td>
+                        <div class="table-actions">
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/danh-muc/{id}/sua(id=${item.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                            <form th:action="@{/admin/danh-muc/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa danh mục này?');">
+                                <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+</body>
+</html>

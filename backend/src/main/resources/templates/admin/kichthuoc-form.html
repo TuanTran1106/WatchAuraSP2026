@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title" th:text="${kichThuoc.id != null ? 'Sửa kích thước' : 'Thêm kích thước'}">Form</h2>
+        <form th:action="${formAction}" th:object="${kichThuoc}" method="post">
+            <input th:if="${kichThuoc.id != null}" type="hidden" th:field="*{id}" />
+            <div><label>Tên kích thước</label><input type="text" th:field="*{tenKichThuoc}" /></div>
+            <div><button type="submit">Lưu</button><a th:href="@{/admin/kich-thuoc}">Hủy</a></div>
+        </form>
+    </section>
+</div>
+</body>
+</html>
