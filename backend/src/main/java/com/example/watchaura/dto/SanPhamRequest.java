@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,4 +32,27 @@ public class SanPhamRequest {
 
     private String phongCach;
     private Boolean trangThai = true;
+
+    /** Giá bán (dùng khi tạo/cập nhật biến thể mặc định) */
+    private BigDecimal giaBan;
+    /** Số lượng tồn (dùng khi tạo/cập nhật biến thể mặc định) */
+    private Integer soLuongTon;
+
+    /** Màu sắc (biến thể mặc định) */
+    private Integer idMauSac;
+    /** Kích thước / Loại dây (biến thể mặc định) */
+    private Integer idKichThuoc;
+    /** Chất liệu dây (biến thể mặc định) */
+    private Integer idChatLieuDay;
+    /** Loại máy (biến thể mặc định) */
+    private Integer idLoaiMay;
+
+    /** Đường kính (mm) - biến thể mặc định */
+    private Double duongKinh;
+    /** Độ chịu nước (m) - biến thể mặc định */
+    private Integer doChiuNuoc;
+    /** Bề rộng dây (mm) - biến thể mặc định */
+    private Double beRongDay;
+    /** Trọng lượng (g) - biến thể mặc định */
+    private Double trongLuong;
 }

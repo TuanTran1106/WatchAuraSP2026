@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.FutureOrPresent;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,6 +20,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "Blog")
 public class Blog {
+
+    public interface OnCreate {}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,5 +37,6 @@ public class Blog {
     private String hinhAnh;
 
     @Column(name = "ngay_dang")
+    @FutureOrPresent(message = "Ngày đăng không được ở quá khứ", groups = OnCreate.class)
     private LocalDateTime ngayDang;
 }

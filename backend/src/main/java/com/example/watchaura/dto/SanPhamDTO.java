@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,4 +24,18 @@ public class SanPhamDTO {
     private String tenDanhMuc;
     private String phongCach;
     private Boolean trangThai;
+    /** Giá bán (thấp nhất trong các biến thể), null nếu chưa có chi tiết */
+    private BigDecimal giaBan;
+    /** Tổng số lượng tồn của tất cả biến thể */
+    private Integer soLuongTon;
+
+    private Integer idMauSac;
+    private Integer idKichThuoc;
+    private Integer idChatLieuDay;
+    private Integer idLoaiMay;
+
+    private Double duongKinh;
+    private Integer doChiuNuoc;
+    private Double beRongDay;
+    private Double trongLuong;
 }

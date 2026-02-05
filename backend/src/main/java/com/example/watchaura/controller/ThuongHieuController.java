@@ -23,46 +23,47 @@ public class ThuongHieuController {
         model.addAttribute("title", "Thương hiệu");
         model.addAttribute("content", "admin/thuonghieu-list");
         model.addAttribute("list", list);
-        return "layout/admin-layout";
-    }
-
-    @GetMapping("/them")
-    public String formCreate(Model model) {
-        model.addAttribute("title", "Thêm thương hiệu");
-        model.addAttribute("content", "admin/thuonghieu-form");
         model.addAttribute("thuongHieu", new ThuongHieu());
         model.addAttribute("formAction", "/admin/thuong-hieu");
         return "layout/admin-layout";
     }
 
+    @GetMapping("/them")
+    public String formCreate() {
+        return "redirect:/admin/thuong-hieu";
+    }
+
     @GetMapping("/{id}/sua")
     public String formEdit(@PathVariable Integer id, Model model) {
+        List<ThuongHieu> list = thuongHieuService.getAll();
         ThuongHieu thuongHieu = thuongHieuService.getById(id);
-        model.addAttribute("title", "Sửa thương hiệu");
-        model.addAttribute("content", "admin/thuonghieu-form");
+        model.addAttribute("title", "Thương hiệu");
+        model.addAttribute("content", "admin/thuonghieu-list");
+        model.addAttribute("list", list);
         model.addAttribute("thuongHieu", thuongHieu);
+        model.addAttribute("thuongHieuId", id);
         model.addAttribute("formAction", "/admin/thuong-hieu/" + id);
         return "layout/admin-layout";
     }
 
     @PostMapping
-    public String create(@ModelAttribute ThuongHieu thuongHieu, RedirectAttributes redirect) {
+    public String create(@ModelAttribute("thuongHieu") ThuongHieu thuongHieu, RedirectAttributes redirect) {
         thuongHieuService.create(thuongHieu);
         redirect.addFlashAttribute("message", "Thêm thương hiệu thành công.");
-        return "redirect:/admin/thuong-hieu";
+        return "redirect:/admin/thuong-hieu#listThuongHieu";
     }
 
     @PostMapping("/{id}")
-    public String update(@PathVariable Integer id, @ModelAttribute ThuongHieu thuongHieu, RedirectAttributes redirect) {
+    public String update(@PathVariable Integer id, @ModelAttribute("thuongHieu") ThuongHieu thuongHieu, RedirectAttributes redirect) {
         thuongHieuService.update(id, thuongHieu);
         redirect.addFlashAttribute("message", "Cập nhật thương hiệu thành công.");
-        return "redirect:/admin/thuong-hieu";
+        return "redirect:/admin/thuong-hieu#listThuongHieu";
     }
 
     @PostMapping("/{id}/xoa")
     public String delete(@PathVariable Integer id, RedirectAttributes redirect) {
         thuongHieuService.delete(id);
         redirect.addFlashAttribute("message", "Xóa thương hiệu thành công.");
-        return "redirect:/admin/thuong-hieu";
+        return "redirect:/admin/thuong-hieu#listThuongHieu";
     }
 }

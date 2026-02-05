@@ -37,7 +37,7 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày sinh</label>
-                    <input class="form__input" type="date" th:field="*{ngaySinh}" />
+                    <input class="form__input" type="date" th:field="*{ngaySinh}" th:attr="max=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" />
                 </div>
                 <div class="form__group">
                     <label class="form__label">Chức vụ</label>

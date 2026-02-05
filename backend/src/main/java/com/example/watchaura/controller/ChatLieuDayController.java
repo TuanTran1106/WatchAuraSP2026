@@ -23,24 +23,26 @@ public class ChatLieuDayController {
         model.addAttribute("title", "Chất liệu dây");
         model.addAttribute("content", "admin/chatlieuday-list");
         model.addAttribute("list", list);
-        return "layout/admin-layout";
-    }
-
-    @GetMapping("/them")
-    public String formCreate(Model model) {
-        model.addAttribute("title", "Thêm chất liệu dây");
-        model.addAttribute("content", "admin/chatlieuday-form");
         model.addAttribute("chatLieuDay", new ChatLieuDay());
+        model.addAttribute("chatLieuDayId", null);
         model.addAttribute("formAction", "/admin/chat-lieu-day");
         return "layout/admin-layout";
     }
 
+    @GetMapping("/them")
+    public String formCreate() {
+        return "redirect:/admin/chat-lieu-day";
+    }
+
     @GetMapping("/{id}/sua")
     public String formEdit(@PathVariable Integer id, Model model) {
+        List<ChatLieuDay> list = chatLieuDayRepository.findAll();
         ChatLieuDay chatLieuDay = chatLieuDayRepository.findById(id).orElseThrow();
-        model.addAttribute("title", "Sửa chất liệu dây");
-        model.addAttribute("content", "admin/chatlieuday-form");
+        model.addAttribute("title", "Chất liệu dây");
+        model.addAttribute("content", "admin/chatlieuday-list");
+        model.addAttribute("list", list);
         model.addAttribute("chatLieuDay", chatLieuDay);
+        model.addAttribute("chatLieuDayId", id);
         model.addAttribute("formAction", "/admin/chat-lieu-day/" + id);
         return "layout/admin-layout";
     }

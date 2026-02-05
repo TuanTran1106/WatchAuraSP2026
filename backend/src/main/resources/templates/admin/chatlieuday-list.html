@@ -3,8 +3,38 @@
 <body>
 <div th:fragment="content">
     <p th:if="${message}" class="message" th:text="${message}"></p>
-    <a th:href="@{/admin/chat-lieu-day/them}" class="btn btn--primary">Thêm chất liệu dây</a>
-    <section class="card card--full">
+
+    <div class="form-card-wrapper" id="formChatLieuDayWrapper" th:classappend="${chatLieuDayId == null} ? 'is-collapsed'">
+    <section class="card card--full card--form form-card" id="formChatLieuDay">
+        <div class="form-card__header">
+            <h2 class="form-card__title" th:text="${chatLieuDayId != null ? 'Sửa chất liệu dây' : 'Thêm chất liệu dây'}">Thêm chất liệu dây</h2>
+            <button type="button" class="form-card__toggle form-card__toggle--close" id="formChatLieuDayToggle" title="Đóng form" aria-label="Đóng form">×</button>
+        </div>
+        <div class="form-card__body">
+        <form class="form form--chatlieuday" th:action="${formAction}" th:object="${chatLieuDay}" method="post">
+            <input th:if="${chatLieuDay != null and chatLieuDay.id != null}" type="hidden" th:field="*{id}" />
+            <div class="form__grid">
+                <div class="form__group">
+                    <label class="form__label">Tên chất liệu dây</label>
+                    <input class="form__input" type="text" th:field="*{tenChatLieu}" required placeholder="Nhập tên chất liệu dây" />
+                </div>
+            </div>
+            <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Lưu</button>
+                <a th:href="@{/admin/chat-lieu-day}" class="btn btn--secondary">Hủy</a>
+            </div>
+        </form>
+        </div>
+    </section>
+    <div class="form-card form-card--bar" id="formChatLieuDayOpenBar" th:attr="aria-hidden=${chatLieuDayId != null ? 'true' : 'false'}">
+        <div class="form-card__header">
+            <span class="form-card__title">Thêm chất liệu dây</span>
+            <button type="button" class="form-card__toggle form-card__toggle--open" id="formChatLieuDayOpenBtn" title="Mở form" aria-label="Mở form">+</button>
+        </div>
+    </div>
+    </div>
+
+    <section class="card card--full" id="listChatLieuDay">
         <h2 class="card__title">Danh sách chất liệu dây</h2>
         <table class="table">
             <thead><tr><th>ID</th><th>Tên chất liệu</th><th>Thao tác</th></tr></thead>
@@ -15,7 +45,7 @@
                     <td>
                         <div class="table-actions">
                             <a class="btn-icon btn-icon--edit" th:href="@{/admin/chat-lieu-day/{id}/sua(id=${item.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
-                            <form th:action="@{/admin/chat-lieu-day/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa?');">
+                            <form th:action="@{/admin/chat-lieu-day/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa chất liệu dây này?');">
                                 <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                             </form>
                         </div>

@@ -23,46 +23,47 @@ public class DanhMucController {
         model.addAttribute("title", "Danh mục");
         model.addAttribute("content", "admin/danhmuc-list");
         model.addAttribute("list", list);
-        return "layout/admin-layout";
-    }
-
-    @GetMapping("/them")
-    public String formCreate(Model model) {
-        model.addAttribute("title", "Thêm danh mục");
-        model.addAttribute("content", "admin/danhmuc-form");
         model.addAttribute("danhMuc", new DanhMuc());
         model.addAttribute("formAction", "/admin/danh-muc");
         return "layout/admin-layout";
     }
 
+    @GetMapping("/them")
+    public String formCreate() {
+        return "redirect:/admin/danh-muc";
+    }
+
     @GetMapping("/{id}/sua")
     public String formEdit(@PathVariable Integer id, Model model) {
+        List<DanhMuc> list = danhMucService.getAll();
         DanhMuc danhMuc = danhMucService.getById(id);
-        model.addAttribute("title", "Sửa danh mục");
-        model.addAttribute("content", "admin/danhmuc-form");
+        model.addAttribute("title", "Danh mục");
+        model.addAttribute("content", "admin/danhmuc-list");
+        model.addAttribute("list", list);
         model.addAttribute("danhMuc", danhMuc);
+        model.addAttribute("danhMucId", id);
         model.addAttribute("formAction", "/admin/danh-muc/" + id);
         return "layout/admin-layout";
     }
 
     @PostMapping
-    public String create(@ModelAttribute DanhMuc danhMuc, RedirectAttributes redirect) {
+    public String create(@ModelAttribute("danhMuc") DanhMuc danhMuc, RedirectAttributes redirect) {
         danhMucService.create(danhMuc);
         redirect.addFlashAttribute("message", "Thêm danh mục thành công.");
-        return "redirect:/admin/danh-muc";
+        return "redirect:/admin/danh-muc#listDanhMuc";
     }
 
     @PostMapping("/{id}")
-    public String update(@PathVariable Integer id, @ModelAttribute DanhMuc danhMuc, RedirectAttributes redirect) {
+    public String update(@PathVariable Integer id, @ModelAttribute("danhMuc") DanhMuc danhMuc, RedirectAttributes redirect) {
         danhMucService.update(id, danhMuc);
         redirect.addFlashAttribute("message", "Cập nhật danh mục thành công.");
-        return "redirect:/admin/danh-muc";
+        return "redirect:/admin/danh-muc#listDanhMuc";
     }
 
     @PostMapping("/{id}/xoa")
     public String delete(@PathVariable Integer id, RedirectAttributes redirect) {
         danhMucService.delete(id);
         redirect.addFlashAttribute("message", "Xóa danh mục thành công.");
-        return "redirect:/admin/danh-muc";
+        return "redirect:/admin/danh-muc#listDanhMuc";
     }
 }

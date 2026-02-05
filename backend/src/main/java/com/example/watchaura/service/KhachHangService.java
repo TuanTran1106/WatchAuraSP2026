@@ -15,6 +15,8 @@ public interface KhachHangService {
 
     Page<KhachHang> getPage(Pageable pageable);
 
+    Page<KhachHang> searchPage(String q, Boolean trangThai, Pageable pageable);
+
     KhachHang getById(Integer id);
 
     KhachHang create(KhachHang khachHang);
@@ -22,6 +24,8 @@ public interface KhachHangService {
     KhachHang update(Integer id, KhachHang khachHang);
 
     void delete(Integer id);
+
+    void toggleTrangThai(Integer id);
 
     List<KhachHang> getByTenChucVu(String tenChucVu);
 

@@ -4,6 +4,8 @@ import com.example.watchaura.entity.Blog;
 import com.example.watchaura.repository.BlogRepository;
 import com.example.watchaura.service.BlogService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,11 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public Page<Blog> getPage(Pageable pageable) {
+        return blogRepository.findAll(pageable);
+    }
+
+    @Override
     public Blog getById(Integer id) {
         return blogRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy blog ID: " + id));
@@ -30,7 +37,9 @@ public class BlogServiceImpl implements BlogService {
     @Override
     @Transactional
     public Blog create(Blog blog) {
-        blog.setNgayDang(LocalDateTime.now());
+        if (blog.getNgayDang() == null) {
+            blog.setNgayDang(LocalDateTime.now());
+        }
         return blogRepository.save(blog);
     }
 

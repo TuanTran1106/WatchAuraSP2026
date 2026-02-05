@@ -23,24 +23,26 @@ public class MauSacController {
         model.addAttribute("title", "Màu sắc");
         model.addAttribute("content", "admin/mausac-list");
         model.addAttribute("list", list);
-        return "layout/admin-layout";
-    }
-
-    @GetMapping("/them")
-    public String formCreate(Model model) {
-        model.addAttribute("title", "Thêm màu sắc");
-        model.addAttribute("content", "admin/mausac-form");
         model.addAttribute("mauSac", new MauSac());
+        model.addAttribute("mauSacId", null);
         model.addAttribute("formAction", "/admin/mau-sac");
         return "layout/admin-layout";
     }
 
+    @GetMapping("/them")
+    public String formCreate() {
+        return "redirect:/admin/mau-sac";
+    }
+
     @GetMapping("/{id}/sua")
     public String formEdit(@PathVariable Integer id, Model model) {
+        List<MauSac> list = mauSacRepository.findAll();
         MauSac mauSac = mauSacRepository.findById(id).orElseThrow();
-        model.addAttribute("title", "Sửa màu sắc");
-        model.addAttribute("content", "admin/mausac-form");
+        model.addAttribute("title", "Màu sắc");
+        model.addAttribute("content", "admin/mausac-list");
+        model.addAttribute("list", list);
         model.addAttribute("mauSac", mauSac);
+        model.addAttribute("mauSacId", id);
         model.addAttribute("formAction", "/admin/mau-sac/" + id);
         return "layout/admin-layout";
     }
