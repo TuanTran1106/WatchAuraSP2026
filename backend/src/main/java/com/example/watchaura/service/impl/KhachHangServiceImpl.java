@@ -8,6 +8,7 @@ import com.example.watchaura.service.KhachHangService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +22,9 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Autowired
     private ChucVuRepository chucVuRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Override
     public String generateMaNguoiDung(ChucVu chucVu) {
         if (chucVu == null || chucVu.getTenChucVu() == null) {
@@ -58,6 +62,11 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    public Page<KhachHang> searchPage(String q, Boolean trangThai, Pageable pageable) {
+        return khachHangRepository.searchByKeywordAndTrangThai(q, trangThai, pageable);
+    }
+
+    @Override
     public KhachHang getById(Integer id) {
         return khachHangRepository.findById(id)
                 .orElseThrow(() ->
@@ -77,6 +86,9 @@ public class KhachHangServiceImpl implements KhachHangService {
         khachHang.setChucVu(chucVu);
         khachHang.setMaNguoiDung(generateMaNguoiDung(chucVu));
         khachHang.setTrangThai(true);
+        if (khachHang.getMatKhau() != null && !khachHang.getMatKhau().isBlank()) {
+            khachHang.setMatKhau(passwordEncoder.encode(khachHang.getMatKhau()));
+        }
 
         return khachHangRepository.save(khachHang);
     }
@@ -88,7 +100,7 @@ public class KhachHangServiceImpl implements KhachHangService {
         kh.setTenNguoiDung(khachHang.getTenNguoiDung());
         kh.setEmail(khachHang.getEmail());
         kh.setSdt(khachHang.getSdt());
-        kh.setMatKhau(khachHang.getMatKhau());
+        /* Không cho admin sửa mật khẩu - giữ nguyên mật khẩu hiện tại */
         kh.setGioiTinh(khachHang.getGioiTinh());
         kh.setNgaySinh(khachHang.getNgaySinh());
         kh.setHinhAnh(khachHang.getHinhAnh());
@@ -104,6 +116,14 @@ public class KhachHangServiceImpl implements KhachHangService {
     public void delete(Integer id) {
         khachHangRepository.deleteById(id);
     }
+
+    @Override
+    public void toggleTrangThai(Integer id) {
+        KhachHang kh = getById(id);
+        kh.setTrangThai(kh.getTrangThai() == null || !kh.getTrangThai());
+        khachHangRepository.save(kh);
+    }
+
     @Override
     public List<KhachHang> getByTenChucVu(String tenChucVu) {
         return khachHangRepository.findByChucVu_TenChucVu(tenChucVu);

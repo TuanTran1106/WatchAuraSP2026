@@ -2,23 +2,52 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content">
-    <div class="content__grid">
-        <section class="card">
-            <h2 class="card__title">Tổng khách hàng</h2>
-            <p class="card__value" th:text="${totalKhachHang}">0</p>
+    <div class="dashboard-welcome">
+        <div class="dashboard-welcome__content">
+            <h1 class="dashboard-welcome__title">Chào mừng trở lại</h1>
+            <p class="dashboard-welcome__subtitle">Quản lý cửa hàng đồng hồ WatchAura của bạn một cách dễ dàng.</p>
+        </div>
+        <div class="dashboard-welcome__decor"></div>
+    </div>
+
+    <div class="content__grid dashboard-stats">
+        <section class="card stat-card stat-card--customers">
+            <div class="stat-card__icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-card__body">
+                <h2 class="card__title">Tổng khách hàng</h2>
+                <p class="card__value" th:text="${totalKhachHang}">0</p>
+            </div>
         </section>
-        <section class="card">
-            <h2 class="card__title">Tổng hóa đơn</h2>
-            <p class="card__value" th:text="${totalHoaDon}">0</p>
+        <section class="card stat-card stat-card--orders">
+            <div class="stat-card__icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="stat-card__body">
+                <h2 class="card__title">Tổng hóa đơn</h2>
+                <p class="card__value" th:text="${totalHoaDon}">0</p>
+            </div>
         </section>
-        <section class="card">
-            <h2 class="card__title">Tổng sản phẩm</h2>
-            <p class="card__value" th:text="${totalSanPham}">0</p>
+        <section class="card stat-card stat-card--products">
+            <div class="stat-card__icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-card__body">
+                <h2 class="card__title">Tổng sản phẩm</h2>
+                <p class="card__value" th:text="${totalSanPham}">0</p>
+            </div>
         </section>
     </div>
-    <section class="card card--full">
-        <h2 class="card__title">Dashboard</h2>
-        <p>Chào mừng đến trang quản trị WatchAura.</p>
+
+    <section class="card card--full card--welcome">
+        <div class="card-welcome">
+            <div class="card-welcome__icon"><i class="fas fa-gem"></i></div>
+            <div>
+                <h2 class="card__title">Tổng quan hệ thống</h2>
+                <p class="card-welcome__text">Theo dõi các thống kê quan trọng và quản lý cửa hàng hiệu quả. Sử dụng menu bên trái để điều hướng giữa các mục quản lý.</p>
+            </div>
+        </div>
     </section>
 </div>
 </body>

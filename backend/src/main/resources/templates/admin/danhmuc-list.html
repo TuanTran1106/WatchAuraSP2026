@@ -3,8 +3,39 @@
 <body>
 <div th:fragment="content">
     <p th:if="${message}" class="message" th:text="${message}"></p>
-    <a th:href="@{/admin/danh-muc/them}" class="btn btn--primary">Thêm danh mục</a>
-    <section class="card card--full">
+
+    <div class="form-card-wrapper" id="formDanhMucWrapper" th:classappend="${danhMuc == null or danhMuc.id == null} ? 'is-collapsed'">
+    <section class="card card--full card--form form-card" id="formDanhMuc">
+        <div class="form-card__header">
+            <h2 class="form-card__title" th:text="${danhMucId != null ? 'Sửa danh mục' : 'Thêm danh mục'}">Thêm danh mục</h2>
+            <button type="button" class="form-card__toggle form-card__toggle--close" id="formDanhMucToggle" title="Đóng form" aria-label="Đóng form">×</button>
+        </div>
+        <div class="form-card__body">
+        <form class="form form--danhmuc" th:action="${formAction}" th:object="${danhMuc}" method="post">
+            <input th:if="${danhMuc != null and danhMuc.id != null}" type="hidden" th:field="*{id}" />
+            <div class="form__grid">
+                <div class="form__group">
+                    <label class="form__label">Tên danh mục</label>
+                    <input class="form__input" type="text" th:field="*{tenDanhMuc}" required placeholder="Nhập tên danh mục" />
+                </div>
+            </div>
+            <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Lưu</button>
+                <a th:href="@{/admin/danh-muc}" class="btn btn--secondary">Hủy</a>
+            </div>
+        </form>
+        </div>
+    </section>
+
+    <div class="form-card form-card--bar" id="formDanhMucOpenBar" th:attr="aria-hidden=${danhMuc != null and danhMuc.id != null ? 'true' : 'false'}">
+        <div class="form-card__header">
+            <span class="form-card__title">Thêm danh mục</span>
+            <button type="button" class="form-card__toggle form-card__toggle--open" id="formDanhMucOpenBtn" title="Mở form" aria-label="Mở form">+</button>
+        </div>
+    </div>
+    </div>
+
+    <section class="card card--full" id="listDanhMuc">
         <h2 class="card__title">Danh sách danh mục</h2>
         <table class="table">
             <thead>

@@ -39,6 +39,13 @@ public class AdminController {
         }
         return "layout/admin-layout";
     }
+
+    @GetMapping("/cai-dat")
+    public String getCaiDatPage(Model model) {
+        model.addAttribute("title", "Cài đặt");
+        model.addAttribute("content", "admin/cai-dat");
+        return "layout/admin-layout";
+    }
 }
 
 

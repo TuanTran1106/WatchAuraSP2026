@@ -98,6 +98,18 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     // ===================================
 
     /**
+     * Tìm kiếm sản phẩm theo từ khóa (mã hoặc tên)
+     */
+    @Query("SELECT sp FROM SanPham sp WHERE " +
+            "(:q IS NULL OR :q = '' OR LOWER(sp.maSanPham) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(sp.tenSanPham) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<SanPham> searchByKeyword(@Param("q") String q, Pageable pageable);
+
+    @Query("SELECT sp FROM SanPham sp WHERE " +
+            "(:q IS NULL OR :q = '' OR LOWER(sp.maSanPham) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(sp.tenSanPham) LIKE LOWER(CONCAT('%', :q, '%'))) AND " +
+            "(:trangThai IS NULL OR sp.trangThai = :trangThai)")
+    Page<SanPham> searchByKeywordAndTrangThai(@Param("q") String q, @Param("trangThai") Boolean trangThai, Pageable pageable);
+
+    /**
      * Tìm kiếm sản phẩm theo nhiều tiêu chí
      */
     @Query("SELECT sp FROM SanPham sp WHERE " +

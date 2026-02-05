@@ -5,7 +5,8 @@ import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.service.VoucherService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,16 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public List<Voucher> getAll() {
         return voucherRepository.findAll();
+    }
+
+    @Override
+    public Page<Voucher> getPage(Pageable pageable) {
+        return voucherRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<Voucher> searchPage(String keyword, Boolean trangThai, Pageable pageable) {
+        return voucherRepository.searchByKeywordAndTrangThai(keyword != null ? keyword : "", trangThai, pageable);
     }
 
     @Override
@@ -77,5 +88,13 @@ public class VoucherServiceImpl implements VoucherService {
             throw new RuntimeException("Không tìm thấy voucher để xóa");
         }
         voucherRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void toggleTrangThai(Integer id) {
+        Voucher v = getById(id);
+        v.setTrangThai(v.getTrangThai() == null || !v.getTrangThai());
+        voucherRepository.save(v);
     }
 }

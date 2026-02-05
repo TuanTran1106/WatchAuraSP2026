@@ -4,6 +4,8 @@ import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.repository.KhuyenMaiRepository;
 import com.example.watchaura.service.KhuyenMaiService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,16 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     @Override
     public List<KhuyenMai> getAll() {
         return khuyenMaiRepository.findAll();
+    }
+
+    @Override
+    public Page<KhuyenMai> getPage(Pageable pageable) {
+        return khuyenMaiRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<KhuyenMai> searchPage(String keyword, Boolean trangThai, Pageable pageable) {
+        return khuyenMaiRepository.searchByKeywordAndTrangThai(keyword != null ? keyword : "", trangThai, pageable);
     }
 
     @Override
@@ -73,5 +85,13 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
             throw new RuntimeException("Không tìm thấy khuyến mãi để xóa");
         }
         khuyenMaiRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void toggleTrangThai(Integer id) {
+        KhuyenMai km = getById(id);
+        km.setTrangThai(km.getTrangThai() == null || !km.getTrangThai());
+        khuyenMaiRepository.save(km);
     }
 }

@@ -3,8 +3,39 @@
 <body>
 <div th:fragment="content">
     <p th:if="${message}" class="message" th:text="${message}"></p>
-    <a th:href="@{/admin/mau-sac/them}" class="btn btn--primary">Thêm màu sắc</a>
-    <section class="card card--full">
+
+    <div class="form-card-wrapper" id="formMauSacWrapper" th:classappend="${mauSacId == null} ? 'is-collapsed'">
+    <section class="card card--full card--form form-card" id="formMauSac">
+        <div class="form-card__header">
+            <h2 class="form-card__title" th:text="${mauSacId != null ? 'Sửa màu sắc' : 'Thêm màu sắc'}">Thêm màu sắc</h2>
+            <button type="button" class="form-card__toggle form-card__toggle--close" id="formMauSacToggle" title="Đóng form" aria-label="Đóng form">×</button>
+        </div>
+        <div class="form-card__body">
+        <form class="form form--mausac" th:action="${formAction}" th:object="${mauSac}" method="post">
+            <input th:if="${mauSac != null and mauSac.id != null}" type="hidden" th:field="*{id}" />
+            <div class="form__grid">
+                <div class="form__group">
+                    <label class="form__label">Tên màu sắc</label>
+                    <input class="form__input" type="text" th:field="*{tenMauSac}" required placeholder="Nhập tên màu sắc" />
+                </div>
+            </div>
+            <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Lưu</button>
+                <a th:href="@{/admin/mau-sac}" class="btn btn--secondary">Hủy</a>
+            </div>
+        </form>
+        </div>
+    </section>
+
+    <div class="form-card form-card--bar" id="formMauSacOpenBar" th:attr="aria-hidden=${mauSacId != null ? 'true' : 'false'}">
+        <div class="form-card__header">
+            <span class="form-card__title">Thêm màu sắc</span>
+            <button type="button" class="form-card__toggle form-card__toggle--open" id="formMauSacOpenBtn" title="Mở form" aria-label="Mở form">+</button>
+        </div>
+    </div>
+    </div>
+
+    <section class="card card--full" id="listMauSac">
         <h2 class="card__title">Danh sách màu sắc</h2>
         <table class="table">
             <thead><tr><th>ID</th><th>Tên màu sắc</th><th>Thao tác</th></tr></thead>
@@ -15,7 +46,7 @@
                     <td>
                         <div class="table-actions">
                             <a class="btn-icon btn-icon--edit" th:href="@{/admin/mau-sac/{id}/sua(id=${item.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
-                            <form th:action="@{/admin/mau-sac/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa?');">
+                            <form th:action="@{/admin/mau-sac/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa màu sắc này?');">
                                 <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                             </form>
                         </div>

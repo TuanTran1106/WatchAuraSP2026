@@ -38,7 +38,7 @@ public class HoaDonRequest {
     private String ghiChu;
     
     private DiaChiGiaoHangRequest diaChiGiaoHang;
-    
-    @NotNull(message = "Danh sách sản phẩm không được để trống")
+
+    /** Có thể null khi thêm nhanh từ form trên list; controller sẽ set thành empty list. */
     private List<HoaDonChiTietRequest> items;
 }

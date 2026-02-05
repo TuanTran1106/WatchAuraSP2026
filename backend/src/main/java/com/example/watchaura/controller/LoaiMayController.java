@@ -23,24 +23,26 @@ public class LoaiMayController {
         model.addAttribute("title", "Loại máy");
         model.addAttribute("content", "admin/loaimay-list");
         model.addAttribute("list", list);
-        return "layout/admin-layout";
-    }
-
-    @GetMapping("/them")
-    public String formCreate(Model model) {
-        model.addAttribute("title", "Thêm loại máy");
-        model.addAttribute("content", "admin/loaimay-form");
         model.addAttribute("loaiMay", new LoaiMay());
+        model.addAttribute("loaiMayId", null);
         model.addAttribute("formAction", "/admin/loai-may");
         return "layout/admin-layout";
     }
 
+    @GetMapping("/them")
+    public String formCreate() {
+        return "redirect:/admin/loai-may";
+    }
+
     @GetMapping("/{id}/sua")
     public String formEdit(@PathVariable Integer id, Model model) {
+        List<LoaiMay> list = loaiMayRepository.findAll();
         LoaiMay loaiMay = loaiMayRepository.findById(id).orElseThrow();
-        model.addAttribute("title", "Sửa loại máy");
-        model.addAttribute("content", "admin/loaimay-form");
+        model.addAttribute("title", "Loại máy");
+        model.addAttribute("content", "admin/loaimay-list");
+        model.addAttribute("list", list);
         model.addAttribute("loaiMay", loaiMay);
+        model.addAttribute("loaiMayId", id);
         model.addAttribute("formAction", "/admin/loai-may/" + id);
         return "layout/admin-layout";
     }

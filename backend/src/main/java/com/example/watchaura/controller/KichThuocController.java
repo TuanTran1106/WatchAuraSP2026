@@ -23,24 +23,26 @@ public class KichThuocController {
         model.addAttribute("title", "Kích thước");
         model.addAttribute("content", "admin/kichthuoc-list");
         model.addAttribute("list", list);
-        return "layout/admin-layout";
-    }
-
-    @GetMapping("/them")
-    public String formCreate(Model model) {
-        model.addAttribute("title", "Thêm kích thước");
-        model.addAttribute("content", "admin/kichthuoc-form");
         model.addAttribute("kichThuoc", new KichThuoc());
+        model.addAttribute("kichThuocId", null);
         model.addAttribute("formAction", "/admin/kich-thuoc");
         return "layout/admin-layout";
     }
 
+    @GetMapping("/them")
+    public String formCreate() {
+        return "redirect:/admin/kich-thuoc";
+    }
+
     @GetMapping("/{id}/sua")
     public String formEdit(@PathVariable Integer id, Model model) {
+        List<KichThuoc> list = kichThuocRepository.findAll();
         KichThuoc kichThuoc = kichThuocRepository.findById(id).orElseThrow();
-        model.addAttribute("title", "Sửa kích thước");
-        model.addAttribute("content", "admin/kichthuoc-form");
+        model.addAttribute("title", "Kích thước");
+        model.addAttribute("content", "admin/kichthuoc-list");
+        model.addAttribute("list", list);
         model.addAttribute("kichThuoc", kichThuoc);
+        model.addAttribute("kichThuocId", id);
         model.addAttribute("formAction", "/admin/kich-thuoc/" + id);
         return "layout/admin-layout";
     }
