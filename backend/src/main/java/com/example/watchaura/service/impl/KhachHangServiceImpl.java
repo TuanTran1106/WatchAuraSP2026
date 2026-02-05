@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -89,6 +90,10 @@ public class KhachHangServiceImpl implements KhachHangService {
         if (khachHang.getMatKhau() != null && !khachHang.getMatKhau().isBlank()) {
             khachHang.setMatKhau(passwordEncoder.encode(khachHang.getMatKhau()));
         }
+        // Giữ nguyên ngày sinh, giới tính từ form để lưu vào DB
+        if (khachHang.getNgaySinh() != null && khachHang.getNgaySinh().isAfter(LocalDate.now())) {
+            throw new RuntimeException("Ngày sinh không được ở tương lai.");
+        }
 
         return khachHangRepository.save(khachHang);
     }
@@ -127,6 +132,50 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Override
     public List<KhachHang> getByTenChucVu(String tenChucVu) {
         return khachHangRepository.findByChucVu_TenChucVu(tenChucVu);
+    }
+
+    @Override
+    public Optional<KhachHang> findByMaNguoiDung(String maNguoiDung) {
+        return khachHangRepository.findByMaNguoiDung(maNguoiDung);
+    }
+
+    @Override
+    public Optional<KhachHang> findByEmail(String email) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        return khachHangRepository.findByEmailIgnoreCase(email.trim());
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        if (email == null || email.isBlank()) return false;
+        return khachHangRepository.existsByEmail(email.trim());
+    }
+
+    @Override
+    public KhachHang registerKhachHang(String tenNguoiDung, String email, String sdt, String matKhau, LocalDate ngaySinh, String gioiTinh) {
+        ChucVu chucVuKhachHang = chucVuRepository.findByTenChucVu("Khách hàng")
+                .orElseThrow(() -> new RuntimeException("Chức vụ Khách hàng chưa được cấu hình trong hệ thống."));
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email không được để trống.");
+        }
+        if (khachHangRepository.findByEmailIgnoreCase(email.trim()).isPresent()) {
+            throw new RuntimeException("Email đã được sử dụng.");
+        }
+        if (ngaySinh != null && ngaySinh.isAfter(LocalDate.now())) {
+            throw new RuntimeException("Ngày sinh không được ở tương lai.");
+        }
+        String maTuDong = generateMaNguoiDung(chucVuKhachHang); // KH001, KH002, ...
+        KhachHang kh = new KhachHang();
+        kh.setTenNguoiDung(tenNguoiDung);
+        kh.setEmail(email.trim());
+        kh.setSdt(sdt);
+        kh.setMaNguoiDung(maTuDong);
+        kh.setMatKhau(matKhau != null && !matKhau.isBlank() ? passwordEncoder.encode(matKhau) : null);
+        kh.setNgaySinh(ngaySinh);
+        kh.setGioiTinh(gioiTinh);
+        kh.setChucVu(chucVuKhachHang);
+        kh.setTrangThai(true);
+        return khachHangRepository.save(kh);
     }
 
 }

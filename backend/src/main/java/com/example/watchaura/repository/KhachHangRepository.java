@@ -15,6 +15,12 @@ import java.util.Optional;
 public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
     boolean existsByMaNguoiDung(String maNguoiDung);
 
+    boolean existsByEmail(String email);
+
+    Optional<KhachHang> findByEmailIgnoreCase(String email);
+
+    Optional<KhachHang> findByMaNguoiDung(String maNguoiDung);
+
     List<KhachHang> findByChucVu_TenChucVu(String tenChucVu);
 
     Optional<KhachHang> findFirstByMaNguoiDungStartingWithOrderByIdDesc(String prefix);

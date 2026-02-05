@@ -4,12 +4,35 @@
 
 <header th:fragment="header" class="user-header">
     <div class="container header-inner">
-        <a href="/" class="logo">WatchAura</a>
+        <a th:href="@{/}" class="logo">WatchAura</a>
+
+        <form class="header-search" th:action="@{/san-pham}" method="get">
+            <input type="search" name="keyword" class="header-search__input" placeholder="Tìm kiếm sản phẩm..." th:value="${param.keyword}">
+            <button type="submit" class="header-search__btn" aria-label="Tìm kiếm">
+            <svg class="header-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </button>
+        </form>
 
         <nav class="nav">
-            <a href="/">Trang chủ</a>
-            <a href="/san-pham">Sản phẩm</a>
-            <a href="/gio-hang">Giỏ hàng</a>
+            <a th:href="@{/}">Trang chủ</a>
+            <a th:href="@{/san-pham}">Sản phẩm</a>
+            <a th:href="@{/tin-tuc}">Tin tức</a>
+            <a th:href="@{/lien-he}">Liên hệ</a>
+            <a th:href="@{/gio-hang}" class="nav-cart">
+                Giỏ hàng
+                <span class="nav-cart__count" th:if="${soLuongGioHang != null and soLuongGioHang > 0}" th:text="${soLuongGioHang}">0</span>
+            </a>
+            <th:block th:if="${currentUser != null}">
+                <span class="nav-user" th:text="'Xin chào, ' + ${currentUser.tenNguoiDung}">Xin chào</span>
+                <a th:href="@{/dang-xuat}" class="btn btn-header btn-header--outline">Đăng xuất</a>
+            </th:block>
+            <th:block th:if="${currentUser == null}">
+                <a th:href="@{/dang-ky}" class="nav-link">Đăng ký</a>
+                <a th:href="@{/dang-nhap}" class="btn btn-header">Đăng nhập</a>
+            </th:block>
         </nav>
     </div>
 </header>
