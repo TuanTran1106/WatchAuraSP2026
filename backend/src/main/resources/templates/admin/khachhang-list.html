@@ -44,7 +44,7 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày sinh</label>
-                    <input class="form__input" type="date" name="ngaySinh" id="ngaySinh" th:value="${khachHang != null and khachHang.ngaySinh != null ? #temporals.format(khachHang.ngaySinh, 'yyyy-MM-dd') : ''}" th:attr="max=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" />
+                    <input class="form__input" type="date" th:field="*{ngaySinh}" th:attr="max=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" />
                     <span class="form__error" th:if="${#fields.hasErrors('ngaySinh')}" th:errors="*{ngaySinh}"></span>
                 </div>
                 <div class="form__group">

@@ -5,6 +5,7 @@ import com.example.watchaura.repository.BlogRepository;
 import com.example.watchaura.service.BlogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,11 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public List<Blog> getAll() {
         return blogRepository.findAll();
+    }
+
+    @Override
+    public List<Blog> getRecentBlogs(int limit) {
+        return blogRepository.findAllByOrderByNgayDangDesc(PageRequest.of(0, limit));
     }
 
     @Override

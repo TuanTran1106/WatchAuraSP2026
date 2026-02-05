@@ -4,11 +4,15 @@ import com.example.watchaura.entity.KhuyenMai;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface KhuyenMaiService {
 
     List<KhuyenMai> getAll();
+
+    /** Khuyến mãi đang diễn ra (trong khoảng ngày, trạng thái bật) */
+    List<KhuyenMai> getActivePromotions(LocalDateTime now);
 
     Page<KhuyenMai> getPage(Pageable pageable);
 

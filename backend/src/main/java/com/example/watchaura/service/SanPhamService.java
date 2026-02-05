@@ -12,6 +12,9 @@ import java.util.List;
 public interface SanPhamService {
     List<SanPhamDTO> getAllSanPham();
 
+    /** Sản phẩm nổi bật cho trang chủ (đang bán, mới nhất) */
+    List<SanPhamDTO> getSanPhamTrangChu(int limit);
+
     Page<SanPhamDTO> getPage(Pageable pageable);
 
     Page<SanPhamDTO> searchPage(String keyword, Boolean trangThai, Pageable pageable);

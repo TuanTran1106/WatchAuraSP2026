@@ -24,6 +24,11 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
+    public List<KhuyenMai> getActivePromotions(LocalDateTime now) {
+        return khuyenMaiRepository.findActivePromotions(now);
+    }
+
+    @Override
     public Page<KhuyenMai> getPage(Pageable pageable) {
         return khuyenMaiRepository.findAll(pageable);
     }

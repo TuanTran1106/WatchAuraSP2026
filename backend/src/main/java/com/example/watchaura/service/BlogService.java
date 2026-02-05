@@ -10,6 +10,9 @@ public interface BlogService {
 
     List<Blog> getAll();
 
+    /** Tin tức mới nhất (theo ngày đăng) */
+    List<Blog> getRecentBlogs(int limit);
+
     Page<Blog> getPage(Pageable pageable);
 
     Blog getById(Integer id);

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="user-page" th:with="blog=${blog}">
+    <div class="container container--narrow">
+        <nav class="breadcrumb">
+            <a th:href="@{/}">Trang chủ</a>
+            <span class="breadcrumb__sep">/</span>
+            <a th:href="@{/tin-tuc}">Tin tức</a>
+            <span class="breadcrumb__sep">/</span>
+            <span th:text="${blog.tieuDe}">Chi tiết</span>
+        </nav>
+        <article class="blog-detail">
+            <h1 class="blog-detail__title" th:text="${blog.tieuDe}">Tiêu đề</h1>
+            <time class="blog-detail__date" th:if="${blog.ngayDang != null}" th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}"></time>
+            <div class="blog-detail__img" th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
+                <img th:src="@{'/uploads/' + ${blog.hinhAnh}}" th:alt="${blog.tieuDe}" style="max-width:100%; border-radius:8px;">
+            </div>
+            <div class="blog-detail__body" th:if="${blog.noiDung != null}" th:utext="${blog.noiDung}">Nội dung</div>
+        </article>
+    </div>
+</div>
+</body>
+</html>

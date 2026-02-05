@@ -22,6 +22,7 @@ import com.example.watchaura.service.SanPhamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,14 @@ public class SanPhamServiceImpl implements SanPhamService {
      */
     public List<SanPhamDTO> getAllSanPham() {
         return sanPhamRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SanPhamDTO> getSanPhamTrangChu(int limit) {
+        return sanPhamRepository.findByTrangThaiOrderByNgayTaoDesc(true, PageRequest.of(0, limit))
+                .getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

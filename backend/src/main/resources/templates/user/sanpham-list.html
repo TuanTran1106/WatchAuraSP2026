@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="user-page user-page--products">
+    <div class="container">
+        <h1 class="page-title">Sản phẩm</h1>
+
+        <div class="filters">
+            <form th:action="@{/san-pham}" method="get" class="filters__form">
+                <input type="hidden" name="page" value="0">
+                <input type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tên..." class="filters__input">
+                <select name="danhMucId" class="filters__select">
+                    <option value="">Tất cả danh mục</option>
+                    <option th:each="dm : ${danhMucList}" th:value="${dm.id}" th:text="${dm.tenDanhMuc}" th:selected="${danhMucId != null and danhMucId == dm.id}"></option>
+                </select>
+                <select name="thuongHieuId" class="filters__select">
+                    <option value="">Tất cả thương hiệu</option>
+                    <option th:each="th : ${thuongHieuList}" th:value="${th.id}" th:text="${th.tenThuongHieu}" th:selected="${thuongHieuId != null and thuongHieuId == th.id}"></option>
+                </select>
+                <button type="submit" class="btn btn--primary">Lọc</button>
+            </form>
+        </div>
+
+        <div class="products__grid" th:if="${list != null and !list.isEmpty()}">
+            <div th:each="sp : ${list}" class="product-card">
+                <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-card__link">
+                    <div class="product-card__img-wrap">
+                        <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-card__img">
+                        <div th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" class="product-card__placeholder">⌚</div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name" th:text="${sp.tenSanPham}">Tên</h3>
+                        <p class="product-card__brand" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}"></p>
+                        <p class="product-card__price" th:if="${sp.giaBan != null}" th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|"></p>
+                        <p class="product-card__price product-card__price--na" th:if="${sp.giaBan == null}">Liên hệ</p>
+                    </div>
+                </a>
+                <div class="product-card__actions">
+                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm">Chi tiết</a>
+                    <a th:href="@{/gio-hang}" class="btn btn--primary btn--sm">Thêm giỏ</a>
+                </div>
+            </div>
+        </div>
+        <p th:if="${list == null or list.isEmpty()}" class="section__empty">Không tìm thấy sản phẩm nào.</p>
+
+        <div class="pagination" th:if="${pageResult != null and pageResult.totalPages > 1}">
+            <a th:if="${pageResult.hasPrevious()}" th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number - 1})}">Trước</a>
+            <span class="pagination__current" th:text="|Trang ${pageResult.number + 1} / ${pageResult.totalPages}|"></span>
+            <a th:if="${pageResult.hasNext()}" th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number + 1})}">Sau</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

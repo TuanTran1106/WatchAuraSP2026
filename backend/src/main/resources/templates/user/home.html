@@ -1,10 +1,161 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ - WatchAura</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+</head>
 <body>
 
-<div th:fragment="content">
-    <h1>Trang chủ</h1>
-    <p>Welcome to WatchAura</p>
+<div th:fragment="content" class="home-page">
+
+    <!-- Hero / Banner -->
+    <section class="hero">
+        <div class="hero__inner container">
+            <div class="hero__content">
+                <h1 class="hero__title">Đồng Hồ Chính Hãng</h1>
+                <p class="hero__subtitle">Khám phá bộ sưu tập đồng hồ cao cấp – Phong cách, tin cậy, đẳng cấp thời gian.</p>
+                <a th:href="@{/san-pham}" class="btn btn--primary hero__cta">Xem sản phẩm</a>
+            </div>
+            <div class="hero__visual">
+                <div class="hero__img-wrap"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Danh mục -->
+    <section class="section categories">
+        <div class="container">
+            <h2 class="section__title">Danh mục sản phẩm</h2>
+            <div class="categories__grid" th:if="${danhMucList != null and !danhMucList.isEmpty()}">
+                <a th:each="dm : ${danhMucList}" th:href="@{/san-pham(danhMucId=${dm.id})}" class="category-card">
+                    <span class="category-card__icon">⌚</span>
+                    <span class="category-card__name" th:text="${dm.tenDanhMuc}">Danh mục</span>
+                </a>
+            </div>
+            <p th:if="${danhMucList == null or danhMucList.isEmpty()}" class="section__empty">Chưa có danh mục.</p>
+        </div>
+    </section>
+
+    <!-- Sản phẩm nổi bật -->
+    <section class="section products">
+        <div class="container">
+            <div class="section__head">
+                <h2 class="section__title">Sản phẩm nổi bật</h2>
+                <a th:href="@{/san-pham}" class="link-more">Xem tất cả →</a>
+            </div>
+            <div class="products__grid" th:if="${sanPhamTrangChu != null and !sanPhamTrangChu.isEmpty()}">
+                <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
+                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-card__link">
+                        <div class="product-card__img-wrap">
+                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-card__img">
+                            <div th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" class="product-card__placeholder">⌚</div>
+                        </div>
+                        <div class="product-card__info">
+                            <h3 class="product-card__name" th:text="${sp.tenSanPham}">Tên sản phẩm</h3>
+                            <p class="product-card__brand" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
+                            <p class="product-card__price" th:if="${sp.giaBan != null}">
+                                <span th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                            </p>
+                            <p class="product-card__price product-card__price--na" th:if="${sp.giaBan == null}">Liên hệ</p>
+                        </div>
+                    </a>
+                    <div class="product-card__actions">
+                        <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm">Xem chi tiết</a>
+                        <a th:href="@{/gio-hang}" class="btn btn--primary btn--sm">Thêm vào giỏ</a>
+                    </div>
+                </div>
+            </div>
+            <p th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="section__empty">Chưa có sản phẩm nào.</p>
+        </div>
+    </section>
+
+    <!-- Khuyến mãi -->
+    <section class="section promotions" th:if="${khuyenMaiDangChay != null and !khuyenMaiDangChay.isEmpty()}">
+        <div class="container">
+            <h2 class="section__title">Khuyến mãi đang diễn ra</h2>
+            <div class="promo-list">
+                <div th:each="km : ${khuyenMaiDangChay}" class="promo-card">
+                    <div class="promo-card__content">
+                        <h3 class="promo-card__title" th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
+                        <p class="promo-card__desc" th:text="${km.moTa}">Mô tả</p>
+                        <p class="promo-card__value">
+                            <span th:if="${km.loaiGiam == 'PHAN_TRAM'}" th:text="'Giảm ' + ${km.giaTriGiam} + '%'">Giảm %</span>
+                            <span th:if="${km.loaiGiam == 'TIEN'}" th:text="'Giảm ' + ${#numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giảm tiền</span>
+                        </p>
+                        <p class="promo-card__date" th:if="${km.ngayKetThuc != null}" th:text="|Đến hết ${#temporals.format(km.ngayKetThuc, 'dd/MM/yyyy')}|">Hết hạn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Thương hiệu -->
+    <section class="section brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
+        <div class="container">
+            <h2 class="section__title">Thương hiệu đồng hành</h2>
+            <div class="brands__list">
+                <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}" class="brands__item" th:text="${th.tenThuongHieu}">Thương hiệu</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tin tức / Blog -->
+    <section class="section blog">
+        <div class="container">
+            <div class="section__head">
+                <h2 class="section__title">Tin tức &amp; Blog</h2>
+                <a th:href="@{/tin-tuc}" class="link-more">Xem tất cả →</a>
+            </div>
+            <div class="blog__grid" th:if="${blogMoi != null and !blogMoi.isEmpty()}">
+                <article th:each="blog : ${blogMoi}" class="blog-card">
+                    <a th:href="@{/tin-tuc/{id}(id=${blog.id})}" class="blog-card__link">
+                        <div class="blog-card__img-wrap" th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
+                            <img th:src="@{'/uploads/' + ${blog.hinhAnh}}" th:alt="${blog.tieuDe}" class="blog-card__img">
+                        </div>
+                        <div class="blog-card__img-wrap blog-card__img-wrap--placeholder" th:if="${blog.hinhAnh == null or blog.hinhAnh.isEmpty()}">
+                            <span>📰</span>
+                        </div>
+                        <div class="blog-card__body">
+                            <h3 class="blog-card__title" th:text="${blog.tieuDe}">Tiêu đề</h3>
+                            <time class="blog-card__date" th:if="${blog.ngayDang != null}" th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}">Ngày</time>
+                        </div>
+                    </a>
+                </article>
+            </div>
+            <p th:if="${blogMoi == null or blogMoi.isEmpty()}" class="section__empty">Chưa có bài viết.</p>
+        </div>
+    </section>
+
+    <!-- Ưu đãi / Hỗ trợ -->
+    <section class="section features">
+        <div class="container">
+            <div class="features__grid">
+                <div class="feature-item">
+                    <span class="feature-item__icon">🚚</span>
+                    <h3 class="feature-item__title">Giao hàng toàn quốc</h3>
+                    <p class="feature-item__text">Miễn phí đơn từ 3 triệu</p>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-item__icon">🛡️</span>
+                    <h3 class="feature-item__title">Bảo hành chính hãng</h3>
+                    <p class="feature-item__text">Bảo hành 1–2 năm tùy thương hiệu</p>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-item__icon">↩️</span>
+                    <h3 class="feature-item__title">Đổi trả 30 ngày</h3>
+                    <p class="feature-item__text">Đổi trả nếu lỗi nhà sản xuất</p>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-item__icon">📞</span>
+                    <h3 class="feature-item__title">Hỗ trợ 24/7</h3>
+                    <p class="feature-item__text">Hotline: 1900 xxxx</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </div>
 
 </body>

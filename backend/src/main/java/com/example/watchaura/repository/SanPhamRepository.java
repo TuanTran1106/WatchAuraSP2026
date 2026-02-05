@@ -34,6 +34,11 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     Page<SanPham> findByTrangThai(Boolean trangThai, Pageable pageable);
 
     /**
+     * Sản phẩm đang bán, mới nhất (cho trang chủ)
+     */
+    Page<SanPham> findByTrangThaiOrderByNgayTaoDesc(Boolean trangThai, Pageable pageable);
+
+    /**
      * Tìm sản phẩm theo tên (tìm kiếm gần đúng)
      */
     List<SanPham> findByTenSanPhamContainingIgnoreCase(String tenSanPham);
