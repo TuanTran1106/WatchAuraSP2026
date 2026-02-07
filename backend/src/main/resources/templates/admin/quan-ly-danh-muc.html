@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh Mục - Watch Aura</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div th:fragment="content">
+        <style>
+            .content * {
+                box-sizing: border-box;
+            }
+
+            .content .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                min-height: 100vh;
+                padding: 0;
+                color: #333;
+                background-color: #f5f7fa;
+            }
+
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            /* Header */
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .header h1 i {
+                color: #2c3e50;
+                font-size: 36px;
+            }
+
+            .header-actions {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            /* Content Section */
+            .content-section {
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+
+            .section-title {
+                font-size: 24px;
+                margin-bottom: 20px;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 15px;
+            }
+
+            .section-title i {
+                color: #2c3e50;
+            }
+
+            .actions {
+                display: flex;
+                gap: 5px;
+                flex-wrap: wrap;
+            }
+
+            /* Loading State */
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #999;
+            }
+
+            .spinner {
+                border: 4px solid #f0f0f0;
+                border-top: 4px solid #2c3e50;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Modal Styling */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                overflow: auto;
+                animation: fadeIn 0.3s ease;
+            }
+
+            .modal.show {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .modal-content {
+                background-color: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+                max-width: 500px;
+                width: 95%;
+                animation: slideIn 0.3s ease;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateY(-50px);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+                border-bottom: 2px solid #f0f0f0;
+            }
+
+            .modal-header h2 {
+                font-size: 24px;
+                color: #333;
+                margin: 0;
+            }
+
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 28px;
+                color: #999;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .modal-close:hover {
+                color: #333;
+            }
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 20px;
+            }
+
+            .form-group label {
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .form-group input,
+            .form-group textarea {
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: inherit;
+                transition: border-color 0.3s ease;
+            }
+
+            .form-group input:focus,
+            .form-group textarea:focus {
+                outline: none;
+                border-color: #2c3e50;
+                box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+            }
+
+            .form-group textarea {
+                resize: vertical;
+                min-height: 100px;
+            }
+
+            .modal-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 25px;
+                padding-top: 20px;
+                border-top: 2px solid #f0f0f0;
+            }
+
+            .modal-actions button {
+                flex: 1;
+                padding: 12px;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .modal-actions .btn-save {
+                background: #53a5fb;
+                color: white;
+            }
+
+            .modal-actions .btn-save:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+            }
+
+            .modal-actions .btn-cancel {
+                background: #f0f0f0;
+                color: #333;
+            }
+
+            .modal-actions .btn-cancel:hover {
+                background: #e0e0e0;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                .header h1 {
+                    font-size: 24px;
+                }
+
+                .header-actions {
+                    width: 100%;
+                    flex-direction: column;
+                }
+
+                .header-actions .btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+                .content .table {
+                    font-size: 12px;
+                }
+
+                .content .table th,
+                .content .table td {
+                    padding: 0.5rem;
+                }
+
+                .actions {
+                    flex-direction: column;
+                }
+
+                .actions .btn {
+                    width: 100%;
+                }
+
+                .modal-content {
+                    max-width: 90%;
+                }
+            }
+        </style>
+        <div class="container">
+            <!-- Danh sách Danh mục -->
+            <div class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-table"></i>
+                    Danh sách danh mục
+                    <button class="btn btn--primary" onclick="openAddModal()" style="margin-left: auto;">
+                        <i class="fas fa-plus"></i> Thêm danh mục
+                    </button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="danhMucTable" class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên danh mục</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="danhMucTableBody">
+                            <tr>
+                                <td colspan="3" class="loading">
+                                    <div class="spinner"></div>
+                                    Đang tải dữ liệu...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Thêm/Sửa Danh Mục -->
+        <div id="danhMucModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Thêm mới danh mục</h2>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+
+                <form id="danhMucForm">
+                    <input type="hidden" id="danhMucId">
+
+                    <div class="form-group">
+                        <label for="tenDanhMuc">Tên danh mục *</label>
+                        <input type="text" id="tenDanhMuc" required>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save"></i> Lưu danh mục
+                        </button>
+                        <button type="button" class="btn-cancel" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            const API_URL = 'http://localhost:8080/api';
+            let isEditing = false;
+
+            // Mở Modal Thêm Danh Mục
+            function openAddModal() {
+                resetModal();
+                document.getElementById('danhMucModal').classList.add('show');
+                document.getElementById('modalTitle').textContent = 'Thêm mới danh mục';
+                isEditing = false;
+            }
+
+            // Đóng Modal
+            function closeModal() {
+                document.getElementById('danhMucModal').classList.remove('show');
+                resetModal();
+            }
+
+            // Đóng Modal khi click ngoài
+            window.onclick = function (event) {
+                const modal = document.getElementById('danhMucModal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            }
+
+            // Reset Modal
+            function resetModal() {
+                document.getElementById('danhMucForm').reset();
+                document.getElementById('danhMucId').value = '';
+            }
+
+            // Tải danh sách danh mục
+            async function loadDanhMuc() {
+                try {
+                    const response = await fetch(`${API_URL}/danh-muc`);
+                    const danhMucs = await response.json();
+
+                    const tbody = document.getElementById('danhMucTableBody');
+
+                    if (danhMucs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="loading">Không có dữ liệu</td></tr>';
+                        return;
+                    }
+
+                    let htmlRows = '';
+                    danhMucs.forEach(dm => {
+                        htmlRows += `
+                        <tr>
+                            <td><strong>${dm.id}</strong></td>
+                            <td>${dm.tenDanhMuc || '-'}</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="btn btn--secondary" onclick="editDanhMuc(${dm.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn--danger" onclick="deleteDanhMuc(${dm.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    });
+
+                    tbody.innerHTML = htmlRows;
+                } catch (error) {
+                    console.error('Lỗi khi tải danh sách:', error);
+                    const tbody = document.getElementById('danhMucTableBody');
+                    tbody.innerHTML = '<tr><td colspan="3" class="loading" style="color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Lỗi khi tải dữ liệu</td></tr>';
+                }
+            }
+
+            // Submit form (Thêm/Sửa)
+            document.getElementById('danhMucForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const id = document.getElementById('danhMucId').value;
+                const data = {
+                    tenDanhMuc: document.getElementById('tenDanhMuc').value
+                };
+
+                try {
+                    let response;
+
+                    if (isEditing && id) {
+                        // Cập nhật
+                        response = await fetch(`${API_URL}/danh-muc/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                    } else {
+                        // Thêm mới
+                        response = await fetch(`${API_URL}/danh-muc`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                    }
+
+                    if (response.ok) {
+                        alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+                        closeModal();
+                        loadDanhMuc();
+                    } else {
+                        const error = await response.text();
+                        alert('Lỗi: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    alert('Có lỗi xảy ra!');
+                }
+            });
+
+            // Sửa danh mục
+            async function editDanhMuc(id) {
+                try {
+                    const response = await fetch(`${API_URL}/danh-muc/${id}`);
+                    const danhMuc = await response.json();
+
+                    document.getElementById('danhMucId').value = danhMuc.id;
+                    document.getElementById('tenDanhMuc').value = danhMuc.tenDanhMuc;
+
+                    document.getElementById('modalTitle').innerText = 'Cập nhật danh mục';
+                    isEditing = true;
+
+                    document.getElementById('danhMucModal').classList.add('show');
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    alert('Không thể tải thông tin danh mục');
+                }
+            }
+
+            // Xóa danh mục
+            async function deleteDanhMuc(id) {
+                if (!confirm('Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác.')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_URL}/danh-muc/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('Xóa thành công!');
+                        loadDanhMuc();
+                    } else {
+                        const error = await response.text();
+                        alert('Lỗi: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    alert('Có lỗi xảy ra khi xóa!');
+                }
+            }
+
+            // Khởi tạo khi trang load
+            window.addEventListener('DOMContentLoaded', function () {
+                loadDanhMuc();
+            });
+        </script>
+    </div>
+</body>
+
+</html>
