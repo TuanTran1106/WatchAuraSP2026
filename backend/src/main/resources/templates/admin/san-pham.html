@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sản Phẩm - Watch Aura</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div th:fragment="content">
+        <style>
+            .content * {
+                box-sizing: border-box;
+            }
+
+            .content .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0;
+            }
+
+            .product-image {
+                width: 50px;
+                height: 50px;
+                object-fit: cover;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+            }
+
+            .status-badge {
+                display: inline-block;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .status-active {
+                background-color: #d4edda;
+                color: #155724;
+            }
+
+            .status-inactive {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
+
+            .price-highlight {
+                color: #dc3545;
+                font-weight: bold;
+                font-size: 15px;
+            }
+
+            .actions {
+                display: flex;
+                gap: 5px;
+                flex-wrap: wrap;
+            }
+
+            /* Variant list under each product row */
+            .variant-list-row td {
+                background: linear-gradient(180deg, #fafbfc 0%, #f5f7fa 100%);
+                padding: 16px 15px;
+                border-top: 1px solid #e8ecf1;
+                border-bottom: 1px solid #e8ecf1;
+            }
+
+            .variant-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 12px;
+                color: #4a5568;
+                font-size: 13px;
+            }
+
+            .variant-item {
+                background: white;
+                border: 1px solid #dce5ed;
+                border-radius: 8px;
+                padding: 12px;
+                box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+                transition: all 0.2s ease;
+            }
+
+            .variant-item:hover {
+                /*border-color: #2c3e50;*/
+                box-shadow: 0 2px 6px rgba(44, 62, 80, 0.12);
+                transform: translateY(-1px);
+            }
+
+            .variant-item .variant-name {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                font-weight: 600;
+                color: #1a1a1a;
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+
+            .variant-item .variant-name span {
+                background: #f0f4f8;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .variant-item .variant-details {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                font-size: 12px;
+                color: #64748b;
+                margin-bottom: 8px;
+            }
+
+            .variant-item .detail-row {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .variant-item .detail-row .label {
+                font-weight: 500;
+                color: #475569;
+            }
+
+            .variant-item .detail-row .value {
+                color: #1e293b;
+                font-weight: 600;
+            }
+
+            .variant-item .variant-price {
+                color: #dc3545;
+                font-size: 14px;
+                font-weight: 700;
+                padding-top: 8px;
+                border-top: 1px solid #e8ecf1;
+            }
+
+            .variant-item .muted {
+                color: #8b8f94;
+                font-size: 11px;
+                display: block;
+            }
+
+            .variant-item .variant-status {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 10px;
+                padding-top: 8px;
+                border-top: 1px solid #e8ecf1;
+            }
+
+            .variant-item .status-label {
+                font-size: 12px;
+                font-weight: 500;
+                color: #475569;
+            }
+
+            .variant-item .toggle-switch-small {
+                display: inline-block;
+                position: relative;
+                width: 44px;
+                height: 24px;
+            }
+
+            .variant-item .toggle-switch-small input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .variant-item .toggle-switch-small .slider-small {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #cbd5e1;
+                transition: 0.4s;
+                border-radius: 24px;
+                border: 1px solid #b0bcc4;
+            }
+
+            .variant-item .toggle-switch-small .slider-small:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            .variant-item .toggle-switch-small input:checked+.slider-small {
+                background-color: #27ae60;
+                border-color: #27ae60;
+            }
+
+            .variant-item .toggle-switch-small input:checked+.slider-small:before {
+                transform: translateX(20px);
+            }
+
+            .variant-item .toggle-switch-small input:disabled+.slider-small {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            /* Form Styling */
+            .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .form-group label {
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: inherit;
+                transition: border-color 0.3s ease;
+            }
+
+            .form-group input:focus,
+            .form-group textarea:focus,
+            .form-group select:focus {
+                outline: none;
+                border-color: #2c3e50;
+                box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+            }
+
+            .form-group textarea {
+                resize: vertical;
+                min-height: 80px;
+            }
+
+            .form-full {
+                grid-column: 1 / -1;
+            }
+
+            .form-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            .form-actions button {
+                flex: 1;
+                padding: 12px;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .form-actions .btn-submit {
+                background: #2c3e50;
+                color: white;
+            }
+
+            .form-actions .btn-submit:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+            }
+
+            .form-actions .btn-cancel {
+                background: #f0f0f0;
+                color: #333;
+            }
+
+            .form-actions .btn-cancel:hover {
+                background: #e0e0e0;
+            }
+
+            /* Preview Image */
+            .preview-container {
+                margin-top: 10px;
+            }
+
+            .preview-image {
+                /*max-width: 50px;*/
+                /*max-height: 100px;*/
+                border-radius: 6px;
+                border: 2px solid #ddd;
+            }
+
+            /* Loading State */
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #999;
+            }
+
+            .spinner {
+                border: 4px solid #f0f0f0;
+                border-top: 4px solid #2c3e50;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Radio Button Styling */
+            .radio-group {
+                display: flex;
+                gap: 20px;
+                margin-top: 10px;
+            }
+
+            .radio-group label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                font-weight: 500;
+            }
+
+            .radio-group input[type="radio"] {
+                cursor: pointer;
+            }
+
+            /* Modal Styling */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                overflow: auto;
+                animation: fadeIn 0.3s ease;
+            }
+
+            .modal.show {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .modal-content {
+                background-color: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+                max-width: 1200px;
+                width: 95%;
+                max-height: 90vh;
+                overflow-y: auto;
+                animation: slideIn 0.3s ease;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateY(-50px);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+                border-bottom: 2px solid #f0f0f0;
+            }
+
+            .modal-header h2 {
+                font-size: 24px;
+                color: #333;
+                margin: 0;
+            }
+
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 28px;
+                color: #999;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .modal-close:hover {
+                color: #333;
+            }
+
+            .modal-form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .modal-form-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .modal-form-group.full {
+                grid-column: 1 / -1;
+            }
+
+            .modal-form-group label {
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .modal-form-group input,
+            .modal-form-group textarea,
+            .modal-form-group select {
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: inherit;
+                transition: border-color 0.3s ease;
+            }
+
+            .modal-form-group input:focus,
+            .modal-form-group textarea:focus,
+            .modal-form-group select:focus {
+                outline: none;
+                border-color: #2c3e50;
+                box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+            }
+
+            .modal-form-group textarea {
+                resize: vertical;
+                min-height: 80px;
+            }
+
+            .preview-image-container {
+                margin-top: 10px;
+            }
+
+            .preview-image-container img {
+                max-width: 150px;
+                max-height: 150px;
+                border-radius: 6px;
+                border: 2px solid #ddd;
+            }
+
+            .radio-group-modal {
+                display: flex;
+                gap: 20px;
+                margin-top: 10px;
+            }
+
+            .radio-group-modal label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                font-weight: 500;
+                cursor: pointer;
+            }
+
+            .radio-group-modal input[type="radio"] {
+                cursor: pointer;
+            }
+
+            .modal-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 25px;
+                padding-top: 20px;
+                border-top: 2px solid #f0f0f0;
+            }
+
+            .modal-actions button {
+                flex: 1;
+                padding: 12px;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .modal-actions .btn-save {
+                background: #53a5fb;
+                color: white;
+            }
+
+            .modal-actions .btn-save:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+            }
+
+            .modal-actions .btn-cancel {
+                background: #f0f0f0;
+                color: #333;
+            }
+
+            .modal-actions .btn-cancel:hover {
+                background: #e0e0e0;
+            }
+
+            /* Preview Image Container */
+            .preview-image-container {
+                display: flex;
+                justify-content: flex-start;
+                padding: 10px;
+                background: #f5f5f5;
+                border-radius: 8px;
+                width: fit-content;
+                max-width: 300px;
+            }
+
+            .preview-image-container img {
+                width: 100%;
+                max-height: 250px;
+                border-radius: 4px;
+            }
+
+            /* Radio Group in Modal */
+            .radio-group-modal {
+                display: flex;
+                gap: 20px;
+            }
+
+            .radio-group-modal label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                font-weight: 400;
+            }
+
+            .radio-group-modal input[type="radio"] {
+                cursor: pointer;
+            }
+
+            /* Section Divider */
+            .section-divider {
+                padding: 20px 0;
+                margin: 20px 0;
+                border-top: 2px solid #f0f0f0;
+                border-bottom: 2px solid #f0f0f0;
+            }
+
+            .section-divider h3 {
+                margin: 0;
+                color: #2c3e50;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .section-divider i {
+                color: #2c3e50;
+            }
+
+            /* Add Variant Button */
+            .btn-add-variant {
+                background: #27ae60;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500;
+                transition: background 0.3s ease;
+            }
+
+            .btn-add-variant:hover {
+                background: #229954;
+            }
+
+            /* Variant Row */
+            .variant-row {
+                background: #f9f9f9;
+                padding: 20px;
+                border-radius: 8px;
+                border: 1px solid #e0e0e0;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+                position: relative;
+            }
+
+            .variant-row .modal-form-group {
+                margin: 0;
+            }
+
+            .variant-row .variant-remove {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: #e74c3c;
+                color: white;
+                border: none;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.3s ease;
+            }
+
+            .variant-row .variant-remove:hover {
+                background: #c0392b;
+            }
+
+            /* Toggle Switch CSS */
+            .toggle-switch {
+                display: inline-block;
+                position: relative;
+                width: 50px;
+                height: 26px;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-switch .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: 0.4s;
+                border-radius: 26px;
+                border: 2px solid #ddd;
+            }
+
+            .toggle-switch .slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 2px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            .toggle-switch input:checked+.slider {
+                background-color: #27ae60;
+                border-color: #27ae60;
+            }
+
+            .toggle-switch input:checked+.slider:before {
+                transform: translateX(24px);
+            }
+
+            .toggle-switch input:disabled+.slider {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                .header h1 {
+                    font-size: 24px;
+                }
+
+                .header-actions {
+                    width: 100%;
+                    flex-direction: column;
+                }
+
+                .header-actions .btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+                .form-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .content .table {
+                    font-size: 12px;
+                }
+
+                .content .table th,
+                .content .table td {
+                    padding: 0.5rem;
+                }
+
+                .actions {
+                    flex-direction: column;
+                }
+
+                .actions .btn {
+                    width: 100%;
+                }
+            }
+        </style>
+        <div class="container">
+            <!-- Danh sách Sản phẩm -->
+            <div class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-table"></i>
+                    Danh sách sản phẩm
+                    <button class="btn btn--primary" onclick="openAddModal()" style="margin-left: auto;">
+                        <i class="fas fa-plus"></i>Thêm sản phẩm
+                    </button>
+                </div>
+
+                <!-- Tìm kiếm & Lọc (giống trang Voucher, Khách hàng, ...) -->
+                <div class="toolbar toolbar--sanpham">
+                    <div class="search-bar">
+                        <input type="text" id="searchKeyword" placeholder="Tìm theo mã hoặc tên..."
+                            class="search-bar__input" />
+                        <button type="button" class="btn btn--primary search-bar__btn" onclick="applySearch()"><i
+                                class="fa-solid fa-search"></i> Tìm kiếm</button>
+                        <button type="button" class="btn btn--secondary search-bar__btn" onclick="resetSearch()"
+                            title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</button>
+                    </div>
+                    <div class="filter-bar">
+                        <label class="filter-bar__label">Trạng thái:</label>
+                        <select id="filterTrangThai" class="form__select filter-bar__select" onchange="applySearch()">
+                            <option value="">Tất cả</option>
+                            <option value="true">Hoạt động</option>
+                            <option value="false">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="productsTable" class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>MÃ SP</th>
+                                <th>HÌNH ẢNH</th>
+                                <th>TÊN SẢN PHẨM</th>
+                                <th>GIÁ BÁN</th>
+                                <th>SỐ LƯỢNG</th>
+                                <th>TRẠNG THÁI</th>
+                                <th>THAO TÁC</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <tr>
+                                <td colspan="8" class="loading">
+                                    <div class="spinner"></div>
+                                    Đang tải dữ liệu...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Phân trang: 5 sản phẩm/trang -->
+                <div id="paginationBar" class="pagination-bar"
+                    style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 12px 0;">
+                    <span id="paginationInfo" class="pagination-info" style="color: #64748b; font-size: 14px;"></span>
+                    <div id="paginationControls" class="pagination-controls"
+                        style="display: flex; gap: 8px; align-items: center;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Thêm/Sửa Sản Phẩm -->
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Thêm mới sản phẩm</h2>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+
+                <form id="sanPhamForm">
+                    <!-- PHẦN 1: THÔNG TIN SẢN PHẨM -->
+                    <div class="section-divider">
+                        <h3><i class="fas fa-cube"></i> Thông tin sản phẩm</h3>
+                    </div>
+
+                    <div class="modal-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <input type="hidden" id="productId">
+
+                        <div class="modal-form-group">
+                            <label for="maSanPham">Mã sản phẩm *</label>
+                            <input type="text" id="maSanPham" required placeholder="Không trùng với mã đã có"
+                                title="Khi sửa sản phẩm, mã không được thay đổi">
+                            <small id="maSanPhamError" class="text-error" style="display: none; color: #e74c3c;">Mã sản
+                                phẩm
+                                đã tồn tại.</small>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label for="tenSanPham">Tên sản phẩm *</label>
+                            <input type="text" id="tenSanPham" required>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label for="idThuongHieu">Thương hiệu *</label>
+                            <select id="idThuongHieu" required>
+                                <option value="">-- Chọn thương hiệu --</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label for="idDanhMuc">Danh mục *</label>
+                            <select id="idDanhMuc" required>
+                                <option value="">-- Chọn danh mục --</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label for="phongCach">Phong cách</label>
+                            <input type="text" id="phongCach">
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label for="hinhAnhFile">Hình ảnh</label>
+                            <input type="file" id="hinhAnhFile" accept="image/*">
+                            <input type="hidden" id="hinhAnh">
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label for="moTa">Mô tả</label>
+                            <textarea id="moTa"></textarea>
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1; display: none;" id="previewContainer">
+                            <label>Xem trước hình ảnh</label>
+                            <div class="preview-image-container">
+                                <img id="previewImage" src="" alt="Preview">
+                            </div>
+                        </div>
+
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label>Trạng thái sản phẩm</label>
+                            <div class="radio-group-modal">
+                                <label>
+                                    <input type="radio" name="trangThai" value="true" checked> Hoạt động
+                                </label>
+                                <label>
+                                    <input type="radio" name="trangThai" value="false"> Không hoạt động
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHẦN 2: CHI TIẾT SẢN PHẨM (BIẾN THỂ) -->
+                    <div class="section-divider" style="margin-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3><i class="fas fa-layer-group"></i> Chi tiết sản phẩm (Biến thể)</h3>
+                            <button type="button" class="btn-add-variant" onclick="addVariantRow()">
+                                <i class="fas fa-plus"></i> Thêm biến thể
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="variantContainer" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Variant rows will be added here -->
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="modal-actions" style="margin-top: 30px;">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save"></i> Lưu sản phẩm
+                        </button>
+                        <button type="button" class="btn-cancel" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            const API_URL = 'http://localhost:8080/api';
+            const PAGE_SIZE = 5;
+            let isEditing = false;
+            let currentPage = 0;
+            let totalPages = 0;
+            let totalElements = 0;
+
+            // Bộ nhớ cache cho các danh sách attribute
+            let attributeCache = {
+                mauSac: [],
+                kichThuoc: [],
+                chatLieuDay: [],
+                loaiMay: []
+            };
+
+            // Hàm để map ID sang tên
+            function getMauSacName(id) {
+                if (!id) return '-';
+                const item = attributeCache.mauSac.find(m => m.id == id);
+                return item ? item.tenMauSac : 'Màu#' + id;
+            }
+
+            function getKichThuocName(id) {
+                if (!id) return '-';
+                const item = attributeCache.kichThuoc.find(k => k.id == id);
+                return item ? item.tenKichThuoc : 'Kích#' + id;
+            }
+
+            function getChatLieuDayName(id) {
+                if (!id) return '-';
+                const item = attributeCache.chatLieuDay.find(c => c.id == id);
+                return item ? item.tenChatLieu : 'Chất#' + id;
+            }
+
+            function getLoaiMayName(id) {
+                if (!id) return '-';
+                const item = attributeCache.loaiMay.find(l => l.id == id);
+                return item ? item.tenLoaiMay : 'Máy#' + id;
+            }
+
+            // Load và cache tất cả attribute
+            async function loadAttributeCache() {
+                try {
+                    const [mauSacs, kichThuocs, chatLieus, loaiMays] = await Promise.all([
+                        fetch(`${API_URL}/mau-sac`).then(r => r.json()),
+                        fetch(`${API_URL}/kich-thuoc`).then(r => r.json()),
+                        fetch(`${API_URL}/chat-lieu-day`).then(r => r.json()),
+                        fetch(`${API_URL}/loai-may`).then(r => r.json())
+                    ]);
+                    attributeCache.mauSac = mauSacs;
+                    attributeCache.kichThuoc = kichThuocs;
+                    attributeCache.chatLieuDay = chatLieus;
+                    attributeCache.loaiMay = loaiMays;
+                } catch (error) {
+                    console.error('Lỗi load attribute cache:', error);
+                }
+            }
+
+            // Mở Modal Thêm Sản Phẩm
+            function openAddModal() {
+                resetModal();
+                document.getElementById('productModal').classList.add('show');
+                document.getElementById('modalTitle').textContent = 'Thêm mới sản phẩm';
+                isEditing = false;
+                const maInput = document.getElementById('maSanPham');
+                maInput.removeAttribute('readonly');
+                maInput.disabled = false;
+                document.getElementById('maSanPhamError').style.display = 'none';
+            }
+
+            // Đóng Modal
+            function closeModal() {
+                document.getElementById('productModal').classList.remove('show');
+                resetModal();
+            }
+
+            // Đóng Modal khi click ngoài
+            // window.onclick = function (event) {
+            //     const modal = document.getElementById('productModal');
+            //     if (event.target === modal) {
+            //         closeModal();
+            //     }
+            // }
+
+            // Reset Modal
+            function resetModal() {
+                document.getElementById('sanPhamForm').reset();
+                document.getElementById('productId').value = '';
+                document.getElementById('hinhAnh').value = '';
+                document.getElementById('previewContainer').style.display = 'none';
+                document.querySelector('input[name="trangThai"][value="true"]').checked = true;
+                document.getElementById('variantContainer').innerHTML = '';
+                const maInput = document.getElementById('maSanPham');
+                maInput.removeAttribute('readonly');
+                maInput.disabled = false;
+                document.getElementById('maSanPhamError').style.display = 'none';
+                addVariantRow(); // Thêm 1 dòng biến thể mặc định
+            }
+
+            // Thêm dòng biến thể mới
+            function addVariantRow() {
+                const container = document.getElementById('variantContainer');
+                const variantIndex = container.children.length;
+
+                const variantRow = document.createElement('div');
+                variantRow.className = 'variant-row';
+                variantRow.innerHTML = `
+                <input type="hidden" class="variant-id">
+
+                <div class="modal-form-group">
+                    <label>Màu sắc</label>
+                    <select class="variant-mauSac" required>
+                        <option value="">-- Chọn màu sắc --</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Kích thước</label>
+                    <select class="variant-kichThuoc" required>
+                        <option value="">-- Chọn kích thước --</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Chất liệu dây</label>
+                    <select class="variant-chatLieuDay" required>
+                        <option value="">-- Chọn chất liệu dây --</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Loại máy</label>
+                    <select class="variant-loaiMay" required>
+                        <option value="">-- Chọn loại máy --</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Giá bán *</label>
+                    <input type="number" class="variant-giaBan" step="0.01" required>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Số lượng tồn *</label>
+                    <input type="number" class="variant-soLuongTon" required>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Đường kính (mm)</label>
+                    <input type="number" class="variant-duongKinh" step="0.01">
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Độ chịu nước (m)</label>
+                    <input type="number" class="variant-doChiuNuoc">
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Bề rộng dây (mm)</label>
+                    <input type="number" class="variant-beRongDay" step="0.01">
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Trọng lượng (g)</label>
+                    <input type="number" class="variant-trongLuong" step="0.01">
+                </div>
+
+                <div class="modal-form-group" style="grid-column: 1 / -1;">
+                    <label>Trạng thái chi tiết</label>
+                    <div class="radio-group-modal">
+                        <label>
+                            <input type="radio" name="trangThaiChiTiet-${variantIndex}" value="true" checked> Hoạt động
+                        </label>
+                        <label>
+                            <input type="radio" name="trangThaiChiTiet-${variantIndex}" value="false"> Không hoạt động
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" class="variant-remove" onclick="removeVariantRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+
+                container.appendChild(variantRow);
+
+                // Populate selects
+                populateVariantSelects(variantRow);
+            }
+
+            // Xóa dòng biến thể (có xác nhận)
+            function removeVariantRow(button) {
+                const container = document.getElementById('variantContainer');
+                if (container.children.length > 1) {
+                    const variantRow = button.closest('.variant-row');
+                    const variantId = variantRow.querySelector('.variant-id').value;
+
+                    const confirmed = confirm('Bạn có chắc chắn muốn xóa biến thể này? Hành động này không thể hoàn tác.');
+                    if (!confirmed) return;
+
+                    // Nếu là variant cũ (có ID), xóa từ API
+                    if (variantId) {
+                        fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`, {
+                            method: 'DELETE'
+                        }).then(res => {
+                            if (!res.ok) {
+                                return res.text().then(text => { throw new Error(text || 'Lỗi xóa biến thể'); });
+                            }
+                            // Remove from DOM only when API delete succeeded
+                            variantRow.remove();
+                        }).catch(error => {
+                            console.error('Lỗi xóa biến thể:', error);
+                            alert('Xảy ra lỗi khi xóa biến thể: ' + (error.message || error));
+                        });
+                    } else {
+                        // Nếu là variant mới (chưa lưu), chỉ remove DOM
+                        variantRow.remove();
+                    }
+                } else {
+                    alert('Phải có ít nhất 1 biến thể!');
+                }
+            }
+
+            // Populate variant selects
+            function populateVariantSelects(variantRow) {
+                // Màu sắc
+                const mauSacSelect = variantRow.querySelector('.variant-mauSac');
+                const kichThuocSelect = variantRow.querySelector('.variant-kichThuoc');
+                const chatLieuSelect = variantRow.querySelector('.variant-chatLieuDay');
+                const loaiMaySelect = variantRow.querySelector('.variant-loaiMay');
+
+                // Load data từ API
+                return Promise.all([
+                    fetch(`${API_URL}/mau-sac`).then(r => r.json()),
+                    fetch(`${API_URL}/kich-thuoc`).then(r => r.json()),
+                    fetch(`${API_URL}/chat-lieu-day`).then(r => r.json()),
+                    fetch(`${API_URL}/loai-may`).then(r => r.json())
+                ]).then(([mauSacs, kichThuocs, chatLieus, loaiMays]) => {
+                    mauSacs.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenMauSac;
+                        mauSacSelect.appendChild(option);
+                    });
+
+                    kichThuocs.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenKichThuoc;
+                        kichThuocSelect.appendChild(option);
+                    });
+
+                    chatLieus.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenChatLieu;
+                        chatLieuSelect.appendChild(option);
+                    });
+
+                    loaiMays.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenLoaiMay;
+                        loaiMaySelect.appendChild(option);
+                    });
+                }).catch(error => console.error('Lỗi load dữ liệu:', error));
+            }
+
+            // Lắng nghe sự kiện thay đổi file input
+            document.getElementById('hinhAnhFile').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const preview = document.getElementById('previewImage');
+                        const container = document.getElementById('previewContainer');
+                        preview.src = event.target.result;
+                        container.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+
+            function formatPrice(price) {
+                if (!price) return '0₫';
+                return parseFloat(price).toLocaleString('vi-VN') + '₫';
+            }
+
+            // Tải danh sách sản phẩm (phân trang 5/trang, tìm kiếm, lọc trạng thái)
+            async function loadProducts(page) {
+                if (page === undefined) page = currentPage;
+                currentPage = page;
+
+                const keyword = document.getElementById('searchKeyword').value.trim();
+                const trangThaiEl = document.getElementById('filterTrangThai');
+                const trangThai = trangThaiEl.value === '' ? null : (trangThaiEl.value === 'true');
+
+                const params = new URLSearchParams();
+                if (keyword) params.set('keyword', keyword);
+                if (trangThai !== null) params.set('trangThai', trangThai);
+                params.set('page', page);
+                params.set('size', PAGE_SIZE);
+
+                const tbody = document.getElementById('productTableBody');
+                tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div>Đang tải dữ liệu...</td></tr>';
+
+                try {
+                    const response = await fetch(`${API_URL}/san-pham/search?${params}`);
+                    if (!response.ok) throw new Error('Lỗi tải dữ liệu');
+                    const data = await response.json();
+                    const products = data.content || [];
+                    totalPages = data.totalPages ?? 0;
+                    totalElements = data.totalElements ?? 0;
+
+                    if (products.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="loading">Không có dữ liệu</td></tr>';
+                        renderPagination();
+                        return;
+                    }
+
+                    // Tạo HTML cho từng sản phẩm (có fetch chi tiết biến thể)
+                    let htmlRows = '';
+
+                    for (const product of products) {
+                        const imgHtml = product.hinhAnh ?
+                            `<img src="${product.hinhAnh}" alt="Ảnh" class="product-image">` :
+                            '<span style="color: #999;">Không có ảnh</span>';
+
+                        // Lấy giá bán và số lượng từ chi tiết sản phẩm, đồng thời chuẩn bị HTML cho các biến thể
+                        let giaBan = 'N/A';
+                        let soLuongTon = 0;
+                        let variantDetails = [];
+
+                        try {
+                            const detailResponse = await fetch(`${API_URL}/san-pham-chi-tiet/san-pham/${product.id}`);
+                            if (detailResponse.ok) {
+                                variantDetails = await detailResponse.json();
+                                if (variantDetails && variantDetails.length > 0) {
+                                    // Tính tổng số lượng từ tất cả các variant
+                                    let totalSoLuong = 0;
+                                    let totalGia = 0;
+
+                                    variantDetails.forEach(detail => {
+                                        totalSoLuong += detail.soLuongTon || 0;
+                                        if (detail.giaBan && totalGia === 0) {
+                                            totalGia = detail.giaBan; // Lấy giá từ variant đầu tiên
+                                        }
+                                    });
+
+                                    if (totalGia > 0) {
+                                        giaBan = formatPrice(totalGia);
+                                    }
+                                    soLuongTon = totalSoLuong;
+                                }
+                            }
+                        } catch (error) {
+                            console.warn(`Lỗi khi tải chi tiết sản phẩm ${product.id}:`, error);
+                        }
+
+                        const statusBadge = product.trangThai ?
+                            '<span class="status-badge status-active"><i class="fas fa-check-circle"></i> Hoạt động</span>' :
+                            '<span class="status-badge status-inactive"><i class="fas fa-times-circle"></i> Không hoạt động</span>';
+
+                        // Tạo HTML cho các biến thể hiển thị dưới mỗi sản phẩm
+                        let variantListHtml = '';
+                        if (variantDetails && variantDetails.length > 0) {
+                            variantListHtml = '<div class="variant-list">' + variantDetails.map(detail => {
+                                const color = getMauSacName(detail.idMauSac);
+                                const size = getKichThuocName(detail.idKichThuoc);
+                                const material = getChatLieuDayName(detail.idChatLieuDay);
+                                const machine = getLoaiMayName(detail.idLoaiMay);
+                                const price = detail.giaBan ? formatPrice(detail.giaBan) : '0₫';
+                                const qty = detail.soLuongTon || 0;
+
+                                let detailsHtml = `
+                                <div class="variant-item">
+                                    <div class="variant-name">
+                                        <span>${color}</span>
+                                        <span>${size}</span>
+                                    </div>
+                                    <div class="variant-details">
+                                        <div class="detail-row">
+                                            <span class="label">Chất liệu:</span>
+                                            <span class="value">${material}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="label">Loại máy:</span>
+                                            <span class="value">${machine}</span>
+                                        </div>
+                            `;
+
+                                if (detail.duongKinh) {
+                                    detailsHtml += `
+                                        <div class="detail-row">
+                                            <span class="label">Đường kính:</span>
+                                            <span class="value">${detail.duongKinh}mm</span>
+                                        </div>
+                                `;
+                                }
+                                if (detail.doChiuNuoc) {
+                                    detailsHtml += `
+                                        <div class="detail-row">
+                                            <span class="label">Chịu nước:</span>
+                                            <span class="value">${detail.doChiuNuoc}m</span>
+                                        </div>
+                                `;
+                                }
+                                if (detail.beRongDay) {
+                                    detailsHtml += `
+                                        <div class="detail-row">
+                                            <span class="label">Rộng dây:</span>
+                                            <span class="value">${detail.beRongDay}mm</span>
+                                        </div>
+                                `;
+                                }
+                                if (detail.trongLuong) {
+                                    detailsHtml += `
+                                        <div class="detail-row">
+                                            <span class="label">Trọng lượng:</span>
+                                            <span class="value">${detail.trongLuong}g</span>
+                                        </div>
+                                `;
+                                }
+
+                                detailsHtml += `
+                                    </div>
+                                    <div class="variant-price">
+                                        ${price} · <span class="muted">SL: ${qty}</span>
+                                    </div>
+                                    <div class="variant-status">
+                                        <span class="status-label">Trạng thái:</span>
+                                        <label class="toggle-switch-small" title="Bật/tắt biến thể">
+                                            <input type="checkbox" ${detail.trangThai ? 'checked' : ''} onchange="toggleVariantStatus(${detail.id}, this)">
+                                            <span class="slider-small"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            `;
+                                return detailsHtml;
+                            }).join('') + '</div>';
+                        } else {
+                            variantListHtml = '<div class="variant-list"><div class="variant-item"><span class="muted">Không có biến thể nào</span></div></div>';
+                        }
+
+                        htmlRows += `
+                        <tr>
+                            <td><strong>${product.id}</strong></td>
+                            <td><code>${product.maSanPham}</code></td>
+                            <td>${imgHtml}</td>
+                            <td>${product.tenSanPham}</td>
+                            <td class="price-highlight">${giaBan}</td>
+                            <td><strong>${soLuongTon}</strong></td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="btn btn--secondary" onclick="editProduct(${product.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <label class="toggle-switch" title="Bật/tắt trạng thái sản phẩm" style="margin-left: 10px;">
+                                        <input type="checkbox" ${product.trangThai ? 'checked' : ''} onchange="toggleProductStatus(${product.id}, this)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="variant-list-row">
+                            <td colspan="8">
+                                ${variantListHtml}
+                            </td>
+                        </tr>
+                    `;
+                    }
+
+                    tbody.innerHTML = htmlRows;
+                    renderPagination();
+                } catch (error) {
+                    console.error('Lỗi khi tải danh sách:', error);
+                    tbody.innerHTML = '<tr><td colspan="8" class="loading" style="color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Lỗi khi tải dữ liệu</td></tr>';
+                    renderPagination();
+                }
+            }
+
+            function applySearch() {
+                loadProducts(0);
+            }
+
+            function resetSearch() {
+                document.getElementById('searchKeyword').value = '';
+                document.getElementById('filterTrangThai').value = '';
+                loadProducts(0);
+            }
+
+            function renderPagination() {
+                const infoEl = document.getElementById('paginationInfo');
+                const controlsEl = document.getElementById('paginationControls');
+                if (totalElements === 0) {
+                    infoEl.textContent = 'Không có bản ghi nào';
+                    controlsEl.innerHTML = '';
+                    return;
+                }
+                const from = currentPage * PAGE_SIZE + 1;
+                const to = Math.min((currentPage + 1) * PAGE_SIZE, totalElements);
+                infoEl.textContent = `Hiển thị ${from}-${to} / ${totalElements} sản phẩm`;
+                let html = '';
+                if (currentPage > 0) {
+                    html += `<button type="button" class="btn btn--outline btn--sm" onclick="loadProducts(${currentPage - 1})"><i class="fas fa-chevron-left"></i> Trước</button>`;
+                }
+                html += `<span style="padding: 0 8px; font-weight: 600;">Trang ${currentPage + 1}/${totalPages || 1}</span>`;
+                if (currentPage < totalPages - 1) {
+                    html += `<button type="button" class="btn btn--outline btn--sm" onclick="loadProducts(${currentPage + 1})">Sau <i class="fas fa-chevron-right"></i></button>`;
+                }
+                controlsEl.innerHTML = html;
+            }
+
+            // Tải danh sách thương hiệu
+            async function loadThuongHieu() {
+                try {
+                    const response = await fetch(`${API_URL}/thuong-hieu`);
+                    const list = await response.json();
+
+                    const select = document.getElementById('idThuongHieu');
+                    select.innerHTML = '<option value="">-- Chọn thương hiệu --</option>' +
+                        list.map(item => `<option value="${item.id}">${item.tenThuongHieu}</option>`).join('');
+                } catch (error) {
+                    console.error('Lỗi khi tải thương hiệu:', error);
+                }
+            }
+
+            // Tải danh sách danh mục
+            async function loadDanhMuc() {
+                try {
+                    const response = await fetch(`${API_URL}/danh-muc`);
+                    const list = await response.json();
+
+                    const select = document.getElementById('idDanhMuc');
+                    select.innerHTML = '<option value="">-- Chọn danh mục --</option>' +
+                        list.map(item => `<option value="${item.id}">${item.tenDanhMuc}</option>`).join('');
+                } catch (error) {
+                    console.error('Lỗi khi tải danh mục:', error);
+                }
+            }
+
+            // Submit form (Thêm/Sửa)
+            function saveProduct() {
+                document.getElementById('sanPhamForm').dispatchEvent(new Event('submit'));
+            }
+
+            // Kiểm tra mã sản phẩm trùng (khi thêm mới)
+            async function checkMaSanPhamTrung(ma) {
+                if (!ma || !ma.trim()) return false;
+                const res = await fetch(`${API_URL}/san-pham/check-ma?ma=${encodeURIComponent(ma.trim())}`);
+                if (!res.ok) return false;
+                return await res.json();
+            }
+
+            document.getElementById('maSanPham').addEventListener('blur', async function () {
+                if (isEditing) return;
+                const ma = this.value.trim();
+                if (!ma) { document.getElementById('maSanPhamError').style.display = 'none'; return; }
+                const trung = await checkMaSanPhamTrung(ma);
+                const errEl = document.getElementById('maSanPhamError');
+                errEl.style.display = trung ? 'block' : 'none';
+            });
+
+            document.getElementById('sanPhamForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // Khi thêm mới: kiểm tra mã trùng trước khi gửi
+                if (!isEditing) {
+                    const ma = document.getElementById('maSanPham').value.trim();
+                    if (!ma) {
+                        alert('Vui lòng nhập mã sản phẩm.');
+                        return;
+                    }
+                    const maTrung = await checkMaSanPhamTrung(ma);
+                    if (maTrung) {
+                        document.getElementById('maSanPhamError').style.display = 'block';
+                        alert('Mã sản phẩm đã tồn tại. Vui lòng chọn mã khác.');
+                        return;
+                    }
+                }
+
+                // Kiểm tra trùng lặp biến thể
+                const duplicateIndices = checkDuplicateVariants();
+                if (duplicateIndices.length > 0) {
+                    alert(`Lỗi: Biến thể bị trùng lặp!\n\nCác biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây + Loại máy:\n- Hàng ${duplicateIndices.map(i => i + 1).join(', ')}\n\nVui lòng sửa lại trước khi lưu.`);
+                    return;
+                }
+
+                const id = document.getElementById('productId').value;
+                const fileInput = document.getElementById('hinhAnhFile');
+
+                // Nếu có file ảnh được chọn, upload riêng trước
+                let hinhAnh = document.getElementById('hinhAnh').value;
+
+                if (fileInput.files.length > 0) {
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+
+                    try {
+                        let uploadEndpoint = `${API_URL}/san-pham/upload`;
+                        let uploadMethod = 'POST';
+
+                        // Nếu đang sửa, upload ảnh sẽ tự động xóa ảnh cũ
+                        if (isEditing && id) {
+                            uploadEndpoint = `${API_URL}/san-pham/${id}/upload`;
+                            uploadMethod = 'PUT';
+                        }
+
+                        const uploadResponse = await fetch(uploadEndpoint, {
+                            method: uploadMethod,
+                            body: formData
+                        });
+
+                        if (!uploadResponse.ok) {
+                            const error = await uploadResponse.text();
+                            alert('Lỗi upload ảnh: ' + error);
+                            return;
+                        }
+
+                        const uploadData = await uploadResponse.json();
+                        // Lấy filePath từ response
+                        hinhAnh = uploadData.filePath || uploadData.hinhAnh;
+                    } catch (error) {
+                        console.error('Lỗi upload ảnh:', error);
+                        alert('Lỗi upload ảnh: ' + error.message);
+                        return;
+                    }
+                }
+
+                const data = {
+                    maSanPham: document.getElementById('maSanPham').value,
+                    tenSanPham: document.getElementById('tenSanPham').value,
+                    moTa: document.getElementById('moTa').value,
+                    hinhAnh: hinhAnh,
+                    idThuongHieu: parseInt(document.getElementById('idThuongHieu').value),
+                    idDanhMuc: parseInt(document.getElementById('idDanhMuc').value),
+                    phongCach: document.getElementById('phongCach').value,
+                    trangThai: document.querySelector('input[name="trangThai"]:checked').value === 'true'
+                };
+
+                try {
+                    let response;
+                    let productId = id;
+
+                    if (isEditing && id) {
+                        // Cập nhật sản phẩm
+                        response = await fetch(`${API_URL}/san-pham/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                    } else {
+                        // Thêm mới sản phẩm
+                        response = await fetch(`${API_URL}/san-pham`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+
+                        if (response.ok) {
+                            const newProduct = await response.json();
+                            productId = newProduct.id;
+                        }
+                    }
+
+                    if (!response.ok) {
+                        const error = await response.text();
+                        alert('Lỗi lưu sản phẩm: ' + error);
+                        return;
+                    }
+
+                    // Lưu các biến thể
+                    const variantRows = document.querySelectorAll('.variant-row');
+                    for (const variantRow of variantRows) {
+                        const variantId = variantRow.querySelector('.variant-id').value;
+
+                        const variantData = {
+                            idSanPham: parseInt(productId),
+                            idMauSac: parseInt(variantRow.querySelector('.variant-mauSac').value) || null,
+                            idKichThuoc: parseInt(variantRow.querySelector('.variant-kichThuoc').value) || null,
+                            idChatLieuDay: parseInt(variantRow.querySelector('.variant-chatLieuDay').value) || null,
+                            idLoaiMay: parseInt(variantRow.querySelector('.variant-loaiMay').value) || null,
+                            giaBan: parseFloat(variantRow.querySelector('.variant-giaBan').value),
+                            soLuongTon: parseInt(variantRow.querySelector('.variant-soLuongTon').value),
+                            duongKinh: parseFloat(variantRow.querySelector('.variant-duongKinh').value) || null,
+                            doChiuNuoc: parseInt(variantRow.querySelector('.variant-doChiuNuoc').value) || null,
+                            beRongDay: parseFloat(variantRow.querySelector('.variant-beRongDay').value) || null,
+                            trongLuong: parseFloat(variantRow.querySelector('.variant-trongLuong').value) || null,
+                            trangThai: variantRow.querySelector('input[name^="trangThaiChiTiet"]:checked').value === 'true'
+                        };
+
+                        let variantResponse;
+                        if (variantId) {
+                            // Update variant cũ
+                            variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(variantData)
+                            });
+                        } else {
+                            // Thêm variant mới
+                            variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(variantData)
+                            });
+                        }
+
+                        if (!variantResponse.ok) {
+                            const error = await variantResponse.text();
+                            console.warn('Lỗi lưu biến thể:', error);
+                        }
+                    }
+
+                    alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+                    closeModal();
+                    loadProducts();
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    alert('Có lỗi xảy ra!');
+                }
+            });
+
+            // Xem chi tiết sản phẩm
+            function viewDetail(id) {
+                window.location.href = `sanpham-chi-tiet.html?id=${id}`;
+            }
+
+            // Sửa sản phẩm
+            async function editProduct(id) {
+                try {
+                    // Load thông tin sản phẩm
+                    const response = await fetch(`${API_URL}/san-pham/${id}`);
+                    const product = await response.json();
+
+                    document.getElementById('productId').value = product.id;
+                    const maInput = document.getElementById('maSanPham');
+                    maInput.value = product.maSanPham;
+                    maInput.setAttribute('readonly', 'readonly');
+                    maInput.disabled = false;
+                    document.getElementById('maSanPhamError').style.display = 'none';
+                    document.getElementById('tenSanPham').value = product.tenSanPham;
+                    document.getElementById('moTa').value = product.moTa || '';
+                    document.getElementById('hinhAnh').value = product.hinhAnh || '';
+                    document.getElementById('idThuongHieu').value = product.idThuongHieu;
+                    document.getElementById('idDanhMuc').value = product.idDanhMuc;
+                    document.getElementById('phongCach').value = product.phongCach || '';
+
+                    // Hiển thị ảnh hiện tại
+                    if (product.hinhAnh) {
+                        const preview = document.getElementById('previewImage');
+                        const container = document.getElementById('previewContainer');
+                        preview.src = product.hinhAnh;
+                        container.style.display = 'block';
+                    }
+
+                    const radioButtons = document.querySelectorAll('input[name="trangThai"]');
+                    radioButtons.forEach(radio => {
+                        radio.checked = radio.value === product.trangThai.toString();
+                    });
+
+                    // Load các biến thể của sản phẩm
+                    const variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/san-pham/${id}`);
+                    const variants = await variantResponse.json();
+
+                    const variantContainer = document.getElementById('variantContainer');
+                    variantContainer.innerHTML = ''; // Clear existing
+
+                    if (variants && variants.length > 0) {
+                        for (const variant of variants) {
+                            const variantIndex = variantContainer.children.length;
+                            const variantRow = document.createElement('div');
+                            variantRow.className = 'variant-row';
+                            variantRow.innerHTML = `
+                            <input type="hidden" class="variant-id">
+
+                            <div class="modal-form-group">
+                                <label>Màu sắc</label>
+                                <select class="variant-mauSac" required>
+                                    <option value="">-- Chọn màu sắc --</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Kích thước</label>
+                                <select class="variant-kichThuoc" required>
+                                    <option value="">-- Chọn kích thước --</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Chất liệu dây</label>
+                                <select class="variant-chatLieuDay" required>
+                                    <option value="">-- Chọn chất liệu dây --</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Loại máy</label>
+                                <select class="variant-loaiMay" required>
+                                    <option value="">-- Chọn loại máy --</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Giá bán *</label>
+                                <input type="number" class="variant-giaBan" step="0.01" required>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Số lượng tồn *</label>
+                                <input type="number" class="variant-soLuongTon" required>
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Đường kính (mm)</label>
+                                <input type="number" class="variant-duongKinh" step="0.01">
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Độ chịu nước (m)</label>
+                                <input type="number" class="variant-doChiuNuoc">
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Bề rộng dây (mm)</label>
+                                <input type="number" class="variant-beRongDay" step="0.01">
+                            </div>
+
+                            <div class="modal-form-group">
+                                <label>Trọng lượng (g)</label>
+                                <input type="number" class="variant-trongLuong" step="0.01">
+                            </div>
+
+                            <div class="modal-form-group" style="grid-column: 1 / -1;">
+                                <label>Trạng thái chi tiết</label>
+                                <div class="radio-group-modal">
+                                    <label>
+                                        <input type="radio" name="trangThaiChiTiet-${variantIndex}" value="true"> Hoạt động
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="trangThaiChiTiet-${variantIndex}" value="false"> Không hoạt động
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="button" class="variant-remove" onclick="removeVariantRow(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+
+                            variantContainer.appendChild(variantRow);
+
+                            // Populate selects và chờ xong rồi mới set value
+                            await populateVariantSelects(variantRow);
+
+                            // Set ID variant
+                            variantRow.querySelector('.variant-id').value = variant.id || '';
+
+                            // Set dữ liệu variant
+                            variantRow.querySelector('.variant-mauSac').value = variant.idMauSac || '';
+                            variantRow.querySelector('.variant-kichThuoc').value = variant.idKichThuoc || '';
+                            variantRow.querySelector('.variant-chatLieuDay').value = variant.idChatLieuDay || '';
+                            variantRow.querySelector('.variant-loaiMay').value = variant.idLoaiMay || '';
+                            variantRow.querySelector('.variant-giaBan').value = variant.giaBan || '';
+                            variantRow.querySelector('.variant-soLuongTon').value = variant.soLuongTon || '';
+                            variantRow.querySelector('.variant-duongKinh').value = variant.duongKinh || '';
+                            variantRow.querySelector('.variant-doChiuNuoc').value = variant.doChiuNuoc || '';
+                            variantRow.querySelector('.variant-beRongDay').value = variant.beRongDay || '';
+                            variantRow.querySelector('.variant-trongLuong').value = variant.trongLuong || '';
+
+                            // Set trạng thái
+                            const statusRadios = variantRow.querySelectorAll(`input[name="trangThaiChiTiet-${variantIndex}"]`);
+                            statusRadios.forEach(radio => {
+                                radio.checked = radio.value === variant.trangThai.toString();
+                            });
+                        }
+                    } else {
+                        // Thêm 1 dòng variant mặc định nếu không có
+                        addVariantRow();
+                    }
+
+                    document.getElementById('modalTitle').innerText = 'Cập nhật sản phẩm';
+                    isEditing = true;
+
+                    document.getElementById('productModal').classList.add('show');
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    alert('Không thể tải thông tin sản phẩm');
+                }
+            }
+
+            // Xóa sản phẩm
+            async function deleteProduct(id) {
+                if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_URL}/san-pham/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('Xóa thành công!');
+                        loadProducts();
+                    } else {
+                        const error = await response.text();
+                        alert('Lỗi: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    alert('Có lỗi xảy ra khi xóa!');
+                }
+            }
+
+            // Chuyển trạng thái sản phẩm nhanh (toggle)
+            async function toggleProductStatus(id, checkbox) {
+                try {
+                    // Disable checkbox trong khi xử lý
+                    checkbox.disabled = true;
+
+                    // Lấy thông tin sản phẩm hiện tại
+                    const r = await fetch(`${API_URL}/san-pham/${id}`);
+                    if (!r.ok) {
+                        const txt = await r.text();
+                        checkbox.disabled = false;
+                        checkbox.checked = !checkbox.checked; // Revert toggle
+                        alert('Không thể tải sản phẩm: ' + txt);
+                        return;
+                    }
+
+                    const product = await r.json();
+                    // Đảo trạng thái
+                    product.trangThai = !product.trangThai;
+
+                    // Gửi PUT cập nhật toàn bộ đối tượng
+                    const putRes = await fetch(`${API_URL}/san-pham/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(product)
+                    });
+
+                    if (putRes.ok) {
+                        // Reload bảng để cập nhật badge
+                        loadProducts();
+                    } else {
+                        const error = await putRes.text();
+                        checkbox.disabled = false;
+                        checkbox.checked = !checkbox.checked; // Revert toggle
+                        alert('Không thể thay đổi trạng thái: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi đổi trạng thái:', error);
+                    checkbox.disabled = false;
+                    checkbox.checked = !checkbox.checked; // Revert toggle
+                    alert('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
+                }
+            }
+
+            // Toggle trạng thái biến thể
+            async function toggleVariantStatus(variantId, checkbox) {
+                try {
+                    checkbox.disabled = true;
+
+                    // Lấy thông tin biến thể hiện tại
+                    const r = await fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`);
+                    if (!r.ok) {
+                        const txt = await r.text();
+                        checkbox.disabled = false;
+                        checkbox.checked = !checkbox.checked;
+                        alert('Không thể tải biến thể: ' + txt);
+                        return;
+                    }
+
+                    const variant = await r.json();
+                    variant.trangThai = !variant.trangThai;
+
+                    // Gửi PUT cập nhật
+                    const putRes = await fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(variant)
+                    });
+
+                    if (putRes.ok) {
+                        // Reload bảng để cập nhật
+                        loadProducts();
+                    } else {
+                        const error = await putRes.text();
+                        checkbox.disabled = false;
+                        checkbox.checked = !checkbox.checked;
+                        alert('Không thể thay đổi trạng thái biến thể: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi đổi trạng thái biến thể:', error);
+                    checkbox.disabled = false;
+                    checkbox.checked = !checkbox.checked;
+                    alert('Có lỗi xảy ra khi thay đổi trạng thái biến thể');
+                }
+            }
+
+            // Tạo unique key cho biến thể (dùng để kiểm tra trùng)
+            function getVariantKey(row) {
+                const mauSac = row.querySelector('.variant-mauSac').value;
+                const kichThuoc = row.querySelector('.variant-kichThuoc').value;
+                const chatLieuDay = row.querySelector('.variant-chatLieuDay').value;
+                const loaiMay = row.querySelector('.variant-loaiMay').value;
+                return `${mauSac}|${kichThuoc}|${chatLieuDay}|${loaiMay}`;
+            }
+
+            // Kiểm tra trùng lặp biến thể
+            function checkDuplicateVariants() {
+                const variantRows = document.querySelectorAll('.variant-row');
+                const keys = new Set();
+                const duplicates = [];
+
+                variantRows.forEach((row, index) => {
+                    const key = getVariantKey(row);
+
+                    // Bỏ qua variant trống (tất cả select đều trống)
+                    if (key === '||') {
+                        return;
+                    }
+
+                    if (keys.has(key)) {
+                        duplicates.push(index);
+                    } else {
+                        keys.add(key);
+                    }
+                });
+
+                return duplicates;
+            }
+
+            // Khởi tạo khi trang load
+            window.addEventListener('DOMContentLoaded', function () {
+                loadAttributeCache().then(() => {
+                    loadProducts(0);
+                });
+                loadThuongHieu();
+                loadDanhMuc();
+                loadMauSac();
+                loadKichThuoc();
+                loadChatLieuDay();
+                loadLoaiMay();
+                document.getElementById('searchKeyword').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); applySearch(); }
+                });
+            });
+
+            // Load Màu sắc
+            async function loadMauSac() {
+                try {
+                    const response = await fetch(`${API_URL}/mau-sac`);
+                    const data = await response.json();
+                    const select = document.getElementById('idMauSac');
+                    select.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenMauSac;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Lỗi load màu sắc:', error);
+                }
+            }
+
+            // Load Kích thước
+            async function loadKichThuoc() {
+                try {
+                    const response = await fetch(`${API_URL}/kich-thuoc`);
+                    const data = await response.json();
+                    const select = document.getElementById('idKichThuoc');
+                    select.innerHTML = '<option value="">-- Chọn kích thước --</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenKichThuoc;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Lỗi load kích thước:', error);
+                }
+            }
+
+            // Load Chất liệu dây
+            async function loadChatLieuDay() {
+                try {
+                    const response = await fetch(`${API_URL}/chat-lieu-day`);
+                    const data = await response.json();
+                    const select = document.getElementById('idChatLieuDay');
+                    select.innerHTML = '<option value="">-- Chọn chất liệu dây --</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenChatLieu;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Lỗi load chất liệu dây:', error);
+                }
+            }
+
+            // Load Loại máy
+            async function loadLoaiMay() {
+                try {
+                    const response = await fetch(`${API_URL}/loai-may`);
+                    const data = await response.json();
+                    const select = document.getElementById('idLoaiMay');
+                    select.innerHTML = '<option value="">-- Chọn loại máy --</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.tenLoaiMay;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Lỗi load loại máy:', error);
+                }
+            }
+        </script>
+    </div>
+</body>
+
+</html>
+<!--<button class="btn btn--danger" onclick="deleteProduct(${product.id})">-->
+<!--    <i class="fas fa-trash"></i> Xóa-->
+<!--</button>-->
+<!--<button class="btn btn--secondary" onclick="viewDetail(${product.id})">-->
+<!--    <i class="fas fa-eye"></i> Chi tiết-->
+<!--</button>-->

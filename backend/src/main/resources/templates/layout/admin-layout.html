@@ -1,52 +1,127 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="vi" xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8" />-->
+<!--    <title th:text="${title}">Admin - WatchAura</title>-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0" />-->
+<!--    <link rel="preconnect" href="https://fonts.googleapis.com">-->
+<!--    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />-->
+<!--    <link rel="stylesheet" href="/admin/admin.css" />-->
+<!--</head>-->
+<!--<body>-->
+<!--    <div class="admin-layout">-->
+<!--        <aside class="sidebar">-->
+<!--            <div class="sidebar__brand">-->
+<!--                <span class="sidebar__logo">WA</span>-->
+<!--                <span class="sidebar__title">WatchAura Admin</span>-->
+<!--            </div>-->
+<!--            <nav class="sidebar__nav">-->
+<!--                <a th:href="@{/admin}" class="sidebar__link">Dashboard <i class="fa-solid fa-gauge-high"></i></a>-->
+<!--                <a th:href="@{/admin/khach-hang}" class="sidebar__link">Khách hàng <i class="fa-solid fa-user"></i></a>-->
+<!--                <a th:href="@{/admin/hoa-don}" class="sidebar__link">Hóa đơn <i class="fa-solid fa-file-invoice"></i></a>-->
+<!--                <a th:href="@{/admin/san-pham}" class="sidebar__link">Sản phẩm <i class="fa-solid fa-box"></i></a>-->
+<!--                <a th:href="@{/admin/danh-muc}" class="sidebar__link">Danh mục <i class="fa-solid fa-folder"></i></a>-->
+<!--                <a th:href="@{/admin/thuong-hieu}" class="sidebar__link">Thương hiệu <i class="fa-solid fa-copyright"></i></a>-->
+<!--                <a th:href="@{/admin/mau-sac}" class="sidebar__link">Màu sắc <i class="fa-solid fa-palette"></i></a>-->
+<!--                <a th:href="@{/admin/chat-lieu-day}" class="sidebar__link">Chất liệu dây <i class="fa-solid fa-link"></i></a>-->
+<!--                <a th:href="@{/admin/kich-thuoc}" class="sidebar__link">Kích thước <i class="fa-solid fa-ruler"></i></a>-->
+<!--                <a th:href="@{/admin/loai-may}" class="sidebar__link">Loại máy <i class="fa-solid fa-gears"></i></a>-->
+<!--                <a th:href="@{/admin/khuyen-mai}" class="sidebar__link">Khuyến mãi <i class="fa-solid fa-percent"></i></a>-->
+<!--                <a th:href="@{/admin/voucher}" class="sidebar__link">Voucher <i class="fa-solid fa-ticket"></i></a>-->
+<!--                <a th:href="@{/admin/blog}" class="sidebar__link">Blog <i class="fa-solid fa-newspaper"></i></a>-->
+<!--                <a th:href="@{/admin/cai-dat}" class="sidebar__link">Cài đặt <i class="fa-solid fa-gear"></i></a>-->
+<!--            </nav>-->
+<!--        </aside>-->
+<!--        <div class="main">-->
+<!--            <header class="header">-->
+<!--                <button class="header__menu-btn" id="sidebarToggle" type="button">☰</button>-->
+<!--                <h1 class="header__title" th:text="${title}">Admin</h1>-->
+<!--            </header>-->
+<!--            <main class="content">-->
+<!--                <div th:replace="~{${content != null ? content : 'admin/dashboard'} :: content}"></div>-->
+<!--            </main>-->
+<!--            <footer class="footer">-->
+<!--                <span>© 2026 WatchAura Admin. All rights reserved.</span>-->
+<!--            </footer>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <script th:src="@{/admin/admin.js}"></script>-->
+<!--</body>-->
+<!--</html>-->
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8" />
     <title th:text="${title}">Admin - WatchAura</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          crossorigin="anonymous" />
     <link rel="stylesheet" href="/admin/admin.css" />
 </head>
+
 <body>
-    <div class="admin-layout">
-        <aside class="sidebar">
-            <div class="sidebar__brand">
-                <span class="sidebar__logo">WA</span>
-                <span class="sidebar__title">WatchAura Admin</span>
-            </div>
-            <nav class="sidebar__nav">
-                <a th:href="@{/admin}" class="sidebar__link">Dashboard <i class="fa-solid fa-gauge-high"></i></a>
-                <a th:href="@{/admin/khach-hang}" class="sidebar__link">Khách hàng <i class="fa-solid fa-user"></i></a>
-                <a th:href="@{/admin/hoa-don}" class="sidebar__link">Hóa đơn <i class="fa-solid fa-file-invoice"></i></a>
-                <a th:href="@{/admin/san-pham}" class="sidebar__link">Sản phẩm <i class="fa-solid fa-box"></i></a>
-                <a th:href="@{/admin/danh-muc}" class="sidebar__link">Danh mục <i class="fa-solid fa-folder"></i></a>
-                <a th:href="@{/admin/thuong-hieu}" class="sidebar__link">Thương hiệu <i class="fa-solid fa-copyright"></i></a>
-                <a th:href="@{/admin/mau-sac}" class="sidebar__link">Màu sắc <i class="fa-solid fa-palette"></i></a>
-                <a th:href="@{/admin/chat-lieu-day}" class="sidebar__link">Chất liệu dây <i class="fa-solid fa-link"></i></a>
-                <a th:href="@{/admin/kich-thuoc}" class="sidebar__link">Kích thước <i class="fa-solid fa-ruler"></i></a>
-                <a th:href="@{/admin/loai-may}" class="sidebar__link">Loại máy <i class="fa-solid fa-gears"></i></a>
-                <a th:href="@{/admin/khuyen-mai}" class="sidebar__link">Khuyến mãi <i class="fa-solid fa-percent"></i></a>
-                <a th:href="@{/admin/voucher}" class="sidebar__link">Voucher <i class="fa-solid fa-ticket"></i></a>
-                <a th:href="@{/admin/blog}" class="sidebar__link">Blog <i class="fa-solid fa-newspaper"></i></a>
-                <a th:href="@{/admin/cai-dat}" class="sidebar__link">Cài đặt <i class="fa-solid fa-gear"></i></a>
-            </nav>
-        </aside>
-        <div class="main">
-            <header class="header">
-                <button class="header__menu-btn" id="sidebarToggle" type="button">☰</button>
-                <h1 class="header__title" th:text="${title}">Admin</h1>
-            </header>
-            <main class="content">
-                <div th:replace="~{${content != null ? content : 'admin/dashboard'} :: content}"></div>
-            </main>
-            <footer class="footer">
-                <span>© 2026 WatchAura Admin. All rights reserved.</span>
-            </footer>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar__brand">
+            <span class="sidebar__logo">WA</span>
+            <span class="sidebar__title">WatchAura Admin</span>
         </div>
+        <nav class="sidebar__nav">
+            <a th:href="@{/admin}" class="sidebar__link"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách
+                        hàng</span></a>
+            <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa
+                        đơn</span></a>
+            <div class="sidebar__dropdown" id="sidebarProductDropdown">
+                <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
+                        aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
+                    <i class="fas fa-box-open"></i>
+                    <span>Sản phẩm</span>
+                    <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                </button>
+                <div class="sidebar__dropdown-menu" id="sidebarProductMenu" role="menu">
+                    <a th:href="@{/admin/san-pham}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-box"></i><span>Sản phẩm</span></a>
+                    <a th:href="@{/admin/danh-muc}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-folder"></i><span>Danh mục</span></a>
+                    <a th:href="@{/admin/thuong-hieu}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-building"></i><span>Thương hiệu</span></a>
+                    <a th:href="@{/admin/mau-sac}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-palette"></i><span>Màu sắc</span></a>
+                    <a th:href="@{/admin/kich-thuoc}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-ruler-combined"></i><span>Kích thước</span></a>
+                    <a th:href="@{/admin/loai-may}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-cogs"></i><span>Loại máy</span></a>
+                    <a th:href="@{/admin/chat-lieu-day}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-link"></i><span>Chất liệu dây</span></a>
+                </div>
+            </div>
+            <a th:href="@{/admin/khuyen-mai}" class="sidebar__link"><i class="fas fa-percent"></i><span>Khuyến
+                        mãi</span></a>
+            <a th:href="@{/admin/voucher}" class="sidebar__link"><i
+                    class="fas fa-ticket"></i><span>Voucher</span></a>
+            <a th:href="@{/admin/blog}" class="sidebar__link"><i class="fas fa-newspaper"></i><span>Blog</span></a>
+            <a th:href="@{/admin/hoa-don-chi-tiet}" class="sidebar__link"><i
+                    class="fas fa-file-invoice"></i><span>Chi tiết hóa đơn</span></a>
+        </nav>
+    </aside>
+    <div class="main">
+        <header class="header">
+            <button class="header__menu-btn" id="sidebarToggle" type="button">☰</button>
+            <h1 class="header__title" th:text="${title}">Admin</h1>
+        </header>
+        <main class="content">
+            <div th:replace="~{${content} :: content}"></div>
+        </main>
+        <footer class="footer">
+            <span>© 2026 WatchAura Admin. All rights reserved.</span>
+        </footer>
     </div>
-    <script th:src="@{/admin/admin.js}"></script>
+</div>
+<script th:src="@{/admin/admin.js}"></script>
 </body>
+
 </html>
