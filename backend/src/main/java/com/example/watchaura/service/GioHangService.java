@@ -13,4 +13,6 @@ public interface GioHangService {
     GioHangDTO update(Integer id, GioHangRequest request);
     void delete(Integer id);
     GioHangDTO getOrCreateCart(Integer khachHangId);
+    /** Tổng số lượng sản phẩm trong giỏ (để hiển thị badge header). Trả về 0 nếu chưa đăng nhập hoặc giỏ trống. */
+    int getSoLuongGioHang(Integer khachHangId);
 }

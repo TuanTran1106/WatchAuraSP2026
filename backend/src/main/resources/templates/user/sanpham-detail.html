@@ -33,8 +33,27 @@
                     <p th:if="${sp.phongCach != null}" th:text="|Phong cách: ${sp.phongCach}|"></p>
                 </div>
                 <p class="product-detail__desc" th:if="${sp.moTa != null and !sp.moTa.isEmpty()}" th:utext="${sp.moTa}">Mô tả</p>
+                <div class="product-detail__actions" th:if="${variants != null and !variants.isEmpty()}">
+                    <form th:action="@{/gio-hang/them}" method="post" class="product-detail__form">
+                        <input type="hidden" name="redirectUrl" th:value="@{/san-pham/{id}(id=${sp.id})}">
+                        <th:block th:if="${variants.size() == 1}">
+                            <input type="hidden" name="sanPhamChiTietId" th:value="${variants[0].id}">
+                        </th:block>
+                        <th:block th:if="${variants.size() > 1}">
+                            <label class="product-detail__label">Chọn phiên bản:</label>
+                            <select name="sanPhamChiTietId" class="product-detail__select" required>
+                                <option th:each="v : ${variants}" th:value="${v.id}" th:text="${(v.tenMauSac != null ? v.tenMauSac + ' - ' : '') + (v.tenKichThuoc != null ? v.tenKichThuoc : '') + ' | ' + (v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : '')}">Phiên bản</option>
+                            </select>
+                        </th:block>
+                        <label class="product-detail__label">Số lượng:</label>
+                        <input type="number" name="soLuong" value="1" min="1" class="product-detail__qty">
+                        <button type="submit" class="btn btn--primary">Thêm vào giỏ hàng</button>
+                    </form>
+                </div>
+                <div class="product-detail__actions" th:if="${variants == null or variants.isEmpty()}">
+                    <p class="section__empty">Sản phẩm tạm hết hàng. Vui lòng liên hệ đặt trước.</p>
+                </div>
                 <div class="product-detail__actions">
-                    <a th:href="@{/gio-hang}" class="btn btn--primary">Thêm vào giỏ hàng</a>
                     <a th:href="@{/san-pham}" class="btn btn--outline">← Quay lại danh sách</a>
                 </div>
             </div>
