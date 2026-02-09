@@ -1,30 +1,22 @@
 package com.example.watchaura.service;
 
 import com.example.watchaura.entity.KhuyenMai;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
 import java.util.List;
+
+import org.springframework.data.domain.Page;
 
 public interface KhuyenMaiService {
 
-    List<KhuyenMai> getAll();
+    Page<KhuyenMai> findAll(int page, int size);
 
-    /** Khuyến mãi đang diễn ra (trong khoảng ngày, trạng thái bật) */
-    List<KhuyenMai> getActivePromotions(LocalDateTime now);
+    KhuyenMai findById(Integer id);
 
-    Page<KhuyenMai> getPage(Pageable pageable);
-
-    Page<KhuyenMai> searchPage(String keyword, Boolean trangThai, Pageable pageable);
-
-    KhuyenMai getById(Integer id);
-
-    KhuyenMai create(KhuyenMai khuyenMai);
+    KhuyenMai save(KhuyenMai khuyenMai);
 
     KhuyenMai update(Integer id, KhuyenMai khuyenMai);
 
     void delete(Integer id);
 
-    void toggleTrangThai(Integer id);
+    boolean existsByMaKhuyenMai(String maKhuyenMai);
 }

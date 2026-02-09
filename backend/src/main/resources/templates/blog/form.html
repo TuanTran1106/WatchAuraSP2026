@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Blog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+    <h3 class="mb-4"
+        th:text="${blog.id == null ? 'Thêm Blog' : 'Cập nhật Blog'}">
+    </h3>
+
+    <form th:action="${blog.id == null
+            ? '/admin/blog/luu'
+            : '/admin/blog/cap-nhat/' + blog.id}"
+          th:object="${blog}"
+          method="post">
+
+        <!-- TIÊU ĐỀ -->
+        <div class="mb-3">
+            <label class="form-label">Tiêu đề</label>
+            <input type="text"
+                   th:field="*{tieuDe}"
+                   class="form-control"
+                   required>
+        </div>
+
+        <!-- NỘI DUNG -->
+        <div class="mb-3">
+            <label class="form-label">Nội dung</label>
+            <textarea th:field="*{noiDung}"
+                      rows="6"
+                      class="form-control"
+                      required></textarea>
+        </div>
+
+        <!-- HÌNH ẢNH -->
+        <div class="mb-3">
+            <label class="form-label">Link hình ảnh</label>
+            <input type="text"
+                   th:field="*{hinhAnh}"
+                   class="form-control"
+                   placeholder="https://...">
+        </div>
+
+        <!-- PREVIEW -->
+        <div class="mb-3" th:if="${blog.hinhAnh != null}">
+            <label class="form-label">Xem trước</label><br>
+            <img th:src="@{${blog.hinhAnh}}"
+                 width="200"
+                 style="object-fit: cover">
+        </div>
+
+        <!-- NGÀY ĐĂNG -->
+        <div class="mb-3">
+            <label class="form-label">Ngày đăng</label>
+            <input type="datetime-local"
+                   class="form-control"
+                   th:value="${blog.ngayDang != null
+                       ? #temporals.format(blog.ngayDang,'yyyy-MM-dd''T''HH:mm')
+                       : ''}"
+                   name="ngayDang">
+        </div>
+
+        <!-- ACTION -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+                Lưu
+            </button>
+            <a th:href="@{/admin/blog}" class="btn btn-secondary">
+                Quay lại
+            </a>
+        </div>
+
+    </form>
+</div>
+
+</body>
+</html>

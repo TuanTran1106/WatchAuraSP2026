@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản lý Blog</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Danh sách Blog</h3>
+    <a th:href="@{/admin/blog/them}" class="btn btn-primary">
+      + Thêm Blog
+    </a>
+  </div>
+
+  <!-- TABLE -->
+  <table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark text-center">
+    <tr>
+      <th>ID</th>
+      <th>Hình ảnh</th>
+      <th>Tiêu đề</th>
+      <th>Nội dung</th>
+      <th>Ngày đăng</th>
+      <th>Hành động</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="b : ${listBlog}">
+      <td class="text-center" th:text="${b.id}"></td>
+
+      <!-- IMAGE -->
+      <td class="text-center">
+        <img th:if="${b.hinhAnh != null}"
+             th:src="@{${b.hinhAnh}}"
+             width="80" height="60"
+             style="object-fit: cover">
+        <span th:if="${b.hinhAnh == null}" class="text-muted">Không có</span>
+      </td>
+
+      <!-- TITLE -->
+      <td th:text="${b.tieuDe}"></td>
+
+      <!-- CONTENT SHORT -->
+      <td>
+        <span th:text="${#strings.abbreviate(b.noiDung, 100)}"></span>
+      </td>
+
+      <!-- DATE -->
+      <td class="text-center">
+        <span th:text="${#temporals.format(b.ngayDang,'dd/MM/yyyy')}"></span>
+      </td>
+
+      <!-- ACTION -->
+      <td class="text-center">
+        <a th:href="@{/admin/blog/sua/{id}(id=${b.id})}"
+           class="btn btn-sm btn-warning">Sửa</a>
+
+        <a th:href="@{/admin/blog/xoa/{id}(id=${b.id})}"
+           onclick="return confirm('Xóa blog này?')"
+           class="btn btn-sm btn-danger">Xóa</a>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGINATION -->
+  <nav th:if="${totalPages > 1}">
+    <ul class="pagination justify-content-center">
+
+      <!-- PREVIOUS -->
+      <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+        <a class="page-link"
+           th:href="@{/admin/blog(page=${currentPage - 1})}">
+          «
+        </a>
+      </li>
+
+      <!-- PAGE NUMBER -->
+      <li class="page-item"
+          th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+          th:classappend="${i == currentPage} ? 'active'">
+        <a class="page-link"
+           th:href="@{/admin/blog(page=${i})}"
+           th:text="${i + 1}"></a>
+      </li>
+
+      <!-- NEXT -->
+      <li class="page-item"
+          th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+        <a class="page-link"
+           th:href="@{/admin/blog(page=${currentPage + 1})}">
+          »
+        </a>
+      </li>
+
+    </ul>
+  </nav>
+
+</div>
+
+</body>
+</html>
