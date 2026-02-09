@@ -1,23 +1,19 @@
 package com.example.watchaura.service;
 
 import com.example.watchaura.entity.Blog;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 public interface BlogService {
 
-    List<Blog> getAll();
+    Page<Blog> findAll(int page, int size);
 
-    /** Tin tức mới nhất (theo ngày đăng) */
-    List<Blog> getRecentBlogs(int limit);
 
-    Page<Blog> getPage(Pageable pageable);
+    Blog findById(Integer id);
 
-    Blog getById(Integer id);
-
-    Blog create(Blog blog);
+    Blog save(Blog blog);
 
     Blog update(Integer id, Blog blog);
 

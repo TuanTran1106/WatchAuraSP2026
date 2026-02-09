@@ -3,73 +3,48 @@ package com.example.watchaura.service.impl;
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.repository.KhuyenMaiRepository;
 import com.example.watchaura.service.KhuyenMaiService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 @Service
-@RequiredArgsConstructor
 public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
-    private final KhuyenMaiRepository khuyenMaiRepository;
+    @Autowired
+    private KhuyenMaiRepository khuyenMaiRepository;
 
     @Override
-    public List<KhuyenMai> getAll() {
-        return khuyenMaiRepository.findAll();
+    public Page<KhuyenMai> findAll(int page, int size) {
+        return khuyenMaiRepository.findAll(
+                PageRequest.of(page, size, Sort.by("id").descending())
+        );
     }
 
     @Override
-    public List<KhuyenMai> getActivePromotions(LocalDateTime now) {
-        return khuyenMaiRepository.findActivePromotions(now);
+    public KhuyenMai findById(Integer id) {
+        return khuyenMaiRepository.findById(id).orElse(null);
     }
 
     @Override
-    public Page<KhuyenMai> getPage(Pageable pageable) {
-        return khuyenMaiRepository.findAll(pageable);
-    }
-
-    @Override
-    public Page<KhuyenMai> searchPage(String keyword, Boolean trangThai, Pageable pageable) {
-        return khuyenMaiRepository.searchByKeywordAndTrangThai(keyword != null ? keyword : "", trangThai, pageable);
-    }
-
-    @Override
-    public KhuyenMai getById(Integer id) {
-        return khuyenMaiRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi ID: " + id));
-    }
-
-    @Override
-    @Transactional
-    public KhuyenMai create(KhuyenMai khuyenMai) {
-
-        if (khuyenMaiRepository.existsByMaKhuyenMai(khuyenMai.getMaKhuyenMai())) {
-            throw new RuntimeException("Mã khuyến mãi đã tồn tại");
-        }
-
+    public KhuyenMai save(KhuyenMai khuyenMai) {
         khuyenMai.setNgayTao(LocalDateTime.now());
         khuyenMai.setNgayCapNhat(LocalDateTime.now());
-
         return khuyenMaiRepository.save(khuyenMai);
     }
 
     @Override
-    @Transactional
     public KhuyenMai update(Integer id, KhuyenMai khuyenMai) {
-
-        KhuyenMai existing = getById(id);
-
-        if (khuyenMaiRepository.existsByMaKhuyenMaiAndIdNot(
-                khuyenMai.getMaKhuyenMai(), id)) {
-            throw new RuntimeException("Mã khuyến mãi đã tồn tại");
+        KhuyenMai existing = khuyenMaiRepository.findById(id).orElse(null);
+        if (existing == null) {
+            return null;
         }
 
-        existing.setMaKhuyenMai(khuyenMai.getMaKhuyenMai());
         existing.setTenChuongTrinh(khuyenMai.getTenChuongTrinh());
         existing.setMoTa(khuyenMai.getMoTa());
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
@@ -84,19 +59,12 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
-    @Transactional
     public void delete(Integer id) {
-        if (!khuyenMaiRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy khuyến mãi để xóa");
-        }
         khuyenMaiRepository.deleteById(id);
     }
 
     @Override
-    @Transactional
-    public void toggleTrangThai(Integer id) {
-        KhuyenMai km = getById(id);
-        km.setTrangThai(km.getTrangThai() == null || !km.getTrangThai());
-        khuyenMaiRepository.save(km);
+    public boolean existsByMaKhuyenMai(String maKhuyenMai) {
+        return khuyenMaiRepository.existsByMaKhuyenMai(maKhuyenMai);
     }
 }

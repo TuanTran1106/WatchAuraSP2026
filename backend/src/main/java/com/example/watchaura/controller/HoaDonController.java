@@ -2,6 +2,7 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
+import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VoucherService;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -77,7 +80,10 @@ public class HoaDonController {
         model.addAttribute("hoaDon", request);
         model.addAttribute("hoaDonId", id);
         model.addAttribute("khachHangList", khachHangService.getAll());
-        model.addAttribute("voucherList", voucherService.getAll());
+        Page<Voucher> voucherPage =
+                voucherService.findAll(PageRequest.of(0, 100));
+        model.addAttribute("voucherList", voucherPage.getContent());
+
         model.addAttribute("formAction", "/admin/hoa-don/" + id);
         return "layout/admin-layout";
     }
@@ -90,7 +96,10 @@ public class HoaDonController {
             model.addAttribute("hoaDon", request);
             model.addAttribute("hoaDonId", id);
             model.addAttribute("khachHangList", khachHangService.getAll());
-            model.addAttribute("voucherList", voucherService.getAll());
+            Page<Voucher> voucherPage =
+                    voucherService.findAll(PageRequest.of(0, 100));
+
+            model.addAttribute("voucherList", voucherPage.getContent());
             model.addAttribute("formAction", "/admin/hoa-don/" + id);
             return "layout/admin-layout";
         }
