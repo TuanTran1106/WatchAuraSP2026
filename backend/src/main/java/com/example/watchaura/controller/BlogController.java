@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+
 @Controller
 @RequestMapping("/admin/blog")
 public class BlogController {
@@ -16,8 +18,18 @@ public class BlogController {
 
     // ================== LIST ==================
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("listBlog", blogService.findAll());
+    public String list(
+            @RequestParam(defaultValue = "0") int page,
+            Model model
+    ) {
+        int size = 5; // mỗi trang 5 blog
+
+        Page<Blog> blogPage = blogService.findAll(page, size);
+
+        model.addAttribute("listBlog", blogPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", blogPage.getTotalPages());
+
         return "blog/list";
     }
 

@@ -4,9 +4,12 @@ import com.example.watchaura.entity.Blog;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 public interface BlogService {
 
-    List<Blog> findAll();
+    Page<Blog> findAll(int page, int size);
+
 
     Blog findById(Integer id);
 

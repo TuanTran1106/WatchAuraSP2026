@@ -4,6 +4,8 @@ import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.service.VoucherService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,9 +18,10 @@ public class VoucherServiceImpl implements VoucherService {
     private VoucherRepository voucherRepository;
 
     @Override
-    public List<Voucher> findAll() {
-        return voucherRepository.findAll();
+    public Page<Voucher> findAll(Pageable pageable) {
+        return voucherRepository.findAll(pageable);
     }
+
 
     @Override
     public Voucher findById(Integer id) {

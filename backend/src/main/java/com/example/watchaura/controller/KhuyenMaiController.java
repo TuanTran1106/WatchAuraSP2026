@@ -16,8 +16,18 @@ public class KhuyenMaiController {
 
     // ================== LIST ==================
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("listKhuyenMai", khuyenMaiService.findAll());
+    public String list(
+            @RequestParam(defaultValue = "0") int page,
+            Model model
+    ) {
+        int size = 5; // 5 khuyến mãi / trang
+
+        var pageData = khuyenMaiService.findAll(page, size);
+
+        model.addAttribute("listKhuyenMai", pageData.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageData.getTotalPages());
+
         return "khuyenmai/list";
     }
 

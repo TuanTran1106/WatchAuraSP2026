@@ -4,9 +4,11 @@ import com.example.watchaura.entity.KhuyenMai;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 public interface KhuyenMaiService {
 
-    List<KhuyenMai> findAll();
+    Page<KhuyenMai> findAll(int page, int size);
 
     KhuyenMai findById(Integer id);
 

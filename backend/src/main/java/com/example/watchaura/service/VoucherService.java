@@ -1,12 +1,15 @@
 package com.example.watchaura.service;
 
 import com.example.watchaura.entity.Voucher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface VoucherService {
 
-    List<Voucher> findAll();
+    Page<Voucher> findAll(Pageable pageable);
+
 
     Voucher findById(Integer id);
 

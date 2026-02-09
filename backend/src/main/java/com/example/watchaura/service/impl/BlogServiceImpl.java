@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 @Service
 public class BlogServiceImpl implements BlogService {
 
@@ -16,8 +20,10 @@ public class BlogServiceImpl implements BlogService {
     private BlogRepository blogRepository;
 
     @Override
-    public List<Blog> findAll() {
-        return blogRepository.findAll();
+    public Page<Blog> findAll(int page, int size) {
+        return blogRepository.findAll(
+                PageRequest.of(page, size, Sort.by("ngayDang").descending())
+        );
     }
 
     @Override

@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 @Service
 public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
@@ -16,8 +20,10 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     private KhuyenMaiRepository khuyenMaiRepository;
 
     @Override
-    public List<KhuyenMai> findAll() {
-        return khuyenMaiRepository.findAll();
+    public Page<KhuyenMai> findAll(int page, int size) {
+        return khuyenMaiRepository.findAll(
+                PageRequest.of(page, size, Sort.by("id").descending())
+        );
     }
 
     @Override

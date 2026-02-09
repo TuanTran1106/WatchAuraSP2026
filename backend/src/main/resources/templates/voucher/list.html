@@ -59,6 +59,40 @@
         </tr>
         </tbody>
     </table>
+    <!-- Pagination -->
+    <nav th:if="${totalPages > 1}">
+        <ul class="pagination justify-content-center">
+
+            <!-- Previous -->
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/admin/voucher(page=${currentPage - 1})}">
+                    &laquo;
+                </a>
+            </li>
+
+            <!-- Page numbers -->
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link"
+                   th:text="${i + 1}"
+                   th:href="@{/admin/voucher(page=${i})}">
+                </a>
+            </li>
+
+            <!-- Next -->
+            <li class="page-item"
+                th:classappend="${currentPage + 1 == totalPages} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/admin/voucher(page=${currentPage + 1})}">
+                    &raquo;
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+
 </div>
 </body>
 </html>

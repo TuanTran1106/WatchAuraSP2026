@@ -7,6 +7,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+
 @Controller
 @RequestMapping("/admin/voucher")
 public class VoucherController {
@@ -16,10 +21,20 @@ public class VoucherController {
 
     // ================== LIST ==================
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("listVoucher", voucherService.findAll());
+    public String list(
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, 7);
+        Page<Voucher> pageVoucher = voucherService.findAll(pageable);
+
+        model.addAttribute("listVoucher", pageVoucher.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageVoucher.getTotalPages());
+
         return "voucher/list";
     }
+
 
     // ================== ADD FORM ==================
     @GetMapping("/them")
