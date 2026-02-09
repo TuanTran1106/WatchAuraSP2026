@@ -106,6 +106,16 @@ public class GioHangServiceImpl implements GioHangService {
                 });
     }
 
+    @Override
+    public int getSoLuongGioHang(Integer khachHangId) {
+        if (khachHangId == null) return 0;
+        return gioHangRepository.findByKhachHangIdAndTrangThai(khachHangId, true)
+                .map(gh -> gioHangChiTietRepository.findByGioHangId(gh.getId()).stream()
+                        .mapToInt(ct -> ct.getSoLuong() != null ? ct.getSoLuong() : 0)
+                        .sum())
+                .orElse(0);
+    }
+
     private GioHangDTO convertToDTO(GioHang gioHang) {
         GioHangDTO dto = new GioHangDTO();
         dto.setId(gioHang.getId());
@@ -144,8 +154,9 @@ public class GioHangServiceImpl implements GioHangService {
         if (chiTiet.getSanPhamChiTiet() != null) {
             dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
             dto.setGiaBan(chiTiet.getSanPhamChiTiet().getGiaBan());
-            
+            dto.setSoLuongTon(chiTiet.getSanPhamChiTiet().getSoLuongTon());
             if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
+                dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
                 dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
                 dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
             }

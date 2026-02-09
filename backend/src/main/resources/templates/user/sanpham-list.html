@@ -5,6 +5,8 @@
 <div th:fragment="content" class="user-page user-page--products">
     <div class="container">
         <h1 class="page-title">Sản phẩm</h1>
+        <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
 
         <div class="filters">
             <form th:action="@{/san-pham}" method="get" class="filters__form">
@@ -38,7 +40,14 @@
                 </a>
                 <div class="product-card__actions">
                     <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm">Chi tiết</a>
-                    <a th:href="@{/gio-hang}" class="btn btn--primary btn--sm">Thêm giỏ</a>
+                    <th:block th:if="${firstVariantIdByProductId != null and firstVariantIdByProductId[__${sp.id}__] != null}">
+                        <form th:action="@{/gio-hang/them}" method="post" class="product-card__form-inline">
+                            <input type="hidden" name="sanPhamChiTietId" th:value="${firstVariantIdByProductId[__${sp.id}__]}">
+                            <input type="hidden" name="soLuong" value="1">
+                            <input type="hidden" name="redirectUrl" th:value="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult != null ? pageResult.number : 0})}">
+                            <button type="submit" class="btn btn--primary btn--sm">Thêm giỏ</button>
+                        </form>
+                    </th:block>
                 </div>
             </div>
         </div>

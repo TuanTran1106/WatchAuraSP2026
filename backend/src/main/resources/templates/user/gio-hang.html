@@ -1,12 +1,166 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content" class="user-page">
-    <div class="container">
-        <h1 class="page-title">Giỏ hàng</h1>
-        <p class="section__empty">Chức năng giỏ hàng đang được hoàn thiện. Bạn có thể xem sản phẩm và liên hệ đặt hàng.</p>
-        <a th:href="@{/san-pham}" class="btn btn--primary">Xem sản phẩm</a>
+<div th:fragment="content" class="user-page cart-page">
+    <div class="container cart-container">
+        <nav class="breadcrumb cart-breadcrumb">
+            <a th:href="@{/}">Trang chủ</a>
+            <span class="breadcrumb__sep">/</span>
+            <span class="breadcrumb__current">Giỏ hàng</span>
+        </nav>
+        <header class="cart-header">
+            <h1 class="cart-page__title">Giỏ hàng của bạn</h1>
+            <p class="cart-page__subtitle" th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}" th:text="|${cart.items.size()} sản phẩm|">0 sản phẩm</p>
+        </header>
+
+        <div th:if="${success}" class="alert alert--success" th:text="${success}">Thông báo</div>
+        <div th:if="${error}" class="alert alert--error" th:text="${error}">Lỗi</div>
+
+        <th:block th:if="${cart == null or cart.items == null or cart.items.isEmpty()}">
+            <div class="cart-empty">
+                <div class="cart-empty__icon">🛒</div>
+                <h2 class="cart-empty__title">Giỏ hàng trống</h2>
+                <p class="cart-empty__text">Bạn chưa thêm sản phẩm nào. Khám phá bộ sưu tập đồng hồ và thêm vào giỏ nhé!</p>
+                <div class="cart-empty__actions">
+                    <a th:href="@{/san-pham}" class="btn btn--primary">Xem sản phẩm</a>
+                    <a th:href="@{/}" class="btn btn--outline">Về trang chủ</a>
+                </div>
+            </div>
+        </th:block>
+
+        <th:block th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}">
+            <div class="cart-table-wrap">
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Đơn giá</th>
+                            <th>Số lượng</th>
+                            <th>Thành tiền</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${cart.items}" class="cart-row" th:attr="data-item-id=${item.id}, data-gia-ban=${item.giaBan != null ? item.giaBan : 0}, data-max-qty=${item.soLuongTon != null ? item.soLuongTon : 999}">
+                            <td class="cart-table__product">
+                                <a th:if="${item.idSanPham != null}" th:href="@{/san-pham/{id}(id=${item.idSanPham})}" class="cart-table__img-link">
+                                    <img th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}" th:src="@{'/uploads/' + ${item.hinhAnh}}" alt="" class="cart-table__img">
+                                    <span th:if="${item.hinhAnh == null or item.hinhAnh.isEmpty()}" class="cart-table__img-placeholder">⌚</span>
+                                </a>
+                                <a th:if="${item.idSanPham != null}" th:href="@{/san-pham/{id}(id=${item.idSanPham})}" class="cart-table__name cart-table__name--link" th:text="${item.tenSanPham}">Tên SP</a>
+                                <span th:if="${item.idSanPham == null}" class="cart-table__name" th:text="${item.tenSanPham}">Tên SP</span>
+                            </td>
+                            <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
+                            <td class="cart-table__qty">
+                                <div class="qty-controls">
+                                    <form th:if="${item.soLuong > 1}" th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update">
+                                        <input type="hidden" name="soLuong" th:value="${item.soLuong - 1}">
+                                        <button type="submit" class="qty-btn qty-btn--minus" aria-label="Giảm">−</button>
+                                    </form>
+                                    <span th:if="${item.soLuong <= 1}" class="qty-btn qty-btn--minus qty-btn--disabled">−</span>
+                                    <span class="qty-controls__num cart-qty-display" th:text="${item.soLuong}">1</span>
+                                    <form th:if="${item.soLuongTon == null or item.soLuong < item.soLuongTon}" th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update">
+                                        <input type="hidden" name="soLuong" th:value="${item.soLuong + 1}">
+                                        <button type="submit" class="qty-btn qty-btn--plus" aria-label="Tăng">+</button>
+                                    </form>
+                                    <span th:if="${item.soLuongTon != null and item.soLuong >= item.soLuongTon}" class="qty-btn qty-btn--plus qty-btn--disabled" title="Đã đạt tối đa tồn kho">+</span>
+                                </div>
+                                <p class="cart-table__max-qty" th:if="${item.soLuongTon != null}" th:text="|Tối đa: ${item.soLuongTon} SP|">Tối đa</p>
+                                <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-custom cart-form-update">
+                                    <input type="number" name="soLuong" th:value="${item.soLuong}" min="1" th:attr="max=${item.soLuongTon != null ? item.soLuongTon : 999}" class="qty-custom__input cart-qty-input">
+                                    <button type="submit" class="btn btn--small">Cập nhật</button>
+                                </form>
+                            </td>
+                            <td class="cart-table__total cart-line-total" th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
+                            <td class="cart-table__remove">
+                                <form th:action="@{/gio-hang/xoa/{id}(id=${item.id})}" method="post" class="cart-form-delete">
+                                    <button type="submit" class="btn-remove" aria-label="Xóa">×</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cart-summary">
+                <div class="cart-summary__box">
+                    <div class="cart-summary__row">
+                        <span class="cart-summary__label">Tạm tính</span>
+                        <span class="cart-summary__value" id="cart-tong-tien" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                    </div>
+                    <p class="cart-summary__note">Phí vận chuyển sẽ được tính ở bước thanh toán.</p>
+                    <div class="cart-summary__actions">
+                        <a th:href="@{/san-pham}" class="btn btn--outline btn--lg">← Tiếp tục mua</a>
+                        <a th:href="@{#}" class="btn btn--primary btn--lg">Thanh toán</a>
+                    </div>
+                </div>
+            </div>
+        </th:block>
     </div>
+    <script th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}">
+(function() {
+    function formatVnd(num) {
+        if (num == null) return '0 ₫';
+        return Number(num).toLocaleString('vi-VN') + ' ₫';
+    }
+    function updateHeaderCount(count) {
+        var el = document.querySelector('.nav-cart__count');
+        if (el) {
+            el.textContent = count;
+            el.style.display = count > 0 ? '' : 'none';
+        }
+    }
+    function showCartError(msg) {
+        var wrap = document.querySelector('.cart-page .container');
+        if (!wrap) return;
+        var alert = document.createElement('div');
+        alert.className = 'alert alert--error';
+        alert.textContent = msg;
+        wrap.insertBefore(alert, wrap.firstChild.nextSibling);
+        setTimeout(function() { alert.remove(); }, 5000);
+    }
+    document.querySelectorAll('.cart-form-update, .cart-form-delete').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (form.classList.contains('cart-form-delete') && !confirm('Xóa sản phẩm này khỏi giỏ?')) return;
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+            var fd = new FormData(form);
+            var req = new Request(form.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            fetch(req).then(function(r) { return r.json(); }).then(function(data) {
+                if (btn) btn.disabled = false;
+                if (!data.success) {
+                    showCartError(data.error || 'Có lỗi xảy ra.');
+                    return;
+                }
+                var row = form.closest('.cart-row');
+                if (form.classList.contains('cart-form-delete')) {
+                    if (row) row.remove();
+                    var tbody = document.querySelector('.cart-table tbody');
+                    if (tbody && tbody.querySelectorAll('.cart-row').length === 0) {
+                        window.location.reload();
+                        return;
+                    }
+                } else {
+                    if (row && data.soLuong != null) {
+                        var qtyDisplay = row.querySelector('.cart-qty-display');
+                        if (qtyDisplay) qtyDisplay.textContent = data.soLuong;
+                        var lineTotal = row.querySelector('.cart-line-total');
+                        if (lineTotal && data.thanhTien != null) lineTotal.textContent = formatVnd(data.thanhTien);
+                        var qtyInput = row.querySelector('.cart-qty-input');
+                        if (qtyInput) qtyInput.value = data.soLuong;
+                    }
+                }
+                var totalEl = document.getElementById('cart-tong-tien');
+                if (totalEl && data.tongTien != null) totalEl.textContent = formatVnd(data.tongTien);
+                updateHeaderCount(data.soLuongGioHang);
+            }).catch(function() {
+                if (btn) btn.disabled = false;
+                showCartError('Không kết nối được. Thử lại.');
+            });
+        });
+    });
+})();
+    </script>
 </div>
 </body>
 </html>

@@ -55,9 +55,11 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
         SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(request.getSanPhamChiTietId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
 
-        // Kiểm tra số lượng tồn kho
-        if (sanPhamChiTiet.getSoLuongTon() == null || sanPhamChiTiet.getSoLuongTon() < request.getSoLuong()) {
-            throw new RuntimeException("Số lượng tồn kho không đủ");
+        Integer tonKho = sanPhamChiTiet.getSoLuongTon();
+        if (tonKho == null || tonKho < request.getSoLuong()) {
+            throw new RuntimeException(tonKho != null
+                    ? "Số lượng tồn kho không đủ (còn " + tonKho + " sản phẩm)."
+                    : "Số lượng tồn kho không đủ.");
         }
 
         // Kiểm tra sản phẩm đã có trong giỏ chưa
@@ -70,8 +72,8 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
             existing.setSoLuong(existing.getSoLuong() + request.getSoLuong());
             
             // Kiểm tra lại tồn kho
-            if (sanPhamChiTiet.getSoLuongTon() < existing.getSoLuong()) {
-                throw new RuntimeException("Số lượng tồn kho không đủ");
+            if (tonKho < existing.getSoLuong()) {
+                throw new RuntimeException("Số lượng tồn kho không đủ (còn " + tonKho + " sản phẩm).");
             }
             
             return convertToDTO(gioHangChiTietRepository.save(existing));
@@ -93,10 +95,11 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết giỏ hàng"));
 
         SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
-        
-        // Kiểm tra số lượng tồn kho
-        if (sanPhamChiTiet.getSoLuongTon() == null || sanPhamChiTiet.getSoLuongTon() < request.getSoLuong()) {
-            throw new RuntimeException("Số lượng tồn kho không đủ");
+        Integer ton = sanPhamChiTiet.getSoLuongTon();
+        if (ton == null || ton < request.getSoLuong()) {
+            throw new RuntimeException(ton != null
+                    ? "Số lượng tồn kho không đủ (còn " + ton + " sản phẩm)."
+                    : "Số lượng tồn kho không đủ.");
         }
 
         chiTiet.setSoLuong(request.getSoLuong());
@@ -121,8 +124,9 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
         if (chiTiet.getSanPhamChiTiet() != null) {
             dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
             dto.setGiaBan(chiTiet.getSanPhamChiTiet().getGiaBan());
-            
+            dto.setSoLuongTon(chiTiet.getSanPhamChiTiet().getSoLuongTon());
             if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
+                dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
                 dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
                 dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
             }

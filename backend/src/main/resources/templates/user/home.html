@@ -9,6 +9,8 @@
 <body>
 
 <div th:fragment="content" class="home-page">
+    <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
 
     <!-- Hero / Banner -->
     <section class="hero">
@@ -63,7 +65,14 @@
                     </a>
                     <div class="product-card__actions">
                         <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm">Xem chi tiết</a>
-                        <a th:href="@{/gio-hang}" class="btn btn--primary btn--sm">Thêm vào giỏ</a>
+                        <th:block th:if="${firstVariantIdByProductId != null and firstVariantIdByProductId[__${sp.id}__] != null}">
+                            <form th:action="@{/gio-hang/them}" method="post" class="product-card__form-inline">
+                                <input type="hidden" name="sanPhamChiTietId" th:value="${firstVariantIdByProductId[__${sp.id}__]}">
+                                <input type="hidden" name="soLuong" value="1">
+                                <input type="hidden" name="redirectUrl" th:value="@{/}">
+                                <button type="submit" class="btn btn--primary btn--sm">Thêm vào giỏ</button>
+                            </form>
+                        </th:block>
                     </div>
                 </div>
             </div>
