@@ -5,9 +5,17 @@ import com.example.watchaura.entity.*;
 import com.example.watchaura.repository.*;
 import com.example.watchaura.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +40,36 @@ public class HoaDonServiceImpl implements HoaDonService {
         return hoaDonRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HoaDonDTO> search(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return getAll();
+        }
+        String q = keyword.trim();
+        return hoaDonRepository.findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCase(q, q).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable) {
+        String q = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        boolean hasQ = q != null;
+        boolean hasStatus = trangThai != null && !trangThai.isBlank();
+        if (hasStatus && hasQ) {
+            return hoaDonRepository.findByTrangThaiAndKeyword(trangThai, q, pageable).map(this::convertToDTO);
+        }
+        if (hasStatus) {
+            return hoaDonRepository.findByTrangThaiDonHang(trangThai, pageable).map(this::convertToDTO);
+        }
+        if (hasQ) {
+            return hoaDonRepository.findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCase(q, q, pageable).map(this::convertToDTO);
+        }
+        return hoaDonRepository.findAll(pageable).map(this::convertToDTO);
     }
 
     @Override
@@ -205,11 +243,28 @@ public class HoaDonServiceImpl implements HoaDonService {
         return convertToDTO(hoaDonRepository.save(hoaDon));
     }
 
+    /** Thứ tự trạng thái: chỉ cho chuyển theo chiều thuận (mũi tên), không cho lùi. */
+    private static final java.util.Map<String, java.util.Set<String>> ALLOWED_NEXT_STATUS = java.util.Map.of(
+            "CHO_XAC_NHAN", java.util.Set.of("DANG_XU_LY", "DA_HUY"),
+            "DANG_XU_LY", java.util.Set.of("DANG_GIAO", "DA_HUY"),
+            "DANG_GIAO", java.util.Set.of("DA_GIAO", "DA_HUY"),
+            "DA_GIAO", java.util.Set.of(),
+            "DA_HUY", java.util.Set.of()
+    );
+
     @Override
     @Transactional
     public HoaDonDTO updateTrangThaiDonHang(Integer id, String trangThaiDonHang) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        String current = hoaDon.getTrangThaiDonHang() != null ? hoaDon.getTrangThaiDonHang() : "CHO_XAC_NHAN";
+        if (!current.equals(trangThaiDonHang)) {
+            java.util.Set<String> allowed = ALLOWED_NEXT_STATUS.getOrDefault(current, java.util.Set.of());
+            if (!allowed.contains(trangThaiDonHang)) {
+                throw new RuntimeException("Chỉ được chuyển trạng thái theo chiều tiến (Chờ xác nhận → Đang xử lý → Đang giao → Đã giao hoặc Đã hủy). Không cho chuyển ngược.");
+            }
+        }
 
         // Nếu hủy đơn, cộng lại tồn kho
         if ("DA_HUY".equals(trangThaiDonHang) && !"DA_HUY".equals(hoaDon.getTrangThaiDonHang())) {
@@ -241,6 +296,63 @@ public class HoaDonServiceImpl implements HoaDonService {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String uuid = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         return "HD" + timestamp + uuid;
+    }
+
+    @Override
+    public byte[] exportPdf(HoaDonDTO dto) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+            Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 11);
+            Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+
+            document.add(new Paragraph("WatchAura - Hóa đơn", fontTitle));
+            document.add(new Paragraph(" "));
+
+            document.add(new Paragraph("Mã đơn: " + (dto.getMaDonHang() != null ? dto.getMaDonHang() : ""), fontNormal));
+            document.add(new Paragraph("Ngày đặt: " + (dto.getNgayDat() != null ? dto.getNgayDat().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : ""), fontNormal));
+            document.add(new Paragraph("Khách hàng: " + (dto.getTenKhachHang() != null ? dto.getTenKhachHang() : ""), fontNormal));
+            document.add(new Paragraph("SĐT: " + (dto.getSdtKhachHang() != null ? dto.getSdtKhachHang() : ""), fontNormal));
+            document.add(new Paragraph("Địa chỉ: " + (dto.getDiaChi() != null ? dto.getDiaChi() : ""), fontNormal));
+            document.add(new Paragraph("Trạng thái: " + (dto.getTrangThaiDonHang() != null ? dto.getTrangThaiDonHang() : ""), fontNormal));
+            document.add(new Paragraph(" "));
+
+            if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+                PdfPTable table = new PdfPTable(4);
+                table.setWidthPercentage(100f);
+                table.setWidths(new float[]{3f, 1.5f, 2f, 2f});
+                table.addCell(createCell("Sản phẩm", fontHeader, Element.ALIGN_LEFT));
+                table.addCell(createCell("Số lượng", fontHeader, Element.ALIGN_CENTER));
+                table.addCell(createCell("Đơn giá", fontHeader, Element.ALIGN_RIGHT));
+                table.addCell(createCell("Thành tiền", fontHeader, Element.ALIGN_RIGHT));
+                for (HoaDonChiTietDTO ct : dto.getItems()) {
+                    table.addCell(createCell(ct.getTenSanPham() != null ? ct.getTenSanPham() : "", fontNormal, Element.ALIGN_LEFT));
+                    table.addCell(createCell(ct.getSoLuong() != null ? ct.getSoLuong().toString() : "0", fontNormal, Element.ALIGN_CENTER));
+                    table.addCell(createCell(ct.getDonGia() != null ? ct.getDonGia().toString() : "0", fontNormal, Element.ALIGN_RIGHT));
+                    table.addCell(createCell(ct.getThanhTien() != null ? ct.getThanhTien().toString() : "0", fontNormal, Element.ALIGN_RIGHT));
+                }
+                document.add(table);
+                document.add(new Paragraph(" "));
+            }
+
+            document.add(new Paragraph("Tổng tạm tính: " + (dto.getTongTienTamTinh() != null ? dto.getTongTienTamTinh().toString() : "0"), fontNormal));
+            document.add(new Paragraph("Tiền giảm: " + (dto.getTienGiam() != null ? dto.getTienGiam().toString() : "0"), fontNormal));
+            document.add(new Paragraph("Tổng thanh toán: " + (dto.getTongTienThanhToan() != null ? dto.getTongTienThanhToan().toString() : "0"), fontHeader));
+
+            document.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi xuất PDF: " + e.getMessage());
+        }
+    }
+
+    private static PdfPCell createCell(String text, Font font, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "", font));
+        cell.setHorizontalAlignment(alignment);
+        return cell;
     }
 
     private BigDecimal calculateVoucherDiscount(Voucher voucher, BigDecimal tongTien) {

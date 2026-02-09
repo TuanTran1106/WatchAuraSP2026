@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="user-page user-page--detail" th:with="sp=${sp}">
+    <div class="container container--narrow">
+        <nav class="breadcrumb">
+            <a th:href="@{/}">Trang chủ</a>
+            <span class="breadcrumb__sep">/</span>
+            <a th:href="@{/san-pham}">Sản phẩm</a>
+            <span class="breadcrumb__sep">/</span>
+            <span th:text="${sp.tenSanPham}">Chi tiết</span>
+        </nav>
+
+        <div class="product-detail">
+            <div class="product-detail__gallery">
+                <div class="product-detail__img-wrap" th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}">
+                    <img th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-detail__img">
+                </div>
+                <div class="product-detail__img-wrap product-detail__img-wrap--placeholder" th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}">
+                    <span>⌚</span>
+                </div>
+            </div>
+            <div class="product-detail__info">
+                <h1 class="product-detail__name" th:text="${sp.tenSanPham}">Tên sản phẩm</h1>
+                <p class="product-detail__meta" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
+                <p class="product-detail__meta" th:if="${sp.tenDanhMuc}" th:text="${sp.tenDanhMuc}">Danh mục</p>
+                <p class="product-detail__price" th:if="${sp.giaBan != null}" th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</p>
+                <p class="product-detail__price product-detail__price--na" th:if="${sp.giaBan == null}">Liên hệ để biết giá</p>
+                <div class="product-detail__specs" th:if="${sp.duongKinh != null or sp.doChiuNuoc != null or sp.phongCach != null}">
+                    <p th:if="${sp.duongKinh != null}" th:text="|Đường kính: ${sp.duongKinh} mm|"></p>
+                    <p th:if="${sp.doChiuNuoc != null}" th:text="|Chịu nước: ${sp.doChiuNuoc} m|"></p>
+                    <p th:if="${sp.phongCach != null}" th:text="|Phong cách: ${sp.phongCach}|"></p>
+                </div>
+                <p class="product-detail__desc" th:if="${sp.moTa != null and !sp.moTa.isEmpty()}" th:utext="${sp.moTa}">Mô tả</p>
+                <div class="product-detail__actions">
+                    <a th:href="@{/gio-hang}" class="btn btn--primary">Thêm vào giỏ hàng</a>
+                    <a th:href="@{/san-pham}" class="btn btn--outline">← Quay lại danh sách</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

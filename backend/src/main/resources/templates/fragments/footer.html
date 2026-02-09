@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<footer th:fragment="footer" class="user-footer">
+    <div class="container footer-inner">
+        <div class="footer__col">
+            <h4 class="footer__title">Về WatchAura</h4>
+            <p class="footer__text">Chuyên đồng hồ chính hãng – Cam kết bảo hành, giao hàng toàn quốc, đổi trả linh hoạt.</p>
+        </div>
+        <div class="footer__col">
+            <h4 class="footer__title">Liên kết nhanh</h4>
+            <a th:href="@{/}">Trang chủ</a>
+            <a th:href="@{/san-pham}">Sản phẩm</a>
+            <a th:href="@{/tin-tuc}">Tin tức</a>
+            <a th:href="@{/lien-he}">Liên hệ</a>
+            <a th:href="@{/gio-hang}">Giỏ hàng</a>
+        </div>
+        <div class="footer__col">
+            <h4 class="footer__title">Liên hệ</h4>
+            <p>Hotline: <strong>1900 xxxx</strong></p>
+            <p>Email: support@watchaura.vn</p>
+            <p>Địa chỉ: TP. Hồ Chí Minh</p>
+        </div>
+        <div class="footer__col footer__col--newsletter">
+            <h4 class="footer__title">Đăng ký nhận tin</h4>
+            <p class="footer__text">Nhận thông tin khuyến mãi và sản phẩm mới.</p>
+            <form class="footer-newsletter" th:action="@{/dang-ky-nhan-tin}" method="post">
+                <input type="email" name="email" class="footer-newsletter__input" placeholder="Email của bạn" required>
+                <button type="submit" class="footer-newsletter__btn">Đăng ký</button>
+            </form>
+        </div>
+    </div>
+    <div class="footer__bottom">
+        <div class="container">
+            <p class="footer__copyright">© 2026 WatchAura. Bảo lưu mọi quyền.</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

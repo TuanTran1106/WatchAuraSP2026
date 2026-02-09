@@ -1,15 +1,9 @@
 package com.example.watchaura.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.PastOrPresent;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -23,6 +17,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name = "KhachHang")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class KhachHang {
 
     @Id
@@ -48,6 +43,7 @@ public class KhachHang {
     private String gioiTinh;
 
     @Column(name = "ngay_sinh")
+    @PastOrPresent(message = "Ngày sinh không được ở tương lai")
     private LocalDate ngaySinh;
 
     @Column(name = "hinh_anh", length = 255)
@@ -61,6 +57,11 @@ public class KhachHang {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_chuc_vu")
-    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ChucVu chucVu;
+
+    @PrePersist
+    protected void onCreate() {
+        this.ngayTao = LocalDateTime.now();
+    }
 }

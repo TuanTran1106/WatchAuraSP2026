@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title">Địa chỉ theo khách hàng</h2>
+        <form method="get" th:action="@{/admin/dia-chi}">
+            <label>Chọn khách hàng</label>
+            <select name="khachHangId" onchange="this.form.submit()">
+                <option value="">-- Chọn khách hàng --</option>
+                <option th:each="kh : ${khachHangList}" th:value="${kh.id}" th:text="${kh.tenNguoiDung}" th:selected="${selectedKhachHangId != null and selectedKhachHangId == kh.id}"></option>
+            </select>
+        </form>
+        <table class="table" th:if="${!list.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Địa chỉ cụ thể</th>
+                    <th>Phường/Xã</th>
+                    <th>Quận/Huyện</th>
+                    <th>Tỉnh/Thành</th>
+                    <th>Mặc định</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${list}">
+                    <td th:text="${item.id}"></td>
+                    <td th:text="${item.diaChiCuThe}"></td>
+                    <td th:text="${item.phuongXa}"></td>
+                    <td th:text="${item.quanHuyen}"></td>
+                    <td th:text="${item.tinhThanh}"></td>
+                    <td th:text="${item.macDinh != null and item.macDinh ? 'Có' : 'Không'}"></td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${selectedKhachHangId != null and list.isEmpty()}">Không có địa chỉ nào.</p>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title">Danh sách chi tiết hóa đơn</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ID hóa đơn</th>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${list}">
+                    <td th:text="${item.id}"></td>
+                    <td th:text="${item.hoaDonId}"></td>
+                    <td th:text="${item.tenSanPham}"></td>
+                    <td th:text="${item.soLuong}"></td>
+                    <td th:text="${item.donGia}"></td>
+                    <td th:text="${item.thanhTien}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+</body>
+</html>

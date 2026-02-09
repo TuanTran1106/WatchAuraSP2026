@@ -5,11 +5,12 @@ import com.example.watchaura.repository.ChatLieuDayRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
+@Controller
 @RequestMapping("/api/chat-lieu-day")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
@@ -21,6 +22,7 @@ public class ChatLieuDayController {
      * GET: Lấy tất cả chất liệu dây
      */
     @GetMapping
+    @ResponseBody
     public ResponseEntity<List<ChatLieuDay>> getAllChatLieuDay() {
         try {
             List<ChatLieuDay> chatLieuDays = chatLieuDayRepository.findAll();
@@ -34,6 +36,7 @@ public class ChatLieuDayController {
      * GET: Lấy chất liệu dây theo ID
      */
     @GetMapping("/{id}")
+    @ResponseBody
     public ResponseEntity<?> getChatLieuDayById(@PathVariable Integer id) {
         try {
             return chatLieuDayRepository.findById(id)
@@ -48,6 +51,7 @@ public class ChatLieuDayController {
      * POST: Tạo mới chất liệu dây
      */
     @PostMapping
+    @ResponseBody
     public ResponseEntity<?> createChatLieuDay(@RequestBody ChatLieuDay chatLieuDay) {
         try {
             ChatLieuDay saved = chatLieuDayRepository.save(chatLieuDay);
@@ -61,6 +65,7 @@ public class ChatLieuDayController {
      * PUT: Cập nhật chất liệu dây
      */
     @PutMapping("/{id}")
+    @ResponseBody
     public ResponseEntity<?> updateChatLieuDay(@PathVariable Integer id, @RequestBody ChatLieuDay chatLieuDay) {
         try {
             return chatLieuDayRepository.findById(id)
@@ -78,6 +83,7 @@ public class ChatLieuDayController {
      * DELETE: Xóa chất liệu dây
      */
     @DeleteMapping("/{id}")
+    @ResponseBody
     public ResponseEntity<?> deleteChatLieuDay(@PathVariable Integer id) {
         try {
             if (chatLieuDayRepository.existsById(id)) {

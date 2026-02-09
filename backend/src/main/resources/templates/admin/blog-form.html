@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title" th:text="${blog.id != null ? 'Sửa blog' : 'Thêm blog'}">Form</h2>
+        <form th:action="${formAction}" th:object="${blog}" method="post">
+            <input th:if="${blog.id != null}" type="hidden" th:field="*{id}" />
+            <div><label>Tiêu đề</label><input type="text" th:field="*{tieuDe}" /></div>
+            <div><label>Nội dung</label><textarea th:field="*{noiDung}"></textarea></div>
+            <div><label>Đường dẫn ảnh</label><input type="text" th:field="*{hinhAnh}" /></div>
+            <div><label>Ngày đăng</label><input type="datetime-local" th:field="*{ngayDang}" /></div>
+            <div><button type="submit">Lưu</button><a th:href="@{/admin/blog}">Hủy</a></div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

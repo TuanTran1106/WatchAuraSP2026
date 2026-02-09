@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full">
+        <h2 class="card__title" th:text="${chucVu.id != null ? 'Sửa chức vụ' : 'Thêm chức vụ'}">Form</h2>
+        <form th:action="${formAction}" th:object="${chucVu}" method="post">
+            <input th:if="${chucVu.id != null}" type="hidden" th:field="*{id}" />
+            <div><label>Tên chức vụ</label><input type="text" th:field="*{tenChucVu}" required /></div>
+            <div><button type="submit">Lưu</button><a th:href="@{/admin/chuc-vu}">Hủy</a></div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="user-page">
+    <div class="container">
+        <h1 class="page-title">Tin tức &amp; Blog</h1>
+        <div class="blog__grid" th:if="${blogMoi != null and !blogMoi.isEmpty()}">
+            <article th:each="blog : ${blogMoi}" class="blog-card">
+                <a th:href="@{/tin-tuc/{id}(id=${blog.id})}" class="blog-card__link">
+                    <div class="blog-card__img-wrap" th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
+                        <img th:src="@{'/uploads/' + ${blog.hinhAnh}}" th:alt="${blog.tieuDe}" class="blog-card__img">
+                    </div>
+                    <div class="blog-card__img-wrap blog-card__img-wrap--placeholder" th:if="${blog.hinhAnh == null or blog.hinhAnh.isEmpty()}"><span>📰</span></div>
+                    <div class="blog-card__body">
+                        <h3 class="blog-card__title" th:text="${blog.tieuDe}">Tiêu đề</h3>
+                        <time class="blog-card__date" th:if="${blog.ngayDang != null}" th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}"></time>
+                    </div>
+                </a>
+            </article>
+        </div>
+        <p th:if="${blogMoi == null or blogMoi.isEmpty()}" class="section__empty">Chưa có bài viết.</p>
+    </div>
+</div>
+</body>
+</html>

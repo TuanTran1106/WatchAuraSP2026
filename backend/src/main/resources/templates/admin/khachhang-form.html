@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <section class="card card--full card--form">
+        <h2 class="card__title" th:text="${khachHang.id != null ? 'Sửa khách hàng' : 'Thêm khách hàng'}">Form</h2>
+        <form class="form form--khachhang" th:action="${formAction}" th:object="${khachHang}" method="post">
+            <input th:if="${khachHang.id != null}" type="hidden" th:field="*{id}" />
+            <div class="form__grid">
+                <div class="form__group">
+                    <label class="form__label">Mã người dùng</label>
+                    <input class="form__input" type="text" th:field="*{maNguoiDung}" required placeholder="Nhập mã người dùng" />
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Họ tên</label>
+                    <input class="form__input" type="text" th:field="*{tenNguoiDung}" required placeholder="Nhập họ tên" />
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Email</label>
+                    <input class="form__input" type="email" th:field="*{email}" placeholder="example@gmail.com" />
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Số điện thoại</label>
+                    <input class="form__input" type="text" th:field="*{sdt}" placeholder="0912 345 678" />
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Mật khẩu</label>
+                    <input class="form__input" type="password" th:field="*{matKhau}" placeholder="••••••••" th:attr="required=${khachHang.id == null}" />
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Giới tính</label>
+                    <select class="form__input form__select" th:field="*{gioiTinh}">
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                    </select>
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Ngày sinh</label>
+                    <input class="form__input" type="date" th:field="*{ngaySinh}" th:attr="max=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" />
+                </div>
+                <div class="form__group">
+                    <label class="form__label">Chức vụ</label>
+                    <select class="form__input form__select" th:field="*{chucVu.id}">
+                        <option value="">-- Chọn chức vụ --</option>
+                        <option th:each="cv : ${chucVuList}" th:value="${cv.id}" th:text="${cv.tenChucVu}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Lưu</button>
+                <a th:href="@{/admin/khach-hang}" class="btn btn--secondary">Hủy</a>
+            </div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

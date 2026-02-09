@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.FutureOrPresent;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "KhuyenMai")
 public class KhuyenMai {
+
+    public interface OnCreate {}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,10 +48,18 @@ public class KhuyenMai {
     private BigDecimal giamToiDa;
 
     @Column(name = "ngay_bat_dau")
+    @FutureOrPresent(message = "Ngày bắt đầu không được ở quá khứ")
     private LocalDateTime ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
+    @FutureOrPresent(message = "Ngày kết thúc không được ở quá khứ")
     private LocalDateTime ngayKetThuc;
+
+    @AssertTrue(message = "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu")
+    public boolean isNgayKetThucSauNgayBatDau() {
+        if (ngayBatDau == null || ngayKetThuc == null) return true;
+        return !ngayKetThuc.isBefore(ngayBatDau);
+    }
 
     @Column(name = "trang_thai")
     private Boolean trangThai;

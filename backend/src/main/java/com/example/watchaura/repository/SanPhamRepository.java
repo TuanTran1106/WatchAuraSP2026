@@ -34,6 +34,11 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     Page<SanPham> findByTrangThai(Boolean trangThai, Pageable pageable);
 
     /**
+     * Sản phẩm đang bán, mới nhất (cho trang chủ)
+     */
+    Page<SanPham> findByTrangThaiOrderByNgayTaoDesc(Boolean trangThai, Pageable pageable);
+
+    /**
      * Tìm sản phẩm theo tên (tìm kiếm gần đúng)
      */
     List<SanPham> findByTenSanPhamContainingIgnoreCase(String tenSanPham);
@@ -96,6 +101,18 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     // ===================================
     // CUSTOM @Query - Tìm kiếm nâng cao
     // ===================================
+
+    /**
+     * Tìm kiếm sản phẩm theo từ khóa (mã hoặc tên)
+     */
+    @Query("SELECT sp FROM SanPham sp WHERE " +
+            "(:q IS NULL OR :q = '' OR LOWER(sp.maSanPham) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(sp.tenSanPham) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<SanPham> searchByKeyword(@Param("q") String q, Pageable pageable);
+
+    @Query("SELECT sp FROM SanPham sp WHERE " +
+            "(:q IS NULL OR :q = '' OR LOWER(sp.maSanPham) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(sp.tenSanPham) LIKE LOWER(CONCAT('%', :q, '%'))) AND " +
+            "(:trangThai IS NULL OR sp.trangThai = :trangThai)")
+    Page<SanPham> searchByKeywordAndTrangThai(@Param("q") String q, @Param("trangThai") Boolean trangThai, Pageable pageable);
 
     /**
      * Tìm kiếm sản phẩm theo nhiều tiêu chí

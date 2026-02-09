@@ -11,6 +11,9 @@ import com.example.watchaura.repository.ThuongHieuRepository;
 import com.example.watchaura.service.FileUploadService;
 import com.example.watchaura.service.SanPhamService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,50 +24,46 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SanPhamServiceImpl implements SanPhamService {
+
     private final SanPhamRepository sanPhamRepository;
     private final ThuongHieuRepository thuongHieuRepository;
     private final DanhMucRepository danhMucRepository;
     private final FileUploadService fileUploadService;
 
-    /**
-     * Lấy tất cả sản phẩm
-     */
+    @Override
     public List<SanPhamDTO> getAllSanPham() {
-        return sanPhamRepository.findAll().stream()
+        return sanPhamRepository.findAll()
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Lấy sản phẩm theo ID
-     */
+    @Override
     public SanPhamDTO getSanPhamById(Integer id) {
         SanPham sanPham = sanPhamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
         return convertToDTO(sanPham);
     }
 
-    /**
-     * Tạo mới sản phẩm
-     */
+    @Override
     @Transactional
     public SanPhamDTO createSanPham(SanPhamRequest request) {
-        // Kiểm tra mã sản phẩm đã tồn tại
-        if (sanPhamRepository.existsByMaSanPham(request.getMaSanPham())) {
-            throw new RuntimeException("Mã sản phẩm đã tồn tại: " + request.getMaSanPham());
+        String ma = request.getMaSanPham() != null ? request.getMaSanPham().trim() : "";
+        if (ma.isEmpty()) {
+            throw new RuntimeException("Mã sản phẩm không được để trống.");
+        }
+        if (sanPhamRepository.existsByMaSanPham(ma)) {
+            throw new RuntimeException("Mã sản phẩm đã tồn tại: " + ma);
         }
 
-        // Kiểm tra thương hiệu tồn tại
         ThuongHieu thuongHieu = thuongHieuRepository.findById(request.getIdThuongHieu())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu với ID: " + request.getIdThuongHieu()));
 
-        // Kiểm tra danh mục tồn tại
         DanhMuc danhMuc = danhMucRepository.findById(request.getIdDanhMuc())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + request.getIdDanhMuc()));
 
-        // Tạo entity
         SanPham sanPham = new SanPham();
-        sanPham.setMaSanPham(request.getMaSanPham());
+        sanPham.setMaSanPham(ma);
         sanPham.setTenSanPham(request.getTenSanPham());
         sanPham.setMoTa(request.getMoTa());
         sanPham.setHinhAnh(request.getHinhAnh());
@@ -74,35 +73,23 @@ public class SanPhamServiceImpl implements SanPhamService {
         sanPham.setTrangThai(request.getTrangThai());
         sanPham.setNgayTao(LocalDateTime.now());
 
-        // Lưu vào database
-        SanPham savedSanPham = sanPhamRepository.save(sanPham);
-        return convertToDTO(savedSanPham);
+        return convertToDTO(sanPhamRepository.save(sanPham));
     }
 
-    /**
-     * Cập nhật sản phẩm
-     */
+    @Override
     @Transactional
     public SanPhamDTO updateSanPham(Integer id, SanPhamRequest request) {
-        // Tìm sản phẩm cần cập nhật
+
         SanPham sanPham = sanPhamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
 
-        // Kiểm tra mã sản phẩm trùng (ngoại trừ chính nó)
-        if (sanPhamRepository.existsByMaSanPhamAndIdNot(request.getMaSanPham(), id)) {
-            throw new RuntimeException("Mã sản phẩm đã tồn tại: " + request.getMaSanPham());
-        }
-
-        // Kiểm tra thương hiệu tồn tại
+        // Không cho phép sửa mã sản phẩm - giữ nguyên mã hiện tại
         ThuongHieu thuongHieu = thuongHieuRepository.findById(request.getIdThuongHieu())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu với ID: " + request.getIdThuongHieu()));
 
-        // Kiểm tra danh mục tồn tại
         DanhMuc danhMuc = danhMucRepository.findById(request.getIdDanhMuc())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + request.getIdDanhMuc()));
 
-        // Cập nhật thông tin
-        sanPham.setMaSanPham(request.getMaSanPham());
         sanPham.setTenSanPham(request.getTenSanPham());
         sanPham.setMoTa(request.getMoTa());
         sanPham.setHinhAnh(request.getHinhAnh());
@@ -111,14 +98,10 @@ public class SanPhamServiceImpl implements SanPhamService {
         sanPham.setPhongCach(request.getPhongCach());
         sanPham.setTrangThai(request.getTrangThai());
 
-        // Lưu vào database
-        SanPham updatedSanPham = sanPhamRepository.save(sanPham);
-        return convertToDTO(updatedSanPham);
+        return convertToDTO(sanPhamRepository.save(sanPham));
     }
 
-    /**
-     * Xóa sản phẩm
-     */
+    @Override
     @Transactional
     public void deleteSanPham(Integer id) {
         if (!sanPhamRepository.existsById(id)) {
@@ -127,12 +110,28 @@ public class SanPhamServiceImpl implements SanPhamService {
         sanPhamRepository.deleteById(id);
     }
 
-    /**
-     * Cập nhật ảnh sản phẩm
-     */
+    @Override
+    public boolean existsByMaSanPham(String maSanPham) {
+        return maSanPham != null && sanPhamRepository.existsByMaSanPham(maSanPham.trim());
+    }
+
+    @Override
+    public List<SanPhamDTO> getSanPhamTrangChu(int limit) {
+        return sanPhamRepository.findByTrangThaiOrderByNgayTaoDesc(true, PageRequest.of(0, limit))
+                .getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<SanPhamDTO> searchPage(String keyword, Boolean trangThai, Pageable pageable) {
+        return sanPhamRepository.searchByKeywordAndTrangThai(keyword, trangThai, pageable)
+                .map(this::convertToDTO);
+    }
+
+    @Override
     @Transactional
     public SanPhamDTO updateSanPhamImage(Integer id, String newFilePath) {
-        // Tìm sản phẩm cần cập nhật
         SanPham sanPham = sanPhamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
 
@@ -149,9 +148,6 @@ public class SanPhamServiceImpl implements SanPhamService {
         return convertToDTO(updatedSanPham);
     }
 
-    /**
-     * Convert Entity sang DTO
-     */
     private SanPhamDTO convertToDTO(SanPham sanPham) {
         SanPhamDTO dto = new SanPhamDTO();
         dto.setId(sanPham.getId());
@@ -174,5 +170,4 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         return dto;
     }
-
 }

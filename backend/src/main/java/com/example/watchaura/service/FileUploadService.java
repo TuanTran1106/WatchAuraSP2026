@@ -14,26 +14,22 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class FileUploadService {
-
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
-    /**
-     * Upload ảnh và lưu vào thư mục uploads
-     * @param file File ảnh cần upload
-     * @return Đường dẫn file (tương đối) để lưu vào database
-     */
+    // Upload ảnh và lưu vào thư mục uploads
+    // @param file File ảnh cần upload
+    // @return Đường dẫn file (tương đối) để lưu vào database
+
     public String uploadFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("File không được để trống");
         }
-
         // Kiểm tra định dạng file
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new RuntimeException("Chỉ chấp nhận file ảnh (image/*)");
         }
-
         try {
             // Tạo thư mục nếu chưa tồn tại
             Path uploadPath = Paths.get(uploadDir).toAbsolutePath();
@@ -54,11 +50,9 @@ public class FileUploadService {
             throw new RuntimeException("Lỗi khi upload file: " + e.getMessage());
         }
     }
+    //Xóa file ảnh
+    //@param filePath Đường dẫn file (tương đối)
 
-    /**
-     * Xóa file ảnh
-     * @param filePath Đường dẫn file (tương đối)
-     */
     public void deleteFile(String filePath) {
         if (filePath == null || filePath.isEmpty() || filePath.equals("/uploads/")) {
             return;
