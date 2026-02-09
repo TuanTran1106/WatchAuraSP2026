@@ -36,8 +36,15 @@ public class UsersController {
         model.addAttribute("danhMucList", danhMucService.getAll());
         model.addAttribute("thuongHieuList", thuongHieuService.getAll());
         model.addAttribute("sanPhamTrangChu", sanPhamTrangChu);
-        model.addAttribute("khuyenMaiDangChay", khuyenMaiService.getActivePromotions(LocalDateTime.now()));
-        model.addAttribute("blogMoi", blogService.getRecentBlogs(3));
+        model.addAttribute(
+                "khuyenMaiDangChay",
+                khuyenMaiService.findAll(0, 100).getContent()
+        );
+        model.addAttribute(
+                "blogMoi",
+                blogService.findAll(0, 3).getContent()
+        );
+
 
         return "layout/user-layout";
     }
@@ -53,7 +60,11 @@ public class UsersController {
     public String tinTuc(Model model) {
         model.addAttribute("title", "Tin tức - WatchAura");
         model.addAttribute("content", "user/tin-tuc :: content");
-        model.addAttribute("blogMoi", blogService.getPage(PageRequest.of(0, 10, Sort.by("ngayDang").descending())).getContent());
+        model.addAttribute(
+                "blogMoi",
+                blogService.findAll(0, 10).getContent()
+        );
+
         return "layout/user-layout";
     }
 
@@ -66,7 +77,7 @@ public class UsersController {
 
     @GetMapping("/tin-tuc/{id}")
     public String tinTucDetail(@PathVariable Integer id, Model model) {
-        model.addAttribute("blog", blogService.getById(id));
+        model.addAttribute("blog", blogService.findById(id));
         model.addAttribute("title", "Tin tức - WatchAura");
         model.addAttribute("content", "user/tin-tuc-detail :: content");
         return "layout/user-layout";
