@@ -52,10 +52,24 @@ public class HoaDonController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Model model) {
         HoaDonDTO dto = hoaDonService.getById(id);
+        String statusClass = statusToCssClass(dto.getTrangThaiDonHang());
         model.addAttribute("title", "Chi tiết hóa đơn");
         model.addAttribute("content", "admin/hoadon-detail");
         model.addAttribute("hoaDon", dto);
+        model.addAttribute("hoaDonStatusClass", statusClass);
         return "layout/admin-layout";
+    }
+
+    private static String statusToCssClass(String trangThai) {
+        if (trangThai == null) return "";
+        return switch (trangThai) {
+            case "CHO_XAC_NHAN" -> "invoice-detail__status--cho-xac-nhan";
+            case "DANG_XU_LY" -> "invoice-detail__status--dang-xu-ly";
+            case "DANG_GIAO" -> "invoice-detail__status--dang-giao";
+            case "DA_GIAO" -> "invoice-detail__status--da-giao";
+            case "DA_HUY" -> "invoice-detail__status--da-huy";
+            default -> "";
+        };
     }
 
     @GetMapping("/{id}/sua")

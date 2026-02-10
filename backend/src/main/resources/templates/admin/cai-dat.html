@@ -2,9 +2,142 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content">
-    <section class="card card--full">
-        <h2 class="card__title">Cài đặt</h2>
-        <p>Trang cấu hình hệ thống. Các tùy chọn sẽ được bổ sung sau.</p>
+    <p th:if="${message}" class="message" th:text="${message}"></p>
+    <p th:if="${error}" class="message error" th:text="${error}"></p>
+
+    <!-- 1. Thông tin cửa hàng / hệ thống -->
+    <section class="card card--full settings-section">
+        <div class="card__header">
+            <h2 class="card__title"><i class="fas fa-store"></i> Thông tin cửa hàng</h2>
+        </div>
+        <div class="card__body">
+            <form th:action="@{/admin/cai-dat/thong-tin}" method="post" class="form form--settings">
+                <div class="form__grid">
+                    <div class="form__group form__group--full">
+                        <label class="form__label">Tên website / Cửa hàng</label>
+                        <input class="form__input" type="text" name="tenCuaHang" th:value="${settings != null ? settings['site.name'] : 'WatchAura'}" placeholder="VD: WatchAura" />
+                    </div>
+                    <div class="form__group form__group--full">
+                        <label class="form__label">Slogan / Mô tả ngắn</label>
+                        <input class="form__input" type="text" name="slogan" th:value="${settings != null ? settings['site.slogan'] : ''}" placeholder="Đồng hồ chính hãng, bảo hành uy tín" />
+                    </div>
+                    <div class="form__group form__group--full">
+                        <label class="form__label">Địa chỉ</label>
+                        <input class="form__input" type="text" name="diaChi" th:value="${settings != null ? settings['site.address'] : ''}" placeholder="Địa chỉ cửa hàng" />
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Hotline</label>
+                        <input class="form__input" type="text" name="hotline" th:value="${settings != null ? settings['site.hotline'] : ''}" placeholder="1900 xxxx" />
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Email liên hệ</label>
+                        <input class="form__input" type="email" name="email" th:value="${settings != null ? settings['site.email'] : ''}" placeholder="contact@watchaura.vn" />
+                    </div>
+                </div>
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> Lưu thông tin</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- 2. Cấu hình chung -->
+    <section class="card card--full settings-section">
+        <div class="card__header">
+            <h2 class="card__title"><i class="fas fa-sliders-h"></i> Cấu hình chung</h2>
+        </div>
+        <div class="card__body">
+            <form th:action="@{/admin/cai-dat/cau-hinh}" method="post" class="form form--settings">
+                <div class="form__grid">
+                    <div class="form__group">
+                        <label class="form__label">Đơn vị tiền tệ</label>
+                        <select class="form__input form__select" name="donViTienTe">
+                            <option value="VND" th:selected="${settings != null && settings['currency'] == 'VND'}">VND (₫)</option>
+                            <option value="USD" th:selected="${settings != null && settings['currency'] == 'USD'}">USD ($)</option>
+                        </select>
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Số dòng mỗi trang (danh sách)</label>
+                        <input class="form__input" type="number" name="pageSize" min="5" max="100" th:value="${settings != null ? settings['page.size'] : '10'}" placeholder="10" />
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Múi giờ</label>
+                        <select class="form__input form__select" name="timezone">
+                            <option value="Asia/Ho_Chi_Minh" th:selected="${settings == null || settings['timezone'] == 'Asia/Ho_Chi_Minh'}">GMT+7 (Việt Nam)</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> Lưu cấu hình</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- 3. Email & Thông báo -->
+    <section class="card card--full settings-section">
+        <div class="card__header">
+            <h2 class="card__title"><i class="fas fa-envelope"></i> Email & Thông báo</h2>
+        </div>
+        <div class="card__body">
+            <form th:action="@{/admin/cai-dat/email}" method="post" class="form form--settings">
+                <div class="form__grid">
+                    <div class="form__group">
+                        <label class="form__label">Bật gửi email xác nhận đơn hàng</label>
+                        <select class="form__input form__select" name="emailXacNhanDon">
+                            <option value="true" th:selected="${settings == null || settings['email.orderConfirm'] != 'false'}">Có</option>
+                            <option value="false" th:selected="${settings != null && settings['email.orderConfirm'] == 'false'}">Không</option>
+                        </select>
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Email gửi thông báo (From)</label>
+                        <input class="form__input" type="email" name="emailFrom" th:value="${settings != null ? settings['email.from'] : ''}" placeholder="noreply@watchaura.vn" />
+                    </div>
+                    <div class="form__group form__group--full">
+                        <label class="form__label">Ghi chú</label>
+                        <p class="form__hint">Cấu hình SMTP (host, port, user/pass) thường đặt trong <code>application.properties</code> hoặc biến môi trường. Phần này chỉ bật/tắt và email hiển thị.</p>
+                    </div>
+                </div>
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> Lưu</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- 4. Bảo mật (placeholder) -->
+    <section class="card card--full settings-section">
+        <div class="card__header">
+            <h2 class="card__title"><i class="fas fa-shield-alt"></i> Bảo mật & Đăng nhập</h2>
+        </div>
+        <div class="card__body">
+            <form th:action="@{/admin/cai-dat/bao-mat}" method="post" class="form form--settings">
+                <div class="form__grid">
+                    <div class="form__group">
+                        <label class="form__label">Độ dài mật khẩu tối thiểu</label>
+                        <input class="form__input" type="number" name="minPasswordLength" min="6" max="32" th:value="${settings != null ? settings['security.minPasswordLength'] : '6'}" />
+                    </div>
+                    <div class="form__group">
+                        <label class="form__label">Khóa tài khoản sau (số lần sai)</label>
+                        <input class="form__input" type="number" name="maxLoginAttempts" min="3" max="10" th:value="${settings != null ? settings['security.maxLoginAttempts'] : '5'}" placeholder="5" />
+                    </div>
+                </div>
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> Lưu</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- 5. Giao diện -->
+    <section class="card card--full settings-section">
+        <div class="card__header">
+            <h2 class="card__title"><i class="fas fa-palette"></i> Giao diện</h2>
+        </div>
+        <div class="card__body">
+            <p class="form__hint">Chế độ sáng/tối có thể chuyển bằng nút trên góc phải header. Tùy chọn lưu theme (nếu cần) sẽ được bổ sung sau.</p>
+        </div>
     </section>
 </div>
 </body>

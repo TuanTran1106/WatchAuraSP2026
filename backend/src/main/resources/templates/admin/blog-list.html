@@ -3,16 +3,17 @@
 <body>
 <div th:fragment="content">
     <p th:if="${message}" class="message" th:text="${message}"></p>
-    <p th:if="${error}" class="message message--error" th:text="${error}"></p>
 
     <div class="form-card-wrapper" id="formBlogWrapper" th:classappend="${blog == null or blog.id == null} ? 'is-collapsed'">
+    <!-- Form luôn hiển thị phía trên, có nút đóng/mở -->
     <section class="card card--full card--form form-card" id="formBlog">
         <div class="form-card__header">
-            <h2 class="form-card__title" th:text="${blogId != null ? 'Sửa blog' : 'Thêm blog'}">Thêm blog</h2>
+            <h2 class="form-card__title" th:text="${blog != null and blog.id != null ? 'Sửa blog' : 'Thêm blog'}">Thêm blog</h2>
             <button type="button" class="form-card__toggle form-card__toggle--close" id="formBlogToggle" title="Đóng form" aria-label="Đóng form">×</button>
         </div>
         <div class="form-card__body">
         <form class="form form--blog" th:action="${formAction}" th:object="${blog}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
             <input th:if="${blog != null and blog.id != null}" type="hidden" th:field="*{id}" />
             <div class="form__grid">
                 <div class="form__group form__group--full">
@@ -34,7 +35,7 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày đăng</label>
-                    <input class="form__input" type="datetime-local" name="ngayDang" th:value="${blog != null and blog.ngayDang != null ? #temporals.format(blog.ngayDang, 'yyyy-MM-dd') + 'T' + #temporals.format(blog.ngayDang, 'HH:mm') : ''}" th:attr="min=${blog == null or blog.id == null ? #temporals.format(#temporals.createNow(), 'yyyy-MM-dd') + 'T' + #temporals.format(#temporals.createNow(), 'HH:mm') : ''}" />
+                    <input class="form__input" type="datetime-local" name="ngayDang" th:value="${blog != null and blog.ngayDang != null ? #temporals.format(blog.ngayDang, 'yyyy-MM-dd') + 'T' + #temporals.format(blog.ngayDang, 'HH:mm') : ''}" th:attr="min=${blog == null or blog.id == null ? #temporals.format(#temporals.createNow(), 'yyyy-MM-dd') + 'T' + #temporals.format(#temporals.createNow(), 'HH:mm') : null}, readonly=${blog != null and blog.id != null}" />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayDang')}" th:errors="*{ngayDang}"></span>
                 </div>
             </div>
@@ -46,6 +47,7 @@
         </div>
     </section>
 
+    <!-- Thanh mở form khi đã đóng -->
     <div class="form-card form-card--bar" id="formBlogOpenBar" th:attr="aria-hidden=${blog != null and blog.id != null ? 'true' : 'false'}">
         <div class="form-card__header">
             <span class="form-card__title">Thêm blog</span>
@@ -54,8 +56,18 @@
     </div>
     </div>
 
+    <!-- Danh sách bên dưới -->
     <section class="card card--full" id="listBlog">
         <h2 class="card__title">Danh sách blog</h2>
+
+        <form th:action="@{/admin/blog}" method="get" class="toolbar toolbar--blog">
+            <div class="search-bar">
+                <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo tiêu đề hoặc nội dung..." class="search-bar__input" />
+                <button type="submit" class="btn btn--primary search-bar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
+                <a th:href="@{/admin/blog}" class="btn btn--secondary search-bar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
+            </div>
+        </form>
+
         <table class="table">
             <thead>
                 <tr>
@@ -77,8 +89,8 @@
                     <td th:text="${item.ngayDang != null ? #temporals.format(item.ngayDang, 'dd/MM/yyyy HH:mm') : ''}"></td>
                     <td>
                         <div class="table-actions">
-                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/blog/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
-                            <form th:action="@{/admin/blog/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa blog này?');">
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/blog/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''})}" title="Sửa"><i class="fas fa-edit"></i></a>
+                            <form th:action="@{/admin/blog/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa blog này?');">
                                 <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                             </form>
                         </div>
@@ -89,16 +101,16 @@
         <nav class="pagination" th:if="${page != null and page.totalPages > 1}" aria-label="Phân trang">
             <ul class="pagination__list">
                 <li th:if="${page.first}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></span></li>
-                <li th:unless="${page.first}"><a class="pagination__link" th:href="@{/admin/blog(page=0)}" title="Trang đầu"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.first}"><a class="pagination__link" th:href="@{/admin/blog(page=0, q=${searchKeyword != null ? searchKeyword : ''})}" title="Trang đầu"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></a></li>
                 <li th:if="${page.first}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></span></li>
-                <li th:unless="${page.first}"><a class="pagination__link pagination__link--prev" th:href="@{/admin/blog(page=${page.number - 1})}" title="Trước"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.first}"><a class="pagination__link pagination__link--prev" th:href="@{/admin/blog(page=${page.number - 1}, q=${searchKeyword != null ? searchKeyword : ''})}" title="Trước"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
                 <li th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
-                    <a class="pagination__link" th:classappend="${i == page.number} ? 'pagination__link--active'" th:href="@{/admin/blog(page=${i})}" th:text="${i + 1}">1</a>
+                    <a class="pagination__link" th:classappend="${i == page.number} ? 'pagination__link--active'" th:href="@{/admin/blog(page=${i}, q=${searchKeyword != null ? searchKeyword : ''})}" th:text="${i + 1}">1</a>
                 </li>
                 <li th:if="${page.last}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></li>
-                <li th:unless="${page.last}"><a class="pagination__link pagination__link--next" th:href="@{/admin/blog(page=${page.number + 1})}" title="Sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.last}"><a class="pagination__link pagination__link--next" th:href="@{/admin/blog(page=${page.number + 1}, q=${searchKeyword != null ? searchKeyword : ''})}" title="Sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
                 <li th:if="${page.last}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></span></li>
-                <li th:unless="${page.last}"><a class="pagination__link" th:href="@{/admin/blog(page=${page.totalPages - 1})}" title="Trang cuối"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.last}"><a class="pagination__link" th:href="@{/admin/blog(page=${page.totalPages - 1}, q=${searchKeyword != null ? searchKeyword : ''})}" title="Trang cuối"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></a></li>
             </ul>
         </nav>
     </section>

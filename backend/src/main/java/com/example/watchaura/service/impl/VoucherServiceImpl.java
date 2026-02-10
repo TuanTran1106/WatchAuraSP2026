@@ -22,6 +22,10 @@ public class VoucherServiceImpl implements VoucherService {
         return voucherRepository.findAll(pageable);
     }
 
+    @Override
+    public Page<Voucher> searchPage(String q, Boolean trangThai, Pageable pageable) {
+        return voucherRepository.searchByKeywordAndTrangThai(q, trangThai, pageable);
+    }
 
     @Override
     public Voucher findById(Integer id) {
@@ -33,6 +37,10 @@ public class VoucherServiceImpl implements VoucherService {
         voucher.setSoLuongDaDung(0);
         voucher.setNgayTao(LocalDateTime.now());
         voucher.setNgayCapNhat(LocalDateTime.now());
+        // DB không cho phép NULL cột trang_thai: mặc định Đang hoạt động khi tạo mới
+        if (voucher.getTrangThai() == null) {
+            voucher.setTrangThai(Boolean.TRUE);
+        }
         return voucherRepository.save(voucher);
     }
 
@@ -42,7 +50,9 @@ public class VoucherServiceImpl implements VoucherService {
         if (existing == null) {
             return null;
         }
-
+        if (voucher.getMaVoucher() != null) {
+            existing.setMaVoucher(voucher.getMaVoucher());
+        }
         existing.setTenVoucher(voucher.getTenVoucher());
         existing.setMoTa(voucher.getMoTa());
         existing.setLoaiVoucher(voucher.getLoaiVoucher());
@@ -52,7 +62,10 @@ public class VoucherServiceImpl implements VoucherService {
         existing.setSoLuongTong(voucher.getSoLuongTong());
         existing.setNgayBatDau(voucher.getNgayBatDau());
         existing.setNgayKetThuc(voucher.getNgayKetThuc());
-        existing.setTrangThai(voucher.getTrangThai());
+        // Chỉ cập nhật trạng thái khi form gửi giá trị; tránh ghi NULL (DB không cho phép)
+        if (voucher.getTrangThai() != null) {
+            existing.setTrangThai(voucher.getTrangThai());
+        }
         existing.setNgayCapNhat(LocalDateTime.now());
 
         return voucherRepository.save(existing);
@@ -64,7 +77,21 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
+    public void toggleTrangThai(Integer id) {
+        Voucher v = voucherRepository.findById(id).orElse(null);
+        if (v != null) {
+            v.setTrangThai(v.getTrangThai() == null || !v.getTrangThai());
+            voucherRepository.save(v);
+        }
+    }
+
+    @Override
     public boolean existsByMaVoucher(String maVoucher) {
         return voucherRepository.existsByMaVoucher(maVoucher);
+    }
+
+    @Override
+    public boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id) {
+        return voucherRepository.existsByMaVoucherAndIdNot(maVoucher, id);
     }
 }

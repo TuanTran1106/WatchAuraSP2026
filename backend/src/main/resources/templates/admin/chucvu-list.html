@@ -20,7 +20,7 @@
                     <td th:text="${item.tenChucVu}"></td>
                     <td>
                         <div class="table-actions">
-                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/chuc-vu/{id}/sua(id=${item.id})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/chuc-vu/{id}/sua(id=${item.id})}" title="Sửa"><i class="fas fa-edit"></i></a>
                             <form th:action="@{/admin/chuc-vu/{id}/xoa(id=${item.id})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa?');">
                                 <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                             </form>

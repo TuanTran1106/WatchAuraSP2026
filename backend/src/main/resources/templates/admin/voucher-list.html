@@ -3,21 +3,24 @@
 <body>
 <div th:fragment="content">
     <p th:if="${message}" class="message" th:text="${message}"></p>
-    <p th:if="${error}" class="message message--error" th:text="${error}"></p>
 
-    <div class="form-card-wrapper" id="formVoucherWrapper" th:classappend="${voucherId == null} ? 'is-collapsed'">
+    <div class="form-card-wrapper" id="formVoucherWrapper" th:classappend="${voucher == null or voucher.id == null} ? 'is-collapsed'">
+    <!-- Form luôn hiển thị phía trên, có nút đóng/mở -->
     <section class="card card--full card--form form-card" id="formVoucher">
         <div class="form-card__header">
-            <h2 class="form-card__title" th:text="${voucherId != null ? 'Sửa voucher' : 'Thêm voucher'}">Thêm voucher</h2>
+            <h2 class="form-card__title" th:text="${voucher != null and voucher.id != null ? 'Sửa voucher' : 'Thêm voucher'}">Thêm voucher</h2>
             <button type="button" class="form-card__toggle form-card__toggle--close" id="formVoucherToggle" title="Đóng form" aria-label="Đóng form">×</button>
         </div>
         <div class="form-card__body">
         <form class="form form--voucher" th:action="${formAction}" th:object="${voucher}" method="post">
+            <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
+            <input type="hidden" name="filterTrangThai" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
             <input th:if="${voucher != null and voucher.id != null}" type="hidden" th:field="*{id}" />
             <div class="form__grid">
                 <div class="form__group">
                     <label class="form__label">Mã voucher</label>
                     <input class="form__input" type="text" th:field="*{maVoucher}" required placeholder="VD: VC001" />
+                    <span class="form__error" th:if="${#fields.hasErrors('maVoucher')}" th:errors="*{maVoucher}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Tên voucher</label>
@@ -29,7 +32,11 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Loại voucher</label>
-                    <input class="form__input" type="text" th:field="*{loaiVoucher}" required placeholder="VD: PHAN_TRAM" />
+                    <select class="form__input form__select" th:field="*{loaiVoucher}">
+                        <option value="">-- Chọn loại --</option>
+                        <option value="PHAN_TRAM">Giảm theo %</option>
+                        <option value="TIEN">Giảm theo tiền</option>
+                    </select>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Giá trị</label>
@@ -63,8 +70,9 @@
                 <div class="form__group">
                     <label class="form__label">Trạng thái</label>
                     <select class="form__input form__select" th:field="*{trangThai}">
-                        <option value="true">Hoạt động</option>
-                        <option value="false">Không hoạt động</option>
+                        <option value="">-- Chọn trạng thái --</option>
+                        <option value="false">Không Hoạt Động</option>
+                        <option value="true">Đang Hoạt Động</option>
                     </select>
                 </div>
             </div>
@@ -76,7 +84,8 @@
         </div>
     </section>
 
-    <div class="form-card form-card--bar" id="formVoucherOpenBar" th:attr="aria-hidden=${voucherId != null ? 'true' : 'false'}">
+    <!-- Thanh mở form khi đã đóng -->
+    <div class="form-card form-card--bar" id="formVoucherOpenBar" th:attr="aria-hidden=${voucher != null and voucher.id != null ? 'true' : 'false'}">
         <div class="form-card__header">
             <span class="form-card__title">Thêm voucher</span>
             <button type="button" class="form-card__toggle form-card__toggle--open" id="formVoucherOpenBtn" title="Mở form" aria-label="Mở form">+</button>
@@ -84,23 +93,20 @@
     </div>
     </div>
 
+    <!-- Danh sách bên dưới -->
     <section class="card card--full" id="listVoucher">
         <h2 class="card__title">Danh sách voucher</h2>
 
-        <form th:action="@{/admin/voucher}" method="get" class="toolbar toolbar--voucher">
-            <div class="search-bar">
-                <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="search-bar__input" />
-                <button type="submit" class="btn btn--primary search-bar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-                <a th:href="@{/admin/voucher}" class="btn btn--secondary search-bar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
-            </div>
-            <div class="filter-bar">
-                <label class="filter-bar__label">Trạng thái:</label>
-                <select name="trangThai" class="form__select filter-bar__select" onchange="this.form.submit()">
-                    <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
-                    <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
-                    <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
-                </select>
-            </div>
+        <form th:action="@{/admin/voucher}" method="get" class="toolbar toolbar--search-row">
+            <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
+            <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
+            <a th:href="@{/admin/voucher}" class="btn btn--secondary toolbar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
+            <label class="toolbar__label">Trạng thái:</label>
+            <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
+                <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
+                <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
+                <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
+            </select>
         </form>
 
         <table class="table">
@@ -128,7 +134,7 @@
                     <td th:text="${item.ngayKetThuc != null ? #temporals.format(item.ngayKetThuc, 'dd/MM/yyyy HH:mm') : '—'}"></td>
                     <td>
                         <form th:action="@{/admin/voucher/{id}/trang-thai(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" method="post" style="display:inline;">
-                            <button type="submit" class="btn-icon btn-icon--toggle" th:title="${item.trangThai != null and item.trangThai ? 'Đang bật (bấm để tắt)' : 'Đang tắt (bấm để bật)'}" aria-label="Đổi trạng thái">
+                            <button type="submit" class="btn-icon btn-icon--toggle" th:title="${item.trangThai != null and item.trangThai ? 'Đang hoạt động (bấm để tắt)' : 'Không hoạt động (bấm để bật)'}" aria-label="Đổi trạng thái">
                                 <i class="fa-solid fa-toggle-on" th:if="${item.trangThai != null and item.trangThai}" style="color: #16a34a; font-size: 1.35rem;"></i>
                                 <i class="fa-solid fa-toggle-off" th:if="${item.trangThai == null or !item.trangThai}" style="color: #94a3b8; font-size: 1.35rem;"></i>
                             </button>
@@ -136,7 +142,7 @@
                     </td>
                     <td>
                         <div class="table-actions">
-                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/voucher/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/voucher/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fas fa-edit"></i></a>
                             <form th:action="@{/admin/voucher/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" method="post" style="display:inline;" onsubmit="return confirm('Xóa voucher này?');">
                                 <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                             </form>

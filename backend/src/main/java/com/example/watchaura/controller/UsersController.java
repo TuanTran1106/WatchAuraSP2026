@@ -54,16 +54,6 @@ public class UsersController {
         model.addAttribute("khuyenMaiDangChay", khuyenMaiService.getActivePromotions(LocalDateTime.now()));
         model.addAttribute("blogMoi", blogService.getRecentBlogs(3));
 
-        model.addAttribute(
-                "khuyenMaiDangChay",
-                khuyenMaiService.findAll(0, 100).getContent()
-        );
-        model.addAttribute(
-                "blogMoi",
-                blogService.findAll(0, 3).getContent()
-        );
-
-
         return "layout/user-layout";
     }
 

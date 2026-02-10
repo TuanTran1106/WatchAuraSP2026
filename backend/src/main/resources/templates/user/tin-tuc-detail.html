@@ -1,23 +1,40 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content" class="user-page">
+<div th:fragment="content" class="user-page blog-detail-page">
 
     <div class="container container--narrow">
-        <nav class="breadcrumb">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
             <a th:href="@{/}">Trang chủ</a>
             <span class="breadcrumb__sep">/</span>
             <a th:href="@{/tin-tuc}">Tin tức</a>
             <span class="breadcrumb__sep">/</span>
             <span th:text="${blog.tieuDe}">Chi tiết</span>
         </nav>
+
         <article class="blog-detail">
-            <h1 class="blog-detail__title" th:text="${blog.tieuDe}">Tiêu đề</h1>
-            <time class="blog-detail__date" th:if="${blog.ngayDang != null}" th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}"></time>
             <div class="blog-detail__img" th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
-                <img th:src="@{'/uploads/' + ${blog.hinhAnh}}" th:alt="${blog.tieuDe}" style="max-width:100%; border-radius:8px;">
+                <img th:src="${blog.hinhAnh}" th:alt="${blog.tieuDe}" loading="eager">
             </div>
+
+            <header class="blog-detail__header">
+                <span class="blog-detail__label">Tin tức</span>
+                <h1 class="blog-detail__title" th:text="${blog.tieuDe}">Tiêu đề</h1>
+                <div class="blog-detail__meta">
+                    <time class="blog-detail__date" th:if="${blog.ngayDang != null}" th:datetime="${#temporals.format(blog.ngayDang, 'yyyy-MM-dd')}" th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}">00/00/0000</time>
+                </div>
+            </header>
+
             <div class="blog-detail__body" th:if="${blog.noiDung != null}" th:utext="${blog.noiDung}">Nội dung</div>
+
+            <footer class="blog-detail__footer">
+                <a th:href="@{/tin-tuc}" class="blog-detail__back">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Quay lại tin tức
+                </a>
+            </footer>
         </article>
     </div>
 </div>

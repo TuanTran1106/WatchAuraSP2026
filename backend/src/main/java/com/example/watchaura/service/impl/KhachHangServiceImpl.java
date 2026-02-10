@@ -9,6 +9,7 @@ import com.example.watchaura.service.KhachHangService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,6 +24,9 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Autowired
     private ChucVuRepository chucVuRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Override
     public List<KhachHang> getAll() {
         return khachHangRepository.findAll();
@@ -36,35 +40,37 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Override
     public KhachHang create(KhachHang khachHang) {
+        // Gán ChucVu từ form (chucVu.id được bind, cần load entity)
+        Integer chucVuId = khachHang.getChucVu() != null ? khachHang.getChucVu().getId() : null;
+        if (chucVuId != null) {
+            ChucVu chucVu = chucVuRepository.findById(chucVuId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy chức vụ với ID: " + chucVuId));
+            khachHang.setChucVu(chucVu);
+        }
+
+        // Tự sinh mã người dùng theo role nếu chưa có
+        String ma = khachHang.getMaNguoiDung();
+        if (ma == null || ma.isBlank()) {
+            ma = generateMaNguoiDung(khachHang.getChucVu());
+            if (ma == null) {
+                throw new RuntimeException("Vui lòng chọn chức vụ để tự sinh mã người dùng.");
+            }
+            khachHang.setMaNguoiDung(ma);
+        }
+
         if (khachHangRepository.existsByMaNguoiDung(khachHang.getMaNguoiDung())) {
             throw new RuntimeException("Mã Khách Hàng Đã Tồn Tại");
         }
 
-
-        String ma = khachHang.getMaNguoiDung();
-        if (ma != null) {
-            String upper = ma.toUpperCase();
-            Integer tmpId = null;
-            if (upper.startsWith("ADMIN")) {
-                tmpId = 1;
-            } else if (upper.startsWith("NV")) {
-                tmpId = 2;
-            } else if (upper.startsWith("KH")) {
-                tmpId = 3;
-            }
-
-            if (tmpId != null) {
-                final Integer roleId = tmpId;
-                ChucVu chucVu = chucVuRepository
-                        .findById(roleId)
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy chức vụ với ID: " + roleId));
-                khachHang.setChucVu(chucVu);
-            }
+        // Mã hóa mật khẩu bằng BCrypt trước khi lưu (mọi role)
+        if (khachHang.getMatKhau() != null && !khachHang.getMatKhau().isBlank()) {
+            khachHang.setMatKhau(passwordEncoder.encode(khachHang.getMatKhau()));
         }
 
-
         khachHang.setNgayTao(LocalDateTime.now());
-        khachHang.setTrangThai(true);
+        if (khachHang.getTrangThai() == null) {
+            khachHang.setTrangThai(true);
+        }
         return khachHangRepository.save(khachHang);
     }
 
@@ -75,7 +81,10 @@ public class KhachHangServiceImpl implements KhachHangService {
         kh.setTenNguoiDung(khachHang.getTenNguoiDung());
         kh.setEmail(khachHang.getEmail());
         kh.setSdt(khachHang.getSdt());
-        kh.setMatKhau(khachHang.getMatKhau());
+        // Chỉ đổi mật khẩu khi người dùng nhập mới; mã hóa BCrypt rồi mới lưu
+        if (khachHang.getMatKhau() != null && !khachHang.getMatKhau().isBlank()) {
+            kh.setMatKhau(passwordEncoder.encode(khachHang.getMatKhau()));
+        }
         kh.setGioiTinh(khachHang.getGioiTinh());
         kh.setNgaySinh(khachHang.getNgaySinh());
         kh.setHinhAnh(khachHang.getHinhAnh());
@@ -105,8 +114,7 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
     @Override
     public Page<KhachHang> searchPage(String q, Boolean trangThai, Pageable pageable) {
-        // TODO: implement later
-        return Page.empty(pageable);
+        return khachHangRepository.searchByKeywordAndTrangThai(q, trangThai, pageable);
     }
 
     @Override
@@ -114,10 +122,22 @@ public class KhachHangServiceImpl implements KhachHangService {
         // TODO: implement later
         return Page.empty(pageable);
     }
+    /** Sinh mã theo chức vụ: Admin (id 1) -> AD + số, Nhân viên (id 2) -> NV + số, Khách hàng (id 3) -> KH + số. */
     @Override
     public String generateMaNguoiDung(ChucVu chucVu) {
-        // TODO: implement later
-        return null;
+        if (chucVu == null || chucVu.getId() == null) {
+            return null;
+        }
+        String prefix;
+        switch (chucVu.getId()) {
+            case 1: prefix = "AD"; break;
+            case 2: prefix = "NV"; break;
+            case 3: prefix = "KH"; break;
+            default: prefix = "KH"; break;
+        }
+        Integer maxSeq = khachHangRepository.getMaxSequenceForPrefix(prefix);
+        int next = (maxSeq == null ? 0 : maxSeq) + 1;
+        return prefix + next;
     }
 
     @Override
@@ -129,8 +149,24 @@ public class KhachHangServiceImpl implements KhachHangService {
             LocalDate ngaySinh,
             String gioiTinh
     ) {
-        // TODO: implement later
-        return null;
+        if (khachHangRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email này đã được sử dụng. Vui lòng dùng email khác hoặc đăng nhập.");
+        }
+        ChucVu chucVuKhachHang = chucVuRepository.findById(3)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy chức vụ Khách hàng."));
+        String maNguoiDung = generateMaNguoiDung(chucVuKhachHang);
+        KhachHang kh = new KhachHang();
+        kh.setMaNguoiDung(maNguoiDung);
+        kh.setTenNguoiDung(tenNguoiDung);
+        kh.setEmail(email);
+        kh.setSdt(sdt != null ? sdt.trim() : null);
+        kh.setMatKhau(passwordEncoder.encode(matKhau));
+        kh.setNgaySinh(ngaySinh);
+        kh.setGioiTinh(gioiTinh);
+        kh.setChucVu(chucVuKhachHang);
+        kh.setTrangThai(true);
+        kh.setNgayTao(LocalDateTime.now());
+        return khachHangRepository.save(kh);
     }
 
     @Override

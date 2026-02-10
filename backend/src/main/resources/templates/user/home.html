@@ -121,7 +121,7 @@
                 <article th:each="blog : ${blogMoi}" class="blog-card">
                     <a th:href="@{/tin-tuc/{id}(id=${blog.id})}" class="blog-card__link">
                         <div class="blog-card__img-wrap" th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
-                            <img th:src="@{'/uploads/' + ${blog.hinhAnh}}" th:alt="${blog.tieuDe}" class="blog-card__img">
+                            <img th:src="${blog.hinhAnh}" th:alt="${blog.tieuDe}" class="blog-card__img">
                         </div>
                         <div class="blog-card__img-wrap blog-card__img-wrap--placeholder" th:if="${blog.hinhAnh == null or blog.hinhAnh.isEmpty()}">
                             <span>📰</span>
