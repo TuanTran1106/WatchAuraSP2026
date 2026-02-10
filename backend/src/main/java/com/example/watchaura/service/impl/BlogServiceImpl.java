@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
@@ -24,6 +25,16 @@ public class BlogServiceImpl implements BlogService {
         return blogRepository.findAll(
                 PageRequest.of(page, size, Sort.by("ngayDang").descending())
         );
+    }
+
+    @Override
+    public Page<Blog> searchPage(String q, Pageable pageable) {
+        return blogRepository.searchByKeyword(q, pageable);
+    }
+
+    @Override
+    public List<Blog> getRecentBlogs(int limit) {
+        return blogRepository.findAllByOrderByNgayDangDesc(PageRequest.of(0, limit));
     }
 
     @Override
@@ -47,6 +58,9 @@ public class BlogServiceImpl implements BlogService {
         existing.setTieuDe(blog.getTieuDe());
         existing.setNoiDung(blog.getNoiDung());
         existing.setHinhAnh(blog.getHinhAnh());
+        if (blog.getNgayDang() != null) {
+            existing.setNgayDang(blog.getNgayDang());
+        }
 
         return blogRepository.save(existing);
     }

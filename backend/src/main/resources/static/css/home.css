@@ -4,10 +4,12 @@
 }
 
 .container {
-    width: 1200px;
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 0 1rem;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .section {
@@ -446,6 +448,7 @@
 
 /* ----- User page common ----- */
 .user-page {
+    width: 100%;
     padding: 2rem 0 3rem;
 }
 
@@ -506,9 +509,14 @@
     font-size: 0.95rem;
 }
 
-/* Product detail ----- */
+/* Product detail / Auth ----- */
 .container--narrow {
+    width: 100%;
     max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .breadcrumb {

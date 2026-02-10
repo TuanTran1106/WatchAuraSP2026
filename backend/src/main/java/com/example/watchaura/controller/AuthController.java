@@ -29,12 +29,10 @@ public class AuthController {
 
     @GetMapping("/dang-nhap")
     public String dangNhapPage(
-            @RequestParam(value = "success", required = false) String success,
             @RequestParam(value = "error", required = false) String error,
             Model model) {
         model.addAttribute("title", "Đăng nhập - WatchAura");
         model.addAttribute("content", "user/dang-nhap :: content");
-        if (success != null) model.addAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         if (error != null) model.addAttribute("errorMessage", error);
         return "layout/user-layout";
     }
@@ -115,7 +113,7 @@ public class AuthController {
             model.addAttribute("registerError", e.getMessage());
             return "layout/user-layout";
         }
-        redirect.addAttribute("success", "true");
+        redirect.addFlashAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         return "redirect:/dang-nhap";
     }
 }

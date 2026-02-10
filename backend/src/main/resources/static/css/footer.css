@@ -6,10 +6,12 @@
 }
 
 .user-footer .container {
-    width: 1200px;
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 0 1rem;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .footer-inner {

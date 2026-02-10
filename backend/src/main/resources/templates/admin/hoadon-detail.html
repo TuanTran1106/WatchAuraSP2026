@@ -2,97 +2,119 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content">
-    <div class="detail-actions detail-actions--top">
-        <a th:href="@{/admin/hoa-don}" class="btn btn--secondary"><i class="fa-solid fa-arrow-left"></i> Danh sách</a>
+    <div class="invoice-detail">
+        <!-- Breadcrumb / Back -->
+        <div class="invoice-detail__top">
+            <a th:href="@{/admin/hoa-don}" class="invoice-detail__back">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Danh sách hóa đơn</span>
+            </a>
+        </div>
+
+        <!-- Main Invoice Card -->
+        <article class="invoice-detail__card">
+            <!-- Header: Mã HĐ + Trạng thái + Actions -->
+            <header class="invoice-detail__header">
+                <div class="invoice-detail__header-left">
+                    <h1 class="invoice-detail__title">
+                        Hóa đơn
+                        <span class="invoice-detail__code" th:text="${hoaDon.maDonHang}">#Mã</span>
+                    </h1>
+                    <span class="invoice-detail__status"
+                          th:classappend="${hoaDonStatusClass}"
+                          th:text="${hoaDon.trangThaiDonHang != null ? hoaDon.trangThaiDonHang : '—'}">—</span>
+                </div>
+                <div class="invoice-detail__header-actions">
+                    <a class="btn btn--primary btn--sm" th:href="@{/admin/hoa-don/{id}/pdf(id=${hoaDon.id})}" target="_blank">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Xuất PDF</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Thông tin đơn hàng - 2 cột -->
+            <section class="invoice-detail__section">
+                <h2 class="invoice-detail__section-title">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Thông tin đơn hàng
+                </h2>
+                <div class="invoice-detail__grid">
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label">Khách hàng</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.tenKhachHang}">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label">Số điện thoại</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.sdtKhachHang}">—</span>
+                    </div>
+                    <div class="invoice-detail__item invoice-detail__item--full">
+                        <span class="invoice-detail__label">Địa chỉ</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.diaChi}">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label">Ngày đặt</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.ngayDat != null ? #temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm') : '—'}">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label">Thanh toán</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.phuongThucThanhToan != null ? hoaDon.phuongThucThanhToan : '—'}">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label">Loại hóa đơn</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.loaiHoaDon != null ? hoaDon.loaiHoaDon : '—'}">—</span>
+                    </div>
+                    <div class="invoice-detail__item invoice-detail__item--full" th:if="${hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()}">
+                        <span class="invoice-detail__label">Ghi chú</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.ghiChu}">—</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tổng tiền -->
+            <section class="invoice-detail__summary">
+                <div class="invoice-detail__summary-row">
+                    <span class="invoice-detail__label">Tổng tạm tính</span>
+                    <span class="invoice-detail__money" th:text="${hoaDon.tongTienTamTinh != null ? #numbers.formatDecimal(hoaDon.tongTienTamTinh, 1, 'POINT', 0, 'COMMA') : '0'}">0</span>
+                </div>
+                <div class="invoice-detail__summary-row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
+                    <span class="invoice-detail__label">Tiền giảm</span>
+                    <span class="invoice-detail__money invoice-detail__money--discount" th:text="${'-' + #numbers.formatDecimal(hoaDon.tienGiam, 1, 'POINT', 0, 'COMMA')}">0</span>
+                </div>
+                <div class="invoice-detail__summary-row invoice-detail__summary-row--total">
+                    <span class="invoice-detail__label">Tổng thanh toán</span>
+                    <span class="invoice-detail__money invoice-detail__money--total" th:text="${hoaDon.tongTienThanhToan != null ? #numbers.formatDecimal(hoaDon.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : '0'}">0</span>
+                </div>
+            </section>
+
+            <!-- Bảng sản phẩm -->
+            <section class="invoice-detail__section" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
+                <h2 class="invoice-detail__section-title">
+                    <i class="fa-solid fa-list"></i>
+                    Chi tiết sản phẩm
+                </h2>
+                <div class="invoice-detail__table-wrap">
+                    <table class="invoice-detail__table">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="invoice-detail__th--num">Số lượng</th>
+                                <th class="invoice-detail__th--num">Đơn giá</th>
+                                <th class="invoice-detail__th--num">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ct : ${hoaDon.items}">
+                                <td class="invoice-detail__product-name" th:text="${ct.tenSanPham}">—</td>
+                                <td class="invoice-detail__td--num" th:text="${ct.soLuong}">0</td>
+                                <td class="invoice-detail__td--num" th:text="${ct.donGia != null ? #numbers.formatDecimal(ct.donGia, 1, 'POINT', 0, 'COMMA') : '0'}">0</td>
+                                <td class="invoice-detail__td--num" th:text="${ct.thanhTien != null ? #numbers.formatDecimal(ct.thanhTien, 1, 'POINT', 0, 'COMMA') : '0'}">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </article>
     </div>
-
-    <section class="card card--full card--detail">
-        <div class="detail-header">
-            <h2 class="detail-title">Hóa đơn <span class="detail-title__code" th:text="${hoaDon.maDonHang}">#Mã</span></h2>
-            <div class="detail-header__actions">
-                <a class="btn btn--secondary btn--sm" th:href="@{/admin/hoa-don/{id}/pdf(id=${hoaDon.id})}" target="_blank"><i class="fa-solid fa-file-pdf"></i> Xuất PDF</a>
-            </div>
-        </div>
-
-        <div class="detail-info">
-            <h3 class="detail-info__title">Thông tin đơn hàng</h3>
-            <div class="detail-grid">
-                <div class="detail-row">
-                    <span class="detail-label">Khách hàng</span>
-                    <span class="detail-value" th:text="${hoaDon.tenKhachHang}">—</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Số điện thoại</span>
-                    <span class="detail-value" th:text="${hoaDon.sdtKhachHang}">—</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Địa chỉ</span>
-                    <span class="detail-value" th:text="${hoaDon.diaChi}">—</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Ngày đặt</span>
-                    <span class="detail-value" th:text="${hoaDon.ngayDat != null ? #temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm') : '—'}">—</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Phương thức thanh toán</span>
-                    <span class="detail-value" th:text="${hoaDon.phuongThucThanhToan != null ? hoaDon.phuongThucThanhToan : '—'}">—</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Loại hóa đơn</span>
-                    <span class="detail-value" th:text="${hoaDon.loaiHoaDon != null ? hoaDon.loaiHoaDon : '—'}">—</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Trạng thái</span>
-                    <span class="detail-value">
-                        <span class="status-badge" th:classappend="${hoaDon.trangThaiDonHang != null ? 'status-badge--' + hoaDon.trangThaiDonHang.toLowerCase().replace('_','-') : ''}" th:text="${hoaDon.trangThaiDonHang != null ? hoaDon.trangThaiDonHang : '—'}">—</span>
-                    </span>
-                </div>
-                <div class="detail-row" th:if="${hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()}">
-                    <span class="detail-label">Ghi chú</span>
-                    <span class="detail-value" th:text="${hoaDon.ghiChu}">—</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="detail-summary">
-            <div class="detail-summary__row">
-                <span class="detail-label">Tổng tạm tính</span>
-                <span class="detail-value" th:text="${hoaDon.tongTienTamTinh != null ? hoaDon.tongTienTamTinh : '0'}">0</span>
-            </div>
-            <div class="detail-summary__row" th:if="${hoaDon.tienGiam != null}">
-                <span class="detail-label">Tiền giảm</span>
-                <span class="detail-value detail-value--discount" th:text="'-' + ${hoaDon.tienGiam}">0</span>
-            </div>
-            <div class="detail-summary__row detail-summary__row--total">
-                <span class="detail-label">Tổng thanh toán</span>
-                <span class="detail-value detail-value--total" th:text="${hoaDon.tongTienThanhToan != null ? hoaDon.tongTienThanhToan : '0'}">0</span>
-            </div>
-        </div>
-
-        <div class="detail-table-wrap" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
-            <h3 class="detail-info__title">Chi tiết sản phẩm</h3>
-            <table class="table table--detail">
-                <thead>
-                    <tr>
-                        <th>Sản phẩm</th>
-                        <th class="table__cell--right">Số lượng</th>
-                        <th class="table__cell--right">Đơn giá</th>
-                        <th class="table__cell--right">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="ct : ${hoaDon.items}">
-                        <td th:text="${ct.tenSanPham}">—</td>
-                        <td class="table__cell--right" th:text="${ct.soLuong}">0</td>
-                        <td class="table__cell--right" th:text="${ct.donGia}">0</td>
-                        <td class="table__cell--right" th:text="${ct.thanhTien}">0</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-
-    </section>
 </div>
 </body>
 </html>

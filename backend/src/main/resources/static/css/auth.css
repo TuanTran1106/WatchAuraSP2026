@@ -44,6 +44,48 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+/* Ô mật khẩu có nút bật/tắt hiển thị */
+.auth-form .password-field {
+    position: relative;
+}
+
+.auth-form .password-field input {
+    padding-right: 2.75rem;
+}
+
+.auth-form .password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #666;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+}
+
+.auth-form .password-toggle:hover {
+    color: #c9a227;
+    background: rgba(201, 162, 39, 0.08);
+}
+
+.auth-form .password-toggle:focus {
+    outline: none;
+    color: #c9a227;
+}
+
+.auth-form .password-toggle svg {
+    display: block;
+}
+
 .auth-form select {
     cursor: pointer;
     background: #fff;
@@ -109,6 +151,19 @@
     background: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
+}
+
+.auth-form .alert--register-success {
+    padding: 1rem 1.25rem;
+}
+.auth-form .alert--register-success .alert__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.auth-form .alert--register-success .alert__body strong {
+    display: block;
+    font-size: 1rem;
 }
 
 .auth-form .alert-error {

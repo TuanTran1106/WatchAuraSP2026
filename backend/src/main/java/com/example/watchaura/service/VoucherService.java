@@ -10,6 +10,7 @@ public interface VoucherService {
 
     Page<Voucher> findAll(Pageable pageable);
 
+    Page<Voucher> searchPage(String q, Boolean trangThai, Pageable pageable);
 
     Voucher findById(Integer id);
 
@@ -19,5 +20,9 @@ public interface VoucherService {
 
     void delete(Integer id);
 
+    void toggleTrangThai(Integer id);
+
     boolean existsByMaVoucher(String maVoucher);
+
+    boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id);
 }

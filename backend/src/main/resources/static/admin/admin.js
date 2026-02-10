@@ -1,4 +1,39 @@
 (function () {
+  /* Theme sáng/tối - lưu vào localStorage */
+  var THEME_KEY = 'adminTheme';
+  var layout = document.querySelector('.admin-layout');
+  var themeToggle = document.getElementById('adminThemeToggle');
+  function getStoredTheme() {
+    try {
+      return localStorage.getItem(THEME_KEY) || 'light';
+    } catch (e) {
+      return 'light';
+    }
+  }
+  function applyTheme(theme) {
+    if (!layout) return;
+    if (theme === 'dark') {
+      layout.classList.add('theme-dark');
+    } else {
+      layout.classList.remove('theme-dark');
+    }
+  }
+  function setTheme(theme) {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch (e) {}
+    applyTheme(theme);
+  }
+  if (layout) {
+    applyTheme(getStoredTheme());
+    if (themeToggle) {
+      themeToggle.addEventListener('click', function () {
+        var next = layout.classList.contains('theme-dark') ? 'light' : 'dark';
+        setTheme(next);
+      });
+    }
+  }
+
   var sidebar = document.querySelector('.sidebar');
   var toggle = document.getElementById('sidebarToggle');
   if (toggle && sidebar) {
@@ -39,6 +74,60 @@
     formOpenBtn.addEventListener('click', function () {
       formWrapper.classList.remove('is-collapsed');
       var bar = document.getElementById('formKhachHangOpenBar');
+      if (bar) bar.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  var formKmWrapper = document.getElementById('formKhuyenMaiWrapper');
+  var formKmCloseBtn = document.getElementById('formKhuyenMaiToggle');
+  var formKmOpenBtn = document.getElementById('formKhuyenMaiOpenBtn');
+  if (formKmWrapper && formKmCloseBtn) {
+    formKmCloseBtn.addEventListener('click', function () {
+      formKmWrapper.classList.add('is-collapsed');
+      var bar = document.getElementById('formKhuyenMaiOpenBar');
+      if (bar) bar.setAttribute('aria-hidden', 'false');
+    });
+  }
+  if (formKmWrapper && formKmOpenBtn) {
+    formKmOpenBtn.addEventListener('click', function () {
+      formKmWrapper.classList.remove('is-collapsed');
+      var bar = document.getElementById('formKhuyenMaiOpenBar');
+      if (bar) bar.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  var formVoucherWrapper = document.getElementById('formVoucherWrapper');
+  var formVoucherCloseBtn = document.getElementById('formVoucherToggle');
+  var formVoucherOpenBtn = document.getElementById('formVoucherOpenBtn');
+  if (formVoucherWrapper && formVoucherCloseBtn) {
+    formVoucherCloseBtn.addEventListener('click', function () {
+      formVoucherWrapper.classList.add('is-collapsed');
+      var bar = document.getElementById('formVoucherOpenBar');
+      if (bar) bar.setAttribute('aria-hidden', 'false');
+    });
+  }
+  if (formVoucherWrapper && formVoucherOpenBtn) {
+    formVoucherOpenBtn.addEventListener('click', function () {
+      formVoucherWrapper.classList.remove('is-collapsed');
+      var bar = document.getElementById('formVoucherOpenBar');
+      if (bar) bar.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  var formBlogWrapper = document.getElementById('formBlogWrapper');
+  var formBlogCloseBtn = document.getElementById('formBlogToggle');
+  var formBlogOpenBtn = document.getElementById('formBlogOpenBtn');
+  if (formBlogWrapper && formBlogCloseBtn) {
+    formBlogCloseBtn.addEventListener('click', function () {
+      formBlogWrapper.classList.add('is-collapsed');
+      var bar = document.getElementById('formBlogOpenBar');
+      if (bar) bar.setAttribute('aria-hidden', 'false');
+    });
+  }
+  if (formBlogWrapper && formBlogOpenBtn) {
+    formBlogOpenBtn.addEventListener('click', function () {
+      formBlogWrapper.classList.remove('is-collapsed');
+      var bar = document.getElementById('formBlogOpenBar');
       if (bar) bar.setAttribute('aria-hidden', 'true');
     });
   }

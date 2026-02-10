@@ -14,7 +14,7 @@
         <div class="form-card__body">
         <form class="form form--khachhang" th:action="${formAction}" th:object="${khachHang}" method="post">
             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
-            <input type="hidden" name="trangThai" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
+            <input type="hidden" name="filterTrangThai" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
             <input th:if="${khachHang != null and khachHang.id != null}" type="hidden" th:field="*{id}" />
             <div class="form__grid">
                 <div class="form__group">
@@ -32,7 +32,9 @@
                 <div class="form__group">
                     <label class="form__label">Mật khẩu</label>
                     <input class="form__input" type="password" th:field="*{matKhau}" placeholder="••••••••" th:if="${khachHang == null or khachHang.id == null}" required />
-                    <div class="form__input form__input--readonly" th:if="${khachHang != null and khachHang.id != null}">••••••••</div>
+                    <div th:if="${khachHang != null and khachHang.id != null}" class="form__group form__group--readonly">
+                        <span class="form__input form__input--readonly">Không đổi (để trống)</span>
+                    </div>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Giới tính</label>
@@ -44,15 +46,20 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày sinh</label>
-                    <input class="form__input" type="date" th:field="*{ngaySinh}" th:attr="max=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" />
+                    <input class="form__input" type="date" name="ngaySinh"
+                           th:value="${khachHang?.ngaySinh != null ? #temporals.format(khachHang.ngaySinh, 'yyyy-MM-dd') : ''}"
+                           th:max="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}"
+                           title="Chọn ngày trong quá khứ hoặc hôm nay" />
+                    <span class="form__hint">Tối đa là ngày hôm nay (không được chọn ngày tương lai).</span>
                     <span class="form__error" th:if="${#fields.hasErrors('ngaySinh')}" th:errors="*{ngaySinh}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Chức vụ</label>
-                    <select class="form__input form__select" th:field="*{chucVu.id}" th:if="${khachHang == null or khachHang.id == null}">
+                    <select class="form__input form__select" th:field="*{chucVu.id}" th:if="${khachHang == null or khachHang.id == null}" required>
                         <option value="">-- Chọn chức vụ --</option>
                         <option th:each="cv : ${chucVuList}" th:value="${cv.id}" th:text="${cv.tenChucVu}"></option>
                     </select>
+                    <span class="form__hint" th:if="${khachHang == null or khachHang.id == null}">Mã người dùng tự sinh: AD (Admin), NV (Nhân viên), KH (Khách hàng) + số thứ tự.</span>
                     <div class="form__input form__input--readonly" th:if="${khachHang != null and khachHang.id != null}" th:text="${khachHang.chucVu != null ? khachHang.chucVu.tenChucVu : ''}">—</div>
                     <input type="hidden" th:if="${khachHang != null and khachHang.id != null}" th:field="*{chucVu.id}" />
                 </div>
@@ -86,20 +93,16 @@
     <section class="card card--full" id="listKhachHang">
         <h2 class="card__title">Danh sách khách hàng</h2>
 
-        <form th:action="@{/admin/khach-hang}" method="get" class="toolbar toolbar--khachhang">
-            <div class="search-bar">
-                <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã, họ tên, email, SĐT..." class="search-bar__input" />
-                <button type="submit" class="btn btn--primary search-bar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-                <a th:href="@{/admin/khach-hang}" class="btn btn--secondary search-bar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
-            </div>
-            <div class="filter-bar">
-                <label class="filter-bar__label">Trạng thái:</label>
-                <select name="trangThai" class="form__select filter-bar__select" onchange="this.form.submit()">
-                    <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
-                    <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
-                    <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
-                </select>
-            </div>
+        <form th:action="@{/admin/khach-hang}" method="get" class="toolbar toolbar--search-row">
+            <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
+            <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
+            <a th:href="@{/admin/khach-hang}" class="btn btn--secondary toolbar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
+            <label class="toolbar__label">Trạng thái:</label>
+            <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
+                <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
+                <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
+                <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
+            </select>
         </form>
 
         <table class="table">
@@ -118,6 +121,9 @@
                 </tr>
             </thead>
             <tbody>
+                <tr th:if="${#lists.isEmpty(list)}">
+                    <td colspan="10" class="table__empty">Chưa có khách hàng nào.</td>
+                </tr>
                 <tr th:each="item : ${list}">
                     <td th:text="${item.id}"></td>
                     <td th:text="${item.maNguoiDung}"></td>
@@ -137,7 +143,7 @@
                     </td>
                     <td>
                         <div class="table-actions">
-                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/khach-hang/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fa-solid fa-pen"></i></a>
+                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/khach-hang/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fas fa-edit"></i></a>
                         </div>
                     </td>
                 </tr>

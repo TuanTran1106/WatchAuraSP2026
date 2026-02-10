@@ -9,8 +9,6 @@
             <p th:if="${registerError}" class="alert alert-error" th:text="${registerError}"></p>
             <p th:if="${passwordMismatch}" class="alert alert-error" th:text="${passwordMismatch}"></p>
 
-            <p class="form-hint auth-page__hint">Mã đăng nhập sẽ tự động tạo (KH001, KH002, ...). Bạn dùng <strong>Email</strong> để đăng nhập.</p>
-
             <form class="auth-form" th:action="@{/dang-ky}" th:object="${registerRequest}" method="post">
                 <div class="form-group">
                     <label for="tenNguoiDung">Họ và tên <span class="required">*</span></label>
@@ -41,19 +39,38 @@
                         <option value="">-- Chọn --</option>
                         <option value="Nam">Nam</option>
                         <option value="Nữ">Nữ</option>
-                        <option value="Khác">Khác</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="matKhau">Mật khẩu <span class="required">*</span></label>
-                    <input type="password" id="matKhau" th:field="*{matKhau}"
-                           placeholder="Tối thiểu 6 ký tự" minlength="6" autocomplete="new-password">
+                    <div class="password-field">
+                        <input type="password" id="matKhau" th:field="*{matKhau}"
+                               placeholder="Tối thiểu 6 ký tự" minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                            <span class="icon-eye" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </span>
+                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </span>
+                        </button>
+                    </div>
                     <p th:if="${#fields.hasErrors('matKhau')}" class="field-error" th:errors="*{matKhau}"></p>
                 </div>
                 <div class="form-group">
                     <label for="xacNhanMatKhau">Xác nhận mật khẩu <span class="required">*</span></label>
-                    <input type="password" id="xacNhanMatKhau" th:field="*{xacNhanMatKhau}"
-                           placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+                    <div class="password-field">
+                        <input type="password" id="xacNhanMatKhau" th:field="*{xacNhanMatKhau}"
+                               placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                            <span class="icon-eye" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </span>
+                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </span>
+                        </button>
+                    </div>
                     <p th:if="${#fields.hasErrors('xacNhanMatKhau')}" class="field-error" th:errors="*{xacNhanMatKhau}"></p>
                 </div>
                 <button type="submit" class="btn-submit">Đăng ký</button>
@@ -64,6 +81,30 @@
             </div>
         </div>
     </div>
+    <script>
+    (function() {
+        document.querySelectorAll('.password-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var field = btn.closest('.password-field').querySelector('input');
+                var eye = btn.querySelector('.icon-eye');
+                var eyeOff = btn.querySelector('.icon-eye-off');
+                if (field.type === 'password') {
+                    field.type = 'text';
+                    eye.hidden = true;
+                    eyeOff.hidden = false;
+                    btn.setAttribute('aria-label', 'Ẩn mật khẩu');
+                    btn.setAttribute('title', 'Ẩn mật khẩu');
+                } else {
+                    field.type = 'password';
+                    eye.hidden = false;
+                    eyeOff.hidden = true;
+                    btn.setAttribute('aria-label', 'Hiện mật khẩu');
+                    btn.setAttribute('title', 'Hiện mật khẩu');
+                }
+            });
+        });
+    })();
+    </script>
 </div>
 </body>
 </html>
