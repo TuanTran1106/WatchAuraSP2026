@@ -56,6 +56,9 @@ public class Voucher {
     @Column(name = "so_luong_da_dung")
     private Integer soLuongDaDung;
 
+    @Column(name = "gioi_han_moi_user")
+    private Boolean gioiHanMoiUser;
+
     @Column(name = "ngay_bat_dau")
     @FutureOrPresent(message = "Ngày bắt đầu không được ở quá khứ", groups = OnCreate.class)
     private LocalDateTime ngayBatDau;
