@@ -25,4 +25,7 @@ public class DanhMuc {
 
     @Column(name = "ten_danh_muc", nullable = false, length = 100)
     private String tenDanhMuc;
+
+    @Column(name = "hinh_anh", length = 255)
+    private String hinhAnh;
 }

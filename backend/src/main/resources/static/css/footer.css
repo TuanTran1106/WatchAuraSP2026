@@ -2,7 +2,7 @@
     background: #1a1a1a;
     color: #bbb;
     padding: 3rem 0 0;
-    margin-top: 3rem;
+    margin-top: -20px; /* Loại bỏ khoảng trắng giữa phần features và footer */
 }
 
 .user-footer .container {

@@ -40,6 +40,9 @@ public class DanhMucServiceImpl implements DanhMucService {
         DanhMuc existing = getById(id);
 
         existing.setTenDanhMuc(danhMuc.getTenDanhMuc());
+        if (danhMuc.getHinhAnh() != null) {
+            existing.setHinhAnh(danhMuc.getHinhAnh());
+        }
 
         return danhMucRepository.save(existing);
     }

@@ -11,9 +11,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -85,6 +87,7 @@ public class KhuyenMaiController {
     }
 
     @PostMapping
+    @Validated({ Default.class, KhuyenMai.OnCreate.class })
     public String create(@Valid @ModelAttribute("khuyenMai") KhuyenMai khuyenMai, BindingResult result,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,

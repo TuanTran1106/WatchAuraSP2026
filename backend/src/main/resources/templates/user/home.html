@@ -32,7 +32,10 @@
             <h2 class="section__title">Danh mục sản phẩm</h2>
             <div class="categories__grid" th:if="${danhMucList != null and !danhMucList.isEmpty()}">
                 <a th:each="dm : ${danhMucList}" th:href="@{/san-pham(danhMucId=${dm.id})}" class="category-card">
-                    <span class="category-card__icon">⌚</span>
+                    <div class="category-card__img-wrap">
+                        <img th:if="${dm.hinhAnh != null and !dm.hinhAnh.isEmpty()}" th:src="@{${#strings.startsWith(dm.hinhAnh, '/') ? dm.hinhAnh : '/uploads/' + dm.hinhAnh}}" th:alt="${dm.tenDanhMuc}" class="category-card__img">
+                        <span th:if="${dm.hinhAnh == null or dm.hinhAnh.isEmpty()}" class="category-card__icon">⌚</span>
+                    </div>
                     <span class="category-card__name" th:text="${dm.tenDanhMuc}">Danh mục</span>
                 </a>
             </div>
@@ -51,7 +54,7 @@
                 <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
                     <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-card__link">
                         <div class="product-card__img-wrap">
-                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-card__img">
+                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="@{${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-card__img">
                             <div th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" class="product-card__placeholder">⌚</div>
                         </div>
                         <div class="product-card__info">
@@ -60,7 +63,6 @@
                             <p class="product-card__price" th:if="${sp.giaBan != null}">
                                 <span th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                             </p>
-                            <p class="product-card__price product-card__price--na" th:if="${sp.giaBan == null}">Liên hệ</p>
                         </div>
                     </a>
                     <div class="product-card__actions">
@@ -105,7 +107,12 @@
         <div class="container">
             <h2 class="section__title">Thương hiệu đồng hành</h2>
             <div class="brands__list">
-                <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}" class="brands__item" th:text="${th.tenThuongHieu}">Thương hiệu</a>
+                <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}" class="brands__item">
+                    <span class="brands__item-img-wrap" th:if="${th.hinhAnh != null and !th.hinhAnh.isEmpty()}">
+                        <img th:src="@{${#strings.startsWith(th.hinhAnh, '/') ? th.hinhAnh : '/uploads/' + th.hinhAnh}}" th:alt="${th.tenThuongHieu}" class="brands__item-img">
+                    </span>
+                    <span class="brands__item-name" th:text="${th.tenThuongHieu}">Thương hiệu</span>
+                </a>
             </div>
         </div>
     </section>

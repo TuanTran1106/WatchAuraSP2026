@@ -240,6 +240,25 @@
                 min-height: 100px;
             }
 
+            .form-hint {
+                font-size: 12px;
+                color: #666;
+                margin: -4px 0 8px 0;
+                line-height: 1.4;
+            }
+
+            .form-group--image .form-preview {
+                margin-top: 10px;
+            }
+
+            .form-group--image .form-preview img {
+                max-width: 120px;
+                max-height: 120px;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+
             .modal-actions {
                 display: flex;
                 gap: 10px;
@@ -337,13 +356,14 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Ảnh</th>
                                 <th>Tên danh mục</th>
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="danhMucTableBody">
                             <tr>
-                                <td colspan="3" class="loading">
+                                <td colspan="4" class="loading">
                                     <div class="spinner"></div>
                                     Đang tải dữ liệu...
                                 </td>
@@ -368,6 +388,16 @@
                     <div class="form-group">
                         <label for="tenDanhMuc">Tên danh mục *</label>
                         <input type="text" id="tenDanhMuc" required>
+                    </div>
+
+                    <div class="form-group form-group--image">
+                        <label for="hinhAnhFile"><i class="fas fa-image"></i> Ảnh danh mục</label>
+                        <p class="form-hint">Chọn ảnh để hiển thị tại trang chủ (phần danh mục sản phẩm). Có thể bỏ qua nếu chưa có.</p>
+                        <input type="file" id="hinhAnhFile" accept="image/*">
+                        <input type="hidden" id="hinhAnh">
+                        <div id="previewContainer" class="form-preview" style="display: none;">
+                            <img id="previewImage" src="" alt="Ảnh xem trước">
+                        </div>
                     </div>
 
                     <!-- Actions -->
@@ -413,6 +443,8 @@
             function resetModal() {
                 document.getElementById('danhMucForm').reset();
                 document.getElementById('danhMucId').value = '';
+                document.getElementById('hinhAnh').value = '';
+                document.getElementById('previewContainer').style.display = 'none';
             }
 
             // Tải danh sách danh mục
@@ -424,15 +456,18 @@
                     const tbody = document.getElementById('danhMucTableBody');
 
                     if (danhMucs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="3" class="loading">Không có dữ liệu</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="4" class="loading">Không có dữ liệu</td></tr>';
                         return;
                     }
 
                     let htmlRows = '';
                     danhMucs.forEach(dm => {
+                        const imgUrl = dm.hinhAnh ? (dm.hinhAnh.startsWith('/') ? dm.hinhAnh : '/uploads/' + dm.hinhAnh) : null;
+                        const imgCell = imgUrl ? `<img src="${imgUrl}" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">` : '<span style="color: #999;">—</span>';
                         htmlRows += `
                         <tr>
                             <td><strong>${dm.id}</strong></td>
+                            <td>${imgCell}</td>
                             <td>${dm.tenDanhMuc || '-'}</td>
                             <td>
                                 <div class="actions">
@@ -452,7 +487,7 @@
                 } catch (error) {
                     console.error('Lỗi khi tải danh sách:', error);
                     const tbody = document.getElementById('danhMucTableBody');
-                    tbody.innerHTML = '<tr><td colspan="3" class="loading" style="color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Lỗi khi tải dữ liệu</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="loading" style="color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Lỗi khi tải dữ liệu</td></tr>';
                 }
             }
 
@@ -461,8 +496,32 @@
                 e.preventDefault();
 
                 const id = document.getElementById('danhMucId').value;
+                const fileInput = document.getElementById('hinhAnhFile');
+                let hinhAnh = document.getElementById('hinhAnh').value;
+
+                // Upload ảnh nếu có chọn file mới
+                if (fileInput.files && fileInput.files[0]) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', fileInput.files[0]);
+                        const uploadRes = await fetch(`${API_URL}/san-pham/upload`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (uploadRes.ok) {
+                            const result = await uploadRes.json();
+                            hinhAnh = result.filePath || hinhAnh;
+                        }
+                    } catch (err) {
+                        console.error('Lỗi upload ảnh:', err);
+                        alert('Lỗi khi upload ảnh');
+                        return;
+                    }
+                }
+
                 const data = {
-                    tenDanhMuc: document.getElementById('tenDanhMuc').value
+                    tenDanhMuc: document.getElementById('tenDanhMuc').value,
+                    hinhAnh: hinhAnh || null
                 };
 
                 try {
@@ -506,6 +565,17 @@
 
                     document.getElementById('danhMucId').value = danhMuc.id;
                     document.getElementById('tenDanhMuc').value = danhMuc.tenDanhMuc;
+                    document.getElementById('hinhAnh').value = danhMuc.hinhAnh || '';
+                    const previewContainer = document.getElementById('previewContainer');
+                    const previewImage = document.getElementById('previewImage');
+                    if (danhMuc.hinhAnh) {
+                        const imgUrl = danhMuc.hinhAnh.startsWith('/') ? danhMuc.hinhAnh : '/uploads/' + danhMuc.hinhAnh;
+                        previewImage.src = imgUrl;
+                        previewContainer.style.display = 'block';
+                    } else {
+                        previewContainer.style.display = 'none';
+                    }
+                    document.getElementById('hinhAnhFile').value = '';
 
                     document.getElementById('modalTitle').innerText = 'Cập nhật danh mục';
                     isEditing = true;
@@ -540,6 +610,23 @@
                     alert('Có lỗi xảy ra khi xóa!');
                 }
             }
+
+            // Xem trước ảnh khi chọn file
+            document.getElementById('hinhAnhFile').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                const previewContainer = document.getElementById('previewContainer');
+                const previewImage = document.getElementById('previewImage');
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        previewImage.src = ev.target.result;
+                        previewContainer.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.style.display = 'none';
+                }
+            });
 
             // Khởi tạo khi trang load
             window.addEventListener('DOMContentLoaded', function () {

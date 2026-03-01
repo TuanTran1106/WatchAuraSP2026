@@ -15,7 +15,7 @@
         <div class="product-detail">
             <div class="product-detail__gallery">
                 <div class="product-detail__img-wrap" th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}">
-                    <img th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-detail__img">
+                    <img th:src="@{${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-detail__img">
                 </div>
                 <div class="product-detail__img-wrap product-detail__img-wrap--placeholder" th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}">
                     <span>⌚</span>
