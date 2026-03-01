@@ -79,8 +79,17 @@ public class UserGioHangController {
             redirect.addAttribute("error", "Vui lòng đăng nhập.");
             return "redirect:/dang-nhap";
         }
-        if (soLuong == null || soLuong < 1) soLuong = 1;
         try {
+            // Giảm về 0 → xóa khỏi giỏ
+            if (soLuong == null || soLuong < 1) {
+                gioHangChiTietService.delete(id);
+                if (isAjax(request)) {
+                    GioHangDTO cart = gioHangService.getOrCreateCart(userId);
+                    return ResponseEntity.ok(new CartAjaxResponse(true, null, cart.getTongTien(), gioHangService.getSoLuongGioHang(userId), id, null, null));
+                }
+                redirect.addFlashAttribute("success", "Đã xóa sản phẩm khỏi giỏ hàng.");
+                return "redirect:/gio-hang";
+            }
             var existing = gioHangChiTietService.getById(id);
             GioHangChiTietRequest req = new GioHangChiTietRequest();
             req.setGioHangId(existing.getGioHangId());

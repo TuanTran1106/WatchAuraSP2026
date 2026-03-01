@@ -53,23 +53,19 @@
                             <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
                             <td class="cart-table__qty">
                                 <div class="qty-controls">
-                                    <form th:if="${item.soLuong > 1}" th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update">
+                                    <!-- Giảm: gửi soLuong-1, backend xử lý: 0 → xóa -->
+                                    <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update">
                                         <input type="hidden" name="soLuong" th:value="${item.soLuong - 1}">
                                         <button type="submit" class="qty-btn qty-btn--minus" aria-label="Giảm">−</button>
                                     </form>
-                                    <span th:if="${item.soLuong <= 1}" class="qty-btn qty-btn--minus qty-btn--disabled">−</span>
                                     <span class="qty-controls__num cart-qty-display" th:text="${item.soLuong}">1</span>
-                                    <form th:if="${item.soLuongTon == null or item.soLuong < item.soLuongTon}" th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update">
+                                    <!-- Tăng: max = tồn kho -->
+                                    <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update cart-form-plus">
                                         <input type="hidden" name="soLuong" th:value="${item.soLuong + 1}">
-                                        <button type="submit" class="qty-btn qty-btn--plus" aria-label="Tăng">+</button>
+                                        <button type="submit" class="qty-btn qty-btn--plus" aria-label="Tăng" th:disabled="${item.soLuongTon != null and item.soLuong >= item.soLuongTon}" title="Đã đạt tối đa tồn kho">+</button>
                                     </form>
-                                    <span th:if="${item.soLuongTon != null and item.soLuong >= item.soLuongTon}" class="qty-btn qty-btn--plus qty-btn--disabled" title="Đã đạt tối đa tồn kho">+</span>
                                 </div>
                                 <p class="cart-table__max-qty" th:if="${item.soLuongTon != null}" th:text="|Tối đa: ${item.soLuongTon} SP|">Tối đa</p>
-                                <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-custom cart-form-update">
-                                    <input type="number" name="soLuong" th:value="${item.soLuong}" min="1" th:attr="max=${item.soLuongTon != null ? item.soLuongTon : 999}" class="qty-custom__input cart-qty-input">
-                                    <button type="submit" class="btn btn--small">Cập nhật</button>
-                                </form>
                             </td>
                             <td class="cart-table__total cart-line-total" th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
                             <td class="cart-table__remove">
@@ -121,7 +117,7 @@
     document.querySelectorAll('.cart-form-update, .cart-form-delete').forEach(function(form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (form.classList.contains('cart-form-delete') && !confirm('Xóa sản phẩm này khỏi giỏ?')) return;
+            if (form.classList.contains('cart-form-delete') && form.closest('.cart-table__remove') && !confirm('Xóa sản phẩm này khỏi giỏ?')) return;
             var btn = form.querySelector('button[type="submit"]');
             if (btn) btn.disabled = true;
             var fd = new FormData(form);
@@ -133,7 +129,8 @@
                     return;
                 }
                 var row = form.closest('.cart-row');
-                if (form.classList.contains('cart-form-delete')) {
+                var isDelete = form.classList.contains('cart-form-delete') || data.soLuong == null;
+                if (isDelete) {
                     if (row) row.remove();
                     var tbody = document.querySelector('.cart-table tbody');
                     if (tbody && tbody.querySelectorAll('.cart-row').length === 0) {
@@ -146,8 +143,17 @@
                         if (qtyDisplay) qtyDisplay.textContent = data.soLuong;
                         var lineTotal = row.querySelector('.cart-line-total');
                         if (lineTotal && data.thanhTien != null) lineTotal.textContent = formatVnd(data.thanhTien);
-                        var qtyInput = row.querySelector('.cart-qty-input');
-                        if (qtyInput) qtyInput.value = data.soLuong;
+                        var forms = row.querySelectorAll('.qty-controls__form');
+                        var minusInput = forms[0] ? forms[0].querySelector('input[name="soLuong"]') : null;
+                        if (minusInput) minusInput.value = data.soLuong - 1;
+                        var plusForm = row.querySelector('.cart-form-plus');
+                        if (plusForm) {
+                            var plusInput = plusForm.querySelector('input[name="soLuong"]');
+                            if (plusInput) plusInput.value = data.soLuong + 1;
+                            var maxQty = parseInt(row.getAttribute('data-max-qty') || '999', 10);
+                            var plusBtn = plusForm.querySelector('button');
+                            if (plusBtn) plusBtn.disabled = (data.soLuong >= maxQty);
+                        }
                     }
                 }
                 var totalEl = document.getElementById('cart-tong-tien');

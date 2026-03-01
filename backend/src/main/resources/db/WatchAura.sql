@@ -123,11 +123,23 @@ CREATE TABLE Voucher (
                          don_hang_toi_thieu DECIMAL(18,2) DEFAULT 0,
                          so_luong_tong INT NOT NULL,
                          so_luong_da_dung INT DEFAULT 0,
+                         gioi_han_moi_user BIT NOT NULL DEFAULT 0,
                          ngay_bat_dau DATETIME NOT NULL,
                          ngay_ket_thuc DATETIME NOT NULL,
                          trang_thai BIT NOT NULL DEFAULT 1,
                          ngay_tao DATETIME DEFAULT GETDATE(),
                          ngay_cap_nhat DATETIME
+);
+
+CREATE TABLE Voucher_User (
+                             id INT IDENTITY(1,1) PRIMARY KEY,
+                             id_voucher INT NOT NULL,
+                             id_khach_hang INT NOT NULL,
+                             so_lan_da_dung INT NOT NULL DEFAULT 0,
+                             lan_cuoi_dung DATETIME NULL,
+                             CONSTRAINT UQ_VoucherUser UNIQUE (id_voucher, id_khach_hang),
+                             FOREIGN KEY (id_voucher) REFERENCES Voucher(id),
+                             FOREIGN KEY (id_khach_hang) REFERENCES KhachHang(id)
 );
 ----------------------------
 CREATE TABLE KhuyenMai (
