@@ -65,21 +65,54 @@
             </div>
             <p th:if="${list == null or list.isEmpty()}" class="section__empty">Không tìm thấy sản phẩm nào.</p>
 
-            <nav class="pagination-wrap" th:if="${pageResult != null and pageResult.totalPages > 1}" aria-label="Phân trang">
+            <nav class="pagination-wrap" th:if="${pageResult != null && pageResult.totalPages > 1}" aria-label="Phân trang">
                 <ul class="pagination-list">
+                    <!-- Trang đầu -->
                     <li>
-                        <a th:if="${pageResult.hasPrevious()}" class="pagination-link pagination-link--prev"
-                            th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number - 1})}">‹ Trước</a>
-                        <span th:unless="${pageResult.hasPrevious()}" class="pagination-link pagination-link--disabled">‹ Trước</span>
+                        <a th:if="${pageResult.number > 0}"
+                           class="pagination-link pagination-link--first"
+                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=0)}">&laquo;&laquo;</a>
+                        <span th:unless="${pageResult.number > 0}"
+                              class="pagination-link pagination-link--disabled">&laquo;&laquo;</span>
                     </li>
-                    <li th:each="i : ${#numbers.sequence(0, pageResult.totalPages - 1)}" th:if="${i >= pageResult.number - 2 and i <= pageResult.number + 2}">
-                        <a th:if="${i != pageResult.number}" class="pagination-link" th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${i})}" th:text="${i + 1}">1</a>
-                        <span th:if="${i == pageResult.number}" class="pagination-link pagination-link--current" th:text="${i + 1}">1</span>
-                    </li>
+
+                    <!-- Trang trước -->
                     <li>
-                        <a th:if="${pageResult.hasNext()}" class="pagination-link pagination-link--next"
-                            th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number + 1})}">Sau ›</a>
-                        <span th:unless="${pageResult.hasNext()}" class="pagination-link pagination-link--disabled">Sau ›</span>
+                        <a th:if="${pageResult.hasPrevious()}"
+                           class="pagination-link pagination-link--prev"
+                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number - 1})}">&lsaquo;</a>
+                        <span th:unless="${pageResult.hasPrevious()}"
+                              class="pagination-link pagination-link--disabled">&lsaquo;</span>
+                    </li>
+
+                    <!-- Số trang -->
+                    <li th:each="i : ${#numbers.sequence(0, pageResult.totalPages - 1)}"
+                        th:if="${i >= pageResult.number - 2 and i <= pageResult.number + 2}">
+                        <a th:if="${i != pageResult.number}"
+                           class="pagination-link"
+                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${i})}"
+                           th:text="${i + 1}">1</a>
+                        <span th:if="${i == pageResult.number}"
+                              class="pagination-link pagination-link--current"
+                              th:text="${i + 1}">1</span>
+                    </li>
+
+                    <!-- Trang sau -->
+                    <li>
+                        <a th:if="${pageResult.hasNext()}"
+                           class="pagination-link pagination-link--next"
+                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number + 1})}">&rsaquo;</a>
+                        <span th:unless="${pageResult.hasNext()}"
+                              class="pagination-link pagination-link--disabled">&rsaquo;</span>
+                    </li>
+
+                    <!-- Trang cuối -->
+                    <li>
+                        <a th:if="${pageResult.number < pageResult.totalPages - 1}"
+                           class="pagination-link pagination-link--last"
+                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.totalPages - 1})}">&raquo;&raquo;</a>
+                        <span th:unless="${pageResult.number < pageResult.totalPages - 1}"
+                              class="pagination-link pagination-link--disabled">&raquo;&raquo;</span>
                     </li>
                 </ul>
             </nav>

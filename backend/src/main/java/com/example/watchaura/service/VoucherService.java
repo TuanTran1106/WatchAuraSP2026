@@ -14,6 +14,8 @@ public interface VoucherService {
 
     Voucher findById(Integer id);
 
+    Voucher findByMaVoucher(String maVoucher);
+
     Voucher save(Voucher voucher);
 
     Voucher update(Integer id, Voucher voucher);

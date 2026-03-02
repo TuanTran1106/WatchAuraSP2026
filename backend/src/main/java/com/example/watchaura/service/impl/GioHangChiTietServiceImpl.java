@@ -117,6 +117,12 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
         gioHangChiTietRepository.deleteById(id);
     }
 
+    @Override
+    @Transactional
+    public void deleteByGioHangId(Integer gioHangId) {
+        gioHangChiTietRepository.deleteByGioHangId(gioHangId);
+    }
+
     private GioHangChiTietDTO convertToDTO(GioHangChiTiet chiTiet) {
         GioHangChiTietDTO dto = new GioHangChiTietDTO();
         dto.setId(chiTiet.getId());

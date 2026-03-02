@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
 
@@ -19,4 +21,6 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
             "(:q IS NULL OR :q = '' OR LOWER(v.maVoucher) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(v.tenVoucher) LIKE LOWER(CONCAT('%', :q, '%'))) AND " +
             "(:trangThai IS NULL OR v.trangThai = :trangThai)")
     Page<Voucher> searchByKeywordAndTrangThai(@Param("q") String q, @Param("trangThai") Boolean trangThai, Pageable pageable);
+
+    Optional<Voucher> findByMaVoucherIgnoreCase(String maVoucher);
 }

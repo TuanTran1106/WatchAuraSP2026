@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class VoucherServiceImpl implements VoucherService {
@@ -30,6 +31,14 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public Voucher findById(Integer id) {
         return voucherRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public Voucher findByMaVoucher(String maVoucher) {
+        if (maVoucher == null || maVoucher.isBlank()) {
+            return null;
+        }
+        return voucherRepository.findByMaVoucherIgnoreCase(maVoucher.trim()).orElse(null);
     }
 
     @Override

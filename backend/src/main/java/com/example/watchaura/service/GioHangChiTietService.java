@@ -12,4 +12,6 @@ public interface GioHangChiTietService {
     GioHangChiTietDTO create(GioHangChiTietRequest request);
     GioHangChiTietDTO update(Integer id, GioHangChiTietRequest request);
     void delete(Integer id);
+    /** Xóa tất cả sản phẩm trong giỏ (sau khi đặt hàng thành công). */
+    void deleteByGioHangId(Integer gioHangId);
 }

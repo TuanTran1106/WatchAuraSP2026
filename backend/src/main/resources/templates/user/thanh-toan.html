@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="user-page cart-page checkout-page">
+    <div class="container cart-container">
+        <nav class="breadcrumb cart-breadcrumb">
+            <a th:href="@{/}">Trang chủ</a>
+            <span class="breadcrumb__sep">/</span>
+            <a th:href="@{/gio-hang}">Giỏ hàng</a>
+            <span class="breadcrumb__sep">/</span>
+            <span class="breadcrumb__current">Thanh toán</span>
+        </nav>
+        <header class="cart-header">
+            <h1 class="cart-page__title">Thanh toán</h1>
+            <p class="cart-page__subtitle">Điền thông tin giao hàng và xác nhận đơn hàng</p>
+        </header>
+
+        <div th:if="${error}" class="alert alert--error" th:text="${error}">Lỗi</div>
+
+        <form th:action="@{/thanh-toan/dat-hang}" method="post" th:object="${checkoutForm}" id="checkoutForm" class="checkout-form">
+            <div class="checkout-layout">
+                <div class="checkout-form__section">
+                    <h2 class="checkout-section__title">Thông tin giao hàng</h2>
+                    <div class="form-group">
+                        <label for="tenKhachHang">Họ tên người nhận <span class="required">*</span></label>
+                        <input type="text" id="tenKhachHang" th:field="*{tenKhachHang}" class="form-control" placeholder="Nguyễn Văn A" required maxlength="100">
+                        <span th:if="${#fields.hasErrors('tenKhachHang')}" th:errors="*{tenKhachHang}" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="sdtKhachHang">Số điện thoại <span class="required">*</span></label>
+                        <input type="tel" id="sdtKhachHang" th:field="*{sdtKhachHang}" class="form-control" placeholder="0901234567" required maxlength="20">
+                        <span th:if="${#fields.hasErrors('sdtKhachHang')}" th:errors="*{sdtKhachHang}" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="diaChi">Địa chỉ giao hàng <span class="required">*</span></label>
+                        <textarea id="diaChi" th:field="*{diaChi}" class="form-control form-control--textarea" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" required rows="3" maxlength="500"></textarea>
+                        <span th:if="${#fields.hasErrors('diaChi')}" th:errors="*{diaChi}" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="ghiChu">Ghi chú</label>
+                        <textarea id="ghiChu" th:field="*{ghiChu}" class="form-control form-control--textarea" placeholder="Ghi chú cho đơn hàng (không bắt buộc)" rows="2" maxlength="255"></textarea>
+                    </div>
+                    <h2 class="checkout-section__title checkout-section__title--mt">Voucher khuyến mãi</h2>
+                    <div class="form-group">
+                        <label for="maVoucher">Mã voucher</label>
+                        <div class="voucher-input-row">
+                            <input type="text"
+                                   id="maVoucher"
+                                   th:field="*{maVoucher}"
+                                   class="form-control"
+                                   placeholder="Nhập mã voucher (nếu có)"
+                                   maxlength="50">
+                            <button type="button" class="btn btn--outline" id="btnApplyVoucher">Áp dụng</button>
+                        </div>
+                        <div id="voucherMessage" class="voucher-message"></div>
+                        <small style="color:#666;font-size:0.85rem;">Giảm giá sẽ được áp dụng nếu mã hợp lệ và đáp ứng điều kiện sử dụng.</small>
+                    </div>
+                    <h2 class="checkout-section__title checkout-section__title--mt">Phương thức thanh toán</h2>
+                    <div class="payment-method payment-method--cod">
+                        <label class="payment-method__label">
+                            <input type="radio" name="phuongThucThanhToan" value="COD" th:field="*{phuongThucThanhToan}">
+                            <span class="payment-method__icon">💵</span>
+                            <span class="payment-method__text"><strong>Thanh toán khi nhận hàng (COD)</strong><br>
+                                <small>Thanh toán bằng tiền mặt khi nhận hàng</small></span>
+                        </label>
+                    </div>
+                    <div class="payment-method payment-method--vnpay">
+                        <label class="payment-method__label">
+                            <input type="radio" name="phuongThucThanhToan" value="VNPAY" th:field="*{phuongThucThanhToan}">
+                            <span class="payment-method__icon">🏦</span>
+                            <span class="payment-method__text"><strong>VN Pay</strong><br>
+                                <small>Thanh toán qua cổng VN Pay (ATM, thẻ, ví điện tử)</small></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="checkout-summary">
+                    <div class="cart-summary__box">
+                        <h2 class="checkout-section__title">Đơn hàng của bạn</h2>
+                        <div class="checkout-items" th:if="${cart != null and cart.items != null}">
+                            <div class="checkout-item" th:each="item : ${cart.items}">
+                                <div class="checkout-item__img" th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}">
+                                    <img th:src="@{${#strings.startsWith(item.hinhAnh, '/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}}" alt="">
+                                </div>
+                                <div class="checkout-item__img checkout-item__img--placeholder" th:if="${item.hinhAnh == null or item.hinhAnh.isEmpty()}">⌚</div>
+                                <div class="checkout-item__info">
+                                    <span class="checkout-item__name" th:text="${item.tenSanPham}">Tên SP</span>
+                                    <span class="checkout-item__qty" th:text="'x' + ${item.soLuong}">x1</span>
+                                </div>
+                                <div class="checkout-item__total" th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</div>
+                            </div>
+                        </div>
+                        <div class="cart-summary__row" id="voucher-row" style="display:none;">
+                            <span class="cart-summary__label">&nbsp;</span>
+                            <span class="cart-summary__value cart-summary__value--discount" id="checkout-voucher-discount">0 ₫</span>
+                        </div>
+                        <div class="cart-summary__row cart-summary__row--total">
+                            <span class="cart-summary__label">Tổng thanh toán</span>
+                            <span class="cart-summary__value cart-summary__value--large" id="checkout-tong-tien" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        </div>
+                        <div class="cart-summary__actions">
+                            <a th:href="@{/gio-hang}" class="btn btn--outline btn--lg">← Quay lại giỏ hàng</a>
+                            <button type="submit" class="btn btn--primary btn--lg" id="btnSubmitOrder">Đặt hàng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <style th:inline="text">
+        .checkout-page .checkout-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2rem; align-items: start; }
+        .checkout-page .checkout-form__section { background: #fff; border-radius: 12px; border: 1px solid #eee; padding: 1.5rem; }
+        .checkout-page .checkout-section__title { font-size: 1.1rem; font-weight: 600; color: #1a1a1a; margin: 0 0 1rem 0; }
+        .checkout-page .checkout-section__title--mt { margin-top: 1.5rem; }
+        .checkout-page .form-group { margin-bottom: 1rem; }
+        .checkout-page .form-group label { display: block; font-weight: 500; color: #333; margin-bottom: 0.35rem; font-size: 0.9rem; }
+        .checkout-page .form-group .required { color: #c9302c; }
+        .checkout-page .form-control { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; }
+        .checkout-page .form-control--textarea { resize: vertical; min-height: 70px; }
+        .checkout-page .field-error { color: #c9302c; font-size: 0.85rem; display: block; margin-top: 0.25rem; }
+        .checkout-page .payment-method { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 0.75rem 1rem; }
+        .checkout-page .payment-method--cod { border-color: #c9a227; background: #fefdf8; }
+        .checkout-page .payment-method--vnpay { margin-top: 0.5rem; border-color: #0066cc; background: #f0f7ff; }
+        .checkout-page .payment-method__label { display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; }
+        .checkout-page .payment-method__icon { font-size: 1.5rem; }
+        .checkout-page .payment-method__text { flex: 1; }
+        .checkout-page .payment-method__text small { color: #666; font-weight: normal; }
+        .checkout-page .checkout-summary { position: sticky; top: 1rem; }
+        .checkout-page .checkout-items { max-height: 280px; overflow-y: auto; margin-bottom: 1rem; }
+        .checkout-page .checkout-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #f0f0f0; }
+        .checkout-page .checkout-item__img { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
+        .checkout-page .checkout-item__img img { width: 100%; height: 100%; object-fit: cover; }
+        .checkout-page .checkout-item__img--placeholder { font-size: 1.25rem; }
+        .checkout-page .checkout-item__info { flex: 1; min-width: 0; }
+        .checkout-page .checkout-item__name { display: block; font-size: 0.9rem; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .checkout-page .checkout-item__qty { font-size: 0.85rem; color: #666; }
+        .checkout-page .checkout-item__total { font-weight: 600; color: #1a1a1a; white-space: nowrap; }
+        .checkout-page .cart-summary__row--total { padding-top: 0.75rem; margin-top: 0.5rem; border-top: 2px solid #eee; }
+        .checkout-page .cart-summary__value--large { font-size: 1.25rem; font-weight: 700; color: #c9a227; }
+        .checkout-page .cart-summary__value--discount { color: #c9302c; font-size: 0.95rem; font-weight: 600; }
+        .checkout-page .cart-summary__actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+        .checkout-page .voucher-input-row { display: flex; gap: 0.5rem; align-items: center; }
+        .checkout-page .voucher-input-row .form-control { flex: 1; }
+        .checkout-page .voucher-message { margin-top: 0.35rem; font-size: 0.85rem; }
+        .checkout-page .voucher-message--error { color: #c9302c; }
+        .checkout-page .voucher-message--success { color: #2e7d32; }
+        @media (max-width: 900px) {
+            .checkout-page .checkout-layout { grid-template-columns: 1fr; }
+            .checkout-page .checkout-summary { position: static; }
+        }
+    </style>
+    <script th:inline="javascript">
+        (function() {
+            var form = document.getElementById('checkoutForm');
+            var btn = document.getElementById('btnSubmitOrder');
+            if (form && btn) {
+                var radios = form.querySelectorAll('input[name="phuongThucThanhToan"]');
+                function updateBtn() {
+                    var vnpay = form.querySelector('input[name="phuongThucThanhToan"][value="VNPAY"]');
+                    btn.textContent = vnpay && vnpay.checked ? 'Đặt hàng & thanh toán VN Pay' : 'Đặt hàng (COD)';
+                }
+                radios.forEach(function(r) { r.addEventListener('change', updateBtn); });
+                updateBtn();
+            }
+
+            var btnApply = document.getElementById('btnApplyVoucher');
+            var inputVoucher = document.getElementById('maVoucher');
+            var voucherMsg = document.getElementById('voucherMessage');
+            var tongTienEl = document.getElementById('checkout-tong-tien');
+            var voucherRow = document.getElementById('voucher-row');
+            var voucherDiscountEl = document.getElementById('checkout-voucher-discount');
+            var applyUrl = /*[[@{/thanh-toan/apply-voucher}]]*/ '/thanh-toan/apply-voucher';
+
+            function formatCurrencyVnd(value) {
+                var num = Number(value || 0);
+                if (isNaN(num)) num = 0;
+                return num.toLocaleString('vi-VN') + ' ₫';
+            }
+
+            if (btnApply && inputVoucher && tongTienEl) {
+                btnApply.addEventListener('click', function() {
+                    var code = (inputVoucher.value || '').trim();
+                    voucherMsg.textContent = '';
+                    voucherMsg.className = 'voucher-message';
+                    if (voucherRow) {
+                        voucherRow.style.display = 'none';
+                    }
+
+                    if (!code) {
+                        var msg = 'Vui lòng nhập mã voucher.';
+                        voucherMsg.textContent = msg;
+                        voucherMsg.classList.add('voucher-message--error');
+                        console.log(msg);
+                        return;
+                    }
+
+                    btnApply.disabled = true;
+                    btnApply.textContent = 'Đang áp dụng...';
+
+                    fetch(applyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                        },
+                        body: new URLSearchParams({ maVoucher: code })
+                    }).then(function(res) {
+                        return res.json();
+                    }).then(function(data) {
+                        var message = data && data.message ? data.message : '';
+                        console.log('Voucher response:', data);
+                        voucherMsg.textContent = message;
+                        if (data && data.success) {
+                            voucherMsg.classList.add('voucher-message--success');
+                            if (typeof data.finalTotal !== 'undefined' && data.finalTotal !== null) {
+                                tongTienEl.textContent = formatCurrencyVnd(data.finalTotal);
+                            }
+                            if (voucherRow && voucherDiscountEl && typeof data.discount !== 'undefined' && data.discount !== null) {
+                                voucherRow.style.display = '';
+                                voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(data.discount);
+                            }
+                        } else {
+                            voucherMsg.classList.add('voucher-message--error');
+                        }
+                    }).catch(function(err) {
+                        console.error('Lỗi áp dụng voucher:', err);
+                        voucherMsg.textContent = 'Có lỗi xảy ra khi áp dụng voucher.';
+                        voucherMsg.classList.add('voucher-message--error');
+                    }).finally(function() {
+                        btnApply.disabled = false;
+                        btnApply.textContent = 'Áp dụng';
+                    });
+                });
+            }
+        })();
+    </script>
+</div>
+</body>
+</html>
