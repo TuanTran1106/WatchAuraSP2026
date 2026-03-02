@@ -1,5 +1,6 @@
 package com.example.watchaura.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -21,6 +22,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name = "SanPham")
+@JsonIgnoreProperties(ignoreUnknown = true, value = { "hibernateLazyInitializer", "handler" })
 public class SanPham {
 
     @Id
