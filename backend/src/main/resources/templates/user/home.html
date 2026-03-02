@@ -12,71 +12,94 @@
     <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
 
-    <!-- Hero / Banner -->
-    <section class="hero">
-        <div class="hero__inner container">
-            <div class="hero__content">
-                <h1 class="hero__title">Đồng Hồ Chính Hãng</h1>
-                <p class="hero__subtitle">Khám phá bộ sưu tập đồng hồ cao cấp – Phong cách, tin cậy, đẳng cấp thời gian.</p>
-                <a th:href="@{/san-pham}" class="btn btn--primary hero__cta">Xem sản phẩm</a>
-            </div>
-            <div class="hero__visual">
-                <div class="hero__img-wrap"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Danh mục -->
-    <section class="section categories">
-        <div class="container">
-            <h2 class="section__title">Danh mục sản phẩm</h2>
-            <div class="categories__grid" th:if="${danhMucList != null and !danhMucList.isEmpty()}">
-                <a th:each="dm : ${danhMucList}" th:href="@{/san-pham(danhMucId=${dm.id})}" class="category-card">
-                    <span class="category-card__icon">⌚</span>
-                    <span class="category-card__name" th:text="${dm.tenDanhMuc}">Danh mục</span>
-                </a>
-            </div>
-            <p th:if="${danhMucList == null or danhMucList.isEmpty()}" class="section__empty">Chưa có danh mục.</p>
-        </div>
-    </section>
-
-    <!-- Sản phẩm nổi bật -->
-    <section class="section products">
-        <div class="container">
-            <div class="section__head">
-                <h2 class="section__title">Sản phẩm nổi bật</h2>
-                <a th:href="@{/san-pham}" class="link-more">Xem tất cả →</a>
-            </div>
-            <div class="products__grid" th:if="${sanPhamTrangChu != null and !sanPhamTrangChu.isEmpty()}">
-                <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
-                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-card__link">
-                        <div class="product-card__img-wrap">
-                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-card__img">
-                            <div th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" class="product-card__placeholder">⌚</div>
-                        </div>
-                        <div class="product-card__info">
-                            <h3 class="product-card__name" th:text="${sp.tenSanPham}">Tên sản phẩm</h3>
-                            <p class="product-card__brand" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
-                            <p class="product-card__price" th:if="${sp.giaBan != null}">
-                                <span th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
-                            </p>
-                            <p class="product-card__price product-card__price--na" th:if="${sp.giaBan == null}">Liên hệ</p>
-                        </div>
+    <!-- Carousel banner (2 ảnh) -->
+    <section class="banner-carousel" aria-label="Banner khuyến mãi">
+        <div class="banner-carousel__track-wrap">
+            <div class="banner-carousel__track">
+                <div class="banner-carousel__slide" data-slide="0">
+                    <a th:href="@{/san-pham}" class="banner-carousel__link">
+                        <img th:src="@{/uploads/banner.jpg}" alt="Banner 1" class="banner-carousel__img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span class="banner-carousel__placeholder">⌚</span>
                     </a>
-                    <div class="product-card__actions">
-                        <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm">Xem chi tiết</a>
-                        <th:block th:if="${firstVariantIdByProductId != null and firstVariantIdByProductId[__${sp.id}__] != null}">
-                            <form th:action="@{/gio-hang/them}" method="post" class="product-card__form-inline">
-                                <input type="hidden" name="sanPhamChiTietId" th:value="${firstVariantIdByProductId[__${sp.id}__]}">
-                                <input type="hidden" name="soLuong" value="1">
-                                <input type="hidden" name="redirectUrl" th:value="@{/}">
-                                <button type="submit" class="btn btn--primary btn--sm">Thêm vào giỏ</button>
-                            </form>
-                        </th:block>
-                    </div>
+                </div>
+                <div class="banner-carousel__slide" data-slide="1">
+                    <a th:href="@{/san-pham}" class="banner-carousel__link">
+                        <img th:src="@{/uploads/banner2.jpg}" alt="Banner 2" class="banner-carousel__img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span class="banner-carousel__placeholder">⌚</span>
+                    </a>
                 </div>
             </div>
-            <p th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="section__empty">Chưa có sản phẩm nào.</p>
+        </div>
+        <button type="button" class="banner-carousel__btn banner-carousel__btn--prev" aria-label="Banner trước" onclick="window.watchAuraBannerPrev();">‹</button>
+        <button type="button" class="banner-carousel__btn banner-carousel__btn--next" aria-label="Banner sau" onclick="window.watchAuraBannerNext();">›</button>
+        <div class="banner-carousel__dots">
+            <button type="button" class="banner-carousel__dot is-active" aria-label="Xem banner 1" aria-current="true" data-index="0" onclick="window.watchAuraBannerGo(0);"></button>
+            <button type="button" class="banner-carousel__dot" aria-label="Xem banner 2" data-index="1" onclick="window.watchAuraBannerGo(1);"></button>
+        </div>
+    </section>
+    <script>
+(function(){
+ var total = 2, current = 0, interval;
+ var track = document.querySelector('.banner-carousel__track');
+ var dots = document.querySelectorAll('.banner-carousel__dot');
+ function go(i) {
+   current = (i + total) % total;
+   if (track) track.style.transform = 'translateX(-' + current * 100 + '%)';
+   dots.forEach(function(d, j){ d.classList.toggle('is-active', j === current); d.setAttribute('aria-current', j === current ? 'true' : 'false'); });
+ }
+ function next(){ go(current + 1); }
+ function prev(){ go(current - 1); }
+ function start(){ interval = setInterval(next, 2000); }
+ function stop(){ clearInterval(interval); }
+ if (track && dots.length) {
+   window.watchAuraBannerGo = go;
+   window.watchAuraBannerNext = next;
+   window.watchAuraBannerPrev = prev;
+   document.querySelector('.banner-carousel').addEventListener('mouseenter', stop);
+   document.querySelector('.banner-carousel').addEventListener('mouseleave', start);
+   start();
+ }
+})();
+    </script>
+
+    <!-- Thương hiệu đồng hành -->
+    <section class="section brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
+        <div class="container">
+            <h2 class="section__title">Thương hiệu đồng hành</h2>
+            <div class="brands__list">
+                <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}" class="brands__item">
+                    <span class="brands__item-img-wrap" th:if="${th.hinhAnh != null and !th.hinhAnh.isEmpty()}">
+                        <img th:src="@{${#strings.startsWith(th.hinhAnh, '/') ? th.hinhAnh : '/uploads/' + th.hinhAnh}}" th:alt="${th.tenThuongHieu}" class="brands__item-img">
+                    </span>
+                    <span class="brands__item-name" th:text="${th.tenThuongHieu}">Thương hiệu</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sản phẩm nổi bật (card kiểu TrangChu) -->
+    <section class="section products">
+        <div class="container">
+            <h2 class="section__title">Sản phẩm nổi bật</h2>
+            <div class="products-grid">
+                <div th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="no-products">Chưa có sản phẩm nào!</div>
+                <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
+                    <div class="product-image-container">
+                        <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}" th:alt="${sp.tenSanPham}" class="product-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                        <img th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E" alt="No Image" class="product-image">
+                    </div>
+                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-info-link">
+                        <div class="product-info">
+                            <div class="product-brand" th:text="${(sp.tenThuongHieu != null ? sp.tenThuongHieu : 'N/A') + ' | ' + (sp.tenDanhMuc != null ? sp.tenDanhMuc : 'N/A')}">TH | Danh mục</div>
+                            <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
+                            <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm</div>
+                            <div class="product-footer">
+                                <div class="product-price" th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -100,23 +123,10 @@
         </div>
     </section>
 
-    <!-- Thương hiệu -->
-    <section class="section brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
-        <div class="container">
-            <h2 class="section__title">Thương hiệu đồng hành</h2>
-            <div class="brands__list">
-                <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}" class="brands__item" th:text="${th.tenThuongHieu}">Thương hiệu</a>
-            </div>
-        </div>
-    </section>
-
     <!-- Tin tức / Blog -->
     <section class="section blog">
         <div class="container">
-            <div class="section__head">
-                <h2 class="section__title">Tin tức &amp; Blog</h2>
-                <a th:href="@{/tin-tuc}" class="link-more">Xem tất cả →</a>
-            </div>
+            <h2 class="section__title">Tin tức &amp; Blog</h2>
             <div class="blog__grid" th:if="${blogMoi != null and !blogMoi.isEmpty()}">
                 <article th:each="blog : ${blogMoi}" class="blog-card">
                     <a th:href="@{/tin-tuc/{id}(id=${blog.id})}" class="blog-card__link">

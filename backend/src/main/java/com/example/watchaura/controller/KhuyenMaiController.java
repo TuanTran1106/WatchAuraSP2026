@@ -11,9 +11,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -79,12 +81,13 @@ public class KhuyenMaiController {
         model.addAttribute("khuyenMai", khuyenMai);
         String formAction = "/admin/khuyen-mai/" + id + "?page=" + page;
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
-        if (trangThai != null && !trangThai.isBlank()) formAction += "&trangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
+        if (trangThai != null && !trangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
         return "layout/admin-layout";
     }
 
     @PostMapping
+    @Validated({ Default.class, KhuyenMai.OnCreate.class })
     public String create(@Valid @ModelAttribute("khuyenMai") KhuyenMai khuyenMai, BindingResult result,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,

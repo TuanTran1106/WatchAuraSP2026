@@ -1,7 +1,9 @@
 package com.example.watchaura.config;
 
 import com.example.watchaura.controller.AuthController;
+import com.example.watchaura.entity.DanhMuc;
 import com.example.watchaura.entity.KhachHang;
+import com.example.watchaura.service.DanhMucService;
 import com.example.watchaura.service.GioHangService;
 import com.example.watchaura.service.KhachHangService;
 import jakarta.servlet.http.HttpSession;
@@ -10,12 +12,15 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
+import java.util.List;
+
 @ControllerAdvice
 @RequiredArgsConstructor
 public class GlobalControllerAdvice {
 
     private final KhachHangService khachHangService;
     private final GioHangService gioHangService;
+    private final DanhMucService danhMucService;
 
     @ModelAttribute
     public void addCurrentUser(HttpSession session, Model model) {
@@ -34,5 +39,10 @@ public class GlobalControllerAdvice {
             model.addAttribute("currentUser", null);
             model.addAttribute("soLuongGioHang", 0);
         }
+    }
+
+    @ModelAttribute("danhMucList")
+    public List<DanhMuc> addDanhMucList() {
+        return danhMucService.getAll();
     }
 }

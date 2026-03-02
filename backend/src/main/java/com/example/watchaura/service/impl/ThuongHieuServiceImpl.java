@@ -41,9 +41,10 @@ public class ThuongHieuServiceImpl implements ThuongHieuService {
 
         ThuongHieu existing = getById(id);
 
-        existing.setTenThuongHieu(
-                thuongHieu.getTenThuongHieu()
-        );
+        existing.setTenThuongHieu(thuongHieu.getTenThuongHieu());
+        if (thuongHieu.getHinhAnh() != null) {
+            existing.setHinhAnh(thuongHieu.getHinhAnh());
+        }
 
         return thuongHieuRepository.save(existing);
     }

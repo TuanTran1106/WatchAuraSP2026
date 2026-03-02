@@ -27,4 +27,7 @@ public class ThuongHieu {
 
     @Column(name = "ten_thuong_hieu", nullable = false, length = 100)
     private String tenThuongHieu;
+
+    @Column(name = "hinh_anh", length = 255)
+    private String hinhAnh;
 }

@@ -44,7 +44,7 @@
                         <tr th:each="item : ${cart.items}" class="cart-row" th:attr="data-item-id=${item.id}, data-gia-ban=${item.giaBan != null ? item.giaBan : 0}, data-max-qty=${item.soLuongTon != null ? item.soLuongTon : 999}">
                             <td class="cart-table__product">
                                 <a th:if="${item.idSanPham != null}" th:href="@{/san-pham/{id}(id=${item.idSanPham})}" class="cart-table__img-link">
-                                    <img th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}" th:src="@{'/uploads/' + ${item.hinhAnh}}" alt="" class="cart-table__img">
+                                    <img th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}" th:src="@{${#strings.startsWith(item.hinhAnh, '/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}}" alt="" class="cart-table__img">
                                     <span th:if="${item.hinhAnh == null or item.hinhAnh.isEmpty()}" class="cart-table__img-placeholder">⌚</span>
                                 </a>
                                 <a th:if="${item.idSanPham != null}" th:href="@{/san-pham/{id}(id=${item.idSanPham})}" class="cart-table__name cart-table__name--link" th:text="${item.tenSanPham}">Tên SP</a>

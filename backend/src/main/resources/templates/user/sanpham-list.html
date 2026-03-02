@@ -12,73 +12,77 @@
             <div class="filters">
                 <form th:action="@{/san-pham}" method="get" class="filters__form">
                     <input type="hidden" name="page" value="0">
-                    <input type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tên..."
-                        class="filters__input">
-                    <select name="danhMucId" class="filters__select">
+                    <div class="filters__input-wrap">
+                        <i class="fas fa-search filters__icon" aria-hidden="true"></i>
+                        <input type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tên..."
+                            class="filters__input" id="filterKeyword">
+                    </div>
+                    <div class="filters__select-wrap">
+                        <i class="fas fa-layer-group filters__icon filters__icon--select" aria-hidden="true"></i>
+                        <select name="danhMucId" class="filters__select" id="filterDanhMuc">
                         <option value="">Tất cả danh mục</option>
                         <option th:each="dm : ${danhMucList}" th:value="${dm.id}" th:text="${dm.tenDanhMuc}"
-                            th:selected="${danhMucId != null and danhMucId == dm.id}"></option>
-                    </select>
-                    <select name="thuongHieuId" class="filters__select">
+                                th:selected="${danhMucId != null and danhMucId == dm.id}"></option>
+                        </select>
+                    </div>
+                    <div class="filters__select-wrap">
+                        <i class="fas fa-tag filters__icon filters__icon--select" aria-hidden="true"></i>
+                        <select name="thuongHieuId" class="filters__select" id="filterThuongHieu">
                         <option value="">Tất cả thương hiệu</option>
                         <option th:each="th : ${thuongHieuList}" th:value="${th.id}" th:text="${th.tenThuongHieu}"
                             th:selected="${thuongHieuId != null and thuongHieuId == th.id}"></option>
-                    </select>
-                    <button type="submit" class="btn btn--primary">Lọc</button>
+                        </select>
+                    </div>
+                    <button type="submit" class="filters__btn">
+                        <i class="fas fa-filter" aria-hidden="true"></i>
+                        <span>Lọc</span>
+                    </button>
                 </form>
             </div>
 
-            <div class="products__grid" th:if="${list != null and !list.isEmpty()}">
+            <div class="products-grid products__grid" th:if="${list != null and !list.isEmpty()}">
                 <div th:each="sp : ${list}" class="product-card">
-                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-card__link">
-                        <div class="product-card__img-wrap">
-                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}"
-                                th:src="@{'/uploads/' + ${sp.hinhAnh}}" th:alt="${sp.tenSanPham}"
-                                class="product-card__img">
-                            <div th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}"
-                                class="product-card__placeholder">⌚</div>
-                        </div>
-                        <div class="product-card__info">
-                            <h3 class="product-card__name" th:text="${sp.tenSanPham}">Tên</h3>
-                            <p class="product-card__brand" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">
-                            </p>
-                            <div class="product-card__spec" th:if="${sp.phongCach}">
-                                <small th:text="|${sp.phongCach}|"></small>
-                            </div>
-                            <div class="product-card__pricing">
-                                <p class="product-card__price" th:if="${sp.giaBan != null}"
-                                    th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|"></p>
-                                <p class="product-card__price product-card__price--na" th:if="${sp.giaBan == null}">Liên
-                                    hệ</p>
+                    <div class="product-image-container">
+                        <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}"
+                            th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}"
+                            th:alt="${sp.tenSanPham}" class="product-image"
+                            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                        <img th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}"
+                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E"
+                            alt="No Image" class="product-image">
+                    </div>
+                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-info-link">
+                        <div class="product-info">
+                            <div class="product-brand" th:text="${(sp.tenThuongHieu != null ? sp.tenThuongHieu : 'N/A') + ' | ' + (sp.tenDanhMuc != null ? sp.tenDanhMuc : 'N/A')}">TH | Danh mục</div>
+                            <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
+                            <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm</div>
+                            <div class="product-footer">
+                                <div class="product-price" th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
                             </div>
                         </div>
                     </a>
-                    <div class="product-card__actions">
-                        <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm">Chi tiết</a>
-                        <th:block
-                            th:if="${firstVariantIdByProductId != null and firstVariantIdByProductId[__${sp.id}__] != null}">
-                            <form th:action="@{/gio-hang/them}" method="post" class="product-card__form-inline">
-                                <input type="hidden" name="sanPhamChiTietId"
-                                    th:value="${firstVariantIdByProductId[__${sp.id}__]}">
-                                <input type="hidden" name="soLuong" value="1">
-                                <input type="hidden" name="redirectUrl"
-                                    th:value="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult != null ? pageResult.number : 0})}">
-                                <button type="submit" class="btn btn--primary btn--sm">Thêm giỏ</button>
-                            </form>
-                        </th:block>
-                    </div>
                 </div>
             </div>
             <p th:if="${list == null or list.isEmpty()}" class="section__empty">Không tìm thấy sản phẩm nào.</p>
 
-            <div class="pagination" th:if="${pageResult != null and pageResult.totalPages > 1}">
-                <a th:if="${pageResult.hasPrevious()}"
-                    th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number - 1})}">Trước</a>
-                <span class="pagination__current"
-                    th:text="|Trang ${pageResult.number + 1} / ${pageResult.totalPages}|"></span>
-                <a th:if="${pageResult.hasNext()}"
-                    th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number + 1})}">Sau</a>
-            </div>
+            <nav class="pagination-wrap" th:if="${pageResult != null and pageResult.totalPages > 1}" aria-label="Phân trang">
+                <ul class="pagination-list">
+                    <li>
+                        <a th:if="${pageResult.hasPrevious()}" class="pagination-link pagination-link--prev"
+                            th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number - 1})}">‹ Trước</a>
+                        <span th:unless="${pageResult.hasPrevious()}" class="pagination-link pagination-link--disabled">‹ Trước</span>
+                    </li>
+                    <li th:each="i : ${#numbers.sequence(0, pageResult.totalPages - 1)}" th:if="${i >= pageResult.number - 2 and i <= pageResult.number + 2}">
+                        <a th:if="${i != pageResult.number}" class="pagination-link" th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${i})}" th:text="${i + 1}">1</a>
+                        <span th:if="${i == pageResult.number}" class="pagination-link pagination-link--current" th:text="${i + 1}">1</span>
+                    </li>
+                    <li>
+                        <a th:if="${pageResult.hasNext()}" class="pagination-link pagination-link--next"
+                            th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number + 1})}">Sau ›</a>
+                        <span th:unless="${pageResult.hasNext()}" class="pagination-link pagination-link--disabled">Sau ›</span>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 

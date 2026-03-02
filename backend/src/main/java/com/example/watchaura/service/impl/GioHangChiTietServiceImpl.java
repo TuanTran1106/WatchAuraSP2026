@@ -56,10 +56,11 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
 
         Integer tonKho = sanPhamChiTiet.getSoLuongTon();
-        if (tonKho == null || tonKho < request.getSoLuong()) {
-            throw new RuntimeException(tonKho != null
-                    ? "Số lượng tồn kho không đủ (còn " + tonKho + " sản phẩm)."
-                    : "Số lượng tồn kho không đủ.");
+        if (tonKho == null || tonKho < 1) {
+            throw new RuntimeException("Sản phẩm không còn hàng.");
+        }
+        if (tonKho < request.getSoLuong()) {
+            throw new RuntimeException("Số lượng tồn kho không đủ (còn " + tonKho + " sản phẩm).");
         }
 
         // Kiểm tra sản phẩm đã có trong giỏ chưa

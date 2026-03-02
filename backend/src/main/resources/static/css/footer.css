@@ -2,7 +2,7 @@
     background: #1a1a1a;
     color: #bbb;
     padding: 3rem 0 0;
-    margin-top: 3rem;
+    margin-top: -20px; /* Loại bỏ khoảng trắng giữa phần features và footer */
 }
 
 .user-footer .container {
@@ -54,6 +54,25 @@
 .footer__col p {
     font-size: 0.9rem;
     margin-bottom: 0.35rem;
+}
+
+/* Liên hệ – icon + text */
+.footer__contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.footer__contact-item i {
+    color: #c9a227;
+    margin-top: 0.2rem;
+    min-width: 1rem;
+    text-align: center;
+}
+
+.footer__contact-item span {
+    line-height: 1.4;
 }
 
 .footer-newsletter {

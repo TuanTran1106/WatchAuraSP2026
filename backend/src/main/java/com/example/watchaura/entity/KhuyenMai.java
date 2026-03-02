@@ -48,11 +48,11 @@ public class KhuyenMai {
     private BigDecimal giamToiDa;
 
     @Column(name = "ngay_bat_dau")
-    @FutureOrPresent(message = "Ngày bắt đầu không được ở quá khứ")
+    @FutureOrPresent(message = "Ngày bắt đầu không được ở quá khứ", groups = OnCreate.class)
     private LocalDateTime ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
-    @FutureOrPresent(message = "Ngày kết thúc không được ở quá khứ")
+    @FutureOrPresent(message = "Ngày kết thúc không được ở quá khứ", groups = OnCreate.class)
     private LocalDateTime ngayKetThuc;
 
     @AssertTrue(message = "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu")

@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class UserSanPhamController {
 
-    private static final int PAGE_SIZE = 12;
+    private static final int PAGE_SIZE = 8;
 
     private final SanPhamService sanPhamService;
     private final SanPhamChiTietService sanPhamChiTietService;
@@ -62,7 +62,7 @@ public class UserSanPhamController {
         for (SanPhamDTO sp : content) {
             if (sp.getId() != null) {
                 sanPhamChiTietService.getSanPhamChiTietBySanPhamId(sp.getId()).stream()
-                        .filter(v -> Boolean.TRUE.equals(v.getTrangThai()) && v.getSoLuongTon() != null && v.getSoLuongTon() > 0)
+                        .filter(v -> Boolean.TRUE.equals(v.getTrangThai()))
                         .findFirst()
                         .ifPresent(v -> firstVariantIdByProductId.put(sp.getId(), v.getId()));
             }
@@ -90,10 +90,14 @@ public class UserSanPhamController {
         List<SanPhamChiTietDTO> variants = sanPhamChiTietService.getSanPhamChiTietBySanPhamId(id).stream()
                 .filter(v -> Boolean.TRUE.equals(v.getTrangThai()) && v.getSoLuongTon() != null && v.getSoLuongTon() > 0)
                 .collect(Collectors.toList());
+        int tongSoLuong = variants.stream()
+                .mapToInt(v -> v.getSoLuongTon() != null ? v.getSoLuongTon() : 0)
+                .sum();
         model.addAttribute("title", sp.getTenSanPham() + " - WatchAura");
         model.addAttribute("content", "user/sanpham-detail :: content");
         model.addAttribute("sp", sp);
         model.addAttribute("variants", variants);
+        model.addAttribute("tongSoLuong", tongSoLuong);
         model.addAttribute("danhMucList", danhMucService.getAll());
         model.addAttribute("thuongHieuList", thuongHieuService.getAll());
         return "layout/user-layout";

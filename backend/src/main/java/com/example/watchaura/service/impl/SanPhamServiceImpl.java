@@ -5,7 +5,9 @@ import com.example.watchaura.dto.SanPhamRequest;
 import com.example.watchaura.entity.DanhMuc;
 import com.example.watchaura.entity.SanPham;
 import com.example.watchaura.entity.ThuongHieu;
+import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.DanhMucRepository;
+import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.repository.SanPhamRepository;
 import com.example.watchaura.repository.ThuongHieuRepository;
 import com.example.watchaura.service.FileUploadService;
@@ -17,8 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
 public class SanPhamServiceImpl implements SanPhamService {
 
     private final SanPhamRepository sanPhamRepository;
+    private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final ThuongHieuRepository thuongHieuRepository;
     private final DanhMucRepository danhMucRepository;
     private final FileUploadService fileUploadService;
@@ -166,6 +171,23 @@ public class SanPhamServiceImpl implements SanPhamService {
         if (sanPham.getDanhMuc() != null) {
             dto.setIdDanhMuc(sanPham.getDanhMuc().getId());
             dto.setTenDanhMuc(sanPham.getDanhMuc().getTenDanhMuc());
+        }
+
+        // Giá bán: lấy giá thấp nhất trong các biến thể đang bán
+        if (sanPham.getId() != null) {
+            List<SanPhamChiTiet> variants = sanPhamChiTietRepository.findBySanPham_Id(sanPham.getId());
+            BigDecimal minGia = variants.stream()
+                    .map(SanPhamChiTiet::getGiaBan)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo)
+                    .orElse(null);
+            dto.setGiaBan(minGia);
+            int totalTon = variants.stream()
+                    .map(SanPhamChiTiet::getSoLuongTon)
+                    .filter(Objects::nonNull)
+                    .mapToInt(Integer::intValue)
+                    .sum();
+            dto.setSoLuongTon(totalTon);
         }
 
         return dto;

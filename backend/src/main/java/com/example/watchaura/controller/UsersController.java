@@ -41,7 +41,7 @@ public class UsersController {
         for (SanPhamDTO sp : sanPhamTrangChu) {
             if (sp.getId() != null) {
                 sanPhamChiTietService.getSanPhamChiTietBySanPhamId(sp.getId()).stream()
-                        .filter(v -> Boolean.TRUE.equals(v.getTrangThai()) && v.getSoLuongTon() != null && v.getSoLuongTon() > 0)
+                        .filter(v -> Boolean.TRUE.equals(v.getTrangThai()))
                         .findFirst()
                         .ifPresent(v -> firstVariantIdByProductId.put(sp.getId(), v.getId()));
             }
