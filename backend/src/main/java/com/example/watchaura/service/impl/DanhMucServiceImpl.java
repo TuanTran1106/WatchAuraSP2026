@@ -1,16 +1,22 @@
 package com.example.watchaura.service.impl;
 
 import com.example.watchaura.entity.DanhMuc;
+import com.example.watchaura.entity.SanPham;
 import com.example.watchaura.repository.DanhMucRepository;
+import com.example.watchaura.repository.SanPhamRepository;
 import com.example.watchaura.service.DanhMucService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
 @Service
 public class DanhMucServiceImpl implements DanhMucService {
     @Autowired
     private DanhMucRepository danhMucRepository;
+    @Autowired
+    private SanPhamRepository sanPhamRepository;
 
     @Override
     public List<DanhMuc> getAll() {
@@ -48,8 +54,15 @@ public class DanhMucServiceImpl implements DanhMucService {
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
-        getById(id); // check tồn tại
-        danhMucRepository.deleteById(id);
+        DanhMuc danhMuc = getById(id); // check tồn tại
+        // Gỡ danh mục khỏi tất cả sản phẩm đang dùng (tránh lỗi foreign key)
+        List<SanPham> sanPhams = sanPhamRepository.findByDanhMucId(id);
+        for (SanPham sp : sanPhams) {
+            sp.setDanhMuc(null);
+        }
+        sanPhamRepository.saveAll(sanPhams);
+        danhMucRepository.delete(danhMuc);
     }
 }

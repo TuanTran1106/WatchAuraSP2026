@@ -90,10 +90,14 @@ public class UserSanPhamController {
         List<SanPhamChiTietDTO> variants = sanPhamChiTietService.getSanPhamChiTietBySanPhamId(id).stream()
                 .filter(v -> Boolean.TRUE.equals(v.getTrangThai()) && v.getSoLuongTon() != null && v.getSoLuongTon() > 0)
                 .collect(Collectors.toList());
+        int tongSoLuong = variants.stream()
+                .mapToInt(v -> v.getSoLuongTon() != null ? v.getSoLuongTon() : 0)
+                .sum();
         model.addAttribute("title", sp.getTenSanPham() + " - WatchAura");
         model.addAttribute("content", "user/sanpham-detail :: content");
         model.addAttribute("sp", sp);
         model.addAttribute("variants", variants);
+        model.addAttribute("tongSoLuong", tongSoLuong);
         model.addAttribute("danhMucList", danhMucService.getAll());
         model.addAttribute("thuongHieuList", thuongHieuService.getAll());
         return "layout/user-layout";

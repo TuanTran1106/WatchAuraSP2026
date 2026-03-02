@@ -81,7 +81,7 @@ public class KhuyenMaiController {
         model.addAttribute("khuyenMai", khuyenMai);
         String formAction = "/admin/khuyen-mai/" + id + "?page=" + page;
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
-        if (trangThai != null && !trangThai.isBlank()) formAction += "&trangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
+        if (trangThai != null && !trangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
         return "layout/admin-layout";
     }

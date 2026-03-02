@@ -5,7 +5,8 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
+    overflow: visible;
 }
 
 .user-header .container {
@@ -21,13 +22,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    min-height: 64px;
+    gap: 0.75rem;
+    min-height: 56px;
     flex-wrap: wrap;
+    overflow: visible;
 }
 
 .logo {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #fff;
     text-decoration: none;
@@ -59,11 +61,11 @@
 
 .header-search__input {
     flex: 1;
-    padding: 0.4rem 1rem 0.4rem 1.25rem;
+    padding: 0.35rem 0.9rem 0.35rem 1rem;
     border: none;
     background: transparent;
     color: #fff;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     min-width: 0;
 }
 
@@ -114,10 +116,10 @@
 }
 
 .nav a {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.65rem;
     color: #eee;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     border-radius: 6px;
 }
 
@@ -126,8 +128,97 @@
     background: rgba(255,255,255,0.05);
 }
 
+/* Danh mục sản phẩm - dropdown */
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.65rem;
+    color: #eee;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.nav-dropdown__toggle:hover {
+    color: #c9a227;
+    background: rgba(255,255,255,0.05);
+}
+
+.nav-dropdown__chevron {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    transition: transform 0.2s ease;
+}
+
+.nav-dropdown--open .nav-dropdown__chevron {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown__menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    margin-top: 4px;
+    padding: 0.5rem 0;
+    background: #2a2a2a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    display: none;
+    z-index: 1001;
+}
+
+.nav-dropdown--open .nav-dropdown__menu {
+    display: block;
+}
+
+.nav-dropdown__item {
+    display: block;
+    padding: 0.4rem 0.9rem;
+    color: #eee;
+    text-decoration: none;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.nav-dropdown__item:hover {
+    color: #c9a227;
+    background: rgba(255,255,255,0.06);
+}
+
+.nav-dropdown__empty {
+    padding: 0.4rem 0.9rem;
+    margin: 0;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.8rem;
+}
+
 .nav-cart {
     position: relative;
+    padding: 0.4rem 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+}
+
+.nav-cart:hover {
+    color: #c9a227;
+    background: rgba(255,255,255,0.05);
+}
+
+.nav-cart__icon {
+    display: block;
+    flex-shrink: 0;
 }
 
 .nav-cart__count {
@@ -136,20 +227,43 @@
     right: -4px;
     background: #c9a227;
     color: #1a1a1a;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    min-width: 18px;
-    height: 18px;
+    min-width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
+.nav-icon-btn {
+    padding: 0.4rem 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.nav-icon-btn:hover {
+    color: #c9a227;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-icon-btn__icon {
+    display: block;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
 .btn-header {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.85rem;
     background: #c9a227;
     color: #1a1a1a !important;
+    font-size: 0.85rem;
     font-weight: 600;
     border-radius: 6px;
 }
@@ -172,17 +286,17 @@
 }
 
 .nav-user {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.65rem;
     color: #c9a227;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
 }
 
 .nav-link {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.65rem;
     color: #eee;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     border-radius: 6px;
 }
 

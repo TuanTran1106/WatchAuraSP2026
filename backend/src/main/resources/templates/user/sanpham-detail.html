@@ -3,13 +3,13 @@
 <body>
 
 <div th:fragment="content" class="user-page user-page--detail" th:with="sp=${sp}">
-    <div class="container container--narrow">
-        <nav class="breadcrumb">
+    <div class="container container--narrow container--detail">
+        <nav class="breadcrumb breadcrumb--detail">
             <a th:href="@{/}">Trang chủ</a>
             <span class="breadcrumb__sep">/</span>
             <a th:href="@{/san-pham}">Sản phẩm</a>
             <span class="breadcrumb__sep">/</span>
-            <span th:text="${sp.tenSanPham}">Chi tiết</span>
+            <span class="breadcrumb__current" th:text="${sp.tenSanPham}">Chi tiết</span>
         </nav>
 
         <div class="product-detail">
@@ -18,47 +18,89 @@
                     <img th:src="@{${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-detail__img">
                 </div>
                 <div class="product-detail__img-wrap product-detail__img-wrap--placeholder" th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}">
-                    <span>⌚</span>
+                    <span aria-hidden="true">⌚</span>
                 </div>
             </div>
             <div class="product-detail__info">
                 <h1 class="product-detail__name" th:text="${sp.tenSanPham}">Tên sản phẩm</h1>
-                <p class="product-detail__meta" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
-                <p class="product-detail__meta" th:if="${sp.tenDanhMuc}" th:text="${sp.tenDanhMuc}">Danh mục</p>
-                <p class="product-detail__price" th:if="${sp.giaBan != null}" th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</p>
-                <p class="product-detail__price product-detail__price--na" th:if="${sp.giaBan == null}">Liên hệ để biết giá</p>
+                <div class="product-detail__meta-row">
+                    <p class="product-detail__meta" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
+                    <p class="product-detail__meta" th:if="${sp.tenDanhMuc}" th:text="${sp.tenDanhMuc}">Danh mục</p>
+                </div>
+                <div class="product-detail__price-wrap">
+                    <p class="product-detail__price" th:if="${sp.giaBan != null}" th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</p>
+                    <p class="product-detail__price product-detail__price--na" th:if="${sp.giaBan == null}">Liên hệ để biết giá</p>
+                </div>
                 <div class="product-detail__specs" th:if="${sp.duongKinh != null or sp.doChiuNuoc != null or sp.phongCach != null}">
                     <p th:if="${sp.duongKinh != null}" th:text="|Đường kính: ${sp.duongKinh} mm|"></p>
                     <p th:if="${sp.doChiuNuoc != null}" th:text="|Chịu nước: ${sp.doChiuNuoc} m|"></p>
                     <p th:if="${sp.phongCach != null}" th:text="|Phong cách: ${sp.phongCach}|"></p>
                 </div>
+                <p class="product-detail__stock" th:if="${variants != null and !variants.isEmpty()}">
+                    <strong>Tổng số lượng đang có:</strong> <span th:text="${tongSoLuong}">0</span> sản phẩm
+                </p>
                 <p class="product-detail__desc" th:if="${sp.moTa != null and !sp.moTa.isEmpty()}" th:utext="${sp.moTa}">Mô tả</p>
-                <div class="product-detail__actions" th:if="${variants != null and !variants.isEmpty()}">
+                <div class="product-detail__buy" th:if="${variants != null and !variants.isEmpty()}">
                     <form th:action="@{/gio-hang/them}" method="post" class="product-detail__form">
                         <input type="hidden" name="redirectUrl" th:value="@{/san-pham/{id}(id=${sp.id})}">
                         <th:block th:if="${variants.size() == 1}">
                             <input type="hidden" name="sanPhamChiTietId" th:value="${variants[0].id}">
                         </th:block>
                         <th:block th:if="${variants.size() > 1}">
-                            <label class="product-detail__label">Chọn phiên bản:</label>
-                            <select name="sanPhamChiTietId" class="product-detail__select" required>
-                                <option th:each="v : ${variants}" th:value="${v.id}" th:text="${(v.tenMauSac != null ? v.tenMauSac + ' - ' : '') + (v.tenKichThuoc != null ? v.tenKichThuoc : '') + ' | ' + (v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : '')}">Phiên bản</option>
-                            </select>
+                            <div class="product-detail__field">
+                                <label class="product-detail__label">Chọn phiên bản</label>
+                                <select name="sanPhamChiTietId" class="product-detail__select" required>
+                                    <option th:each="v : ${variants}" th:value="${v.id}" th:text="${(v.tenMauSac != null ? v.tenMauSac + ' - ' : '') + (v.tenKichThuoc != null ? v.tenKichThuoc : '') + ' | ' + (v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : '')}">Phiên bản</option>
+                                </select>
+                            </div>
                         </th:block>
-                        <label class="product-detail__label">Số lượng:</label>
-                        <input type="number" name="soLuong" value="1" min="1" class="product-detail__qty">
-                        <button type="submit" class="btn btn--primary">Thêm vào giỏ hàng</button>
+                        <div class="product-detail__field product-detail__field--qty">
+                            <label class="product-detail__label">Số lượng</label>
+                            <div class="product-detail__qty-group">
+                                <button type="button" class="product-detail__qty-btn" data-action="minus" aria-label="Giảm">−</button>
+                                <input type="number" name="soLuong" value="1" min="1" max="99" class="product-detail__qty">
+                                <button type="button" class="product-detail__qty-btn" data-action="plus" aria-label="Tăng">+</button>
+                            </div>
+                        </div>
+                        <div class="product-detail__actions">
+                            <button type="submit" class="btn btn--primary product-detail__btn-cart">Thêm vào giỏ hàng</button>
+                            <a th:href="@{/san-pham}" class="btn btn--outline product-detail__btn-back">Quay lại danh sách</a>
+                        </div>
                     </form>
                 </div>
-                <div class="product-detail__actions" th:if="${variants == null or variants.isEmpty()}">
+                <div class="product-detail__out-of-stock" th:if="${variants == null or variants.isEmpty()}">
                     <p class="section__empty">Sản phẩm tạm hết hàng. Vui lòng liên hệ đặt trước.</p>
-                </div>
-                <div class="product-detail__actions">
-                    <a th:href="@{/san-pham}" class="btn btn--outline">← Quay lại danh sách</a>
+                    <a th:href="@{/san-pham}" class="btn btn--outline product-detail__btn-back">← Quay lại danh sách</a>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+    (function() {
+        function initQtyButtons() {
+            var wrap = document.querySelector('.user-page--detail');
+            if (!wrap) return;
+            var minus = wrap.querySelector('.product-detail__qty-btn[data-action="minus"]');
+            var plus = wrap.querySelector('.product-detail__qty-btn[data-action="plus"]');
+            var input = wrap.querySelector('.product-detail__qty');
+            if (!input) return;
+            if (minus) minus.addEventListener('click', function() {
+                var v = parseInt(input.value, 10) || 1;
+                if (v > 1) input.value = v - 1;
+            });
+            if (plus) plus.addEventListener('click', function() {
+                var v = parseInt(input.value, 10) || 1;
+                var max = parseInt(input.getAttribute('max'), 10) || 99;
+                if (v < max) input.value = v + 1;
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initQtyButtons);
+        } else {
+            initQtyButtons();
+        }
+    })();
+    </script>
 </div>
 
 </body>
