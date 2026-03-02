@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class UserSanPhamController {
 
-    private static final int PAGE_SIZE = 12;
+    private static final int PAGE_SIZE = 8;
 
     private final SanPhamService sanPhamService;
     private final SanPhamChiTietService sanPhamChiTietService;

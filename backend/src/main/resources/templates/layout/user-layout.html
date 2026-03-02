@@ -11,11 +11,54 @@
     <link rel="stylesheet" th:href="@{/css/auth.css}">
     <link rel="stylesheet" th:href="@{/css/cart.css}">
     <link rel="stylesheet" th:href="@{/css/tin-tuc-detail.css}">
+    <link rel="stylesheet" th:href="@{/css/sanpham-detail.css}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 
 <!-- HEADER -->
 <div th:replace="fragments/header :: header"></div>
+
+<!-- Sidebar menu (mở bằng nút hamburger trên header) -->
+<div class="sidebar-menu" id="sidebarMenu">
+    <div class="sidebar-header">
+        <h5>MENU</h5>
+    </div>
+    <ul>
+        <li><a th:href="@{/nguoidung}"><i class="fas fa-user"></i> Tài khoản</a></li>
+        <li><a th:href="@{/nguoidung}"><i class="fas fa-map-marker-alt"></i> Địa chỉ</a></li>
+        <li><a th:href="@{/uu-dai}"><i class="fas fa-percentage"></i> Khuyến mại</a></li>
+        <li><a th:href="@{/tin-tuc}"><i class="fas fa-newspaper"></i> Tin tức</a></li>
+        <li><a th:href="@{/lien-he}"><i class="fas fa-envelope"></i> Liên hệ</a></li>
+        <li th:if="${currentUser != null}"><a th:href="@{/dang-xuat}" onclick="return handleLogout(event);"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+    </ul>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebarMenu()"></div>
+
+<script th:inline="javascript">
+    function toggleSidebarMenu() {
+        var sidebar = document.getElementById('sidebarMenu');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var sidebar = document.getElementById('sidebarMenu');
+            if (sidebar && sidebar.classList.contains('show')) toggleSidebarMenu();
+        }
+    });
+    function handleLogout(event) {
+        if (!confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+            event.preventDefault();
+            return false;
+        }
+        window.location.href = /*[[@{/dang-xuat}]]*/ '/dang-xuat';
+        return false;
+    }
+</script>
 
 <!-- CONTENT -->
 <main class="user-main">

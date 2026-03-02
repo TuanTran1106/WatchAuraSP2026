@@ -77,39 +77,29 @@
         </div>
     </section>
 
-    <!-- Sản phẩm nổi bật -->
+    <!-- Sản phẩm nổi bật (card kiểu TrangChu) -->
     <section class="section products">
         <div class="container">
             <h2 class="section__title">Sản phẩm nổi bật</h2>
-            <div class="products__grid" th:if="${sanPhamTrangChu != null and !sanPhamTrangChu.isEmpty()}">
+            <div class="products-grid">
+                <div th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="no-products">Chưa có sản phẩm nào!</div>
                 <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
-                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-card__link">
-                        <div class="product-card__img-wrap">
-                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="@{${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-card__img">
-                            <div th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" class="product-card__placeholder">⌚</div>
-                        </div>
-                        <div class="product-card__info">
-                            <h3 class="product-card__name" th:text="${sp.tenSanPham}">Tên sản phẩm</h3>
-                            <p class="product-card__brand" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
-                            <p class="product-card__price" th:if="${sp.giaBan != null}">
-                                <span th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
-                            </p>
+                    <div class="product-image-container">
+                        <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}" th:alt="${sp.tenSanPham}" class="product-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                        <img th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E" alt="No Image" class="product-image">
+                    </div>
+                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-info-link">
+                        <div class="product-info">
+                            <div class="product-brand" th:text="${(sp.tenThuongHieu != null ? sp.tenThuongHieu : 'N/A') + ' | ' + (sp.tenDanhMuc != null ? sp.tenDanhMuc : 'N/A')}">TH | Danh mục</div>
+                            <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
+                            <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm</div>
+                            <div class="product-footer">
+                                <div class="product-price" th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
+                            </div>
                         </div>
                     </a>
-                    <div class="product-card__actions">
-                        <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="btn btn--outline btn--sm product-card__btn">Xem chi tiết</a>
-                        <th:block th:if="${firstVariantIdByProductId != null and firstVariantIdByProductId[__${sp.id}__] != null}">
-                            <form th:action="@{/gio-hang/them}" method="post" class="product-card__form-inline">
-                                <input type="hidden" name="sanPhamChiTietId" th:value="${firstVariantIdByProductId[__${sp.id}__]}">
-                                <input type="hidden" name="soLuong" value="1">
-                                <input type="hidden" name="redirectUrl" th:value="@{/}">
-                                <button type="submit" class="btn btn--primary btn--sm product-card__btn">Thêm vào giỏ</button>
-                            </form>
-                        </th:block>
-                    </div>
                 </div>
             </div>
-            <p th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="section__empty">Chưa có sản phẩm nào.</p>
         </div>
     </section>
 

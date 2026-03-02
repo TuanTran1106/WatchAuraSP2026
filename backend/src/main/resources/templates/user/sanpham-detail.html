@@ -2,87 +2,292 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<div th:fragment="content" class="user-page user-page--detail" th:with="sp=${sp}">
-    <div class="container container--narrow container--detail">
-        <nav class="breadcrumb breadcrumb--detail">
+<div th:fragment="content" class="product-detail-page" th:with="sp=${sp}">
+    <div class="container">
+        <nav class="breadcrumb-wrap" aria-label="breadcrumb">
             <a th:href="@{/}">Trang chủ</a>
             <span class="breadcrumb__sep">/</span>
             <a th:href="@{/san-pham}">Sản phẩm</a>
             <span class="breadcrumb__sep">/</span>
-            <span class="breadcrumb__current" th:text="${sp.tenSanPham}">Chi tiết</span>
+            <span th:text="${sp.tenSanPham}">Chi tiết sản phẩm</span>
         </nav>
 
-        <div class="product-detail">
-            <div class="product-detail__gallery">
-                <div class="product-detail__img-wrap" th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}">
-                    <img th:src="@{${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}}" th:alt="${sp.tenSanPham}" class="product-detail__img">
-                </div>
-                <div class="product-detail__img-wrap product-detail__img-wrap--placeholder" th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}">
-                    <span aria-hidden="true">⌚</span>
+        <div class="product-detail-wrapper">
+            <div class="product-detail-image">
+                <div class="product-image1">
+                    <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}"
+                         th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}"
+                         th:alt="${sp.tenSanPham}"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="img-placeholder" style="display: none;" aria-hidden="true">⌚</div>
+                    <th:block th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}">
+                        <div class="img-placeholder" aria-hidden="true">⌚</div>
+                    </th:block>
                 </div>
             </div>
-            <div class="product-detail__info">
-                <h1 class="product-detail__name" th:text="${sp.tenSanPham}">Tên sản phẩm</h1>
-                <div class="product-detail__meta-row">
-                    <p class="product-detail__meta" th:if="${sp.tenThuongHieu}" th:text="${sp.tenThuongHieu}">Thương hiệu</p>
-                    <p class="product-detail__meta" th:if="${sp.tenDanhMuc}" th:text="${sp.tenDanhMuc}">Danh mục</p>
-                </div>
-                <div class="product-detail__price-wrap">
-                    <p class="product-detail__price" th:if="${sp.giaBan != null}" th:text="|${#numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</p>
-                    <p class="product-detail__price product-detail__price--na" th:if="${sp.giaBan == null}">Liên hệ để biết giá</p>
-                </div>
-                <div class="product-detail__specs" th:if="${sp.duongKinh != null or sp.doChiuNuoc != null or sp.phongCach != null}">
-                    <p th:if="${sp.duongKinh != null}" th:text="|Đường kính: ${sp.duongKinh} mm|"></p>
-                    <p th:if="${sp.doChiuNuoc != null}" th:text="|Chịu nước: ${sp.doChiuNuoc} m|"></p>
-                    <p th:if="${sp.phongCach != null}" th:text="|Phong cách: ${sp.phongCach}|"></p>
-                </div>
-                <p class="product-detail__stock" th:if="${variants != null and !variants.isEmpty()}">
-                    <strong>Tổng số lượng đang có:</strong> <span th:text="${tongSoLuong}">0</span> sản phẩm
-                </p>
-                <p class="product-detail__desc" th:if="${sp.moTa != null and !sp.moTa.isEmpty()}" th:utext="${sp.moTa}">Mô tả</p>
-                <div class="product-detail__buy" th:if="${variants != null and !variants.isEmpty()}">
-                    <form th:action="@{/gio-hang/them}" method="post" class="product-detail__form">
-                        <input type="hidden" name="redirectUrl" th:value="@{/san-pham/{id}(id=${sp.id})}">
-                        <th:block th:if="${variants.size() == 1}">
-                            <input type="hidden" name="sanPhamChiTietId" th:value="${variants[0].id}">
-                        </th:block>
-                        <th:block th:if="${variants.size() > 1}">
-                            <div class="product-detail__field">
-                                <label class="product-detail__label">Chọn phiên bản</label>
-                                <select name="sanPhamChiTietId" class="product-detail__select" required>
-                                    <option th:each="v : ${variants}" th:value="${v.id}" th:text="${(v.tenMauSac != null ? v.tenMauSac + ' - ' : '') + (v.tenKichThuoc != null ? v.tenKichThuoc : '') + ' | ' + (v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : '')}">Phiên bản</option>
-                                </select>
-                            </div>
-                        </th:block>
-                        <div class="product-detail__field product-detail__field--qty">
-                            <label class="product-detail__label">Số lượng</label>
-                            <div class="product-detail__qty-group">
-                                <button type="button" class="product-detail__qty-btn" data-action="minus" aria-label="Giảm">−</button>
-                                <input type="number" name="soLuong" value="1" min="1" max="99" class="product-detail__qty">
-                                <button type="button" class="product-detail__qty-btn" data-action="plus" aria-label="Tăng">+</button>
+
+            <div class="product-detail-info">
+                <div class="product-info1">
+                    <h1 class="h3" th:text="${sp.tenSanPham}">Tên sản phẩm</h1>
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <span class="ms-2 text-muted">(Đánh giá của khách hàng)</span>
+                    </div>
+                    <div class="price-container">
+                        <div class="price1">
+                            <span class="price-value" th:if="${variants != null and !variants.isEmpty() and variants[0].giaBan != null}" th:text="${#numbers.formatDecimal(variants[0].giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</span>
+                            <span class="price-value" th:if="${variants == null or variants.isEmpty() or variants[0].giaBan == null}">Liên hệ để biết giá</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <span class="stock-status"
+                              th:classappend="${variants != null and !variants.isEmpty() ? ' in-stock' : ' out-of-stock'}"
+                              th:text="${variants != null and !variants.isEmpty() ? 'Còn hàng' : 'Hết hàng'}">Trạng thái</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            Mã sản phẩm: <span th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}" class="fw-bold">Mã SP</span>
+                        </small>
+                    </div>
+                    <div class="mb-4" th:if="${sp.moTa != null and !sp.moTa.isEmpty()}">
+                        <h5>Mô tả sản phẩm:</h5>
+                        <p th:text="${sp.moTa}">Mô tả</p>
+                    </div>
+                    <div class="mb-4" th:if="${sp.moTa == null or sp.moTa.isEmpty()}">
+                        <h5>Mô tả sản phẩm:</h5>
+                        <p class="text-muted">Chưa cập nhật mô tả</p>
+                    </div>
+
+                    <!-- Chọn biến thể: các ô để chọn, không dùng combobox -->
+                    <div class="variants-section" th:if="${variants != null and !variants.isEmpty()}">
+                        <h5><i class="fas fa-layer-group" style="margin-right: 0.5rem;"></i>Chọn biến thể</h5>
+                        <div class="variants-grid" role="group" aria-label="Chọn phiên bản sản phẩm">
+                            <div th:each="v, iterStat : ${variants}" class="variant-box"
+                                 th:classappend="${iterStat.first ? 'variant-box--active' : ''}"
+                                 th:attr="data-variant-id=${v.id},
+                                          data-gia-ban=${v.giaBan != null ? v.giaBan : ''},
+                                          data-so-luong-ton=${v.soLuongTon != null ? v.soLuongTon : 0},
+                                          data-mau-sac=${v.tenMauSac},
+                                          data-kich-thuoc=${v.tenKichThuoc},
+                                          data-chat-lieu-day=${v.tenChatLieuDay},
+                                          data-loai-may=${v.tenLoaiMay},
+                                          data-duong-kinh=${v.duongKinh},
+                                          data-do-chiu-nuoc=${v.doChiuNuoc},
+                                          data-be-rong-day=${v.beRongDay},
+                                          data-trong-luong=${v.trongLuong}"
+                                 th:data-disabled="${v.soLuongTon == null or v.soLuongTon == 0}">
+                                <span class="variant-box__label">
+                                    <span th:if="${v.tenMauSac != null}" th:text="${v.tenMauSac}">Màu</span>
+                                    <span th:if="${v.tenMauSac != null and v.tenKichThuoc != null}"> / </span>
+                                    <span th:if="${v.tenKichThuoc != null}" th:text="${v.tenKichThuoc}">Size</span>
+                                    <span th:if="${v.tenMauSac == null and v.tenKichThuoc == null}" th:text="'Phiên bản ' + ${iterStat.count}">Phiên bản</span>
+                                </span>
+                                <span class="variant-box__price" th:text="${v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Liên hệ'}">Giá</span>
+                                <span class="variant-box__stock"
+                                      th:classappend="${v.soLuongTon != null and v.soLuongTon > 10 ? 'stock-ok' : (v.soLuongTon != null and v.soLuongTon > 0 ? 'stock-low' : 'stock-none')}">
+                                    <span th:if="${v.soLuongTon != null and v.soLuongTon > 0}" th:text="'Còn ' + ${v.soLuongTon}">Còn</span>
+                                    <span th:if="${v.soLuongTon == null or v.soLuongTon == 0}">Hết hàng</span>
+                                </span>
                             </div>
                         </div>
-                        <div class="product-detail__actions">
-                            <button type="submit" class="btn btn--primary product-detail__btn-cart">Thêm vào giỏ hàng</button>
-                            <a th:href="@{/san-pham}" class="btn btn--outline product-detail__btn-back">Quay lại danh sách</a>
-                        </div>
-                    </form>
+                    </div>
+
+                    <div class="action-buttons" th:if="${variants != null and !variants.isEmpty()}">
+                        <form th:action="@{/gio-hang/them}" method="post" class="product-detail-form">
+                            <input type="hidden" name="redirectUrl" th:value="@{/san-pham/{id}(id=${sp.id})}">
+                            <input type="hidden" name="sanPhamChiTietId" th:value="${variants != null and !variants.isEmpty() ? variants[0].id : ''}" class="input-variant-id">
+                            <div class="product-detail__field" style="margin-bottom: 1rem;">
+                                <label class="product-detail__label">Số lượng:</label>
+                                <div class="qty-group">
+                                    <button type="button" class="qty-btn-minus" aria-label="Giảm">−</button>
+                                    <input type="number" class="quantity-input" name="soLuong" value="1" min="1" th:max="${variants != null and !variants.isEmpty() ? variants[0].soLuongTon : (tongSoLuong != null ? tongSoLuong : 99)}">
+                                    <button type="button" class="qty-btn-plus" aria-label="Tăng">+</button>
+                                </div>
+                                <small class="text-muted" style="margin-left: 0.5rem;">
+                                    Còn lại: <span class="fw-bold stock-remaining" th:text="${variants != null and !variants.isEmpty() ? variants[0].soLuongTon : (tongSoLuong != null ? tongSoLuong : 0)}">0</span>
+                                </small>
+                            </div>
+                            <button type="submit" class="btn-add-cart">
+                                <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+                            </button>
+                            <a th:href="@{/san-pham}" class="btn btn--outline btn-back">Quay lại danh sách</a>
+                        </form>
+                    </div>
+
+                    <div th:if="${variants == null or variants.isEmpty()}">
+                        <p class="section__empty">Sản phẩm tạm hết hàng. Vui lòng liên hệ đặt trước.</p>
+                        <a th:href="@{/san-pham}" class="btn btn--outline btn-back">← Quay lại danh sách</a>
+                    </div>
                 </div>
-                <div class="product-detail__out-of-stock" th:if="${variants == null or variants.isEmpty()}">
-                    <p class="section__empty">Sản phẩm tạm hết hàng. Vui lòng liên hệ đặt trước.</p>
-                    <a th:href="@{/san-pham}" class="btn btn--outline product-detail__btn-back">← Quay lại danh sách</a>
+
+                <!-- Thông số kỹ thuật (trái) + Tính năng nổi bật (phải) - cập nhật theo biến thể chọn -->
+                <div class="specs-features-row" th:attr="data-sp-duong-kinh=${sp.duongKinh}, data-sp-do-chiu-nuoc=${sp.doChiuNuoc}">
+                    <div class="product-specs specs-features-row__left" th:with="firstV=${variants != null and !variants.isEmpty() ? variants[0] : null}">
+                        <h4><i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>Thông số kỹ thuật</h4>
+                        <div class="specs-grid">
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Thương hiệu</div>
+                                <div class="spec-value" th:text="${sp.tenThuongHieu != null ? sp.tenThuongHieu : 'Chưa cập nhật'}">Thương hiệu</div>
+                            </div>
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Danh mục</div>
+                                <div class="spec-value" th:text="${sp.tenDanhMuc != null ? sp.tenDanhMuc : 'Chưa cập nhật'}">Danh mục</div>
+                            </div>
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Màu sắc</div>
+                                <div class="spec-value spec-value--variant" data-spec="mauSac" th:text="${firstV != null and firstV.tenMauSac != null ? firstV.tenMauSac : 'Chưa cập nhật'}">Màu sắc</div>
+                            </div>
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Kích thước</div>
+                                <div class="spec-value spec-value--variant" data-spec="kichThuoc" th:text="${firstV != null and firstV.tenKichThuoc != null ? firstV.tenKichThuoc : 'Chưa cập nhật'}">Kích thước</div>
+                            </div>
+                            <div class="spec-item-enhanced spec-item--chat-lieu-day">
+                                <div class="spec-label">Chất liệu dây</div>
+                                <div class="spec-value spec-value--variant" data-spec="chatLieuDay" th:text="${firstV != null and firstV.tenChatLieuDay != null ? firstV.tenChatLieuDay : 'Chưa cập nhật'}">Chất liệu dây</div>
+                            </div>
+                            <div class="spec-item-enhanced spec-item--loai-may">
+                                <div class="spec-label">Loại máy</div>
+                                <div class="spec-value spec-value--variant" data-spec="loaiMay" th:text="${firstV != null and firstV.tenLoaiMay != null ? firstV.tenLoaiMay : 'Chưa cập nhật'}">Loại máy</div>
+                            </div>
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Đường kính</div>
+                                <div class="spec-value spec-value--variant" data-spec="duongKinh" th:text="${sp.duongKinh != null ? sp.duongKinh + ' mm' : (firstV != null and firstV.duongKinh != null ? firstV.duongKinh + ' mm' : 'Chưa cập nhật')}">Đường kính</div>
+                            </div>
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Độ chịu nước</div>
+                                <div class="spec-value spec-value--variant" data-spec="doChiuNuoc" th:text="${sp.doChiuNuoc != null ? sp.doChiuNuoc + ' m' : (firstV != null and firstV.doChiuNuoc != null ? firstV.doChiuNuoc + ' m' : 'Chưa cập nhật')}">Độ chịu nước</div>
+                            </div>
+                            <div class="spec-item-enhanced spec-item--be-rong-day">
+                                <div class="spec-label">Bề rộng dây</div>
+                                <div class="spec-value spec-value--variant" data-spec="beRongDay" th:text="${firstV != null and firstV.beRongDay != null ? firstV.beRongDay + ' mm' : 'Chưa cập nhật'}">Bề rộng dây</div>
+                            </div>
+                            <div class="spec-item-enhanced spec-item--trong-luong">
+                                <div class="spec-label">Trọng lượng</div>
+                                <div class="spec-value spec-value--variant" data-spec="trongLuong" th:text="${firstV != null and firstV.trongLuong != null ? firstV.trongLuong + ' g' : 'Chưa cập nhật'}">Trọng lượng</div>
+                            </div>
+                            <div class="spec-item-enhanced">
+                                <div class="spec-label">Bảo hành</div>
+                                <div class="spec-value">5 năm</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="features1 specs-features-row__right">
+                        <h4><i class="fas fa-star" style="margin-right: 0.5rem;"></i>Tính năng nổi bật</h4>
+                        <div class="feature-item1">
+                            <div class="feature-icon1"><i class="fas fa-shipping-fast"></i></div>
+                            <div>
+                                <h6>Miễn phí vận chuyển</h6>
+                                <small>Đối với đơn hàng trên 1.000.000đ</small>
+                            </div>
+                        </div>
+                        <div class="feature-item1">
+                            <div class="feature-icon1"><i class="fas fa-shield-alt"></i></div>
+                            <div>
+                                <h6>Bảo hành 5 năm</h6>
+                                <small>Bảo hành chính hãng toàn quốc</small>
+                            </div>
+                        </div>
+                        <div class="feature-item1">
+                            <div class="feature-icon1"><i class="fas fa-medal"></i></div>
+                            <div>
+                                <h6>100% chính hãng</h6>
+                                <small>Cam kết sản phẩm chính hãng</small>
+                            </div>
+                        </div>
+                        <div class="feature-item1">
+                            <div class="feature-icon1"><i class="fas fa-headset"></i></div>
+                            <div>
+                                <h6>Hỗ trợ 24/7</h6>
+                                <small>Nhân viên nhiệt tình hỗ trợ</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <script>
+    <script th:inline="javascript">
     (function() {
-        function initQtyButtons() {
-            var wrap = document.querySelector('.user-page--detail');
-            if (!wrap) return;
-            var minus = wrap.querySelector('.product-detail__qty-btn[data-action="minus"]');
-            var plus = wrap.querySelector('.product-detail__qty-btn[data-action="plus"]');
-            var input = wrap.querySelector('.product-detail__qty');
+        var page = document.querySelector('.product-detail-page');
+        if (!page) return;
+
+        function formatNumber(n) {
+            if (n == null) return '';
+            return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function initVariants() {
+            var boxes = page.querySelectorAll('.variant-box');
+            var row = page.querySelector('.specs-features-row');
+            var specContainer = page.querySelector('.product-specs');
+            var inputVariantId = page.querySelector('.input-variant-id');
+            var priceEl = page.querySelector('.price-value');
+            var stockRemaining = page.querySelector('.stock-remaining');
+            var qtyInput = page.querySelector('.quantity-input');
+            if (!boxes.length || !inputVariantId) return;
+
+            function updateSpecs(box) {
+                if (!specContainer || !row) return;
+                var spDuongKinh = row.getAttribute('data-sp-duong-kinh');
+                var spDoChiuNuoc = row.getAttribute('data-sp-do-chiu-nuoc');
+                var get = function(attr) { return box.getAttribute(attr) || ''; };
+                var specs = {
+                    mauSac: get('data-mau-sac') || 'Chưa cập nhật',
+                    kichThuoc: get('data-kich-thuoc') || 'Chưa cập nhật',
+                    chatLieuDay: get('data-chat-lieu-day') || 'Chưa cập nhật',
+                    loaiMay: get('data-loai-may') || 'Chưa cập nhật',
+                    duongKinh: (get('data-duong-kinh') || spDuongKinh) ? (get('data-duong-kinh') || spDuongKinh) + ' mm' : 'Chưa cập nhật',
+                    doChiuNuoc: (get('data-do-chiu-nuoc') || spDoChiuNuoc) ? (get('data-do-chiu-nuoc') || spDoChiuNuoc) + ' m' : 'Chưa cập nhật',
+                    beRongDay: get('data-be-rong-day') ? get('data-be-rong-day') + ' mm' : 'Chưa cập nhật',
+                    trongLuong: get('data-trong-luong') ? get('data-trong-luong') + ' g' : 'Chưa cập nhật'
+                };
+                specContainer.querySelectorAll('[data-spec]').forEach(function(el) {
+                    var key = el.getAttribute('data-spec');
+                    if (specs[key] !== undefined) el.textContent = specs[key];
+                });
+            }
+
+            function selectBox(box) {
+                var disabled = box.getAttribute('data-disabled') === 'true';
+                if (disabled) return;
+                boxes.forEach(function(b) { b.classList.remove('variant-box--active'); });
+                box.classList.add('variant-box--active');
+                var id = box.getAttribute('data-variant-id');
+                var giaBan = box.getAttribute('data-gia-ban');
+                var soLuong = box.getAttribute('data-so-luong-ton') || '0';
+                inputVariantId.value = id || '';
+                if (priceEl) {
+                    if (giaBan && parseFloat(giaBan) > 0) {
+                        priceEl.textContent = formatNumber(Math.round(parseFloat(giaBan))) + ' ₫';
+                        priceEl.style.display = '';
+                    } else {
+                        priceEl.textContent = 'Liên hệ để biết giá';
+                    }
+                }
+                if (stockRemaining) stockRemaining.textContent = soLuong;
+                if (qtyInput) {
+                    var max = parseInt(soLuong, 10) || 99;
+                    qtyInput.setAttribute('max', max);
+                    var v = parseInt(qtyInput.value, 10) || 1;
+                    if (v > max) qtyInput.value = max;
+                }
+                updateSpecs(box);
+            }
+
+            boxes.forEach(function(box) {
+                box.addEventListener('click', function() { selectBox(box); });
+            });
+        }
+
+        function initQty() {
+            var minus = page.querySelector('.qty-btn-minus');
+            var plus = page.querySelector('.qty-btn-plus');
+            var input = page.querySelector('.quantity-input');
             if (!input) return;
             if (minus) minus.addEventListener('click', function() {
                 var v = parseInt(input.value, 10) || 1;
@@ -94,10 +299,15 @@
                 if (v < max) input.value = v + 1;
             });
         }
+
+        function init() {
+            initVariants();
+            initQty();
+        }
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initQtyButtons);
+            document.addEventListener('DOMContentLoaded', init);
         } else {
-            initQtyButtons();
+            init();
         }
     })();
     </script>
