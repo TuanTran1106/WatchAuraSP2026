@@ -5,6 +5,7 @@ import com.example.watchaura.dto.HoaDonRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.math.BigDecimal;
 
@@ -23,8 +24,12 @@ public interface HoaDonService {
     String generateMaDonHang();
     byte[] exportPdf(HoaDonDTO dto);
 
-    /**
-     * Tính trước số tiền giảm của voucher cho giỏ hàng hiện tại (không tạo hóa đơn).
-     */
+    Page<HoaDonDTO> filterDonHang(
+            Integer userId,
+            String trangThai,
+            String thanhToan,
+            LocalDate ngay,
+            Pageable pageable
+    );
     BigDecimal tinhTienGiamVoucher(Integer khachHangId, Integer voucherId, BigDecimal tongTien);
 }

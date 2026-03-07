@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -583,4 +584,25 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         return dto;
     }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HoaDonDTO> filterDonHang(
+            Integer userId,
+            String trangThai,
+            String thanhToan,
+            LocalDate ngay,
+            Pageable pageable) {
+
+        Page<HoaDon> page = hoaDonRepository.filterDonHang(
+                userId,
+                trangThai,
+                thanhToan,
+                ngay,
+                pageable
+        );
+
+        return page.map(this::convertToDTO);
+    }
 }
+
+
