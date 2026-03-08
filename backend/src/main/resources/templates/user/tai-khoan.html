@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="user-page account-page">
+    <div class="container container--narrow">
+        <p th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></p>
+        <p th:if="${changePasswordError}" class="alert alert-error" th:text="${changePasswordError}"></p>
+        <p th:if="${passwordMismatch}" class="alert alert-error" th:text="${passwordMismatch}"></p>
+
+        <h1 class="account-page__title">Tài khoản của tôi</h1>
+
+        <!-- Thông tin tài khoản (gồm nút đổi mật khẩu + form bên trong) -->
+        <section class="account-card" id="doi-mat-khau" th:if="${currentUser != null}">
+            <h2 class="account-card__heading">
+                <i class="fas fa-user-circle"></i> Thông tin tài khoản
+            </h2>
+            <div class="account-info">
+                <div class="account-info__avatar" aria-hidden="true">
+                    <i class="fas fa-user" th:if="${currentUser.hinhAnh == null or currentUser.hinhAnh == ''}"></i>
+                    <img th:if="${currentUser.hinhAnh != null and currentUser.hinhAnh != ''}" th:src="${currentUser.hinhAnh}" alt="Avatar" class="account-info__img">
+                </div>
+                <dl class="account-info__list">
+                    <div class="account-info__row">
+                        <dt>Họ và tên</dt>
+                        <dd th:text="${currentUser.tenNguoiDung}">—</dd>
+                    </div>
+                    <div class="account-info__row">
+                        <dt>Mã người dùng</dt>
+                        <dd th:text="${currentUser.maNguoiDung}">—</dd>
+                    </div>
+                    <div class="account-info__row">
+                        <dt>Email</dt>
+                        <dd th:text="${currentUser.email}">—</dd>
+                    </div>
+                    <div class="account-info__row">
+                        <dt>Số điện thoại</dt>
+                        <dd th:if="${currentUser.sdt != null and currentUser.sdt != ''}" th:text="${currentUser.sdt}">—</dd>
+                        <dd th:unless="${currentUser.sdt != null and currentUser.sdt != ''}">Chưa cập nhật</dd>
+                    </div>
+                    <div class="account-info__row">
+                        <dt>Ngày sinh</dt>
+                        <dd th:if="${currentUser.ngaySinh != null}" th:text="${#temporals.format(currentUser.ngaySinh, 'dd/MM/yyyy')}">—</dd>
+                        <dd th:unless="${currentUser.ngaySinh != null}">Chưa cập nhật</dd>
+                    </div>
+                    <div class="account-info__row">
+                        <dt>Giới tính</dt>
+                        <dd th:if="${currentUser.gioiTinh != null and currentUser.gioiTinh != ''}" th:text="${currentUser.gioiTinh}">—</dd>
+                        <dd th:unless="${currentUser.gioiTinh != null and currentUser.gioiTinh != ''}">Chưa cập nhật</dd>
+                    </div>
+                </dl>
+            </div>
+            <div class="account-card__password-block">
+                <button type="button" class="btn-toggle-password-form" id="btnTogglePasswordForm" aria-expanded="false" aria-controls="accountChangePasswordForm" title="Đổi mật khẩu">
+                    <i class="fas fa-key btn-toggle-password-form__icon-open" aria-hidden="true"></i>
+                    <i class="fas fa-times btn-toggle-password-form__icon-close" aria-hidden="true" style="display:none"></i>
+                    <span class="btn-toggle-password-form__text">Đổi mật khẩu</span>
+                </button>
+                <div class="account-form-wrap" id="accountChangePasswordForm" role="region" aria-labelledby="btnTogglePasswordForm"
+                     th:classappend="${passwordFormVisible != null and passwordFormVisible} ? 'account-form-wrap--visible' : ''">
+                <form class="auth-form account-form" th:action="@{/doi-mat-khau}" th:object="${changePasswordRequest}" method="post">
+                <div class="form-group">
+                    <label for="matKhauHienTai">Mật khẩu hiện tại <span class="required">*</span></label>
+                    <div class="password-field">
+                        <input type="password" id="matKhauHienTai" th:field="*{matKhauHienTai}"
+                               placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password">
+                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                            <span class="icon-eye" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </span>
+                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </span>
+                        </button>
+                    </div>
+                    <p th:if="${#fields.hasErrors('matKhauHienTai')}" class="field-error" th:errors="*{matKhauHienTai}"></p>
+                </div>
+                <div class="form-group">
+                    <label for="matKhauMoi">Mật khẩu mới <span class="required">*</span></label>
+                    <div class="password-field">
+                        <input type="password" id="matKhauMoi" th:field="*{matKhauMoi}"
+                               placeholder="Tối thiểu 6 ký tự" minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                            <span class="icon-eye" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </span>
+                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </span>
+                        </button>
+                    </div>
+                    <p th:if="${#fields.hasErrors('matKhauMoi')}" class="field-error" th:errors="*{matKhauMoi}"></p>
+                </div>
+                <div class="form-group">
+                    <label for="xacNhanMatKhauMoi">Xác nhận mật khẩu mới <span class="required">*</span></label>
+                    <div class="password-field">
+                        <input type="password" id="xacNhanMatKhauMoi" th:field="*{xacNhanMatKhauMoi}"
+                               placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                            <span class="icon-eye" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </span>
+                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </span>
+                        </button>
+                    </div>
+                    <p th:if="${#fields.hasErrors('xacNhanMatKhauMoi')}" class="field-error" th:errors="*{xacNhanMatKhauMoi}"></p>
+                </div>
+                <button type="submit" class="btn-submit">Đổi mật khẩu</button>
+                </form>
+                </div>
+            </div>
+        </section>
+
+        <div class="account-page__back">
+            <a th:href="@{/}" class="account-page__back-link"><i class="fas fa-arrow-left"></i> Về trang chủ</a>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var formWrap = document.getElementById('accountChangePasswordForm');
+        var btnToggle = document.getElementById('btnTogglePasswordForm');
+        if (!formWrap || !btnToggle) return;
+        var toggleText = btnToggle.querySelector('.btn-toggle-password-form__text');
+            if (window.location.hash === '#doi-mat-khau' && !formWrap.classList.contains('account-form-wrap--visible')) {
+                formWrap.classList.add('account-form-wrap--visible');
+                btnToggle.setAttribute('aria-expanded', 'true');
+                updateToggleButton(true);
+            }
+        function updateToggleButton(visible) {
+            var iconOpen = btnToggle.querySelector('.btn-toggle-password-form__icon-open');
+            var iconClose = btnToggle.querySelector('.btn-toggle-password-form__icon-close');
+            if (toggleText) toggleText.style.display = visible ? 'none' : '';
+            if (iconOpen) iconOpen.style.display = visible ? 'none' : 'inline-block';
+            if (iconClose) iconClose.style.display = visible ? 'inline-block' : 'none';
+            btnToggle.setAttribute('title', visible ? 'Đóng' : 'Đổi mật khẩu');
+        }
+        btnToggle.addEventListener('click', function() {
+            var isVisible = formWrap.classList.contains('account-form-wrap--visible');
+            formWrap.classList.toggle('account-form-wrap--visible', !isVisible);
+            btnToggle.setAttribute('aria-expanded', !isVisible);
+            updateToggleButton(!isVisible);
+        });
+        if (formWrap.classList.contains('account-form-wrap--visible')) {
+            updateToggleButton(true);
+        }
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.password-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var field = btn.closest('.password-field').querySelector('input');
+                var eye = btn.querySelector('.icon-eye');
+                var eyeOff = btn.querySelector('.icon-eye-off');
+                if (field.type === 'password') {
+                    field.type = 'text';
+                    eye.hidden = true;
+                    eyeOff.hidden = false;
+                    btn.setAttribute('aria-label', 'Ẩn mật khẩu');
+                    btn.setAttribute('title', 'Ẩn mật khẩu');
+                } else {
+                    field.type = 'password';
+                    eye.hidden = false;
+                    eyeOff.hidden = true;
+                    btn.setAttribute('aria-label', 'Hiện mật khẩu');
+                    btn.setAttribute('title', 'Hiện mật khẩu');
+                }
+            });
+        });
+    });
+    </script>
+</div>
+</body>
+</html>

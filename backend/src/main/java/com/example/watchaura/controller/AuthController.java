@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.dto.ChangePasswordRequest;
 import com.example.watchaura.dto.RegisterRequest;
 import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.service.KhachHangService;
@@ -115,5 +116,56 @@ public class AuthController {
         }
         redirect.addFlashAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         return "redirect:/dang-nhap";
+    }
+
+    /** Đổi mật khẩu đã gộp vào trang tài khoản: redirect về /nguoidung (khi đã đăng nhập) hoặc đăng nhập. */
+    @GetMapping("/doi-mat-khau")
+    public String doiMatKhauPage(HttpSession session, RedirectAttributes redirect) {
+        Object userId = session.getAttribute(SESSION_CURRENT_USER_ID);
+        if (!(userId instanceof Integer)) {
+            redirect.addFlashAttribute("infoMessage", "Vui lòng đăng nhập để đổi mật khẩu.");
+            return "redirect:/dang-nhap";
+        }
+        return "redirect:/nguoidung#doi-mat-khau";
+    }
+
+    @PostMapping("/doi-mat-khau")
+    public String doiMatKhau(
+            @Valid @ModelAttribute("changePasswordRequest") ChangePasswordRequest request,
+            BindingResult result,
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirect) {
+        Object userIdObj = session.getAttribute(SESSION_CURRENT_USER_ID);
+        if (!(userIdObj instanceof Integer)) {
+            redirect.addFlashAttribute("infoMessage", "Vui lòng đăng nhập để đổi mật khẩu.");
+            return "redirect:/dang-nhap";
+        }
+        Integer userId = (Integer) userIdObj;
+
+        if (result.hasErrors()) {
+            model.addAttribute("title", "Tài khoản - WatchAura");
+            model.addAttribute("content", "user/tai-khoan :: content");
+            model.addAttribute("passwordFormVisible", true);
+            return "layout/user-layout";
+        }
+        if (!request.getMatKhauMoi().equals(request.getXacNhanMatKhauMoi())) {
+            model.addAttribute("title", "Tài khoản - WatchAura");
+            model.addAttribute("content", "user/tai-khoan :: content");
+            model.addAttribute("passwordFormVisible", true);
+            model.addAttribute("passwordMismatch", "Mật khẩu mới và xác nhận không khớp.");
+            return "layout/user-layout";
+        }
+        try {
+            khachHangService.changePassword(userId, request.getMatKhauHienTai(), request.getMatKhauMoi());
+        } catch (RuntimeException e) {
+            model.addAttribute("title", "Tài khoản - WatchAura");
+            model.addAttribute("content", "user/tai-khoan :: content");
+            model.addAttribute("passwordFormVisible", true);
+            model.addAttribute("changePasswordError", e.getMessage());
+            return "layout/user-layout";
+        }
+        redirect.addFlashAttribute("successMessage", "Đổi mật khẩu thành công. Lần đăng nhập sau hãy dùng mật khẩu mới.");
+        return "redirect:/nguoidung";
     }
 }

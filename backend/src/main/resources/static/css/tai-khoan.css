@@ -1,0 +1,190 @@
+/* Trang tài khoản /nguoidung */
+.account-page {
+    padding: 1.5rem 0 3rem;
+}
+
+.account-page__title {
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.account-page .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+}
+
+.account-page .alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.account-page .alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.account-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.account-card__heading {
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.account-card__heading i {
+    color: #c9a227;
+}
+
+.account-card__heading--row {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.btn-toggle-password-form {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    background: #c9a227;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    transition: background 0.2s;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+}
+
+.btn-toggle-password-form:hover {
+    background: #b8921f;
+}
+
+.btn-toggle-password-form__icon-close {
+    font-size: 1.1rem;
+}
+
+.account-card__password-block {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.account-card__password-block .account-form {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.account-form-wrap {
+    display: none;
+    margin-top: 1rem;
+}
+
+.account-form-wrap.account-form-wrap--visible {
+    display: block;
+}
+
+.account-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.account-info__avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f0e6d3 0%, #e8dcc4 100%);
+    color: #9a7b4f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.account-info__img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.account-info__list {
+    flex: 1;
+    min-width: 200px;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.account-info__row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.75rem;
+    align-items: baseline;
+}
+
+.account-info__row dt {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.account-info__row dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+}
+
+.account-form .btn-submit {
+    margin-top: 0.25rem;
+}
+
+.account-page__back {
+    margin-top: 1rem;
+}
+
+.account-page__back-link {
+    color: #c9a227;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.account-page__back-link:hover {
+    text-decoration: underline;
+    color: #b8921f;
+}
+
+@media (max-width: 600px) {
+    .account-info__row {
+        grid-template-columns: 1fr;
+    }
+}

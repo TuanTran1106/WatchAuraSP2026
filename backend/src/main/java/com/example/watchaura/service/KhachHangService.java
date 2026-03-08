@@ -30,6 +30,9 @@ public interface KhachHangService {
 
     KhachHang getById(Integer id);
 
+    /** Lấy KhachHang đã load sẵn ChucVu, dùng cho view để tránh lazy-load khi render (giảm lỗi ERR_INCOMPLETE_CHUNKED_ENCODING). */
+    Optional<KhachHang> getByIdForView(Integer id);
+
     KhachHang create(KhachHang khachHang);
 
     KhachHang update(Integer id, KhachHang khachHang);
@@ -39,5 +42,14 @@ public interface KhachHangService {
     void toggleTrangThai(Integer id);
 
     List<KhachHang> getByTenChucVu(String tenChucVu);
+
+    /**
+     * Đổi mật khẩu cho user đã đăng nhập.
+     * @param userId ID khách hàng (từ session)
+     * @param currentPassword Mật khẩu hiện tại (plain)
+     * @param newPassword Mật khẩu mới (sẽ được mã hóa BCrypt)
+     * @throws RuntimeException nếu mật khẩu hiện tại không đúng hoặc user không tồn tại
+     */
+    void changePassword(Integer userId, String currentPassword, String newPassword);
 
 }

@@ -27,7 +27,8 @@ public class GlobalControllerAdvice {
         Object userId = session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
         if (userId instanceof Integer) {
             try {
-                KhachHang kh = khachHangService.getById((Integer) userId);
+                KhachHang kh = khachHangService.getByIdForView((Integer) userId)
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
                 model.addAttribute("currentUser", kh);
                 model.addAttribute("soLuongGioHang", gioHangService.getSoLuongGioHang((Integer) userId));
             } catch (Exception ignored) {

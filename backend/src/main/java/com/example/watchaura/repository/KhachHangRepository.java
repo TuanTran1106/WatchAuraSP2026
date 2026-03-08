@@ -23,6 +23,9 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
 
     Optional<KhachHang> findByMaNguoiDung(String maNguoiDung);
 
+    @Query("SELECT k FROM KhachHang k LEFT JOIN FETCH k.chucVu WHERE k.id = :id")
+    Optional<KhachHang> findByIdWithChucVu(@Param("id") Integer id);
+
     @Query("SELECT k FROM KhachHang k LEFT JOIN FETCH k.chucVu WHERE " +
             "(:q IS NULL OR :q = '' OR LOWER(k.maNguoiDung) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "OR LOWER(k.tenNguoiDung) LIKE LOWER(CONCAT('%', :q, '%')) " +

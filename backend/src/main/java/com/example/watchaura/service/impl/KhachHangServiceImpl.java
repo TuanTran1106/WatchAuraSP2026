@@ -39,6 +39,11 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    public Optional<KhachHang> getByIdForView(Integer id) {
+        return khachHangRepository.findByIdWithChucVu(id);
+    }
+
+    @Override
     public KhachHang create(KhachHang khachHang) {
         // Gán ChucVu từ form (chucVu.id được bind, cần load entity)
         Integer chucVuId = khachHang.getChucVu() != null ? khachHang.getChucVu().getId() : null;
@@ -182,6 +187,16 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Override
     public Optional<KhachHang> findByMaNguoiDung(String maNguoiDung) {
         return khachHangRepository.findByMaNguoiDung(maNguoiDung);
+    }
+
+    @Override
+    public void changePassword(Integer userId, String currentPassword, String newPassword) {
+        KhachHang kh = getById(userId);
+        if (currentPassword == null || !passwordEncoder.matches(currentPassword, kh.getMatKhau())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng.");
+        }
+        kh.setMatKhau(passwordEncoder.encode(newPassword));
+        khachHangRepository.save(kh);
     }
 
 }
