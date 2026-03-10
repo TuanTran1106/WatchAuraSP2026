@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title th:text="${title}">WatchAura</title>
@@ -16,60 +17,64 @@
     <link rel="stylesheet" th:href="@{/css/tai-khoan.css}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
+
 <body>
 
-<!-- HEADER -->
-<div th:replace="fragments/header :: header"></div>
+    <!-- HEADER -->
+    <div th:replace="fragments/header :: header"></div>
 
-<!-- Sidebar menu (mở bằng nút hamburger trên header) -->
-<div class="sidebar-menu" id="sidebarMenu">
-    <div class="sidebar-header">
-        <h5>MENU</h5>
+    <!-- Sidebar menu (mở bằng nút hamburger trên header) -->
+    <div class="sidebar-menu" id="sidebarMenu">
+        <div class="sidebar-header">
+            <h5>MENU</h5>
+        </div>
+        <ul>
+            <li><a th:href="@{/nguoidung}"><i class="fas fa-user"></i> Tài khoản</a></li>
+            <li><a th:href="|@{/nguoidung}#doi-mat-khau|"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
+            <li><a th:href="@{/nguoidung}"><i class="fas fa-map-marker-alt"></i> Địa chỉ</a></li>
+            <li><a th:href="@{/uu-dai}"><i class="fas fa-percentage"></i> Khuyến mại</a></li>
+            <li><a th:href="@{/tin-tuc}"><i class="fas fa-newspaper"></i> Tin tức</a></li>
+            <li><a th:href="@{/lien-he}"><i class="fas fa-envelope"></i> Liên hệ</a></li>
+            <li><a th:href="@{/tu-van-ai}"><i class="fas fa-robot"></i> Tư vấn thông minh</a></li>
+            <li th:if="${currentUser != null}"><a th:href="@{/dang-xuat}" onclick="return handleLogout(event);"><i
+                        class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+        </ul>
     </div>
-    <ul>
-        <li><a th:href="@{/nguoidung}"><i class="fas fa-user"></i> Tài khoản</a></li>
-        <li><a th:href="|@{/nguoidung}#doi-mat-khau|"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
-        <li><a th:href="@{/nguoidung}"><i class="fas fa-map-marker-alt"></i> Địa chỉ</a></li>
-        <li><a th:href="@{/uu-dai}"><i class="fas fa-percentage"></i> Khuyến mại</a></li>
-        <li><a th:href="@{/tin-tuc}"><i class="fas fa-newspaper"></i> Tin tức</a></li>
-        <li><a th:href="@{/lien-he}"><i class="fas fa-envelope"></i> Liên hệ</a></li>
-        <li th:if="${currentUser != null}"><a th:href="@{/dang-xuat}" onclick="return handleLogout(event);"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
-    </ul>
-</div>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebarMenu()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebarMenu()"></div>
 
-<script th:inline="javascript">
-    function toggleSidebarMenu() {
-        var sidebar = document.getElementById('sidebarMenu');
-        var overlay = document.getElementById('sidebarOverlay');
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-        }
-    }
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
+    <script th:inline="javascript">
+        function toggleSidebarMenu() {
             var sidebar = document.getElementById('sidebarMenu');
-            if (sidebar && sidebar.classList.contains('show')) toggleSidebarMenu();
+            var overlay = document.getElementById('sidebarOverlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+            }
         }
-    });
-    function handleLogout(event) {
-        if (!confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-            event.preventDefault();
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                var sidebar = document.getElementById('sidebarMenu');
+                if (sidebar && sidebar.classList.contains('show')) toggleSidebarMenu();
+            }
+        });
+        function handleLogout(event) {
+            if (!confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                event.preventDefault();
+                return false;
+            }
+            window.location.href = /*[[@{/dang-xuat}]]*/ '/dang-xuat';
             return false;
         }
-        window.location.href = /*[[@{/dang-xuat}]]*/ '/dang-xuat';
-        return false;
-    }
-</script>
+    </script>
 
-<!-- CONTENT -->
-<main class="user-main">
-    <div th:replace="~{__${content}__}"></div>
-</main>
+    <!-- CONTENT -->
+    <main class="user-main">
+        <div th:replace="~{__${content}__}"></div>
+    </main>
 
-<!-- FOOTER -->
-<div th:replace="fragments/footer :: footer"></div>
+    <!-- FOOTER -->
+    <div th:replace="fragments/footer :: footer"></div>
 
 </body>
+
 </html>
