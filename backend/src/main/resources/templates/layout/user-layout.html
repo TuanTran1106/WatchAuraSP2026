@@ -14,6 +14,7 @@
     <link rel="stylesheet" th:href="@{/css/tin-tuc-detail.css}">
     <link rel="stylesheet" th:href="@{/css/sanpham-detail.css}">
     <link rel="stylesheet" th:href="@{/css/don-hang-user-list.css}">
+    <link rel="stylesheet" th:href="@{/css/danh-gia.css}">
     <link rel="stylesheet" th:href="@{/css/tai-khoan.css}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -31,7 +32,7 @@
         <ul>
             <li><a th:href="@{/nguoidung}"><i class="fas fa-user"></i> Tài khoản</a></li>
             <li><a th:href="|@{/nguoidung}#doi-mat-khau|"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
-            <li><a th:href="@{/nguoidung}"><i class="fas fa-map-marker-alt"></i> Địa chỉ</a></li>
+            <li><a th:href="|@{/nguoidung}#dia-chi-mac-dinh|"><i class="fas fa-map-marker-alt"></i> Địa chỉ</a></li>
             <li><a th:href="@{/uu-dai}"><i class="fas fa-percentage"></i> Khuyến mại</a></li>
             <li><a th:href="@{/tin-tuc}"><i class="fas fa-newspaper"></i> Tin tức</a></li>
             <li><a th:href="@{/lien-he}"><i class="fas fa-envelope"></i> Liên hệ</a></li>
@@ -74,6 +75,49 @@
 
     <!-- FOOTER -->
     <div th:replace="fragments/footer :: footer"></div>
+
+    <!-- Toast notification (thêm giỏ thành công, lỗi, v.v.) -->
+    <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+    <div id="flashData" style="display:none" th:attr="data-success=${success}, data-error=${error}"></div>
+    <script th:inline="javascript">
+        (function() {
+            var flashEl = document.getElementById('flashData');
+            var success = flashEl ? flashEl.getAttribute('data-success') : null;
+            var error = flashEl ? flashEl.getAttribute('data-error') : null;
+            var stack = document.getElementById('toastStack');
+            if (!stack) return;
+
+            function showToast(message, type) {
+                type = type || 'success';
+                var title = type === 'success' ? 'Thành công' : 'Lỗi';
+                var icon = type === 'success' ? '<i class="fas fa-check"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+                var el = document.createElement('div');
+                el.className = 'toast-item toast-item--' + type;
+                el.setAttribute('role', 'alert');
+                el.innerHTML = '<div class="toast-item__icon">' + icon + '</div>' +
+                    '<div class="toast-item__body">' +
+                        '<p class="toast-item__title">' + title + '</p>' +
+                        '<p class="toast-item__msg">' + (message || '') + '</p>' +
+                    '</div>' +
+                    '<button type="button" class="toast-item__close" aria-label="Đóng">&times;</button>' +
+                    '<span class="toast-item__progress"></span>';
+                stack.appendChild(el);
+
+                var close = function() {
+                    el.style.animation = 'toastSlideOut 0.3s ease forwards';
+                    setTimeout(function() { el.remove(); }, 320);
+                };
+
+                el.querySelector('.toast-item__close').addEventListener('click', close);
+                setTimeout(close, 4200);
+            }
+
+            if (success) showToast(success, 'success');
+            if (error) showToast(error, 'error');
+
+            window.showToast = showToast;
+        })();
+    </script>
 
 </body>
 

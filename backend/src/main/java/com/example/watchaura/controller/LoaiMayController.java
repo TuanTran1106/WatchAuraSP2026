@@ -72,6 +72,7 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.LoaiMay;
 import com.example.watchaura.repository.LoaiMayRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -94,7 +95,7 @@ public class LoaiMayController {
     @ResponseBody
     public ResponseEntity<List<LoaiMay>> getAllLoaiMay() {
         try {
-            List<LoaiMay> loaiMays = loaiMayRepository.findAll();
+            List<LoaiMay> loaiMays = loaiMayRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
             return ResponseEntity.ok(loaiMays);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

@@ -5,119 +5,240 @@
     <title>Chi tiết đơn hàng - WatchAura</title>
 </head>
 <body>
-<div th:fragment="content">
+<div th:fragment="content" id="orderDetailPage">
     <div class="order-detail-page">
         <div class="order-detail-container order-container">
 
-<!--            <nav class="order-detail-breadcrumb cart-breadcrumb">-->
-<!--                <a th:href="@{/}">Trang chủ</a>-->
-<!--                <span class="breadcrumb__sep">/</span>-->
-<!--                <a th:href="@{/don-hang}">Đơn hàng</a>-->
-<!--                <span class="breadcrumb__sep">/</span>-->
-<!--                <span class="breadcrumb__current" th:text="${hoaDon.maDonHang}">Mã đơn</span>-->
-<!--            </nav>-->
-
             <header class="order-detail-header cart-header">
                 <h1 class="order-detail__title cart-page__title">Chi tiết đơn hàng</h1>
-                <p class="order-detail__subtitle cart-page__subtitle">
+                <p class="order-detail__subtitle cart-page__subtitle" id="orderCodeDisplay">
                     Mã đơn: <strong th:text="${hoaDon.maDonHang}"></strong>
                 </p>
             </header>
 
-            <!-- Thông tin giao hàng -->
-            <section class="order-detail-card detail-card">
-                <h2 class="detail-card__heading">Thông tin giao hàng</h2>
-                <div class="detail-card__grid info-grid">
-                    <div>
-                        <span class="detail-card__label">Họ tên</span>
-                        <p class="detail-card__value" th:text="${hoaDon.tenKhachHang}"></p>
-                    </div>
-                    <div>
-                        <span class="detail-card__label">Số điện thoại</span>
-                        <p class="detail-card__value" th:text="${hoaDon.sdtKhachHang}"></p>
-                    </div>
-                    <div class="info-grid__full">
-                        <span class="detail-card__label">Địa chỉ</span>
-                        <p class="detail-card__value" th:text="${hoaDon.diaChi}"></p>
-                    </div>
-                </div>
-            </section>
+            <!-- Loading indicator -->
+            <div id="orderDetailLoading" style="display: none; text-align: center; padding: 2rem;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Đang tải thông tin...</p>
+            </div>
 
-            <!-- Sản phẩm đã đặt -->
-            <section class="order-detail-card detail-card">
-                <h2 class="detail-card__heading">Sản phẩm đã đặt</h2>
-                <div class="order-detail-table-wrap cart-table-wrap">
-                    <table class="order-detail-table cart-table">
-                        <thead>
-                            <tr>
-                                <th>Sản phẩm</th>
-                                <th>Số lượng</th>
-                                <th>Đơn giá</th>
-                                <th>Thành tiền</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="item : ${hoaDon.items}">
-                                <td class="cart-table__name" th:text="${item.tenSanPham}"></td>
-                                <td th:text="${item.soLuong}"></td>
-                                <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
-                                <td class="cart-table__total" th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+            <!-- Nội dung chi tiết đơn hàng -->
+            <div id="orderDetailContent">
+                <!-- Thông tin giao hàng -->
+                <section class="order-detail-card detail-card">
+                    <h2 class="detail-card__heading">Thông tin giao hàng</h2>
+                    <div class="detail-card__grid info-grid">
+                        <div>
+                            <span class="detail-card__label">Họ tên</span>
+                            <p class="detail-card__value" th:text="${hoaDon.tenKhachHang}"></p>
+                        </div>
+                        <div>
+                            <span class="detail-card__label">Số điện thoại</span>
+                            <p class="detail-card__value" th:text="${hoaDon.sdtKhachHang}"></p>
+                        </div>
+                        <div class="info-grid__full">
+                            <span class="detail-card__label">Địa chỉ</span>
+                            <p class="detail-card__value" th:text="${hoaDon.diaChi}"></p>
+                        </div>
+                    </div>
+                </section>
 
-            <!-- Tổng thanh toán -->
-            <section class="order-detail-card order-detail-summary cart-summary__box">
-                <h2 class="detail-card__heading visually-hidden">Tổng thanh toán</h2>
-                <div class="order-detail-summary__row cart-summary__row">
-                    <span class="order-detail-summary__label">Tạm tính</span>
-                    <span class="order-detail-summary__value" th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT')} đ|"></span>
-                </div>
-                <div class="order-detail-summary__row cart-summary__row">
-                    <span class="order-detail-summary__label">Giảm giá</span>
-                    <span class="order-detail-summary__value">- <span th:text="|${#numbers.formatDecimal(hoaDon.tienGiam,0,'COMMA',0,'POINT')} đ|"></span></span>
-                </div>
-                <div class="order-detail-summary__row cart-summary__row">
-                    <span class="order-detail-summary__label">Phí vận chuyển</span>
-                    <span class="order-detail-summary__value">0 đ</span>
-                </div>
-                <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
-                    <span class="order-detail-summary__label">Tổng thanh toán</span>
-                    <span class="order-detail-summary__total cart-summary__value" th:text="|${#numbers.formatDecimal(hoaDon.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
-                </div>
-            </section>
+                <!-- Sản phẩm đã đặt -->
+                <section class="order-detail-card detail-card">
+                    <h2 class="detail-card__heading">Sản phẩm đã đặt</h2>
+                    <div class="order-detail-table-wrap cart-table-wrap">
+                        <table class="order-detail-table cart-table">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Số lượng</th>
+                                    <th>Đơn giá</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderItemsBody">
+                                <tr th:each="item : ${hoaDon.items}">
+                                    <td class="cart-table__name" th:text="${item.tenSanPham}"></td>
+                                    <td th:text="${item.soLuong}"></td>
+                                    <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
+                                    <td class="cart-table__total" th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
-            <!-- Trạng thái & thanh toán -->
-            <section class="order-detail-card order-detail-meta">
-                <div class="order-detail-meta__item">
-                    <span class="detail-card__label">Trạng thái đơn</span>
-                    <span class="order-detail-meta__badge order-status"
-                          th:classappend="
-                            ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'status-waiting' :
-                            (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'status-processing' :
-                            (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'status-shipping' :
-                            (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'status-done' : 'status-cancel')))"
-                          th:text="
-                            ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'Chờ xác nhận' :
-                            (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'Đang xử lý' :
-                            (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'Đang giao' :
-                            (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'Đã giao' : 'Đã hủy')))">
-                    </span>
-                </div>
-                <div class="order-detail-meta__item">
-                    <span class="detail-card__label">Thanh toán</span>
-                    <span class="order-detail-meta__payment" th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
-                </div>
-            </section>
+                <!-- Tổng thanh toán -->
+                <section class="order-detail-card order-detail-summary cart-summary__box">
+                    <h2 class="detail-card__heading visually-hidden">Tổng thanh toán</h2>
+                    <div class="order-detail-summary__row cart-summary__row">
+                        <span class="order-detail-summary__label">Tạm tính</span>
+                        <span class="order-detail-summary__value" id="tempTotal" th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT')} đ|"></span>
+                    </div>
+                    <div class="order-detail-summary__row cart-summary__row">
+                        <span class="order-detail-summary__label">Giảm giá</span>
+                        <span class="order-detail-summary__value">- <span id="discount" th:text="|${#numbers.formatDecimal(hoaDon.tienGiam,0,'COMMA',0,'POINT')} đ|"></span></span>
+                    </div>
+                    <div class="order-detail-summary__row cart-summary__row">
+                        <span class="order-detail-summary__label">Phí vận chuyển</span>
+                        <span class="order-detail-summary__value">0 đ</span>
+                    </div>
+                    <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
+                        <span class="order-detail-summary__label">Tổng thanh toán</span>
+                        <span class="order-detail-summary__total cart-summary__value" id="totalPayment" th:text="|${#numbers.formatDecimal(hoaDon.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
+                    </div>
+                </section>
+
+                <!-- Trạng thái & thanh toán -->
+                <section class="order-detail-card order-detail-meta">
+                    <div class="order-detail-meta__item">
+                        <span class="detail-card__label">Trạng thái đơn</span>
+                        <span class="order-detail-meta__badge order-status"
+                              id="orderStatus"
+                              th:classappend="
+                                ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'status-waiting' :
+                                (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'status-processing' :
+                                (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'status-shipping' :
+                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'status-done' : 'status-cancel')))"
+                              th:text="
+                                ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'Chờ xác nhận' :
+                                (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'Đang xử lý' :
+                                (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'Đang giao' :
+                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'Đã giao' : 'Đã hủy')))">
+                        </span>
+                    </div>
+                    <div class="order-detail-meta__item">
+                        <span class="detail-card__label">Thanh toán</span>
+                        <span class="order-detail-meta__payment" id="paymentMethod" th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
+                    </div>
+                </section>
+            </div>
 
             <div class="order-detail-back">
-                <a th:href="@{/don-hang}" class="btn-order btn-order--primary">← Quay lại đơn hàng</a>
+                <a th:href="@{/don-hang}" class="btn-order btn-order--primary" id="btnBackToList">← Quay lại đơn hàng</a>
             </div>
 
         </div>
     </div>
+
+    <script th:inline="javascript">
+    (function() {
+        var page = document.getElementById('orderDetailPage');
+        if (!page) return;
+
+        var hoaDonId = /*[[${hoaDon.id}]]*/ null;
+        var apiUrl = /*[[@{/don-hang/chi-tiet/api/}]]*/ '/don-hang/chi-tiet/api/';
+
+        function formatCurrencyVnd(value) {
+            if (value == null) return '0 đ';
+            return Number(value).toLocaleString('vi-VN') + ' đ';
+        }
+
+        function getTenTrangThai(trangThai) {
+            var map = {
+                'CHO_XAC_NHAN': 'Chờ xác nhận',
+                'DANG_XU_LY': 'Đang xử lý',
+                'DANG_GIAO': 'Đang giao',
+                'DA_GIAO': 'Đã giao',
+                'DA_HUY': 'Đã hủy'
+            };
+            return map[trangThai] || trangThai;
+        }
+
+        function getStatusClass(trangThai) {
+            var map = {
+                'CHO_XAC_NHAN': 'status-waiting',
+                'DANG_XU_LY': 'status-processing',
+                'DANG_GIAO': 'status-shipping',
+                'DA_GIAO': 'status-done',
+                'DA_HUY': 'status-cancel'
+            };
+            return map[trangThai] || '';
+        }
+
+        function loadOrderDetail() {
+            if (!hoaDonId) return;
+
+            var loading = document.getElementById('orderDetailLoading');
+            var content = document.getElementById('orderDetailContent');
+
+            if (loading && content) {
+                loading.style.display = '';
+                content.style.display = 'none';
+            }
+
+            fetch(apiUrl + hoaDonId)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (loading && content) {
+                        loading.style.display = 'none';
+                        content.style.display = '';
+                    }
+
+                    if (!data.success) {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(data.message || 'Có lỗi xảy ra!', 'error');
+                        }
+                        return;
+                    }
+
+                    var orderCodeDisplay = document.getElementById('orderCodeDisplay');
+                    if (orderCodeDisplay) {
+                        orderCodeDisplay.innerHTML = 'Mã đơn: <strong>' + (data.maDonHang || '') + '</strong>';
+                    }
+
+                    var itemsBody = document.getElementById('orderItemsBody');
+                    if (itemsBody && data.items) {
+                        itemsBody.innerHTML = '';
+                        data.items.forEach(function(item) {
+                            var row = document.createElement('tr');
+                            row.innerHTML = '<td class="cart-table__name">' + (item.tenSanPham || '') + '</td>' +
+                                '<td>' + (item.soLuong || 0) + '</td>' +
+                                '<td class="cart-table__price">' + formatCurrencyVnd(item.donGia) + '</td>' +
+                                '<td class="cart-table__total">' + formatCurrencyVnd(item.thanhTien) + '</td>';
+                            itemsBody.appendChild(row);
+                        });
+                    }
+
+                    var tempTotal = document.getElementById('tempTotal');
+                    if (tempTotal) tempTotal.textContent = formatCurrencyVnd(data.tongTienTamTinh);
+
+                    var discount = document.getElementById('discount');
+                    if (discount) discount.textContent = formatCurrencyVnd(data.tienGiam);
+
+                    var totalPayment = document.getElementById('totalPayment');
+                    if (totalPayment) totalPayment.textContent = formatCurrencyVnd(data.tongTienThanhToan);
+
+                    var orderStatus = document.getElementById('orderStatus');
+                    if (orderStatus) {
+                        orderStatus.textContent = data.tenTrangThai || '';
+                        orderStatus.className = 'order-detail-meta__badge order-status ' + getStatusClass(data.trangThaiDonHang);
+                    }
+
+                    var paymentMethod = document.getElementById('paymentMethod');
+                    if (paymentMethod) paymentMethod.textContent = data.tenPhuongThuc || '';
+                })
+                .catch(function() {
+                    if (loading && content) {
+                        loading.style.display = 'none';
+                        content.style.display = '';
+                    }
+                });
+        }
+
+        var backBtn = document.getElementById('btnBackToList');
+        if (backBtn) {
+            backBtn.addEventListener('click', function(e) {
+                if (window.history.length > 1) {
+                    e.preventDefault();
+                    window.history.back();
+                }
+            });
+        }
+
+        loadOrderDetail();
+    })();
+    </script>
 </div>
 </body>
 </html>

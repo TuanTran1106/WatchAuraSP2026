@@ -3,14 +3,14 @@
 
 <body>
 
-    <div th:fragment="content" class="user-page user-page--products">
+    <div th:fragment="content" class="user-page user-page--products" id="productListPage">
         <div class="container">
             <h1 class="page-title">Sản phẩm</h1>
             <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
             <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
 
             <div class="filters">
-                <form th:action="@{/san-pham}" method="get" class="filters__form">
+                <form th:action="@{/san-pham}" method="get" class="filters__form" id="productFilterForm">
                     <input type="hidden" name="page" value="0">
                     <div class="filters__input-wrap">
                         <i class="fas fa-search filters__icon" aria-hidden="true"></i>
@@ -33,15 +33,22 @@
                             th:selected="${thuongHieuId != null and thuongHieuId == th.id}"></option>
                         </select>
                     </div>
-                    <button type="submit" class="filters__btn">
+                    <button type="submit" class="filters__btn" id="btnFilter">
                         <i class="fas fa-filter" aria-hidden="true"></i>
                         <span>Lọc</span>
                     </button>
                 </form>
             </div>
 
-            <div class="products-grid products__grid" th:if="${list != null and !list.isEmpty()}">
-                <div th:each="sp : ${list}" class="product-card">
+            <!-- Loading indicator -->
+            <div id="productLoading" style="display: none; text-align: center; padding: 3rem;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Đang tải sản phẩm...</p>
+            </div>
+
+            <!-- Products grid -->
+            <div class="products-grid products__grid" id="productsGrid" th:if="${list != null and !list.isEmpty()}">
+                <div th:each="sp : ${list}" class="product-card" th:attr="data-id=${sp.id}">
                     <div class="product-image-container">
                         <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}"
                             th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}"
@@ -63,15 +70,18 @@
                     </a>
                 </div>
             </div>
-            <p th:if="${list == null or list.isEmpty()}" class="section__empty">Không tìm thấy sản phẩm nào.</p>
 
-            <nav class="pagination-wrap" th:if="${pageResult != null && pageResult.totalPages > 1}" aria-label="Phân trang">
+            <!-- Empty state -->
+            <p id="productEmpty" th:if="${list == null or list.isEmpty()}" class="section__empty">Không tìm thấy sản phẩm nào.</p>
+
+            <!-- Pagination -->
+            <nav class="pagination-wrap" id="productPagination" th:if="${pageResult != null && pageResult.totalPages > 1}" aria-label="Phân trang">
                 <ul class="pagination-list">
                     <!-- Trang đầu -->
                     <li>
                         <a th:if="${pageResult.number > 0}"
                            class="pagination-link pagination-link--first"
-                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=0)}">&laquo;&laquo;</a>
+                           th:href="@{/san-pham(page=0, keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId})}">&laquo;&laquo;</a>
                         <span th:unless="${pageResult.number > 0}"
                               class="pagination-link pagination-link--disabled">&laquo;&laquo;</span>
                     </li>
@@ -80,7 +90,7 @@
                     <li>
                         <a th:if="${pageResult.hasPrevious()}"
                            class="pagination-link pagination-link--prev"
-                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number - 1})}">&lsaquo;</a>
+                           th:href="@{/san-pham(page=${pageResult.number - 1}, keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId})}">&lsaquo;</a>
                         <span th:unless="${pageResult.hasPrevious()}"
                               class="pagination-link pagination-link--disabled">&lsaquo;</span>
                     </li>
@@ -90,7 +100,7 @@
                         th:if="${i >= pageResult.number - 2 and i <= pageResult.number + 2}">
                         <a th:if="${i != pageResult.number}"
                            class="pagination-link"
-                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${i})}"
+                           th:href="@{/san-pham(page=${i}, keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId})}"
                            th:text="${i + 1}">1</a>
                         <span th:if="${i == pageResult.number}"
                               class="pagination-link pagination-link--current"
@@ -101,7 +111,7 @@
                     <li>
                         <a th:if="${pageResult.hasNext()}"
                            class="pagination-link pagination-link--next"
-                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.number + 1})}">&rsaquo;</a>
+                           th:href="@{/san-pham(page=${pageResult.number + 1}, keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId})}">&rsaquo;</a>
                         <span th:unless="${pageResult.hasNext()}"
                               class="pagination-link pagination-link--disabled">&rsaquo;</span>
                     </li>
@@ -110,7 +120,7 @@
                     <li>
                         <a th:if="${pageResult.number < pageResult.totalPages - 1}"
                            class="pagination-link pagination-link--last"
-                           th:href="@{/san-pham(keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId}, page=${pageResult.totalPages - 1})}">&raquo;&raquo;</a>
+                           th:href="@{/san-pham(page=${pageResult.totalPages - 1}, keyword=${keyword}, danhMucId=${danhMucId}, thuongHieuId=${thuongHieuId})}">&raquo;&raquo;</a>
                         <span th:unless="${pageResult.number < pageResult.totalPages - 1}"
                               class="pagination-link pagination-link--disabled">&raquo;&raquo;</span>
                     </li>

@@ -283,6 +283,16 @@
     color: #1a1a1a;
 }
 
+.btn-order--view-review {
+    background: #6b7280;
+    color: #fff;
+}
+
+.btn-order--view-review:hover {
+    background: #4b5563;
+    color: #fff;
+}
+
 .btn-order--rebuy {
     background: #16a34a;
     color: #fff;

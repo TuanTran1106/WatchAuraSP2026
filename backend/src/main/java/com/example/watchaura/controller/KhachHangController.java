@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -35,7 +37,7 @@ public class KhachHangController {
                       @RequestParam(required = false) String trangThai,
                       Model model) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
         Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThai, pageable);
         model.addAttribute("title", "Khách hàng");
         model.addAttribute("content", "admin/khachhang-list");
@@ -68,7 +70,7 @@ public class KhachHangController {
                            @RequestParam(required = false) String trangThai,
                            Model model) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
         Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThai, pageable);
         KhachHang khachHang = khachHangService.getById(id);
         model.addAttribute("title", "Khách hàng");
@@ -93,7 +95,7 @@ public class KhachHangController {
                         Model model, RedirectAttributes redirect) {
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
-            Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+            Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
             Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThaiBool, pageable);
             model.addAttribute("title", "Khách hàng");
             model.addAttribute("content", "admin/khachhang-list");
@@ -107,6 +109,7 @@ public class KhachHangController {
         }
         khachHangService.create(khachHang);
         redirect.addFlashAttribute("message", "Thêm khách hàng thành công.");
+        redirect.addAttribute("page", 0);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (filterTrangThai != null && !filterTrangThai.isBlank()) redirect.addAttribute("trangThai", filterTrangThai);
         return "redirect:/admin/khach-hang#listKhachHang";
@@ -119,7 +122,7 @@ public class KhachHangController {
                          @Valid @ModelAttribute("khachHang") KhachHang khachHang, BindingResult result, Model model, RedirectAttributes redirect) {
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
-            Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
             Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThaiBool, pageable);
             model.addAttribute("title", "Khách hàng");
             model.addAttribute("content", "admin/khachhang-list");

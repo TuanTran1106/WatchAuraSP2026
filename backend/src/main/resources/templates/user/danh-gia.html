@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content" class="review-page">
+    <div class="container">
+        <nav class="breadcrumb-wrap" aria-label="breadcrumb">
+            <a th:href="@{/}">Trang chủ</a>
+            <span class="breadcrumb__sep">/</span>
+            <a th:href="@{/don-hang}">Đơn hàng</a>
+            <span class="breadcrumb__sep">/</span>
+            <span>Đánh giá sản phẩm</span>
+        </nav>
+
+        <header class="review-header">
+            <h1 class="review-title">Đánh giá sản phẩm</h1>
+            <p class="review-subtitle" th:if="${hoaDon != null}">
+                Mã đơn: <strong th:text="${hoaDon.maDonHang}">DH001</strong>
+                <span class="review-date" th:text="${#temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm')}">01/01/2024</span>
+            </p>
+        </header>
+
+        <div class="review-list" th:if="${hoaDon != null and hoaDon.items != null and !hoaDon.items.isEmpty()}">
+            <div th:each="item : ${hoaDon.items}" class="review-card">
+                <div class="review-card__product">
+                    <div class="review-card__img-wrap">
+                        <img th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}"
+                             th:src="@{${#strings.startsWith(item.hinhAnh, '/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}}"
+                             alt="" class="review-card__img">
+                        <span th:unless="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}" class="review-card__img-placeholder">⌚</span>
+                    </div>
+                    <div class="review-card__info">
+                        <h3 class="review-card__name" th:text="${item.tenSanPham}">Tên sản phẩm</h3>
+                        <p class="review-card__variant" th:if="${item.tenBienThe != null}" th:text="${item.tenBienThe}">Màu: Xanh / Size: 38mm</p>
+                        <p class="review-card__price" th:text="|${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</p>
+                    </div>
+                </div>
+
+                <!-- Kiểm tra đã đánh giá chưa -->
+                <th:block th:with="userReview=${userReviewsMap != null ? userReviewsMap.get(item.sanPhamChiTietId) : null}">
+
+                    <!-- Nếu đã đánh giá: hiển thị đánh giá đã gửi -->
+                    <div th:if="${userReview != null}" class="review-card__submitted">
+                        <div class="review-card__rating">
+                            <label class="review-card__rating-label">Đã đánh giá</label>
+                            <div class="review-card__stars-display">
+                                <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                    <i class="fas fa-star" th:classappend="${i <= userReview.soSao ? 'star-filled' : ''}"></i>
+                                </th:block>
+                            </div>
+                        </div>
+                        <div class="review-card__content">
+                            <p class="review-card__review-content" th:text="${userReview.noiDung}">Nội dung đánh giá</p>
+                            <span class="review-card__review-date" th:text="${#temporals.format(userReview.ngayDanhGia, 'dd/MM/yyyy HH:mm')}">01/01/2024</span>
+                        </div>
+                    </div>
+
+                    <!-- Nếu chưa đánh giá: hiển thị form -->
+                    <form th:unless="${userReview != null}" th:action="@{/danh-gia}" method="post" class="review-card__form">
+                        <input type="hidden" name="sanPhamChiTietId" th:value="${item.sanPhamChiTietId}">
+                        <input type="hidden" name="hoaDonId" th:value="${hoaDon.id}">
+
+                        <div class="review-card__rating">
+                            <label class="review-card__rating-label">Chọn sao</label>
+                            <div class="review-card__stars-wrap">
+                                <select name="soSao" class="review-card__stars-select" required aria-label="Chọn số sao">
+                                    <option value="5" selected>★★★★★</option>
+                                    <option value="4">★★★★☆</option>
+                                    <option value="3">★★★☆☆</option>
+                                    <option value="2">★★☆☆☆</option>
+                                    <option value="1">★☆☆☆☆</option>
+                                </select>
+                                <i class="fas fa-chevron-down review-card__stars-arrow"></i>
+                            </div>
+                        </div>
+
+                        <div class="review-card__content">
+                            <textarea name="noiDung" class="review-card__textarea" placeholder="Nhận xét sản phẩm..." rows="2" required></textarea>
+                            <button type="submit" class="review-card__submit">Gửi đánh giá</button>
+                        </div>
+                    </form>
+
+                </th:block>
+            </div>
+        </div>
+
+        <div class="review-empty" th:if="${hoaDon == null or hoaDon.items == null or hoaDon.items.isEmpty()}">
+            <div class="review-empty__icon">📦</div>
+            <h2 class="review-empty__title">Không có sản phẩm để đánh giá</h2>
+            <a th:href="@{/don-hang}" class="btn btn--primary">Quay lại đơn hàng</a>
+        </div>
+
+        <div class="review-actions" th:if="${hoaDon != null and hoaDon.items != null and !hoaDon.items.isEmpty()}">
+            <a th:href="@{/don-hang}" class="btn btn--outline">← Quay lại đơn hàng</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

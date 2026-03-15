@@ -157,15 +157,17 @@ public class HoaDonServiceImpl implements HoaDonService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy voucher"));
         }
 
-        // Tính tổng tiền từ các items
+        // Tính tổng tiền và trừ tồn kho ngay (atomic) để tránh bán vượt khi nhiều người cùng mua
         BigDecimal tongTienTamTinh = BigDecimal.ZERO;
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(itemRequest.getSanPhamChiTietId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
 
-            // Kiểm tra số lượng tồn kho
-            if (sanPhamChiTiet.getSoLuongTon() == null || sanPhamChiTiet.getSoLuongTon() < itemRequest.getSoLuong()) {
-                throw new RuntimeException("Số lượng tồn kho không đủ cho sản phẩm: " + sanPhamChiTiet.getSanPham().getTenSanPham());
+            int rows = sanPhamChiTietRepository.deductStock(itemRequest.getSanPhamChiTietId(), itemRequest.getSoLuong());
+            if (rows == 0) {
+                throw new RuntimeException("Số lượng tồn kho không đủ cho sản phẩm: "
+                        + (sanPhamChiTiet.getSanPham() != null ? sanPhamChiTiet.getSanPham().getTenSanPham() : "ID " + itemRequest.getSanPhamChiTietId())
+                        + ". Vui lòng giảm số lượng hoặc chọn sản phẩm khác.");
             }
 
             if (sanPhamChiTiet.getGiaBan() != null) {
@@ -209,7 +211,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
 
-        // Tạo chi tiết hóa đơn (chưa trừ tồn kho, chỉ kiểm tra ở bước trên)
+        // Tạo chi tiết hóa đơn (tồn kho đã trừ ở bước trên)
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(itemRequest.getSanPhamChiTietId())
                     .orElseThrow();
@@ -296,24 +298,11 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         String currentStatus = hoaDon.getTrangThaiDonHang();
 
-        // Chỉ trừ kho một lần khi chuyển sang ĐANG_GIAO
-        if ("DANG_GIAO".equals(trangThaiDonHang)
-                && !"DANG_GIAO".equals(currentStatus)
-                && !"DA_GIAO".equals(currentStatus)) {
+        // Tồn kho đã trừ ngay khi đặt hàng (create). Chỉ hoàn kho khi hủy đơn.
+        if ("DA_HUY".equals(trangThaiDonHang) && !"DA_HUY".equals(currentStatus)) {
             List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
             for (HoaDonChiTiet chiTiet : chiTiets) {
-                SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
-                sanPhamChiTiet.setSoLuongTon(sanPhamChiTiet.getSoLuongTon() - chiTiet.getSoLuong());
-                sanPhamChiTietRepository.save(sanPhamChiTiet);
-            }
-        } else if ("DA_HUY".equals(trangThaiDonHang)
-                && !"DA_HUY".equals(currentStatus)
-                && ("DANG_GIAO".equals(currentStatus) || "DA_GIAO".equals(currentStatus))) {
-            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
-            for (HoaDonChiTiet chiTiet : chiTiets) {
-                SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
-                sanPhamChiTiet.setSoLuongTon(sanPhamChiTiet.getSoLuongTon() + chiTiet.getSoLuong());
-                sanPhamChiTietRepository.save(sanPhamChiTiet);
+                sanPhamChiTietRepository.restoreStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
             }
         }
 
@@ -515,6 +504,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         if (hoaDon.getKhachHang() != null) {
             dto.setKhachHangId(hoaDon.getKhachHang().getId());
+            dto.setEmail(hoaDon.getKhachHang().getEmail());
         }
 
         dto.setTenKhachHang(hoaDon.getTenKhachHang());
@@ -568,14 +558,36 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setId(chiTiet.getId());
         dto.setHoaDonId(chiTiet.getHoaDon().getId());
         dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
-        
+
         if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
             dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
+            dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
         }
-        
+
+        // Build tenBienThe from variant attributes
+        StringBuilder bienThe = new StringBuilder();
+        if (chiTiet.getSanPhamChiTiet().getMauSac() != null && !chiTiet.getSanPhamChiTiet().getMauSac().getTenMauSac().isEmpty()) {
+            bienThe.append("Màu: ").append(chiTiet.getSanPhamChiTiet().getMauSac().getTenMauSac());
+        }
+        if (chiTiet.getSanPhamChiTiet().getKichThuoc() != null && !chiTiet.getSanPhamChiTiet().getKichThuoc().getTenKichThuoc().isEmpty()) {
+            if (bienThe.length() > 0) bienThe.append(" / ");
+            bienThe.append("Size: ").append(chiTiet.getSanPhamChiTiet().getKichThuoc().getTenKichThuoc());
+        }
+        if (chiTiet.getSanPhamChiTiet().getChatLieuDay() != null && !chiTiet.getSanPhamChiTiet().getChatLieuDay().getTenChatLieu().isEmpty()) {
+            if (bienThe.length() > 0) bienThe.append(" / ");
+            bienThe.append("Dây: ").append(chiTiet.getSanPhamChiTiet().getChatLieuDay().getTenChatLieu());
+        }
+        if (chiTiet.getSanPhamChiTiet().getLoaiMay() != null && !chiTiet.getSanPhamChiTiet().getLoaiMay().getTenLoaiMay().isEmpty()) {
+            if (bienThe.length() > 0) bienThe.append(" / ");
+            bienThe.append("Máy: ").append(chiTiet.getSanPhamChiTiet().getLoaiMay().getTenLoaiMay());
+        }
+        if (bienThe.length() > 0) {
+            dto.setTenBienThe(bienThe.toString());
+        }
+
         dto.setSoLuong(chiTiet.getSoLuong());
         dto.setDonGia(chiTiet.getDonGia());
-        
+
         if (dto.getDonGia() != null && dto.getSoLuong() != null) {
             dto.setThanhTien(dto.getDonGia().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         } else {

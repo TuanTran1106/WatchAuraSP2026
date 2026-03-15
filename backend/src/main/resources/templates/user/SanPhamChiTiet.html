@@ -1085,7 +1085,7 @@
                                 <!-- Quantity and Add to Cart -->
                                 <div class="action-buttons">
                                     <div class="d-grid gap-2 d-md-flex">
-                                        <form th:action="@{/gio-hang/them}" method="post" id="addToCartForm">
+                                        <form th:action="@{/gio-hang/them}" method="post" id="addToCartForm" novalidate>
                                             <input type="hidden" name="spctId"
                                                 th:value="${chiTiet != null ? chiTiet.id : 0}" id="hiddenSpctId" />
                                             <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
@@ -1544,6 +1544,32 @@
                             var maxValue = parseInt(input.getAttribute('max'), 10) || 999;
                             if (currentValue < maxValue) {
                                 input.value = currentValue + 1;
+                            }
+                        });
+                    }
+
+                    var addToCartForm = document.getElementById('addToCartForm');
+                    if (addToCartForm) {
+                        addToCartForm.addEventListener('submit', function (e) {
+                            var input = document.getElementById('quantityInput');
+                            if (!input) return;
+                            var qty = parseInt(input.value, 10) || 1;
+                            var max = parseInt(input.getAttribute('max'), 10) || 999;
+                            if (qty > max) {
+                                e.preventDefault();
+                                input.value = max;
+                                var msg = 'Số lượng vượt quá tồn kho. Hiện chỉ còn ' + max + ' sản phẩm.';
+                                if (typeof window.showToast === 'function') window.showToast(msg, 'error');
+                                else alert(msg);
+                                fetch('/gio-hang/so-luong').then(function(r) { return r.json(); }).then(function(data) {
+                                    var el = document.querySelector('.nav-cart__count');
+                                    if (el && data.soLuongGioHang !== undefined) {
+                                        var c = data.soLuongGioHang;
+                                        el.textContent = c;
+                                        el.style.display = c > 0 ? '' : 'none';
+                                    }
+                                }).catch(function() {});
+                                return false;
                             }
                         });
                     }

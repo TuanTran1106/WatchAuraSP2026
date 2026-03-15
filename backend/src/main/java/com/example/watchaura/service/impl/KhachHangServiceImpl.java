@@ -9,6 +9,7 @@ import com.example.watchaura.service.KhachHangService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,7 @@ public class KhachHangServiceImpl implements KhachHangService {
     private PasswordEncoder passwordEncoder;
     @Override
     public List<KhachHang> getAll() {
-        return khachHangRepository.findAll();
+        return khachHangRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
     @Override
     public KhachHang getById(Integer id) {

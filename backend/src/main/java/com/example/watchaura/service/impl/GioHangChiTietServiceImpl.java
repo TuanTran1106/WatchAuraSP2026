@@ -60,7 +60,7 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
             throw new RuntimeException("Sản phẩm không còn hàng.");
         }
         if (tonKho < request.getSoLuong()) {
-            throw new RuntimeException("Số lượng tồn kho không đủ (còn " + tonKho + " sản phẩm).");
+            throw new RuntimeException("Thêm sản phẩm thất bại: muốn thêm " + request.getSoLuong() + " nhưng chỉ còn " + tonKho + " trong kho.");
         }
 
         // Kiểm tra sản phẩm đã có trong giỏ chưa
@@ -70,13 +70,15 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
 
         if (existing != null) {
             // Cộng dồn số lượng
-            existing.setSoLuong(existing.getSoLuong() + request.getSoLuong());
-            
+            int soLuongHienTai = existing.getSoLuong();
+            int soLuongMoi = soLuongHienTai + request.getSoLuong();
+
             // Kiểm tra lại tồn kho
-            if (tonKho < existing.getSoLuong()) {
-                throw new RuntimeException("Số lượng tồn kho không đủ (còn " + tonKho + " sản phẩm).");
+            if (tonKho < soLuongMoi) {
+                throw new RuntimeException("Thêm sản phẩm thất bại: đã có " + soLuongHienTai + " trong giỏ, thêm " + request.getSoLuong() + " -> tổng " + soLuongMoi + " vượt quá tồn kho (" + tonKho + ").");
             }
-            
+
+            existing.setSoLuong(soLuongMoi);
             return convertToDTO(gioHangChiTietRepository.save(existing));
         } else {
             // Tạo mới

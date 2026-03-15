@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,7 @@ public class SanPhamServiceImpl implements SanPhamService {
 
     @Override
     public List<SanPhamDTO> getAllSanPham() {
-        return sanPhamRepository.findAll()
+        return sanPhamRepository.findAll(Sort.by(Sort.Direction.DESC, "id"))
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

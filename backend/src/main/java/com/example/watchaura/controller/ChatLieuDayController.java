@@ -3,6 +3,7 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.ChatLieuDay;
 import com.example.watchaura.repository.ChatLieuDayRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -25,7 +26,7 @@ public class ChatLieuDayController {
     @ResponseBody
     public ResponseEntity<List<ChatLieuDay>> getAllChatLieuDay() {
         try {
-            List<ChatLieuDay> chatLieuDays = chatLieuDayRepository.findAll();
+            List<ChatLieuDay> chatLieuDays = chatLieuDayRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
             return ResponseEntity.ok(chatLieuDays);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

@@ -1,3 +1,139 @@
+/* ===== Toast notification (thêm giỏ thành công) ===== */
+.toast-stack {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    max-width: 400px;
+}
+
+.toast-item {
+    position: relative;
+    overflow: hidden;
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #c9a227;
+    transform: translateX(120%);
+    opacity: 0;
+    animation: toastSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.toast-item.toast-item--error {
+    border-left-color: #dc2626;
+}
+
+.toast-item.toast-item--error .toast-item__icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.toast-item.toast-item--success .toast-item__icon {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.toast-item__icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.toast-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-item__title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+}
+
+.toast-item__msg {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.toast-item__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(201, 162, 39, 0.35);
+    border-radius: 0 0 0 12px;
+    transform-origin: left;
+    animation: toastProgress 4s linear forwards;
+}
+
+.toast-item--error .toast-item__progress {
+    background: rgba(220, 38, 38, 0.35);
+}
+
+.toast-item__close {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #999;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: color 0.2s, background 0.2s;
+}
+
+.toast-item__close:hover {
+    color: #333;
+    background: #f0f0f0;
+}
+
+@keyframes toastSlideIn {
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toastSlideOut {
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+@keyframes toastProgress {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+@media (max-width: 480px) {
+    .toast-stack {
+        left: 12px;
+        right: 12px;
+        max-width: none;
+    }
+}
+
 /* ===== Giỏ hàng & thông báo chung ===== */
 .alert {
     padding: 0.75rem 1rem;
@@ -177,6 +313,18 @@
 }
 .cart-table__name--link:hover {
     color: #c9a227;
+}
+
+.cart-table__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cart-table__sku {
+    font-size: 0.8rem;
+    color: #888;
+    font-weight: 400;
 }
 
 .cart-table__price {

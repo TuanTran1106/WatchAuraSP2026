@@ -8,13 +8,11 @@ import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VoucherService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,7 +36,7 @@ public class HoaDonController {
                       @RequestParam(required = false) String trangThai,
                       @RequestParam(defaultValue = "0") int page,
                       Model model) {
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
         Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThai, pageable);
         model.addAttribute("title", "Hóa đơn");
         model.addAttribute("content", "admin/hoadon-list");

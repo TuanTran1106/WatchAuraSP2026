@@ -3,9 +3,15 @@ package com.example.watchaura.service;
 import com.example.watchaura.entity.DiaChi;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DiaChiService {
     List<DiaChi> getByKhachHang(Integer khachHangId);
+
+    Optional<DiaChi> getDiaChiMacDinhByKhachHang(Integer khachHangId);
+
+    /** Đặt địa chỉ có id là mặc định cho khách hàng (các địa chỉ khác bỏ mặc định). */
+    void setDiaChiMacDinh(Integer khachHangId, Integer diaChiId);
 
     DiaChi getById(Integer id);
 

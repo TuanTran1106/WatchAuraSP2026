@@ -2,6 +2,7 @@ package com.example.watchaura.repository;
 
 import com.example.watchaura.entity.SanPhamChiTiet;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -40,5 +41,20 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
             "LEFT JOIN FETCH spct.chatLieuDay " +
             "LEFT JOIN FETCH spct.loaiMay")
     List<SanPhamChiTiet> findAllWithDetails();
+
+    /**
+     * Trừ tồn kho một cách nguyên tử. Trả về số dòng bị update (1 = thành công, 0 = không đủ hàng).
+     * Tránh race condition khi nhiều đơn cùng mua 1 sản phẩm.
+     */
+    @Modifying
+    @Query("UPDATE SanPhamChiTiet spct SET spct.soLuongTon = spct.soLuongTon - :qty WHERE spct.id = :id AND spct.soLuongTon >= :qty")
+    int deductStock(@Param("id") Integer id, @Param("qty") Integer qty);
+
+    /**
+     * Hoàn tồn kho khi hủy đơn.
+     */
+    @Modifying
+    @Query("UPDATE SanPhamChiTiet spct SET spct.soLuongTon = spct.soLuongTon + :qty WHERE spct.id = :id")
+    int restoreStock(@Param("id") Integer id, @Param("qty") Integer qty);
 }
 

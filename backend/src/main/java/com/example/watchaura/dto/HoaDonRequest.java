@@ -35,6 +35,8 @@ public class HoaDonRequest {
     @NotBlank(message = "Số điện thoại không được để trống")
     private String sdtKhachHang;
     
+    private String email;
+    
     private String ghiChu;
     
     private DiaChiGiaoHangRequest diaChiGiaoHang;

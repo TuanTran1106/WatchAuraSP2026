@@ -5,6 +5,7 @@ import com.example.watchaura.entity.ChucVu;
 import com.example.watchaura.repository.ChucVuRepository;
 import com.example.watchaura.service.ChucVuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class ChucVuServiceImpl implements ChucVuService {
 
     @Override
     public List<ChucVu> getAll() {
-        return chucVuRepository.findAll();
+        return chucVuRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     @Override

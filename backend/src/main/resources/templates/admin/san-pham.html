@@ -775,14 +775,14 @@
                     <div class="search-bar">
                         <input type="text" id="searchKeyword" placeholder="Tìm theo mã hoặc tên..."
                             class="search-bar__input" />
-                        <button type="button" class="btn btn--primary search-bar__btn" onclick="applySearch()"><i
+                        <button type="button" class="btn btn--primary search-bar__btn" id="btnSearch"><i
                                 class="fa-solid fa-search"></i> Tìm kiếm</button>
-                        <button type="button" class="btn btn--secondary search-bar__btn" onclick="resetSearch()"
+                        <button type="button" class="btn btn--secondary search-bar__btn" id="btnClearSearch"
                             title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</button>
                     </div>
                     <div class="filter-bar">
                         <label class="filter-bar__label">Trạng thái:</label>
-                        <select id="filterTrangThai" class="form__select filter-bar__select" onchange="applySearch()">
+                        <select id="filterTrangThai" class="form__select filter-bar__select">
                             <option value="">Tất cả</option>
                             <option value="true">Hoạt động</option>
                             <option value="false">Không hoạt động</option>
@@ -931,7 +931,7 @@
         </div>
 
         <script>
-            const API_URL = 'http://localhost:8080/api';
+            const API_URL = '/api';
             const PAGE_SIZE = 5;
             let isEditing = false;
             let currentPage = 0;
@@ -1660,7 +1660,8 @@
 
                     alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
                     closeModal();
-                    loadProducts();
+                    // Sau khi thêm mới, luôn load trang đầu tiên để hiển thị bản ghi mới nhất
+                    loadProducts(isEditing ? undefined : 0);
                 } catch (error) {
                     console.error('Lỗi:', error);
                     alert('Có lỗi xảy ra!');
@@ -2012,6 +2013,20 @@
                 loadKichThuoc();
                 loadChatLieuDay();
                 loadLoaiMay();
+
+                // Event listeners cho search và filter
+                document.getElementById('btnSearch').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    applySearch();
+                });
+                document.getElementById('btnClearSearch').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    resetSearch();
+                });
+                document.getElementById('filterTrangThai').addEventListener('change', function(e) {
+                    e.preventDefault();
+                    applySearch();
+                });
                 document.getElementById('searchKeyword').addEventListener('keydown', function (e) {
                     if (e.key === 'Enter') { e.preventDefault(); applySearch(); }
                 });

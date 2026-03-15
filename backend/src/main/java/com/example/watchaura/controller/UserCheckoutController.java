@@ -11,6 +11,8 @@ import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
+import com.example.watchaura.service.DiaChiService;
+import com.example.watchaura.entity.DiaChi;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -44,6 +46,7 @@ public class UserCheckoutController {
     private final KhachHangService khachHangService;
     private final VNPayService vnPayService;
     private final VoucherService voucherService;
+    private final DiaChiService diaChiService;
 
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
@@ -66,6 +69,8 @@ public class UserCheckoutController {
             CheckoutForm form = new CheckoutForm();
             form.setTenKhachHang(khachHang.getTenNguoiDung() != null ? khachHang.getTenNguoiDung() : "");
             form.setSdtKhachHang(khachHang.getSdt() != null ? khachHang.getSdt() : "");
+            form.setEmail(khachHang.getEmail() != null ? khachHang.getEmail() : "");
+            form.setDiaChi(buildDiaChiFromKhachHang(userId));
             form.setPhuongThucThanhToan("COD");
             model.addAttribute("checkoutForm", form);
         }
@@ -118,6 +123,7 @@ public class UserCheckoutController {
             request.setLoaiHoaDon("BAN_LE");
             request.setTenKhachHang(form.getTenKhachHang().trim());
             request.setSdtKhachHang(form.getSdtKhachHang().trim());
+            request.setEmail(form.getEmail() != null ? form.getEmail().trim() : null);
             request.setDiaChi(form.getDiaChi().trim());
             request.setGhiChu(form.getGhiChu() != null ? form.getGhiChu().trim() : null);
             request.setVoucherId(voucherId);
@@ -266,6 +272,22 @@ public class UserCheckoutController {
         return url.toString();
     }
 
+    /** Lấy địa chỉ giao hàng từ danh sách địa chỉ của khách: ưu tiên địa chỉ mặc định, không có thì lấy đầu tiên. */
+    private String buildDiaChiFromKhachHang(Integer khachHangId) {
+        java.util.List<DiaChi> list = diaChiService.getByKhachHang(khachHangId);
+        if (list == null || list.isEmpty()) return "";
+        DiaChi dc = list.stream()
+                .filter(d -> Boolean.TRUE.equals(d.getMacDinh()))
+                .findFirst()
+                .orElse(list.get(0));
+        StringBuilder sb = new StringBuilder();
+        if (dc.getDiaChiCuThe() != null && !dc.getDiaChiCuThe().isBlank()) sb.append(dc.getDiaChiCuThe());
+        if (dc.getPhuongXa() != null && !dc.getPhuongXa().isBlank()) { if (sb.length() > 0) sb.append(", "); sb.append(dc.getPhuongXa()); }
+        if (dc.getQuanHuyen() != null && !dc.getQuanHuyen().isBlank()) { if (sb.length() > 0) sb.append(", "); sb.append(dc.getQuanHuyen()); }
+        if (dc.getTinhThanh() != null && !dc.getTinhThanh().isBlank()) { if (sb.length() > 0) sb.append(", "); sb.append(dc.getTinhThanh()); }
+        return sb.toString();
+    }
+
     private static String getClientIp(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isBlank()) {
@@ -302,6 +324,8 @@ public class UserCheckoutController {
         private String tenKhachHang;
         @NotBlank(message = "Số điện thoại không được để trống")
         private String sdtKhachHang;
+        @NotBlank(message = "Email không được để trống")
+        private String email;
         @NotBlank(message = "Địa chỉ giao hàng không được để trống")
         private String diaChi;
         private String ghiChu;

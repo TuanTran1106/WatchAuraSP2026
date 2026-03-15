@@ -183,6 +183,267 @@
     color: #b8921f;
 }
 
+/* Khối địa chỉ mặc định */
+.account-card--address .account-card__desc {
+    font-size: 0.9rem;
+    color: #666;
+    margin: -0.5rem 0 1rem;
+}
+
+.account-address-display {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.account-address-display__list {
+    margin: 0;
+}
+
+.account-address-empty {
+    color: #888;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.account-card__address-block {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.account-card__address-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.btn-add-address {
+    background: #2c3e50;
+    color: #fff;
+}
+
+.btn-add-address:hover {
+    background: #1a252f;
+}
+
+/* Danh sách địa chỉ */
+.account-address-list-wrap {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #eee;
+}
+
+.account-address-list__title {
+    font-size: 1rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.account-address-list__title i {
+    color: #c9a227;
+}
+
+.account-address-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.account-address-list__item {
+    margin: 0;
+}
+
+.account-address-list__card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    border: 1px solid #eee;
+    position: relative;
+}
+
+.account-address-list__item--default .account-address-list__card {
+    border-color: #c9a227;
+    background: #fdfbf5;
+}
+
+.account-address-list__badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #b8921f;
+    background: #f0e6d3;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.account-address-list__dl {
+    margin: 0;
+}
+
+.account-address-list__dl .account-info__row {
+    grid-template-columns: 100px 1fr;
+}
+
+/* Form chọn địa chỉ mặc định */
+.account-address-list-form {
+    margin-top: 0;
+}
+
+.account-address-list__label {
+    display: block;
+    cursor: pointer;
+    margin: 0;
+}
+
+.account-address-list__label input[type="radio"] {
+    margin-right: 0.75rem;
+    margin-top: 0.1rem;
+    vertical-align: top;
+    accent-color: #c9a227;
+}
+
+.account-address-list__label .account-address-list__card {
+    display: inline-block;
+    vertical-align: top;
+    width: calc(100% - 2rem);
+}
+
+.account-address-list__item--default .account-address-list__label input[type="radio"]:checked + .account-address-list__card {
+    border-color: #c9a227;
+}
+
+.account-address-list__actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.account-address-list__actions .btn-submit-default,
+.account-address-list__actions .btn-add-address {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    background: #c9a227;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background 0.2s;
+}
+
+.account-address-list__actions .btn-submit-default:hover {
+    background: #b8921f;
+}
+
+.account-address-list__actions .btn-add-address {
+    background: #2c3e50;
+}
+
+.account-address-list__actions .btn-add-address:hover {
+    background: #1a252f;
+}
+
+.account-address-empty {
+    color: #666;
+    text-align: center;
+    padding: 1rem;
+}
+
+.account-address-empty p {
+    margin-bottom: 1rem;
+}
+
+.account-form--address {
+    max-width: 560px;
+}
+
+.account-form--address .form-group {
+    margin-bottom: 0.75rem;
+}
+
+.account-form--address .btn-submit {
+    margin-top: 0.75rem;
+}
+
+/* Bảng form địa chỉ - label và input cân đối */
+.account-address-form-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-bottom: 0;
+}
+
+.account-address-form-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.account-address-form-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.account-address-form-table__label {
+    width: 42%;
+    min-width: 160px;
+    max-width: 220px;
+    padding: 0.6rem 1rem 0.6rem 0;
+    vertical-align: top;
+    font-weight: 600;
+    color: #444;
+    font-size: 0.9rem;
+}
+
+.account-address-form-table__label label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: inherit;
+}
+
+.account-address-form-table__input {
+    padding: 0.6rem 0;
+    vertical-align: top;
+}
+
+.account-address-form-table__input input {
+    width: 100%;
+    min-width: 0;
+    max-width: 320px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.account-address-form-table__input input:focus {
+    outline: none;
+    border-color: #c9a227;
+    box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+}
+
+.account-address-form-table__input .field-error {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: #c0392b;
+}
+
+.btn-toggle-address-form .fa-map-pin {
+    margin-right: 0.25rem;
+}
+
 @media (max-width: 600px) {
     .account-info__row {
         grid-template-columns: 1fr;

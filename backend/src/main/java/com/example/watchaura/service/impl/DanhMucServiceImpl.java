@@ -6,6 +6,7 @@ import com.example.watchaura.repository.DanhMucRepository;
 import com.example.watchaura.repository.SanPhamRepository;
 import com.example.watchaura.service.DanhMucService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +21,7 @@ public class DanhMucServiceImpl implements DanhMucService {
 
     @Override
     public List<DanhMuc> getAll() {
-        return danhMucRepository.findAll();
+        return danhMucRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     @Override

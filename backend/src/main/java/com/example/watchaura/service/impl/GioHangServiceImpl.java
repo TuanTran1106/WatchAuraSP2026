@@ -157,6 +157,7 @@ public class GioHangServiceImpl implements GioHangService {
             dto.setSoLuongTon(chiTiet.getSanPhamChiTiet().getSoLuongTon());
             if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
                 dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
+                dto.setMaSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getMaSanPham());
                 dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
                 dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
             }

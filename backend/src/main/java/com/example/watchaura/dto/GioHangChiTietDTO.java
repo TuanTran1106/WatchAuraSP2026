@@ -16,6 +16,7 @@ public class GioHangChiTietDTO {
     private Integer gioHangId;
     private Integer sanPhamChiTietId;
     private Integer idSanPham;
+    private String maSanPham;
     private String tenSanPham;
     private String hinhAnh;
     private BigDecimal giaBan;

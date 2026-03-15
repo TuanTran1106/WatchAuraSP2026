@@ -22,6 +22,14 @@ public class UserGioHangController {
     private final GioHangService gioHangService;
     private final GioHangChiTietService gioHangChiTietService;
 
+    @GetMapping("/so-luong")
+    @ResponseBody
+    public java.util.Map<String, Integer> soLuong(HttpSession session) {
+        Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
+        int count = (userId != null) ? gioHangService.getSoLuongGioHang(userId) : 0;
+        return java.util.Map.of("soLuongGioHang", count);
+    }
+
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
@@ -37,27 +45,39 @@ public class UserGioHangController {
     }
 
     @PostMapping("/them")
-    public String them(@RequestParam("sanPhamChiTietId") Integer sanPhamChiTietId,
+    public Object them(@RequestParam("sanPhamChiTietId") Integer sanPhamChiTietId,
                        @RequestParam(value = "soLuong", defaultValue = "1") Integer soLuong,
                        @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
                        HttpSession session,
+                       HttpServletRequest request,
                        RedirectAttributes redirect) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
         if (userId == null) {
+            if (isAjax(request)) {
+                return ResponseEntity.ok(new CartAjaxResponse(false, "Vui lòng đăng nhập để thêm vào giỏ hàng.", null, 0, null, null, null));
+            }
             redirect.addAttribute("error", "Vui lòng đăng nhập để thêm vào giỏ hàng.");
             return "redirect:/dang-nhap";
         }
         if (soLuong == null || soLuong < 1) soLuong = 1;
         try {
             GioHangDTO cart = gioHangService.getOrCreateCart(userId);
-            GioHangChiTietRequest request = new GioHangChiTietRequest();
-            request.setGioHangId(cart.getId());
-            request.setSanPhamChiTietId(sanPhamChiTietId);
-            request.setSoLuong(soLuong);
-            gioHangChiTietService.create(request);
+            GioHangChiTietRequest req = new GioHangChiTietRequest();
+            req.setGioHangId(cart.getId());
+            req.setSanPhamChiTietId(sanPhamChiTietId);
+            req.setSoLuong(soLuong);
+            gioHangChiTietService.create(req);
+            if (isAjax(request)) {
+                GioHangDTO updatedCart = gioHangService.getOrCreateCart(userId);
+                return ResponseEntity.ok(new CartAjaxResponse(true, "Đã thêm sản phẩm vào giỏ hàng.", updatedCart.getTongTien(), gioHangService.getSoLuongGioHang(userId), null, null, null));
+            }
             redirect.addFlashAttribute("success", "Đã thêm sản phẩm vào giỏ hàng.");
         } catch (Exception e) {
-            redirect.addFlashAttribute("error", e.getMessage() != null ? e.getMessage() : "Không thể thêm vào giỏ hàng.");
+            String msg = e.getMessage() != null ? e.getMessage() : "Không thể thêm vào giỏ hàng.";
+            if (isAjax(request)) {
+                return ResponseEntity.ok(new CartAjaxResponse(false, msg, null, 0, null, null, null));
+            }
+            redirect.addFlashAttribute("error", msg);
         }
         if (redirectUrl != null && !redirectUrl.isBlank() && redirectUrl.startsWith("/")) {
             return "redirect:" + redirectUrl;

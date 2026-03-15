@@ -4,6 +4,7 @@ import com.example.watchaura.entity.ThuongHieu;
 import com.example.watchaura.repository.ThuongHieuRepository;
 import com.example.watchaura.service.ThuongHieuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,7 +15,7 @@ public class ThuongHieuServiceImpl implements ThuongHieuService {
 
     @Override
     public List<ThuongHieu> getAll() {
-        return thuongHieuRepository.findAll();
+        return thuongHieuRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     @Override

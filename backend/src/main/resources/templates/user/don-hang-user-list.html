@@ -3,18 +3,18 @@
 <body>
 <div th:fragment="content">
 
-    <div class="order-page">
+    <div class="order-page" id="orderPage">
         <div class="order-container">
             <header class="order-header-block cart-header">
                 <h1 class="order-page__title cart-page__title">Đơn hàng của tôi</h1>
             </header>
 
             <!-- Tìm kiếm đơn hàng: Trạng thái, Ngày, Thanh toán -->
-            <form method="get" th:action="@{/don-hang}" class="order-filter">
+            <form method="get" th:action="@{/don-hang}" class="order-filter ajax-order-filter" id="orderFilterForm">
                 <input type="hidden" name="page" value="0">
                 <div class="order-filter__group">
                     <label class="order-filter__label">Trạng thái</label>
-                    <select name="trangThai" class="order-filter__select" aria-label="Trạng thái đơn hàng">
+                    <select name="trangThai" class="order-filter__select" aria-label="Trạng thái đơn hàng" id="filterTrangThai">
                         <option value="">Tất cả trạng thái</option>
                         <option value="CHO_XAC_NHAN" th:selected="${trangThai == 'CHO_XAC_NHAN'}">Chờ xác nhận</option>
                         <option value="DANG_XU_LY" th:selected="${trangThai == 'DANG_XU_LY'}">Đang xử lý</option>
@@ -25,7 +25,7 @@
                 </div>
                 <div class="order-filter__group">
                     <label class="order-filter__label">Thanh toán</label>
-                    <select name="thanhToan" class="order-filter__select" aria-label="Phương thức thanh toán">
+                    <select name="thanhToan" class="order-filter__select" aria-label="Phương thức thanh toán" id="filterThanhToan">
                         <option value="">Tất cả</option>
                         <option value="COD" th:selected="${thanhToan == 'COD'}">COD</option>
                         <option value="VNPAY" th:selected="${thanhToan == 'VNPAY'}">VNPay</option>
@@ -33,16 +33,25 @@
                 </div>
                 <div class="order-filter__group">
                     <label class="order-filter__label">Ngày đặt</label>
-                    <input type="date" name="ngay" th:value="${ngay}" class="order-filter__input" aria-label="Lọc theo ngày đặt">
+                    <input type="date" name="ngay" th:value="${ngay}" class="order-filter__input" aria-label="Lọc theo ngày đặt" id="filterNgay">
                 </div>
                 <div class="order-filter__actions">
-                    <button type="submit" class="order-filter__btn btn btn-header">Tìm kiếm</button>
-                    <a th:if="${trangThai != null or thanhToan != null or ngay != null}" th:href="@{/don-hang}" class="order-filter__reset btn">Clear</a>
+                    <button type="submit" class="order-filter__btn btn btn-header" id="btnSearchOrder">Tìm kiếm</button>
+                    <a th:if="${trangThai != null or thanhToan != null or ngay != null}" th:href="@{/don-hang}" class="order-filter__reset btn btnClearFilter" id="btnClearFilter">Clear</a>
                 </div>
             </form>
 
             <!-- Chưa có đơn -->
-            <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty">
+            <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty order-empty--ajax" id="orderEmpty" style="display: none;">
+                <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
+                <h2 class="order-empty__title cart-empty__title">Không tìm thấy đơn hàng</h2>
+                <p class="order-empty__text cart-empty__text">Không có đơn hàng nào phù hợp với bộ lọc.</p>
+                <div class="order-empty__actions cart-empty__actions">
+                    <button type="button" class="btn btn-header btnClearFilter">Xóa bộ lọc</button>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty order-empty--static" id="orderEmptyStatic">
                 <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
                 <h2 class="order-empty__title cart-empty__title">Chưa có đơn hàng</h2>
                 <p class="order-empty__text cart-empty__text">Bạn chưa có đơn hàng nào. Hãy mua sắm và quay lại xem đơn tại đây.</p>
@@ -52,8 +61,8 @@
             </div>
 
             <!-- Danh sách đơn -->
-            <div th:if="${!#lists.isEmpty(pageHoaDon.content)}" class="order-list">
-                <div th:each="don : ${pageHoaDon.content}" class="order-card">
+            <div th:if="${!#lists.isEmpty(pageHoaDon.content)}" class="order-list" id="orderList">
+                <div th:each="don : ${pageHoaDon.content}" class="order-card" th:attr="data-id=${don.id}">
                     <div class="order-card__top">
                         <div class="order-card__meta">
                             <span class="order-card__code">Mã đơn: <strong th:text="${don.maDonHang}"></strong></span>
@@ -86,34 +95,37 @@
                             <span class="order-card__total-value" th:text="|${#numbers.formatDecimal(don.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
                         </div>
                         <div class="order-card__actions order-actions">
-                            <a th:href="@{'/don-hang/chi-tiet/' + ${don.id}}" class="btn-order btn-order--primary">Xem chi tiết</a>
-                            <a th:if="${don.trangThaiDonHang == 'DA_GIAO'}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--review">Đánh giá</a>
+                            <a th:href="@{'/don-hang/chi-tiet/' + ${don.id}}" class="btn-order btn-order--primary btn-view-detail" th:data-id="${don.id}">Xem chi tiết</a>
+                            <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false}">
+                                <a th:if="${don.trangThaiDonHang == 'DA_GIAO' and !daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--review">Đánh giá</a>
+                                <a th:if="${don.trangThaiDonHang == 'DA_GIAO' and daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--view-review">Xem đánh giá</a>
+                            </th:block>
                             <a th:if="${don.trangThaiDonHang == 'DA_GIAO' || don.trangThaiDonHang == 'DA_HUY'}" th:href="@{'/mua-lai/' + ${don.id}}" class="btn-order btn-order--rebuy">Mua lại</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Phân trang giống trang sản phẩm -->
-            <nav class="pagination-wrap" th:if="${pageHoaDon != null and pageHoaDon.totalPages > 1}" aria-label="Phân trang">
+            <!-- Phân trang -->
+            <nav class="pagination-wrap" th:if="${pageHoaDon != null and pageHoaDon.totalPages > 1}" aria-label="Phân trang" id="orderPagination">
                 <ul class="pagination-list">
                     <li>
                         <a th:if="${pageHoaDon.number > 0}"
-                           class="pagination-link pagination-link--first"
-                           th:href="@{/don-hang(page=0, trangThai=${trangThai}, thanhToan=${thanhToan}, ngay=${ngay})}">&laquo;&laquo;</a>
+                           class="pagination-link pagination-link--first btn-pagination"
+                           th:attr="data-page=0" href="javascript:void(0)">&laquo;&laquo;</a>
                         <span th:unless="${pageHoaDon.number > 0}" class="pagination-link pagination-link--disabled">&laquo;&laquo;</span>
                     </li>
                     <li>
                         <a th:if="${pageHoaDon.hasPrevious()}"
-                           class="pagination-link pagination-link--prev"
-                           th:href="@{/don-hang(page=${pageHoaDon.number - 1}, trangThai=${trangThai}, thanhToan=${thanhToan}, ngay=${ngay})}">&lsaquo;</a>
+                           class="pagination-link pagination-link--prev btn-pagination"
+                           th:attr="data-page=${pageHoaDon.number - 1}" href="javascript:void(0)">&lsaquo;</a>
                         <span th:unless="${pageHoaDon.hasPrevious()}" class="pagination-link pagination-link--disabled">&lsaquo;</span>
                     </li>
                     <li th:each="i : ${#numbers.sequence(0, pageHoaDon.totalPages - 1)}"
                         th:if="${i >= pageHoaDon.number - 2 and i <= pageHoaDon.number + 2}">
                         <a th:if="${i != pageHoaDon.number}"
-                           class="pagination-link"
-                           th:href="@{/don-hang(page=${i}, trangThai=${trangThai}, thanhToan=${thanhToan}, ngay=${ngay})}"
+                           class="pagination-link btn-pagination"
+                           th:attr="data-page=${i}" href="javascript:void(0)"
                            th:text="${i + 1}">1</a>
                         <span th:if="${i == pageHoaDon.number}"
                               class="pagination-link pagination-link--current"
@@ -121,14 +133,14 @@
                     </li>
                     <li>
                         <a th:if="${pageHoaDon.hasNext()}"
-                           class="pagination-link pagination-link--next"
-                           th:href="@{/don-hang(page=${pageHoaDon.number + 1}, trangThai=${trangThai}, thanhToan=${thanhToan}, ngay=${ngay})}">&rsaquo;</a>
+                           class="pagination-link pagination-link--next btn-pagination"
+                           th:attr="data-page=${pageHoaDon.number + 1}" href="javascript:void(0)">&rsaquo;</a>
                         <span th:unless="${pageHoaDon.hasNext()}" class="pagination-link pagination-link--disabled">&rsaquo;</span>
                     </li>
                     <li>
                         <a th:if="${pageHoaDon.number < pageHoaDon.totalPages - 1}"
-                           class="pagination-link pagination-link--last"
-                           th:href="@{/don-hang(page=${pageHoaDon.totalPages - 1}, trangThai=${trangThai}, thanhToan=${thanhToan}, ngay=${ngay})}">&raquo;&raquo;</a>
+                           class="pagination-link pagination-link--last btn-pagination"
+                           th:attr="data-page=${pageHoaDon.totalPages - 1}" href="javascript:void(0)">&raquo;&raquo;</a>
                         <span th:unless="${pageHoaDon.number < pageHoaDon.totalPages - 1}" class="pagination-link pagination-link--disabled">&raquo;&raquo;</span>
                     </li>
                 </ul>
@@ -137,6 +149,235 @@
         </div>
     </div>
 
+    <script th:inline="javascript">
+    (function() {
+        var orderPage = document.getElementById('orderPage');
+        if (!orderPage) return;
+
+        var filterForm = document.getElementById('orderFilterForm');
+        var orderList = document.getElementById('orderList');
+        var orderEmpty = document.getElementById('orderEmpty');
+        var orderEmptyStatic = document.getElementById('orderEmptyStatic');
+        var orderPagination = document.getElementById('orderPagination');
+
+        var currentPage = /*[[${pageHoaDon != null ? pageHoaDon.number : 0}]]*/ 0;
+        var totalPages = /*[[${pageHoaDon != null ? pageHoaDon.totalPages : 0}]]*/ 0;
+        var hasOrders = /*[[${!#lists.isEmpty(pageHoaDon.content)}]]*/ false;
+
+        var apiUrl = /*[[@{/don-hang/api}]]*/ '/don-hang/api';
+
+        function formatCurrencyVnd(value) {
+            if (value == null) return '0 đ';
+            return Number(value).toLocaleString('vi-VN') + ' đ';
+        }
+
+        function getTenTrangThai(trangThai) {
+            var map = {
+                'CHO_XAC_NHAN': 'Chờ xác nhận',
+                'DANG_XU_LY': 'Đang xử lý',
+                'DANG_GIAO': 'Đang giao',
+                'DA_GIAO': 'Đã giao',
+                'DA_HUY': 'Đã hủy'
+            };
+            return map[trangThai] || trangThai;
+        }
+
+        function getStatusClass(trangThai) {
+            var map = {
+                'CHO_XAC_NHAN': 'status-waiting',
+                'DANG_XU_LY': 'status-processing',
+                'DANG_GIAO': 'status-shipping',
+                'DA_GIAO': 'status-done',
+                'DA_HUY': 'status-cancel'
+            };
+            return map[trangThai] || '';
+        }
+
+        function renderOrderItem(item) {
+            var html = '<span>' + (item.tenSanPham || '') + '</span>';
+            return html;
+        }
+
+        function renderOrders(data) {
+            if (!data.success) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(data.message || 'Có lỗi xảy ra!', 'error');
+                }
+                return;
+            }
+
+            if (!data.items || data.items.length === 0) {
+                if (orderList) orderList.style.display = 'none';
+                if (orderPagination) orderPagination.style.display = 'none';
+                if (orderEmpty) {
+                    orderEmpty.style.display = '';
+                    if (orderEmptyStatic) orderEmptyStatic.style.display = 'none';
+                }
+                return;
+            }
+
+            if (orderEmpty) orderEmpty.style.display = 'none';
+            if (orderList) {
+                orderList.style.display = '';
+                orderList.innerHTML = '';
+
+                data.items.forEach(function(don) {
+                    var card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.setAttribute('data-id', don.id);
+
+                    var itemsHtml = '';
+                    if (don.items && don.items.length > 0) {
+                        itemsHtml = '<div class="order-card__products">' +
+                            '<span class="order-card__products-label">Sản phẩm:</span>' +
+                            '<span class="order-card__products-list">' +
+                            don.items.map(function(item) { return item.tenSanPham; }).join(', ') +
+                            '</span></div>';
+                    }
+
+                    card.innerHTML = '<div class="order-card__top">' +
+                        '<div class="order-card__meta">' +
+                        '<span class="order-card__code">Mã đơn: <strong>' + (don.maDonHang || '') + '</strong></span>' +
+                        '<span class="order-card__date">' + (don.ngayDat || '') + '</span>' +
+                        itemsHtml +
+                        '</div>' +
+                        '<span class="order-card__status order-status ' + getStatusClass(don.trangThaiDonHang) + '">' +
+                        getTenTrangThai(don.trangThaiDonHang) +
+                        '</span></div>' +
+                        '<div class="order-card__body">' +
+                        '<div class="order-card__total">' +
+                        '<span class="order-card__total-label">Tổng thanh toán:</span>' +
+                        '<span class="order-card__total-value">' + formatCurrencyVnd(don.tongTienThanhToan) + '</span></div>' +
+                        '<div class="order-card__actions order-actions">' +
+                        '<a href="/don-hang/chi-tiet/' + don.id + '" class="btn-order btn-order--primary btn-view-detail" data-id="' + don.id + '">Xem chi tiết</a>' +
+                        (don.trangThaiDonHang === 'DA_GIAO' ? (don.daDanhGia ? '<a href="/danh-gia/' + don.id + '" class="btn-order btn-order--view-review">Xem đánh giá</a>' : '<a href="/danh-gia/' + don.id + '" class="btn-order btn-order--review">Đánh giá</a>') : '') +
+                        (don.trangThaiDonHang === 'DA_GIAO' || don.trangThaiDonHang === 'DA_HUY' ? '<a href="/mua-lai/' + don.id + '" class="btn-order btn-order--rebuy">Mua lại</a>' : '') +
+                        '</div></div>';
+
+                    orderList.appendChild(card);
+                });
+            }
+
+            currentPage = data.currentPage;
+            totalPages = data.totalPages;
+
+            if (orderPagination) {
+                if (totalPages > 1) {
+                    orderPagination.style.display = '';
+                    renderPagination(orderPagination, currentPage, totalPages);
+                } else {
+                    orderPagination.style.display = 'none';
+                }
+            }
+        }
+
+        function renderPagination(paginationEl, current, total) {
+            var html = '<ul class="pagination-list">';
+            html += '<li>';
+            if (current > 0) {
+                html += '<a class="pagination-link pagination-link--first btn-pagination" data-page="0" href="javascript:void(0)">&laquo;&laquo;</a>';
+            } else {
+                html += '<span class="pagination-link pagination-link--disabled">&laquo;&laquo;</span>';
+            }
+            html += '</li><li>';
+            if (current > 0) {
+                html += '<a class="pagination-link pagination-link--prev btn-pagination" data-page="' + (current - 1) + '" href="javascript:void(0)">&lsaquo;</a>';
+            } else {
+                html += '<span class="pagination-link pagination-link--disabled">&lsaquo;</span>';
+            }
+            html += '</li>';
+
+            for (var i = Math.max(0, current - 2); i <= Math.min(total - 1, current + 2); i++) {
+                html += '<li>';
+                if (i !== current) {
+                    html += '<a class="pagination-link btn-pagination" data-page="' + i + '" href="javascript:void(0)">' + (i + 1) + '</a>';
+                } else {
+                    html += '<span class="pagination-link pagination-link--current">' + (i + 1) + '</span>';
+                }
+                html += '</li>';
+            }
+
+            html += '<li>';
+            if (current < total - 1) {
+                html += '<a class="pagination-link pagination-link--next btn-pagination" data-page="' + (current + 1) + '" href="javascript:void(0)">&rsaquo;</a>';
+            } else {
+                html += '<span class="pagination-link pagination-link--disabled">&rsaquo;</span>';
+            }
+            html += '</li><li>';
+            if (current < total - 1) {
+                html += '<a class="pagination-link pagination-link--last btn-pagination" data-page="' + (total - 1) + '" href="javascript:void(0)">&raquo;&raquo;</a>';
+            } else {
+                html += '<span class="pagination-link pagination-link--disabled">&raquo;&raquo;</span>';
+            }
+            html += '</li></ul>';
+
+            paginationEl.innerHTML = html;
+            bindPaginationEvents();
+        }
+
+        function fetchOrders(page) {
+            var trangThai = document.getElementById('filterTrangThai') ? document.getElementById('filterTrangThai').value : '';
+            var thanhToan = document.getElementById('filterThanhToan') ? document.getElementById('filterThanhToan').value : '';
+            var ngay = document.getElementById('filterNgay') ? document.getElementById('filterNgay').value : '';
+
+            var url = apiUrl + '?page=' + page;
+            if (trangThai) url += '&trangThai=' + encodeURIComponent(trangThai);
+            if (thanhToan) url += '&thanhToan=' + encodeURIComponent(thanhToan);
+            if (ngay) url += '&ngay=' + encodeURIComponent(ngay);
+
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(renderOrders)
+                .catch(function() {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+                    }
+                });
+        }
+
+        function bindFilterEvents() {
+            if (!filterForm) return;
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetchOrders(0);
+            });
+
+            var clearBtns = orderPage.querySelectorAll('.btnClearFilter');
+            clearBtns.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (document.getElementById('filterTrangThai')) document.getElementById('filterTrangThai').value = '';
+                    if (document.getElementById('filterThanhToan')) document.getElementById('filterThanhToan').value = '';
+                    if (document.getElementById('filterNgay')) document.getElementById('filterNgay').value = '';
+                    fetchOrders(0);
+                });
+            });
+        }
+
+        function bindPaginationEvents() {
+            var paginationLinks = orderPage.querySelectorAll('.btn-pagination');
+            paginationLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    var page = parseInt(this.getAttribute('data-page'), 10);
+                    if (!isNaN(page)) {
+                        fetchOrders(page);
+                    }
+                });
+            });
+        }
+
+        function init() {
+            bindFilterEvents();
+            bindPaginationEvents();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
 </div>
 </body>
 </html>

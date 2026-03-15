@@ -19,4 +19,6 @@ public class HoaDonChiTietDTO {
     private Integer soLuong;
     private BigDecimal donGia;
     private BigDecimal thanhTien;
+    private String hinhAnh;
+    private String tenBienThe;
 }

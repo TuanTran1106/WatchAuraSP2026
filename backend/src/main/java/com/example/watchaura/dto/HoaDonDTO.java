@@ -31,6 +31,7 @@ public class HoaDonDTO {
     private LocalDateTime ngayDat;
     private String diaChi;
     private String sdtKhachHang;
+    private String email;
     private String ghiChu;
     private DiaChiGiaoHangDTO diaChiGiaoHang;
     private List<HoaDonChiTietDTO> items;

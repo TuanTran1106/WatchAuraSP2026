@@ -72,6 +72,7 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.MauSac;
 import com.example.watchaura.repository.MauSacRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -94,7 +95,7 @@ public class MauSacController {
     @ResponseBody
     public ResponseEntity<List<MauSac>> getAllMauSac() {
         try {
-            List<MauSac> mauSacs = mauSacRepository.findAll();
+            List<MauSac> mauSacs = mauSacRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
             return ResponseEntity.ok(mauSacs);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

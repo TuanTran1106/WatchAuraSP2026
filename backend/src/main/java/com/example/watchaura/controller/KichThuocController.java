@@ -72,6 +72,7 @@ package com.example.watchaura.controller;
 import com.example.watchaura.entity.KichThuoc;
 import com.example.watchaura.repository.KichThuocRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -94,7 +95,7 @@ public class KichThuocController {
     @ResponseBody
     public ResponseEntity<List<KichThuoc>> getAllKichThuoc() {
         try {
-            List<KichThuoc> kichThuocs = kichThuocRepository.findAll();
+            List<KichThuoc> kichThuocs = kichThuocRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
             return ResponseEntity.ok(kichThuocs);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

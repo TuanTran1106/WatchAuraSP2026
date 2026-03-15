@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+
 @Service
 public class DiaChiServiceImpl implements DiaChiService {
     @Autowired
@@ -21,6 +23,24 @@ public class DiaChiServiceImpl implements DiaChiService {
     @Override
     public List<DiaChi> getByKhachHang(Integer khachHangId) {
         return diaChiRepository.findByKhachHangId(khachHangId);
+    }
+
+    @Override
+    public Optional<DiaChi> getDiaChiMacDinhByKhachHang(Integer khachHangId) {
+        return diaChiRepository.findFirstByKhachHangIdAndMacDinhTrue(khachHangId);
+    }
+
+    @Override
+    public void setDiaChiMacDinh(Integer khachHangId, Integer diaChiId) {
+        DiaChi dc = getById(diaChiId);
+        if (dc.getKhachHang() == null || !dc.getKhachHang().getId().equals(khachHangId)) {
+            throw new RuntimeException("Địa chỉ không thuộc tài khoản của bạn.");
+        }
+        List<DiaChi> list = diaChiRepository.findByKhachHangId(khachHangId);
+        for (DiaChi other : list) {
+            other.setMacDinh(diaChiId.equals(other.getId()));
+            diaChiRepository.save(other);
+        }
     }
 
     @Override
@@ -53,7 +73,6 @@ public class DiaChiServiceImpl implements DiaChiService {
 
     @Override
     public DiaChi update(Integer id, DiaChi diaChi) {
-
         DiaChi dc = getById(id);
 
         dc.setDiaChiCuThe(diaChi.getDiaChiCuThe());
@@ -61,6 +80,16 @@ public class DiaChiServiceImpl implements DiaChiService {
         dc.setQuanHuyen(diaChi.getQuanHuyen());
         dc.setTinhThanh(diaChi.getTinhThanh());
         dc.setMacDinh(diaChi.getMacDinh());
+
+        if (Boolean.TRUE.equals(diaChi.getMacDinh())) {
+            List<DiaChi> list = diaChiRepository.findByKhachHangId(dc.getKhachHang().getId());
+            for (DiaChi other : list) {
+                if (!other.getId().equals(id)) {
+                    other.setMacDinh(false);
+                    diaChiRepository.save(other);
+                }
+            }
+        }
 
         return diaChiRepository.save(dc);
     }
