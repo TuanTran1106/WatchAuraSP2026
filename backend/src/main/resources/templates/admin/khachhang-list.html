@@ -12,7 +12,7 @@
             <button type="button" class="form-card__toggle form-card__toggle--close" id="formKhachHangToggle" title="Đóng form" aria-label="Đóng form">×</button>
         </div>
         <div class="form-card__body">
-        <form class="form form--khachhang" th:action="${formAction}" th:object="${khachHang}" method="post">
+        <form class="form form--khachhang js-admin-ajax-form" data-ajax="true" th:action="${formAction}" th:object="${khachHang}" method="post">
             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
             <input type="hidden" name="filterTrangThai" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
             <input th:if="${khachHang != null and khachHang.id != null}" type="hidden" th:field="*{id}" />
@@ -93,7 +93,7 @@
     <section class="card card--full" id="listKhachHang">
         <h2 class="card__title">Danh sách khách hàng</h2>
 
-        <form th:action="@{/admin/khach-hang}" method="get" class="toolbar toolbar--search-row">
+        <form th:action="@{/admin/khach-hang}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
             <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
             <a th:href="@{/admin/khach-hang}" class="btn btn--secondary toolbar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
@@ -134,7 +134,7 @@
                     <td th:text="${item.ngaySinh != null ? #temporals.format(item.ngaySinh, 'dd/MM/yyyy') : ''}"></td>
                     <td th:text="${item.chucVu != null ? item.chucVu.tenChucVu : ''}"></td>
                     <td>
-                        <form th:action="@{/admin/khach-hang/{id}/trang-thai(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" method="post" style="display:inline;">
+                        <form th:action="@{/admin/khach-hang/{id}/trang-thai(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" method="post" style="display:inline;" class="js-admin-ajax-form" data-ajax="true">
                             <button type="submit" class="btn-icon btn-icon--toggle" th:title="${item.trangThai != null and item.trangThai ? 'Đang hoạt động (bấm để tắt)' : 'Không hoạt động (bấm để bật)'}" aria-label="Đổi trạng thái">
                                 <i class="fa-solid fa-toggle-on" th:if="${item.trangThai != null and item.trangThai}" style="color: #16a34a; font-size: 1.35rem;"></i>
                                 <i class="fa-solid fa-toggle-off" th:if="${item.trangThai == null or !item.trangThai}" style="color: #94a3b8; font-size: 1.35rem;"></i>
@@ -143,7 +143,7 @@
                     </td>
                     <td>
                         <div class="table-actions">
-                            <a class="btn-icon btn-icon--edit" th:href="@{/admin/khach-hang/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fas fa-edit"></i></a>
+                            <a class="btn-icon btn-icon--edit js-admin-ajax-link" data-ajax="true" th:href="@{/admin/khach-hang/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fas fa-edit"></i></a>
                         </div>
                     </td>
                 </tr>

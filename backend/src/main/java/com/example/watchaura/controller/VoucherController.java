@@ -30,7 +30,8 @@ public class VoucherController {
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(required = false) String q,
                        @RequestParam(required = false) String trangThai,
-                       Model model) {
+                       Model model,
+                       @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         Page<Voucher> pageResult = voucherService.searchPage(q, filterTrangThai, pageable);
@@ -44,6 +45,9 @@ public class VoucherController {
         newVoucher.setTrangThai(true); // Mặc định Đang hoạt động khi thêm mới (tránh NULL vào DB)
         model.addAttribute("voucher", newVoucher);
         model.addAttribute("formAction", "/admin/voucher");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/voucher-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -64,7 +68,8 @@ public class VoucherController {
                             @RequestParam(defaultValue = "0") int page,
                             @RequestParam(required = false) String q,
                             @RequestParam(required = false) String trangThai,
-                            Model model) {
+                            Model model,
+                            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         Page<Voucher> pageResult = voucherService.searchPage(q, filterTrangThai, pageable);
@@ -83,6 +88,9 @@ public class VoucherController {
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
         if (trangThai != null && !trangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/voucher-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -90,7 +98,8 @@ public class VoucherController {
     public String create(@Valid @ModelAttribute("voucher") Voucher voucher, BindingResult result,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,
-                         Model model, RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (voucher.getMaVoucher() != null && !voucher.getMaVoucher().isBlank()
                 && voucherService.existsByMaVoucher(voucher.getMaVoucher())) {
             result.rejectValue("maVoucher", "duplicate", "Mã voucher đã tồn tại.");
@@ -106,9 +115,29 @@ public class VoucherController {
             model.addAttribute("searchKeyword", q != null ? q : "");
             model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
             model.addAttribute("formAction", "/admin/voucher");
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/voucher-list :: content";
+            }
             return "layout/admin-layout";
         }
         voucherService.save(voucher);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+            Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by("id").descending());
+            Page<Voucher> pageResult = voucherService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Voucher");
+            model.addAttribute("content", "admin/voucher-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
+            Voucher newVoucher = new Voucher();
+            newVoucher.setTrangThai(true);
+            model.addAttribute("voucher", newVoucher);
+            model.addAttribute("formAction", "/admin/voucher");
+            model.addAttribute("message", "Thêm voucher thành công.");
+            return "admin/voucher-list :: content";
+        }
         redirect.addFlashAttribute("message", "Thêm voucher thành công.");
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (filterTrangThai != null && !filterTrangThai.isBlank()) redirect.addAttribute("trangThai", filterTrangThai);
@@ -120,7 +149,8 @@ public class VoucherController {
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,
                          @Valid @ModelAttribute("voucher") Voucher voucher, BindingResult result,
-                         Model model, RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (voucher.getMaVoucher() != null && !voucher.getMaVoucher().isBlank()
                 && voucherService.existsByMaVoucherAndIdNot(voucher.getMaVoucher(), id)) {
             result.rejectValue("maVoucher", "duplicate", "Mã voucher đã tồn tại.");
@@ -140,9 +170,29 @@ public class VoucherController {
             if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
             if (filterTrangThai != null && !filterTrangThai.isBlank()) formAction += "&trangThai=" + URLEncoder.encode(filterTrangThai, StandardCharsets.UTF_8);
             model.addAttribute("formAction", formAction);
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/voucher-list :: content";
+            }
             return "layout/admin-layout";
         }
         voucherService.update(id, voucher);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<Voucher> pageResult = voucherService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Voucher");
+            model.addAttribute("content", "admin/voucher-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
+            Voucher newVoucher = new Voucher();
+            newVoucher.setTrangThai(true);
+            model.addAttribute("voucher", newVoucher);
+            model.addAttribute("formAction", "/admin/voucher");
+            model.addAttribute("message", "Cập nhật voucher thành công.");
+            return "admin/voucher-list :: content";
+        }
         redirect.addFlashAttribute("message", "Cập nhật voucher thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -154,8 +204,27 @@ public class VoucherController {
     public String delete(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String trangThai,
-                         RedirectAttributes redirect) {
+                         Model model,
+                         RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         voucherService.delete(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(trangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<Voucher> pageResult = voucherService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Voucher");
+            model.addAttribute("content", "admin/voucher-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+            Voucher newVoucher = new Voucher();
+            newVoucher.setTrangThai(true);
+            model.addAttribute("voucher", newVoucher);
+            model.addAttribute("formAction", "/admin/voucher");
+            model.addAttribute("message", "Xóa voucher thành công.");
+            return "admin/voucher-list :: content";
+        }
         redirect.addFlashAttribute("message", "Xóa voucher thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -167,8 +236,27 @@ public class VoucherController {
     public String toggleTrangThai(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                                   @RequestParam(required = false) String q,
                                   @RequestParam(required = false) String trangThai,
-                                  RedirectAttributes redirect) {
+                                  Model model,
+                                  RedirectAttributes redirect,
+                                  @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         voucherService.toggleTrangThai(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(trangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<Voucher> pageResult = voucherService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Voucher");
+            model.addAttribute("content", "admin/voucher-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+            Voucher newVoucher = new Voucher();
+            newVoucher.setTrangThai(true);
+            model.addAttribute("voucher", newVoucher);
+            model.addAttribute("formAction", "/admin/voucher");
+            model.addAttribute("message", "Đã cập nhật trạng thái.");
+            return "admin/voucher-list :: content";
+        }
         redirect.addFlashAttribute("message", "Đã cập nhật trạng thái.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);

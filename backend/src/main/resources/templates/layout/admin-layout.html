@@ -66,7 +66,7 @@
                 <i class="fas fa-sun theme-icon theme-icon--light" aria-hidden="true"></i>
             </button>
         </header>
-        <main class="content">
+        <main class="content" id="adminContent" data-admin-fragment="root">
             <div th:replace="~{${content != null ? content : 'admin/dashboard'} :: content}"></div>
         </main>
         <footer class="footer">

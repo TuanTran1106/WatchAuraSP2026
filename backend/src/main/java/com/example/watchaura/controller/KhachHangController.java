@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -16,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
-import java.util.List;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -35,7 +32,8 @@ public class KhachHangController {
     public String list(@RequestParam(defaultValue = "0") int page,
                       @RequestParam(required = false) String q,
                       @RequestParam(required = false) String trangThai,
-                      Model model) {
+                      Model model,
+                      @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
         Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThai, pageable);
@@ -48,6 +46,10 @@ public class KhachHangController {
         model.addAttribute("khachHang", new KhachHang());
         model.addAttribute("chucVuList", chucVuService.getAll());
         model.addAttribute("formAction", "/admin/khach-hang");
+
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/khachhang-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -68,7 +70,8 @@ public class KhachHangController {
                            @RequestParam(defaultValue = "0") int page,
                            @RequestParam(required = false) String q,
                            @RequestParam(required = false) String trangThai,
-                           Model model) {
+                           Model model,
+                           @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
         Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThai, pageable);
@@ -85,6 +88,9 @@ public class KhachHangController {
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
         if (trangThai != null && !trangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/khachhang-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -92,7 +98,9 @@ public class KhachHangController {
     public String create(@Valid @ModelAttribute("khachHang") KhachHang khachHang, BindingResult result,
                         @RequestParam(required = false) String q,
                         @RequestParam(required = false) String filterTrangThai,
-                        Model model, RedirectAttributes redirect) {
+                        Model model,
+                        RedirectAttributes redirect,
+                        @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
             Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
@@ -105,9 +113,28 @@ public class KhachHangController {
             model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
             model.addAttribute("chucVuList", chucVuService.getAll());
             model.addAttribute("formAction", "/admin/khach-hang");
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/khachhang-list :: content";
+            }
             return "layout/admin-layout";
         }
         khachHangService.create(khachHang);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+            Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+            Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khách hàng");
+            model.addAttribute("content", "admin/khachhang-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
+            model.addAttribute("khachHang", new KhachHang());
+            model.addAttribute("chucVuList", chucVuService.getAll());
+            model.addAttribute("formAction", "/admin/khach-hang");
+            model.addAttribute("message", "Thêm khách hàng thành công.");
+            return "admin/khachhang-list :: content";
+        }
         redirect.addFlashAttribute("message", "Thêm khách hàng thành công.");
         redirect.addAttribute("page", 0);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -119,7 +146,10 @@ public class KhachHangController {
     public String update(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,
-                         @Valid @ModelAttribute("khachHang") KhachHang khachHang, BindingResult result, Model model, RedirectAttributes redirect) {
+                         @Valid @ModelAttribute("khachHang") KhachHang khachHang, BindingResult result,
+                         Model model,
+                         RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
             Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
@@ -135,9 +165,29 @@ public class KhachHangController {
             if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
             if (filterTrangThai != null && !filterTrangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(filterTrangThai, StandardCharsets.UTF_8);
             model.addAttribute("formAction", formAction);
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/khachhang-list :: content";
+            }
             return "layout/admin-layout";
         }
         khachHangService.update(id, khachHang);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+            Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khách hàng");
+            model.addAttribute("content", "admin/khachhang-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
+            model.addAttribute("khachHang", new KhachHang());
+            model.addAttribute("chucVuList", chucVuService.getAll());
+            String formAction = "/admin/khach-hang";
+            model.addAttribute("formAction", formAction);
+            model.addAttribute("message", "Cập nhật khách hàng thành công.");
+            return "admin/khachhang-list :: content";
+        }
         redirect.addFlashAttribute("message", "Cập nhật khách hàng thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -149,8 +199,26 @@ public class KhachHangController {
     public String delete(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String trangThai,
-                         RedirectAttributes redirect) {
+                         Model model,
+                         RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         khachHangService.delete(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(trangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+            Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khách hàng");
+            model.addAttribute("content", "admin/khachhang-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+            model.addAttribute("khachHang", new KhachHang());
+            model.addAttribute("chucVuList", chucVuService.getAll());
+            model.addAttribute("formAction", "/admin/khach-hang");
+            model.addAttribute("message", "Xóa khách hàng thành công.");
+            return "admin/khachhang-list :: content";
+        }
         redirect.addFlashAttribute("message", "Xóa khách hàng thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -162,8 +230,26 @@ public class KhachHangController {
     public String toggleTrangThai(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                                   @RequestParam(required = false) String q,
                                   @RequestParam(required = false) String trangThai,
-                                  RedirectAttributes redirect) {
+                                  Model model,
+                                  RedirectAttributes redirect,
+                                  @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         khachHangService.toggleTrangThai(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(trangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+            Page<KhachHang> pageResult = khachHangService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khách hàng");
+            model.addAttribute("content", "admin/khachhang-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+            model.addAttribute("khachHang", new KhachHang());
+            model.addAttribute("chucVuList", chucVuService.getAll());
+            model.addAttribute("formAction", "/admin/khach-hang");
+            model.addAttribute("message", "Đã cập nhật trạng thái.");
+            return "admin/khachhang-list :: content";
+        }
         redirect.addFlashAttribute("message", "Đã cập nhật trạng thái.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);

@@ -32,7 +32,8 @@ public class BlogController {
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(required = false) String q,
-                       Model model) {
+                       Model model,
+                       @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         Page<Blog> pageResult = blogService.searchPage(q, pageable);
         model.addAttribute("title", "Blog");
@@ -42,6 +43,9 @@ public class BlogController {
         model.addAttribute("searchKeyword", q != null ? q : "");
         model.addAttribute("blog", new Blog());
         model.addAttribute("formAction", "/admin/blog");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/blog-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -54,7 +58,8 @@ public class BlogController {
     public String formEdit(@PathVariable Integer id,
                            @RequestParam(defaultValue = "0") int page,
                            @RequestParam(required = false) String q,
-                           Model model) {
+                           Model model,
+                           @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         Page<Blog> pageResult = blogService.searchPage(q, pageable);
         Blog blog = blogService.findById(id);
@@ -70,6 +75,9 @@ public class BlogController {
         String formAction = "/admin/blog/" + id + "?page=" + page;
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/blog-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -77,7 +85,8 @@ public class BlogController {
     public String create(@Valid @ModelAttribute("blog") Blog blog, BindingResult result,
                          @RequestParam(value = "hinhAnhFile", required = false) MultipartFile hinhAnhFile,
                          @RequestParam(required = false) String q,
-                         Model model, RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (result.hasErrors()) {
             Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by("id").descending());
             Page<Blog> pageResult = blogService.searchPage(q, pageable);
@@ -87,6 +96,9 @@ public class BlogController {
             model.addAttribute("page", pageResult);
             model.addAttribute("searchKeyword", q != null ? q : "");
             model.addAttribute("formAction", "/admin/blog");
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/blog-list :: content";
+            }
             return "layout/admin-layout";
         }
         if (hinhAnhFile != null && !hinhAnhFile.isEmpty()) {
@@ -94,6 +106,19 @@ public class BlogController {
             blog.setHinhAnh(path);
         }
         blogService.save(blog);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by("id").descending());
+            Page<Blog> pageResult = blogService.searchPage(q, pageable);
+            model.addAttribute("title", "Blog");
+            model.addAttribute("content", "admin/blog-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("blog", new Blog());
+            model.addAttribute("formAction", "/admin/blog");
+            model.addAttribute("message", "Thêm blog thành công.");
+            return "admin/blog-list :: content";
+        }
         redirect.addFlashAttribute("message", "Thêm blog thành công.");
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         return "redirect:/admin/blog#listBlog";
@@ -104,7 +129,8 @@ public class BlogController {
                          @RequestParam(required = false) String q,
                          @Valid @ModelAttribute("blog") Blog blog, BindingResult result,
                          @RequestParam(value = "hinhAnhFile", required = false) MultipartFile hinhAnhFile,
-                         Model model, RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (result.hasErrors()) {
             Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
             Page<Blog> pageResult = blogService.searchPage(q, pageable);
@@ -117,6 +143,9 @@ public class BlogController {
             String formAction = "/admin/blog/" + id + "?page=" + page;
             if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
             model.addAttribute("formAction", formAction);
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/blog-list :: content";
+            }
             return "layout/admin-layout";
         }
         if (hinhAnhFile != null && !hinhAnhFile.isEmpty()) {
@@ -127,6 +156,19 @@ public class BlogController {
             if (existing != null) blog.setHinhAnh(existing.getHinhAnh());
         }
         blogService.update(id, blog);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<Blog> pageResult = blogService.searchPage(q, pageable);
+            model.addAttribute("title", "Blog");
+            model.addAttribute("content", "admin/blog-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("blog", new Blog());
+            model.addAttribute("formAction", "/admin/blog");
+            model.addAttribute("message", "Cập nhật blog thành công.");
+            return "admin/blog-list :: content";
+        }
         redirect.addFlashAttribute("message", "Cập nhật blog thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -136,8 +178,22 @@ public class BlogController {
     @PostMapping("/{id}/xoa")
     public String delete(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                          @RequestParam(required = false) String q,
-                         RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         blogService.delete(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<Blog> pageResult = blogService.searchPage(q, pageable);
+            model.addAttribute("title", "Blog");
+            model.addAttribute("content", "admin/blog-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("blog", new Blog());
+            model.addAttribute("formAction", "/admin/blog");
+            model.addAttribute("message", "Xóa blog thành công.");
+            return "admin/blog-list :: content";
+        }
         redirect.addFlashAttribute("message", "Xóa blog thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);

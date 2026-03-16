@@ -285,6 +285,30 @@ body {
   padding: 1.5rem;
 }
 
+/* Trạng thái loading cho vùng admin khi tải AJAX */
+#adminContent.is-loading {
+  position: relative;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+#adminContent.is-loading::after {
+  content: 'Đang tải...';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0f172a;
+  background: linear-gradient(
+    to bottom,
+    rgba(248, 250, 252, 0.85),
+    rgba(226, 232, 240, 0.9)
+  );
+}
+
 /* Content area buttons (sản phẩm, danh mục, thương hiệu, màu sắc, kích thước, loại máy, chất liệu dây) */
 .content .btn {
   display: inline-flex;
