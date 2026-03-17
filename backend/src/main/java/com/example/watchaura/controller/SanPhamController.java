@@ -180,6 +180,22 @@ public class SanPhamController {
     }
 
     /**
+     * GET: Sinh mã sản phẩm tự động (dùng khi thêm mới).
+     * URL: GET /api/san-pham/generate-ma
+     */
+    @GetMapping("/generate-ma")
+    @ResponseBody
+    public ResponseEntity<GenerateMaResponse> generateMaSanPham() {
+        try {
+            String ma = sanPhamService.generateMaSanPham();
+            return ResponseEntity.ok(new GenerateMaResponse(ma, "Sinh mã thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new GenerateMaResponse(null, "Lỗi sinh mã: " + e.getMessage()));
+        }
+    }
+
+    /**
      * GET: Lấy sản phẩm theo ID
      * URL: GET /api/san-pham/{id}
      */
@@ -304,6 +320,16 @@ public class SanPhamController {
 
         public ErrorResponse(String error) {
             this.error = error;
+        }
+    }
+
+    public static class GenerateMaResponse {
+        public String maSanPham;
+        public String message;
+
+        public GenerateMaResponse(String maSanPham, String message) {
+            this.maSanPham = maSanPham;
+            this.message = message;
         }
     }
 

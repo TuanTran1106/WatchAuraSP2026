@@ -81,4 +81,7 @@ public class Voucher {
 
     @Column(name = "ngay_cap_nhat")
     private LocalDateTime ngayCapNhat;
+
+    @Column(name = "danh_muc_ap_dung")
+    private String danhMucApDung;
 }

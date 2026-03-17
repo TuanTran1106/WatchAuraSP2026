@@ -24,4 +24,5 @@ public class GioHangChiTietDTO {
     /** Số lượng tồn kho (để hiển thị giới hạn trên UI) */
     private Integer soLuongTon;
     private BigDecimal thanhTien;
+    private String tenDanhMuc;
 }

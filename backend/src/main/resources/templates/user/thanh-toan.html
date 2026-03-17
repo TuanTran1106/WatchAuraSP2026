@@ -47,18 +47,17 @@
                     </div>
                     <h2 class="checkout-section__title checkout-section__title--mt">Voucher khuyến mãi</h2>
                     <div class="form-group">
-                        <label for="maVoucher">Mã voucher</label>
-                        <div class="voucher-input-row">
-                            <input type="text"
-                                   id="maVoucher"
-                                   th:field="*{maVoucher}"
-                                   class="form-control"
-                                   placeholder="Nhập mã voucher (nếu có)"
-                                   maxlength="50">
-                            <button type="button" class="btn btn--outline" id="btnApplyVoucher">Áp dụng</button>
+                        <label>Chọn voucher</label>
+                        <div id="voucher-list-container" class="voucher-list-container">
+                            <div class="voucher-loading">Đang tải voucher...</div>
                         </div>
+                        <div id="selected-voucher-info" class="selected-voucher-info" style="display:none;">
+                            <span class="voucher-tag"></span>
+                            <button type="button" class="btn-remove-voucher" onclick="removeSelectedVoucher()">✕</button>
+                        </div>
+                        <input type="hidden" id="selectedVoucherId" th:field="*{maVoucher}" />
                         <div id="voucherMessage" class="voucher-message"></div>
-                        <small style="color:#666;font-size:0.85rem;">Giảm giá sẽ được áp dụng nếu mã hợp lệ và đáp ứng điều kiện sử dụng.</small>
+                        <small style="color:#666;font-size:0.85rem;">Chọn voucher phù hợp với sản phẩm trong giỏ hàng để được giảm giá.</small>
                     </div>
                     <h2 class="checkout-section__title checkout-section__title--mt">Phương thức thanh toán</h2>
                     <div class="payment-method payment-method--cod">
@@ -96,8 +95,8 @@
                             </div>
                         </div>
                         <div class="cart-summary__row" id="voucher-row" style="display:none;">
-                            <span class="cart-summary__label">&nbsp;</span>
-                            <span class="cart-summary__value cart-summary__value--discount" id="checkout-voucher-discount">0 ₫</span>
+                            <span class="cart-summary__label cart-summary__label--voucher">Voucher:</span>
+                            <span class="cart-summary__value cart-summary__value--discount" id="checkout-voucher-discount">- 0 ₫</span>
                         </div>
                         <div class="cart-summary__row cart-summary__row--total">
                             <span class="cart-summary__label">Tổng thanh toán</span>
@@ -143,12 +142,32 @@
         .checkout-page .cart-summary__row--total { padding-top: 0.75rem; margin-top: 0.5rem; border-top: 2px solid #eee; }
         .checkout-page .cart-summary__value--large { font-size: 1.25rem; font-weight: 700; color: #c9a227; }
         .checkout-page .cart-summary__value--discount { color: #c9302c; font-size: 0.95rem; font-weight: 600; }
+        .checkout-page .cart-summary__label--voucher { color: #1976d2; font-size: 0.95rem; font-weight: 600; }
         .checkout-page .cart-summary__actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
         .checkout-page .voucher-input-row { display: flex; gap: 0.5rem; align-items: center; }
         .checkout-page .voucher-input-row .form-control { flex: 1; }
         .checkout-page .voucher-message { margin-top: 0.35rem; font-size: 0.85rem; }
         .checkout-page .voucher-message--error { color: #c9302c; }
         .checkout-page .voucher-message--success { color: #2e7d32; }
+        .checkout-page .voucher-list-container { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; background: #fafafa; }
+        .checkout-page .voucher-loading { padding: 1rem; text-align: center; color: #666; }
+        .checkout-page .voucher-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
+        .checkout-page .voucher-item:last-child { border-bottom: none; }
+        .checkout-page .voucher-item:hover { background: #f0f7ff; }
+        .checkout-page .voucher-item.selected { background: #e3f2fd; border-color: #1976d2; }
+        .checkout-page .voucher-item input[type="radio"] { margin-right: 0.5rem; }
+        .checkout-page .voucher-item__content { flex: 1; }
+        .checkout-page .voucher-item__name { font-weight: 600; color: #1a1a1a; font-size: 0.9rem; }
+        .checkout-page .voucher-item__discount { color: #c9302c; font-weight: 600; font-size: 0.9rem; }
+        .checkout-page .voucher-item__condition { font-size: 0.8rem; color: #666; margin-top: 0.25rem; }
+        .checkout-page .voucher-item__code { font-size: 0.8rem; color: #1976d2; background: #e3f2fd; padding: 0.15rem 0.4rem; border-radius: 4px; }
+        .checkout-page .voucher-item[disabled="disabled"],
+        .checkout-page .voucher-item input[disabled] + .voucher-item__content { opacity: 0.5; pointer-events: none; }
+        .checkout-page .voucher-item.disabled { opacity: 0.5; cursor: not-allowed; }
+        .checkout-page .selected-voucher-info { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding: 0.5rem 0.75rem; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 8px; }
+        .checkout-page .selected-voucher-info .voucher-tag { flex: 1; color: #2e7d32; font-weight: 500; }
+        .checkout-page .btn-remove-voucher { background: none; border: none; color: #c9302c; cursor: pointer; font-size: 1rem; padding: 0 0.25rem; }
+        .checkout-page .btn-remove-voucher:hover { color: #a00; }
         @media (max-width: 900px) {
             .checkout-page .checkout-layout { grid-template-columns: 1fr; }
             .checkout-page .checkout-summary { position: static; }
@@ -168,13 +187,17 @@
                 updateBtn();
             }
 
-            var btnApply = document.getElementById('btnApplyVoucher');
-            var inputVoucher = document.getElementById('maVoucher');
+            var voucherListContainer = document.getElementById('voucher-list-container');
+            var selectedVoucherInfo = document.getElementById('selected-voucher-info');
+            var selectedVoucherInput = document.getElementById('selectedVoucherId');
             var voucherMsg = document.getElementById('voucherMessage');
             var tongTienEl = document.getElementById('checkout-tong-tien');
             var voucherRow = document.getElementById('voucher-row');
             var voucherDiscountEl = document.getElementById('checkout-voucher-discount');
-            var applyUrl = /*[[@{/thanh-toan/apply-voucher}]]*/ '/thanh-toan/apply-voucher';
+            var baseTotal = /*[[${cart.tongTien}]]*/ 0;
+
+            var getVouchersUrl = /*[[@{/thanh-toan/vouchers}]]*/ '/thanh-toan/vouchers';
+            var applyVoucherUrl = /*[[@{/thanh-toan/apply-voucher-by-id}]]*/ '/thanh-toan/apply-voucher-by-id';
 
             function formatCurrencyVnd(value) {
                 var num = Number(value || 0);
@@ -182,60 +205,179 @@
                 return num.toLocaleString('vi-VN') + ' ₫';
             }
 
-            if (btnApply && inputVoucher && tongTienEl) {
-                btnApply.addEventListener('click', function() {
-                    var code = (inputVoucher.value || '').trim();
-                    voucherMsg.textContent = '';
-                    voucherMsg.className = 'voucher-message';
-                    if (voucherRow) {
-                        voucherRow.style.display = 'none';
-                    }
+            function formatDiscount(voucher) {
+                if (voucher.loaiVoucher === 'PHAN_TRAM') {
+                    return voucher.giaTri + '%';
+                } else {
+                    return formatCurrencyVnd(voucher.giaTri);
+                }
+            }
 
-                    if (!code) {
-                        var msg = 'Vui lòng nhập mã voucher.';
-                        voucherMsg.textContent = msg;
-                        voucherMsg.classList.add('voucher-message--error');
-                        console.log(msg);
-                        return;
-                    }
+            function getConditionText(voucher) {
+                var texts = [];
+                if (voucher.donHangToiThieu && voucher.donHangToiThieu > 0) {
+                    texts.push('Đơn tối thiểu ' + formatCurrencyVnd(voucher.donHangToiThieu));
+                }
+                if (voucher.giaTriToiDa && voucher.giaTriToiDa > 0 && voucher.loaiVoucher === 'PHAN_TRAM') {
+                    texts.push('Giảm tối đa ' + formatCurrencyVnd(voucher.giaTriToiDa));
+                }
+                return texts.length > 0 ? texts.join(' | ') : 'Không giới hạn';
+            }
 
-                    btnApply.disabled = true;
-                    btnApply.textContent = 'Đang áp dụng...';
+            function loadVouchers() {
+                if (!voucherListContainer) return;
 
-                    fetch(applyUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                        },
-                        body: new URLSearchParams({ maVoucher: code })
-                    }).then(function(res) {
-                        return res.json();
-                    }).then(function(data) {
-                        var message = data && data.message ? data.message : '';
-                        console.log('Voucher response:', data);
-                        voucherMsg.textContent = message;
-                        if (data && data.success) {
-                            voucherMsg.classList.add('voucher-message--success');
-                            if (typeof data.finalTotal !== 'undefined' && data.finalTotal !== null) {
-                                tongTienEl.textContent = formatCurrencyVnd(data.finalTotal);
-                            }
-                            if (voucherRow && voucherDiscountEl && typeof data.discount !== 'undefined' && data.discount !== null) {
-                                voucherRow.style.display = '';
-                                voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(data.discount);
-                            }
+                voucherListContainer.innerHTML = '<div class="voucher-loading">Đang tải voucher...</div>';
+
+                fetch(getVouchersUrl)
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data.success && data.vouchers && data.vouchers.length > 0) {
+                            var tongTien = data.tongTien || 0;
+                            var html = '';
+                            data.vouchers.forEach(function(voucher) {
+                                var selected = selectedVoucherInput.value == voucher.id ? 'selected' : '';
+                                var disabled = '';
+                                var disabledReason = '';
+
+                                // Kiểm tra điều kiện đơn hàng tối thiểu
+                                if (voucher.donHangToiThieu && voucher.donHangToiThieu > 0) {
+                                    if (tongTien < voucher.donHangToiThieu) {
+                                        disabled = 'disabled';
+                                        disabledReason = ' (Cần đơn tối thiểu ' + formatCurrencyVnd(voucher.donHangToiThieu) + ')';
+                                    }
+                                }
+
+                                html += '<div class="voucher-item ' + selected + '" data-id="' + voucher.id + '" data-voucher=\'' + JSON.stringify(voucher).replace(/'/g, "&#39;") + '\'>';
+                                html += '<input type="radio" name="voucher" value="' + voucher.id + '" ' + (selected ? 'checked' : '') + ' ' + disabled + '>';
+                                html += '<div class="voucher-item__content">';
+                                html += '<div class="voucher-item__name">' + (voucher.tenVoucher || voucher.maVoucher) + disabledReason + '</div>';
+                                html += '<div class="voucher-item__discount">Giảm ' + formatDiscount(voucher) + '</div>';
+                                html += '<div class="voucher-item__condition">' + getConditionText(voucher) + '</div>';
+                                if (voucher.danhMucApDung) {
+                                    html += '<div class="voucher-item__code">Áp dụng cho: ' + voucher.danhMucApDung + '</div>';
+                                }
+                                html += '</div>';
+                                html += '</div>';
+                            });
+                            voucherListContainer.innerHTML = html;
+
+                            // Add click handlers
+                            var voucherItems = voucherListContainer.querySelectorAll('.voucher-item');
+                            voucherItems.forEach(function(item) {
+                                item.addEventListener('click', function(e) {
+                                    if (e.target.type !== 'radio') {
+                                        var radio = item.querySelector('input[type="radio"]');
+                                        if (radio && !radio.disabled) radio.checked = true;
+                                    }
+                                    var radio = item.querySelector('input[type="radio"]');
+                                    if (radio && !radio.disabled) {
+                                        selectVoucher(item);
+                                    }
+                                });
+                            });
                         } else {
-                            voucherMsg.classList.add('voucher-message--error');
+                            voucherListContainer.innerHTML = '<div class="voucher-loading">Không có voucher nào khả dụng</div>';
                         }
-                    }).catch(function(err) {
-                        console.error('Lỗi áp dụng voucher:', err);
-                        voucherMsg.textContent = 'Có lỗi xảy ra khi áp dụng voucher.';
-                        voucherMsg.classList.add('voucher-message--error');
-                    }).finally(function() {
-                        btnApply.disabled = false;
-                        btnApply.textContent = 'Áp dụng';
+                    })
+                    .catch(function(err) {
+                        console.error('Lỗi tải voucher:', err);
+                        voucherListContainer.innerHTML = '<div class="voucher-loading">Không thể tải voucher</div>';
                     });
+            }
+
+            function selectVoucher(item) {
+                var voucherId = item.getAttribute('data-id');
+                var voucher = JSON.parse(item.getAttribute('data-voucher').replace(/&#39;/g, "'"));
+
+                // Check if already selected - if yes, remove selection
+                var currentSelectedId = selectedVoucherInput.value;
+                if (currentSelectedId == voucherId) {
+                    // Deselect this voucher
+                    removeSelectedVoucher();
+                    return;
+                }
+
+                // Update UI
+                var items = voucherListContainer.querySelectorAll('.voucher-item');
+                items.forEach(function(i) { i.classList.remove('selected'); });
+                item.classList.add('selected');
+
+                // Show selected info
+                if (selectedVoucherInfo) {
+                    var tag = selectedVoucherInfo.querySelector('.voucher-tag');
+                    if (tag) {
+                        tag.textContent = 'Đã chọn: ' + (voucher.tenVoucher || voucher.maVoucher) + ' - Giảm ' + formatDiscount(voucher);
+                    }
+                    selectedVoucherInfo.style.display = 'flex';
+                }
+
+                // Update hidden input
+                selectedVoucherInput.value = voucherId;
+
+                // Apply voucher via API
+                applyVoucher(voucherId);
+            }
+
+            window.removeSelectedVoucher = function() {
+                selectedVoucherInput.value = '';
+                if (selectedVoucherInfo) {
+                    selectedVoucherInfo.style.display = 'none';
+                }
+                var items = voucherListContainer.querySelectorAll('.voucher-item');
+                items.forEach(function(i) {
+                    i.classList.remove('selected');
+                    var radio = i.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = false;
+                });
+
+                // Reset total
+                if (tongTienEl) {
+                    tongTienEl.textContent = formatCurrencyVnd(baseTotal);
+                }
+                if (voucherRow) {
+                    voucherRow.style.display = 'none';
+                }
+                voucherMsg.textContent = '';
+                voucherMsg.className = 'voucher-message';
+            };
+
+            function applyVoucher(voucherId) {
+                voucherMsg.textContent = 'Đang áp dụng voucher...';
+                voucherMsg.className = 'voucher-message';
+
+                fetch(applyVoucherUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    },
+                    body: new URLSearchParams({ voucherId: voucherId })
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
+                    console.log('Apply voucher response:', data);
+                    voucherMsg.textContent = data.message || '';
+                    if (data.success) {
+                        voucherMsg.classList.add('voucher-message--success');
+                        if (typeof data.finalTotal !== 'undefined' && data.finalTotal !== null) {
+                            tongTienEl.textContent = formatCurrencyVnd(data.finalTotal);
+                        }
+                        if (voucherRow && voucherDiscountEl && typeof data.discount !== 'undefined' && data.discount !== null) {
+                            voucherRow.style.display = '';
+                            voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(data.discount);
+                        }
+                    } else {
+                        voucherMsg.classList.add('voucher-message--error');
+                    }
+                }).catch(function(err) {
+                    console.error('Lỗi áp dụng voucher:', err);
+                    voucherMsg.textContent = 'Có lỗi xảy ra khi áp dụng voucher.';
+                    voucherMsg.classList.add('voucher-message--error');
                 });
             }
+
+            // Load vouchers on page load
+            loadVouchers();
         })();
     </script>
 </div>

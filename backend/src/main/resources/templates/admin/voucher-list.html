@@ -75,6 +75,11 @@
                         <option value="true">Đang Hoạt Động</option>
                     </select>
                 </div>
+                <div class="form__group">
+                    <label class="form__label">Danh mục áp dụng</label>
+                    <input class="form__input" type="text" th:field="*{danhMucApDung}" placeholder="Để trống = áp dụng cho tất cả" />
+                    <small style="color: #666; font-size: 0.85rem;">Nhập tên danh mục cụ thể (VD: Đồng hồ nam, Đồng hồ nữ) để voucher chỉ áp dụng cho danh mục đó.</small>
+                </div>
             </div>
             <div class="form__actions">
                 <button type="submit" class="btn btn--primary">Lưu</button>

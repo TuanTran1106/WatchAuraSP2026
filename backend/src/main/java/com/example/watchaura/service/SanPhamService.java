@@ -25,5 +25,7 @@ public interface SanPhamService {
     List<SanPhamDTO> getSanPhamTrangChu(int limit);
 
     Page<SanPhamDTO> searchPage(String keyword, Boolean trangThai, Pageable pageable);
+    // Sinh mã sản phẩm tự động
+    String generateMaSanPham();
 }
 

@@ -840,9 +840,12 @@
                         <input type="hidden" id="productId">
 
                         <div class="modal-form-group">
-                            <label for="maSanPham">Mã sản phẩm *</label>
-                            <input type="text" id="maSanPham" required placeholder="Không trùng với mã đã có"
-                                title="Khi sửa sản phẩm, mã không được thay đổi">
+                            <label for="maSanPham">Mã sản phẩm</label>
+                            <input type="text" id="maSanPham" readonly
+                                title="Mã sản phẩm được tự động sinh">
+                            <small style="color: #28a745; font-size: 12px;">
+                                <i class="fas fa-info-circle"></i> Mã sản phẩm được tự động sinh
+                            </small>
                             <small id="maSanPhamError" class="text-error" style="display: none; color: #e74c3c;">Mã sản
                                 phẩm
                                 đã tồn tại.</small>
@@ -990,14 +993,23 @@
             }
 
             // Mở Modal Thêm Sản Phẩm
-            function openAddModal() {
+            async function openAddModal() {
                 resetModal();
                 document.getElementById('productModal').classList.add('show');
                 document.getElementById('modalTitle').textContent = 'Thêm mới sản phẩm';
                 isEditing = false;
-                const maInput = document.getElementById('maSanPham');
-                maInput.removeAttribute('readonly');
-                maInput.disabled = false;
+
+                // Gọi API sinh mã tự động
+                try {
+                    const response = await fetch(`${API_URL}/san-pham/generate-ma`);
+                    const data = await response.json();
+                    if (data.maSanPham) {
+                        document.getElementById('maSanPham').value = data.maSanPham;
+                    }
+                } catch (error) {
+                    console.error('Lỗi sinh mã:', error);
+                }
+
                 document.getElementById('maSanPhamError').style.display = 'none';
             }
 
@@ -1023,9 +1035,6 @@
                 document.getElementById('previewContainer').style.display = 'none';
                 document.querySelector('input[name="trangThai"][value="true"]').checked = true;
                 document.getElementById('variantContainer').innerHTML = '';
-                const maInput = document.getElementById('maSanPham');
-                maInput.removeAttribute('readonly');
-                maInput.disabled = false;
                 document.getElementById('maSanPhamError').style.display = 'none';
                 addVariantRow(); // Thêm 1 dòng biến thể mặc định
             }
@@ -1491,32 +1500,8 @@
                 return await res.json();
             }
 
-            document.getElementById('maSanPham').addEventListener('blur', async function () {
-                if (isEditing) return;
-                const ma = this.value.trim();
-                if (!ma) { document.getElementById('maSanPhamError').style.display = 'none'; return; }
-                const trung = await checkMaSanPhamTrung(ma);
-                const errEl = document.getElementById('maSanPhamError');
-                errEl.style.display = trung ? 'block' : 'none';
-            });
-
             document.getElementById('sanPhamForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-
-                // Khi thêm mới: kiểm tra mã trùng trước khi gửi
-                if (!isEditing) {
-                    const ma = document.getElementById('maSanPham').value.trim();
-                    if (!ma) {
-                        alert('Vui lòng nhập mã sản phẩm.');
-                        return;
-                    }
-                    const maTrung = await checkMaSanPhamTrung(ma);
-                    if (maTrung) {
-                        document.getElementById('maSanPhamError').style.display = 'block';
-                        alert('Mã sản phẩm đã tồn tại. Vui lòng chọn mã khác.');
-                        return;
-                    }
-                }
 
                 // Kiểm tra trùng lặp biến thể
                 const duplicateIndices = checkDuplicateVariants();

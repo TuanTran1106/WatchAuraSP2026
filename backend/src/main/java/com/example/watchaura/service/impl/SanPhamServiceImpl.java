@@ -54,10 +54,15 @@ public class SanPhamServiceImpl implements SanPhamService {
     @Override
     @Transactional
     public SanPhamDTO createSanPham(SanPhamRequest request) {
-        String ma = request.getMaSanPham() != null ? request.getMaSanPham().trim() : "";
-        if (ma.isEmpty()) {
-            throw new RuntimeException("Mã sản phẩm không được để trống.");
+        // Nếu không có mã hoặc mã trống thì tự sinh mã
+        String ma = request.getMaSanPham();
+        if (ma == null || ma.trim().isEmpty()) {
+            ma = generateMaSanPham();
+        } else {
+            ma = ma.trim();
         }
+
+        // Kiểm tra mã đã tồn tại chưa
         if (sanPhamRepository.existsByMaSanPham(ma)) {
             throw new RuntimeException("Mã sản phẩm đã tồn tại: " + ma);
         }
@@ -133,6 +138,30 @@ public class SanPhamServiceImpl implements SanPhamService {
     public Page<SanPhamDTO> searchPage(String keyword, Boolean trangThai, Pageable pageable) {
         return sanPhamRepository.searchByKeywordAndTrangThai(keyword, trangThai, pageable)
                 .map(this::convertToDTO);
+    }
+
+    @Override
+    public String generateMaSanPham() {
+        // Tìm mã lớn nhất hiện có có dạng SP + số
+        List<SanPham> sanPhams = sanPhamRepository.findAll();
+        int maxNumber = 0;
+
+        for (SanPham sp : sanPhams) {
+            String ma = sp.getMaSanPham();
+            if (ma != null && ma.startsWith("SP")) {
+                try {
+                    int num = Integer.parseInt(ma.substring(2));
+                    if (num > maxNumber) {
+                        maxNumber = num;
+                    }
+                } catch (NumberFormatException e) {
+                    // Bỏ qua nếu không phải định dạng SP + số
+                }
+            }
+        }
+
+        // Trả về mã mới: SP + số tiếp theo (có padding 4 chữ số)
+        return String.format("SP%04d", maxNumber + 1);
     }
 
     @Override

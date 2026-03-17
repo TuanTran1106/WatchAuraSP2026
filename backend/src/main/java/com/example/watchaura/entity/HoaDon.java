@@ -32,7 +32,7 @@ public class HoaDon {
     private String maDonHang;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_khach_hang", nullable = false)
+    @JoinColumn(name = "id_khach_hang", nullable = true)
     private KhachHang khachHang;
 
     @ManyToOne(fetch = FetchType.LAZY)

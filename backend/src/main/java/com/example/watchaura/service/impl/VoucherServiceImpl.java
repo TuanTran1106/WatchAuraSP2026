@@ -50,6 +50,10 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucher.getTrangThai() == null) {
             voucher.setTrangThai(Boolean.TRUE);
         }
+        // Đảm bảo danhMucApDung không NULL
+        if (voucher.getDanhMucApDung() == null) {
+            voucher.setDanhMucApDung("");
+        }
         return voucherRepository.save(voucher);
     }
 
@@ -71,6 +75,7 @@ public class VoucherServiceImpl implements VoucherService {
         existing.setSoLuongTong(voucher.getSoLuongTong());
         existing.setNgayBatDau(voucher.getNgayBatDau());
         existing.setNgayKetThuc(voucher.getNgayKetThuc());
+        existing.setDanhMucApDung(voucher.getDanhMucApDung());
         // Chỉ cập nhật trạng thái khi form gửi giá trị; tránh ghi NULL (DB không cho phép)
         if (voucher.getTrangThai() != null) {
             existing.setTrangThai(voucher.getTrangThai());
@@ -102,5 +107,15 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id) {
         return voucherRepository.existsByMaVoucherAndIdNot(maVoucher, id);
+    }
+
+    @Override
+    public List<Voucher> findVouchersByDanhMuc(String danhMuc) {
+        return voucherRepository.findVouchersByDanhMuc(danhMuc);
+    }
+
+    @Override
+    public List<Voucher> findAllValidVouchers() {
+        return voucherRepository.findAllValidVouchers();
     }
 }

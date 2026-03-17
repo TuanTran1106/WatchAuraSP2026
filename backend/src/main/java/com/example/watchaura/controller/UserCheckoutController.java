@@ -13,6 +13,7 @@ import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
 import com.example.watchaura.service.DiaChiService;
 import com.example.watchaura.entity.DiaChi;
+import com.example.watchaura.entity.Voucher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -30,9 +31,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -77,6 +80,89 @@ public class UserCheckoutController {
         return "layout/user-layout";
     }
 
+    @GetMapping("/vouchers")
+    @ResponseBody
+    public Map<String, Object> getAvailableVouchers(HttpSession session) {
+        Map<String, Object> resp = new HashMap<>();
+        Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
+        if (userId == null) {
+            resp.put("success", false);
+            resp.put("message", "Vui lòng đăng nhập.");
+            return resp;
+        }
+
+        try {
+            GioHangDTO cart = gioHangService.getOrCreateCart(userId);
+            if (cart.getItems() == null || cart.getItems().isEmpty()) {
+                resp.put("success", false);
+                resp.put("message", "Giỏ hàng trống.");
+                return resp;
+            }
+
+            // Lấy danh sách các danh mục trong giỏ hàng
+            Set<String> danhMucSet = cart.getItems().stream()
+                    .map(item -> item.getTenDanhMuc())
+                    .filter(dm -> dm != null && !dm.isBlank())
+                    .collect(Collectors.toSet());
+
+            // Tính tổng tiền giỏ hàng
+            BigDecimal tongTien = BigDecimal.ZERO;
+            if (cart.getItems() != null) {
+                for (var item : cart.getItems()) {
+                    if (item.getThanhTien() != null) {
+                        tongTien = tongTien.add(item.getThanhTien());
+                    } else if (item.getGiaBan() != null && item.getSoLuong() != null) {
+                        tongTien = tongTien.add(item.getGiaBan().multiply(BigDecimal.valueOf(item.getSoLuong())));
+                    }
+                }
+            }
+
+            List<Voucher> availableVouchers = new ArrayList<>();
+
+            // Lấy voucher áp dụng cho từng danh mục
+            for (String danhMuc : danhMucSet) {
+                List<Voucher> vouchers = voucherService.findVouchersByDanhMuc(danhMuc);
+                if (vouchers != null) {
+                    availableVouchers.addAll(vouchers);
+                }
+            }
+
+            // Lấy tất cả voucher chung (không giới hạn danh mục)
+            List<Voucher> allVouchers = voucherService.findAllValidVouchers();
+            if (allVouchers != null) {
+                for (Voucher v : allVouchers) {
+                    boolean exists = availableVouchers.stream()
+                            .anyMatch(av -> av.getId().equals(v.getId()));
+                    if (!exists) {
+                        availableVouchers.add(v);
+                    }
+                }
+            }
+
+            // Lọc bỏ voucher trùng lặp và sắp xếp theo giá trị giảm giá
+            List<Voucher> distinctVouchers = availableVouchers.stream()
+                    .collect(Collectors.toMap(Voucher::getId, v -> v, (v1, v2) -> v1))
+                    .values()
+                    .stream()
+                    .sorted((v1, v2) -> {
+                        BigDecimal g1 = v1.getGiaTri() != null ? v1.getGiaTri() : BigDecimal.ZERO;
+                        BigDecimal g2 = v2.getGiaTri() != null ? v2.getGiaTri() : BigDecimal.ZERO;
+                        return g2.compareTo(g1);
+                    })
+                    .collect(Collectors.toList());
+
+            resp.put("success", true);
+            resp.put("vouchers", distinctVouchers);
+            resp.put("tongTien", tongTien);
+            resp.put("message", "Lấy danh sách voucher thành công.");
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi: " + (e.getMessage() != null ? e.getMessage() : "Không thể lấy voucher."));
+        }
+
+        return resp;
+    }
+
     @PostMapping("/dat-hang")
     public String datHang(
             HttpSession session,
@@ -110,11 +196,23 @@ public class UserCheckoutController {
         try {
             Integer voucherId = null;
             if (form.getMaVoucher() != null && !form.getMaVoucher().isBlank()) {
-                var voucher = voucherService.findByMaVoucher(form.getMaVoucher());
-                if (voucher == null) {
-                    throw new RuntimeException("Voucher không tồn tại hoặc không hợp lệ.");
+                String voucherValue = form.getMaVoucher().trim();
+                // Kiểm tra nếu là số (voucher ID mới) hoặc là mã voucher cũ
+                try {
+                    voucherId = Integer.parseInt(voucherValue);
+                    // Nếu là số, kiểm tra voucher có tồn tại không
+                    var voucher = voucherService.findById(voucherId);
+                    if (voucher == null) {
+                        throw new RuntimeException("Voucher không tồn tại hoặc không hợp lệ.");
+                    }
+                } catch (NumberFormatException e) {
+                    // Nếu không phải số, thử tìm theo mã voucher (backward compatibility)
+                    var voucher = voucherService.findByMaVoucher(voucherValue);
+                    if (voucher == null) {
+                        throw new RuntimeException("Voucher không tồn tại hoặc không hợp lệ.");
+                    }
+                    voucherId = voucher.getId();
                 }
-                voucherId = voucher.getId();
             }
 
             HoaDonRequest request = new HoaDonRequest();
@@ -209,6 +307,67 @@ public class UserCheckoutController {
             resp.put("discount", giam);
             resp.put("finalTotal", thanhToan);
             resp.put("message", "Áp dụng voucher thành công.");
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", e.getMessage() != null ? e.getMessage() : "Không thể áp dụng voucher.");
+        }
+
+        return resp;
+    }
+
+    @PostMapping("/apply-voucher-by-id")
+    @ResponseBody
+    public Map<String, Object> applyVoucherById(
+            HttpSession session,
+            @RequestParam("voucherId") Integer voucherId) {
+        Map<String, Object> resp = new HashMap<>();
+
+        Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
+        if (userId == null) {
+            resp.put("success", false);
+            resp.put("message", "Vui lòng đăng nhập để áp dụng voucher.");
+            return resp;
+        }
+
+        GioHangDTO cart = gioHangService.getOrCreateCart(userId);
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            resp.put("success", false);
+            resp.put("message", "Giỏ hàng trống, không thể áp dụng voucher.");
+            return resp;
+        }
+
+        if (voucherId == null) {
+            resp.put("success", false);
+            resp.put("message", "Vui lòng chọn voucher.");
+            return resp;
+        }
+
+        try {
+            var voucher = voucherService.findById(voucherId);
+            if (voucher == null) {
+                throw new RuntimeException("Voucher không tồn tại hoặc đã ngừng hoạt động.");
+            }
+            BigDecimal tongTien = BigDecimal.ZERO;
+            if (cart.getItems() != null) {
+                for (var item : cart.getItems()) {
+                    if (item.getThanhTien() != null) {
+                        tongTien = tongTien.add(item.getThanhTien());
+                    } else if (item.getGiaBan() != null && item.getSoLuong() != null) {
+                        tongTien = tongTien.add(item.getGiaBan().multiply(BigDecimal.valueOf(item.getSoLuong())));
+                    }
+                }
+            }
+            BigDecimal giam = hoaDonService.tinhTienGiamVoucher(userId, voucher.getId(), tongTien);
+            BigDecimal thanhToan = tongTien.subtract(giam);
+            if (thanhToan.compareTo(BigDecimal.ZERO) < 0) {
+                thanhToan = BigDecimal.ZERO;
+            }
+
+            resp.put("success", true);
+            resp.put("discount", giam);
+            resp.put("finalTotal", thanhToan);
+            resp.put("message", "Áp dụng voucher thành công.");
+            resp.put("voucher", voucher);
         } catch (Exception e) {
             resp.put("success", false);
             resp.put("message", e.getMessage() != null ? e.getMessage() : "Không thể áp dụng voucher.");
