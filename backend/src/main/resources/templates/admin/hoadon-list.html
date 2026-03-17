@@ -8,7 +8,7 @@
     <section class="card card--full" id="listHoaDon">
         <h2 class="card__title">Danh sách hóa đơn</h2>
 
-        <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--search-row">
+        <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
             <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
             <a th:href="@{/admin/hoa-don}" class="btn btn--secondary toolbar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
@@ -43,7 +43,7 @@
                     <td th:text="${item.ngayDat != null ? #temporals.format(item.ngayDat, 'dd/MM/yyyy HH:mm') : '—'}"></td>
                     <td th:text="${item.tongTienThanhToan != null ? #numbers.formatDecimal(item.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : '—'}"></td>
                     <td>
-                        <form th:action="@{/admin/hoa-don/{id}/trang-thai(id=${item.id})}" method="post" style="display:inline;" class="status-form">
+                        <form th:action="@{/admin/hoa-don/{id}/trang-thai(id=${item.id})}" method="post" style="display:inline;" class="status-form js-admin-ajax-form" data-ajax="true">
                             <input type="hidden" name="page" th:value="${page != null ? page.number : 0}" />
                             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
                             <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />

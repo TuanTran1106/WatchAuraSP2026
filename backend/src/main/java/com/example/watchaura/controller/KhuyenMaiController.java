@@ -32,7 +32,8 @@ public class KhuyenMaiController {
     public String list(@RequestParam(defaultValue = "0") int page,
                       @RequestParam(required = false) String q,
                       @RequestParam(required = false) String trangThai,
-                      Model model) {
+                      Model model,
+                      @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThai, pageable);
@@ -44,6 +45,9 @@ public class KhuyenMaiController {
         model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
         model.addAttribute("khuyenMai", new KhuyenMai());
         model.addAttribute("formAction", "/admin/khuyen-mai");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/khuyenmai-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -64,7 +68,8 @@ public class KhuyenMaiController {
                            @RequestParam(defaultValue = "0") int page,
                            @RequestParam(required = false) String q,
                            @RequestParam(required = false) String trangThai,
-                           Model model) {
+                           Model model,
+                           @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Boolean filterTrangThai = parseTrangThai(trangThai);
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThai, pageable);
@@ -83,6 +88,9 @@ public class KhuyenMaiController {
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
         if (trangThai != null && !trangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/khuyenmai-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -91,7 +99,8 @@ public class KhuyenMaiController {
     public String create(@Valid @ModelAttribute("khuyenMai") KhuyenMai khuyenMai, BindingResult result,
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,
-                         Model model, RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (khuyenMai.getMaKhuyenMai() != null && !khuyenMai.getMaKhuyenMai().isBlank()
                 && khuyenMaiService.existsByMaKhuyenMai(khuyenMai.getMaKhuyenMai())) {
             result.rejectValue("maKhuyenMai", "duplicate", "Mã khuyến mãi đã tồn tại.");
@@ -107,9 +116,27 @@ public class KhuyenMaiController {
             model.addAttribute("searchKeyword", q != null ? q : "");
             model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
             model.addAttribute("formAction", "/admin/khuyen-mai");
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/khuyenmai-list :: content";
+            }
             return "layout/admin-layout";
         }
         khuyenMaiService.save(khuyenMai);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+            Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by("id").descending());
+            Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khuyến mãi");
+            model.addAttribute("content", "admin/khuyenmai-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
+            model.addAttribute("khuyenMai", new KhuyenMai());
+            model.addAttribute("formAction", "/admin/khuyen-mai");
+            model.addAttribute("message", "Thêm khuyến mãi thành công.");
+            return "admin/khuyenmai-list :: content";
+        }
         redirect.addFlashAttribute("message", "Thêm khuyến mãi thành công.");
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (filterTrangThai != null && !filterTrangThai.isBlank()) redirect.addAttribute("trangThai", filterTrangThai);
@@ -121,7 +148,8 @@ public class KhuyenMaiController {
                          @RequestParam(required = false) String q,
                          @RequestParam(required = false) String filterTrangThai,
                          @Valid @ModelAttribute("khuyenMai") KhuyenMai khuyenMai, BindingResult result,
-                         Model model, RedirectAttributes redirect) {
+                         Model model, RedirectAttributes redirect,
+                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         if (khuyenMai.getMaKhuyenMai() != null && !khuyenMai.getMaKhuyenMai().isBlank()
                 && khuyenMaiService.existsByMaKhuyenMaiAndIdNot(khuyenMai.getMaKhuyenMai(), id)) {
             result.rejectValue("maKhuyenMai", "duplicate", "Mã khuyến mãi đã tồn tại.");
@@ -141,9 +169,27 @@ public class KhuyenMaiController {
             if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
             if (filterTrangThai != null && !filterTrangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(filterTrangThai, StandardCharsets.UTF_8);
             model.addAttribute("formAction", formAction);
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return "admin/khuyenmai-list :: content";
+            }
             return "layout/admin-layout";
         }
         khuyenMaiService.update(id, khuyenMai);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khuyến mãi");
+            model.addAttribute("content", "admin/khuyenmai-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
+            model.addAttribute("khuyenMai", new KhuyenMai());
+            model.addAttribute("formAction", "/admin/khuyen-mai");
+            model.addAttribute("message", "Cập nhật khuyến mãi thành công.");
+            return "admin/khuyenmai-list :: content";
+        }
         redirect.addFlashAttribute("message", "Cập nhật khuyến mãi thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -155,8 +201,25 @@ public class KhuyenMaiController {
     public String delete(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) String q,
                         @RequestParam(required = false) String trangThai,
-                        RedirectAttributes redirect) {
+                        Model model,
+                        RedirectAttributes redirect,
+                        @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         khuyenMaiService.delete(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(trangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khuyến mãi");
+            model.addAttribute("content", "admin/khuyenmai-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+            model.addAttribute("khuyenMai", new KhuyenMai());
+            model.addAttribute("formAction", "/admin/khuyen-mai");
+            model.addAttribute("message", "Xóa khuyến mãi thành công.");
+            return "admin/khuyenmai-list :: content";
+        }
         redirect.addFlashAttribute("message", "Xóa khuyến mãi thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
@@ -168,8 +231,25 @@ public class KhuyenMaiController {
     public String toggleTrangThai(@PathVariable Integer id, @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(required = false) String q,
                                  @RequestParam(required = false) String trangThai,
-                                 RedirectAttributes redirect) {
+                                 Model model,
+                                 RedirectAttributes redirect,
+                                 @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         khuyenMaiService.toggleTrangThai(id);
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            Boolean filterTrangThaiBool = parseTrangThai(trangThai);
+            Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
+            Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThaiBool, pageable);
+            model.addAttribute("title", "Khuyến mãi");
+            model.addAttribute("content", "admin/khuyenmai-list");
+            model.addAttribute("list", pageResult.getContent());
+            model.addAttribute("page", pageResult);
+            model.addAttribute("searchKeyword", q != null ? q : "");
+            model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+            model.addAttribute("khuyenMai", new KhuyenMai());
+            model.addAttribute("formAction", "/admin/khuyen-mai");
+            model.addAttribute("message", "Đã cập nhật trạng thái.");
+            return "admin/khuyenmai-list :: content";
+        }
         redirect.addFlashAttribute("message", "Đã cập nhật trạng thái.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);

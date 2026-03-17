@@ -18,7 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
-import java.util.List;
 
 @Controller
 @RequestMapping("/admin/hoa-don")
@@ -35,7 +34,8 @@ public class HoaDonController {
     public String list(@RequestParam(required = false) String q,
                       @RequestParam(required = false) String trangThai,
                       @RequestParam(defaultValue = "0") int page,
-                      Model model) {
+                      Model model,
+                      @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
         Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThai, pageable);
         model.addAttribute("title", "Hóa đơn");
@@ -44,6 +44,9 @@ public class HoaDonController {
         model.addAttribute("page", pageResult);
         model.addAttribute("searchKeyword", q != null ? q : "");
         model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/hoadon-list :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -136,11 +139,37 @@ public class HoaDonController {
                                   @RequestParam(required = false) String q,
                                   @RequestParam(required = false) String trangThaiFilter,
                                   @RequestParam(defaultValue = "0") int page,
-                                  RedirectAttributes redirect) {
+                                  Model model,
+                                  RedirectAttributes redirect,
+                                  @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         try {
             hoaDonService.updateTrangThaiDonHang(id, trangThai);
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable);
+                model.addAttribute("title", "Hóa đơn");
+                model.addAttribute("content", "admin/hoadon-list");
+                model.addAttribute("list", pageResult.getContent());
+                model.addAttribute("page", pageResult);
+                model.addAttribute("searchKeyword", q != null ? q : "");
+                model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
+                model.addAttribute("message", "Đã cập nhật trạng thái đơn hàng.");
+                return "admin/hoadon-list :: content";
+            }
             redirect.addFlashAttribute("message", "Đã cập nhật trạng thái đơn hàng.");
         } catch (RuntimeException e) {
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable);
+                model.addAttribute("title", "Hóa đơn");
+                model.addAttribute("content", "admin/hoadon-list");
+                model.addAttribute("list", pageResult.getContent());
+                model.addAttribute("page", pageResult);
+                model.addAttribute("searchKeyword", q != null ? q : "");
+                model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
+                model.addAttribute("error", e.getMessage());
+                return "admin/hoadon-list :: content";
+            }
             redirect.addFlashAttribute("error", e.getMessage());
         }
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
