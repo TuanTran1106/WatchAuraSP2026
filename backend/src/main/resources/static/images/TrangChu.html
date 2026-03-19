@@ -2284,7 +2284,7 @@
                 document.getElementById('blogId').value = blog.id;
                 document.getElementById('tieuDe').value = blog.tieuDe;
                 document.getElementById('noiDung').value = blog.noiDung;
-                document.getElementById('imagePreview').src = blog.hinhAnh ? blog.hinhAnh : '/images/no-image.png';
+                document.getElementById('imagePreview').src = blog.hinhAnh ? '/' + blog.hinhAnh : '/images/no-image.png';
 
                 if (blog.ngayDang) {
                     const date = new Date(blog.ngayDang);
@@ -2312,7 +2312,7 @@
 
                 // Set image with error handling
                 const viewImage = document.getElementById('viewImage');
-                viewImage.src = blog.hinhAnh ? blog.hinhAnh : '/images/no-image.png';
+                viewImage.src = blog.hinhAnh ? '/' + blog.hinhAnh : '/images/no-image.png';
                 viewImage.alt = blog.tieuDe || 'Blog Image';
 
                 // Set date
@@ -2362,7 +2362,7 @@
 
                 // Set image with error handling
                 const detailImage = document.getElementById('detailImage');
-                detailImage.src = blog.hinhAnh ? blog.hinhAnh : '/images/no-image.png';
+                detailImage.src = blog.hinhAnh ? '/' + blog.hinhAnh : '/images/no-image.png';
                 detailImage.alt = blog.tieuDe || 'Blog Image';
 
                 // Set date

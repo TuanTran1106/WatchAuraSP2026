@@ -22,7 +22,7 @@
                     </h1>
                     <span class="invoice-detail__status"
                           th:classappend="${hoaDonStatusClass}"
-                          th:text="${hoaDon.trangThaiDonHang != null ? hoaDon.trangThaiDonHang : '—'}">—</span>
+                          th:text="${hoaDon.tenTrangThaiDonHang != null ? hoaDon.tenTrangThaiDonHang : '—'}">—</span>
                 </div>
                 <div class="invoice-detail__header-actions">
                     <a class="btn btn--primary btn--sm" th:href="@{/admin/hoa-don/{id}/pdf(id=${hoaDon.id})}" target="_blank">

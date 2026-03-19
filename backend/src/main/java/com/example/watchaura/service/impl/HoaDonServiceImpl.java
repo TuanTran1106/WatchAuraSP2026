@@ -518,6 +518,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
         dto.setTrangThai(hoaDon.getTrangThai());
         dto.setTrangThaiDonHang(hoaDon.getTrangThaiDonHang());
+        dto.setTenTrangThaiDonHang(getTenTrangThai(hoaDon.getTrangThaiDonHang()));
         dto.setNgayDat(hoaDon.getNgayDat());
         dto.setDiaChi(hoaDon.getDiaChi());
         dto.setSdtKhachHang(hoaDon.getSdtKhachHang());
@@ -614,6 +615,22 @@ public class HoaDonServiceImpl implements HoaDonService {
         );
 
         return page.map(this::convertToDTO);
+    }
+
+    /**
+     * Map mã trạng thái sang tên tiếng Việt
+     */
+    private String getTenTrangThai(String trangThai) {
+        if (trangThai == null) return "—";
+        return switch (trangThai) {
+            case "CHO_XAC_NHAN" -> "Chờ xác nhận";
+            case "DANG_XU_LY" -> "Đang xử lý";
+            case "DANG_GIAO" -> "Đang giao";
+            case "DA_GIAO" -> "Đã giao";
+            case "DA_HUY" -> "Đã hủy";
+            case "CHO_THANH_TOAN" -> "Chờ thanh toán";
+            default -> trangThai;
+        };
     }
 }
 

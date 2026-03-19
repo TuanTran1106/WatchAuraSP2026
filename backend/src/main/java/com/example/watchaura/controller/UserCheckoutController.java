@@ -232,20 +232,37 @@ public class UserCheckoutController {
                     .collect(Collectors.toList());
             request.setItems(items);
 
-            HoaDonDTO hoaDon = hoaDonService.create(request);
-
             if (isVnPay) {
-                String baseUrl = getBaseUrl(httpRequest);
-                String returnUrl = baseUrl + "/thanh-toan/vnpay/return";
-                long amountVnd = hoaDon.getTongTienThanhToan() != null ? hoaDon.getTongTienThanhToan().longValue() : 0L;
-                String orderInfo = "Thanh toan don hang " + hoaDon.getMaDonHang();
-                String clientIp = getClientIp(httpRequest);
-                String paymentUrl = vnPayService.createPaymentUrl(amountVnd, hoaDon.getMaDonHang(), orderInfo, returnUrl, clientIp, "vn");
+                // VNPay: Không tạo đơn hàng ngay, chỉ lưu vào session để chờ callback
+                // Lưu vào session: userId, checkoutForm, để sau callback VNPay sẽ tạo đơn hàng
+                session.setAttribute("pendingVnPayCheckoutRequest", request);
                 session.setAttribute("pendingVnPayCartId", cart.getId());
                 session.setAttribute("pendingVnPayUserId", userId);
+                
+                // Tạo URL thanh toán VNPay
+                String baseUrl = getBaseUrl(httpRequest);
+                String returnUrl = baseUrl + "/thanh-toan/vnpay/return";
+                // Tính tổng tiền từ request
+                BigDecimal tongTien = BigDecimal.ZERO;
+                for (var item : cart.getItems()) {
+                    if (item.getThanhTien() != null) {
+                        tongTien = tongTien.add(item.getThanhTien());
+                    } else if (item.getGiaBan() != null && item.getSoLuong() != null) {
+                        tongTien = tongTien.add(item.getGiaBan().multiply(BigDecimal.valueOf(item.getSoLuong())));
+                    }
+                }
+                long amountVnd = tongTien.longValue();
+                String maDonHang = "HD" + System.currentTimeMillis(); // Tạo mã tạm thời
+                session.setAttribute("pendingVnPayMaDonHang", maDonHang);
+                
+                String orderInfo = "Thanh toan don hang " + maDonHang;
+                String clientIp = getClientIp(httpRequest);
+                String paymentUrl = vnPayService.createPaymentUrl(amountVnd, maDonHang, orderInfo, returnUrl, clientIp, "vn");
                 return "redirect:" + paymentUrl;
             }
 
+            // COD: Tạo đơn hàng ngay
+            HoaDonDTO hoaDon = hoaDonService.create(request);
             gioHangChiTietService.deleteByGioHangId(cart.getId());
             return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDon.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
         } catch (Exception e) {
@@ -390,31 +407,56 @@ public class UserCheckoutController {
         }
 
         try {
-            HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(vnpTxnRef);
             Integer userId = (Integer) session.getAttribute("pendingVnPayUserId");
             Integer pendingCartId = (Integer) session.getAttribute("pendingVnPayCartId");
+            HoaDonRequest checkoutRequest = (HoaDonRequest) session.getAttribute("pendingVnPayCheckoutRequest");
 
-            if (vnPayService.verifyReturn(request)) {
+            // Xác thực chữ ký VNPay
+            if (!vnPayService.verifyReturn(request)) {
+                // Thanh toán thất bại - không tạo đơn hàng
+                redirect.addFlashAttribute("error", "Thanh toán VN Pay thất bại. Vui lòng thử lại.");
+                session.removeAttribute("pendingVnPayCheckoutRequest");
+                session.removeAttribute("pendingVnPayCartId");
+                session.removeAttribute("pendingVnPayUserId");
+                session.removeAttribute("pendingVnPayMaDonHang");
+                return "redirect:/thanh-toan";
+            }
+
+            // Thanh toán thành công - tạo đơn hàng ngay
+            if (checkoutRequest != null && userId != null) {
+                HoaDonDTO hoaDon = hoaDonService.create(checkoutRequest);
+                
+                // Cập nhật trạng thái từ CHO_THANH_TOAN → CHO_XAC_NHAN (vì đã thanh toán VNPay thành công)
                 hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "CHO_XAC_NHAN");
-                if (pendingCartId != null && userId != null) {
+                
+                // Xóa giỏ hàng sau khi tạo đơn hàng thành công
+                if (pendingCartId != null) {
                     GioHangDTO cart = gioHangService.getOrCreateCart(userId);
                     if (cart.getId().equals(pendingCartId)) {
                         gioHangChiTietService.deleteByGioHangId(cart.getId());
                     }
-                    session.removeAttribute("pendingVnPayCartId");
-                    session.removeAttribute("pendingVnPayUserId");
                 }
+                
+                // Xóa session attributes
+                session.removeAttribute("pendingVnPayCheckoutRequest");
+                session.removeAttribute("pendingVnPayCartId");
+                session.removeAttribute("pendingVnPayUserId");
+                session.removeAttribute("pendingVnPayMaDonHang");
+                
                 return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDon.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
             }
-
-            hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "DA_HUY");
-            session.removeAttribute("pendingVnPayCartId");
-            session.removeAttribute("pendingVnPayUserId");
-            redirect.addFlashAttribute("error", "Thanh toán VN Pay thất bại hoặc đã hủy. Đơn hàng đã được hủy. Bạn có thể đặt lại từ giỏ hàng.");
-            return "redirect:/gio-hang";
+            
+            redirect.addFlashAttribute("error", "Không tìm thấy thông tin đơn hàng. Vui lòng thử lại.");
+            return "redirect:/thanh-toan";
         } catch (Exception e) {
             redirect.addFlashAttribute("error", "Xử lý kết quả thanh toán thất bại: " + (e.getMessage() != null ? e.getMessage() : "Vui lòng liên hệ hỗ trợ."));
             return "redirect:/thanh-toan";
+        } finally {
+            // Luôn xóa session attributes
+            session.removeAttribute("pendingVnPayCheckoutRequest");
+            session.removeAttribute("pendingVnPayCartId");
+            session.removeAttribute("pendingVnPayUserId");
+            session.removeAttribute("pendingVnPayMaDonHang");
         }
     }
 
