@@ -1,7 +1,9 @@
 package com.example.watchaura.repository;
 
 import com.example.watchaura.entity.SanPhamChiTiet;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,5 +58,14 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
     @Modifying
     @Query("UPDATE SanPhamChiTiet spct SET spct.soLuongTon = spct.soLuongTon + :qty WHERE spct.id = :id")
     int restoreStock(@Param("id") Integer id, @Param("qty") Integer qty);
+
+    /**
+     * Lấy sản phẩm với pessimistic write lock - khóa dòng database để tránh race condition.
+     * Khi lock, các transaction khác phải chờ cho đến khi lock được giải phóng.
+     * Dùng cho các thao tác thêm sản phẩm, tăng số lượng, thanh toán.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT spct FROM SanPhamChiTiet spct WHERE spct.id = :id")
+    Optional<SanPhamChiTiet> findByIdWithLock(@Param("id") Integer id);
 }
 

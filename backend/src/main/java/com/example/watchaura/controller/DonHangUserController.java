@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -159,6 +160,7 @@ public class DonHangUserController {
         map.put("ngayDat", hoaDon.getNgayDat() != null ? hoaDon.getNgayDat().toString() : "");
         map.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
         map.put("trangThaiDonHang", hoaDon.getTrangThaiDonHang());
+        map.put("ghiChu", hoaDon.getGhiChu());
         map.put("phuongThucThanhToan", hoaDon.getPhuongThucThanhToan());
         map.put("tenTrangThai", getTenTrangThai(hoaDon.getTrangThaiDonHang()));
         map.put("daDanhGia", daDanhGia);
@@ -167,6 +169,7 @@ public class DonHangUserController {
                     .map(item -> {
                         Map<String, Object> itemMap = new HashMap<>();
                         itemMap.put("tenSanPham", item.getTenSanPham());
+                        itemMap.put("tenBienThe", item.getTenBienThe());
                         return itemMap;
                     })
                     .collect(Collectors.toList()));
@@ -177,8 +180,9 @@ public class DonHangUserController {
     private String getTenTrangThai(String trangThai) {
         if (trangThai == null) return "";
         return switch (trangThai) {
+            case "CAN_XU_LY" -> "Cần xử lý";
             case "CHO_XAC_NHAN" -> "Chờ xác nhận";
-            case "DANG_XU_LY" -> "Đang xử lý";
+            case "DA_XAC_NHAN" -> "Đã xác nhận";
             case "DANG_GIAO" -> "Đang giao";
             case "DA_GIAO" -> "Đã giao";
             case "DA_HUY" -> "Đã hủy";
@@ -259,6 +263,91 @@ public class DonHangUserController {
         return "redirect:/gio-hang";
     }
 
+    /** Trang chỉnh sửa đơn hàng (trạng thái Cần xử lý): hiển thị form sửa số lượng theo tồn kho. */
+    @GetMapping("/don-hang/chinh-sua/{id}")
+    public String chinhSuaDonHangPage(@PathVariable Integer id, HttpSession session, Model model, RedirectAttributes redirect) {
+        Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+        if (userId == null) {
+            redirect.addFlashAttribute("error", "Vui lòng đăng nhập.");
+            return "redirect:/dang-nhap";
+        }
+        HoaDonDTO hoaDon = hoaDonService.getById(id);
+        if (hoaDon.getKhachHangId() == null || !hoaDon.getKhachHangId().equals(userId)) {
+            redirect.addFlashAttribute("error", "Bạn không có quyền chỉnh sửa đơn hàng này.");
+            return "redirect:/don-hang";
+        }
+        if (!"CAN_XU_LY".equals(hoaDon.getTrangThaiDonHang())) {
+            redirect.addFlashAttribute("error", "Chỉ có thể chỉnh sửa đơn hàng ở trạng thái Cần xử lý.");
+            return "redirect:/don-hang";
+        }
+        if (hoaDon.getItems() == null || hoaDon.getItems().isEmpty()) {
+            redirect.addFlashAttribute("error", "Đơn hàng không có sản phẩm.");
+            return "redirect:/don-hang";
+        }
+
+        model.addAttribute("hoaDon", hoaDon);
+        model.addAttribute("title", "Chỉnh sửa đơn hàng");
+        model.addAttribute("content", "user/chinh-sua-don-hang");
+        return "layout/user-layout";
+    }
+
+    /** Xử lý form chỉnh sửa đơn hàng: cập nhật số lượng + thanh toán lại. */
+    @PostMapping("/don-hang/chinh-sua/{id}")
+    public String chinhSuaDonHangSubmit(
+            @PathVariable Integer id,
+            @RequestParam String itemsData,
+            HttpSession session,
+            RedirectAttributes redirect) {
+
+        Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+        if (userId == null) {
+            redirect.addFlashAttribute("error", "Vui lòng đăng nhập.");
+            return "redirect:/dang-nhap";
+        }
+
+        // Parse itemsData: JSON array [{id, spctId, soLuong, giaBan}, ...]
+        Map<Integer, Integer> itemsMap = new HashMap<>();
+        java.util.List<Map<String, Object>> parsedItems;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            parsedItems = mapper.readValue(itemsData,
+                    mapper.getTypeFactory().constructCollectionType(java.util.List.class, Map.class));
+            for (Map<String, Object> item : parsedItems) {
+                Object spctIdObj = item.get("spctId");
+                Object soLuongObj = item.get("soLuong");
+                if (spctIdObj != null && soLuongObj != null) {
+                    Integer spctId = Integer.valueOf(spctIdObj.toString());
+                    Integer soLuong = Integer.valueOf(soLuongObj.toString());
+                    itemsMap.put(spctId, soLuong);
+                }
+            }
+        } catch (Exception e) {
+            redirect.addFlashAttribute("error", "Dữ liệu không hợp lệ.");
+            return "redirect:/don-hang/chinh-sua/" + id;
+        }
+
+        // Có phần tử JSON nhưng không map được spctId -> tránh xóa nhầm toàn bộ chi tiết đơn (lỗi form cũ / thiếu data-spct-id)
+        if (parsedItems != null && !parsedItems.isEmpty() && itemsMap.isEmpty()) {
+            redirect.addFlashAttribute("error",
+                    "Thiếu thông tin sản phẩm (mã biến thể). Vui lòng tải lại trang và thử lại.");
+            return "redirect:/don-hang/chinh-sua/" + id;
+        }
+
+        // itemsMap rỗng khi user xóa hết dòng trên giao diện (mảng JSON []) -> service chuyển đơn sang Đã hủy
+        try {
+            HoaDonDTO updatedHoaDon = hoaDonService.editOrderItems(id, itemsMap);
+            if ("DA_HUY".equals(updatedHoaDon.getTrangThaiDonHang())) {
+                redirect.addFlashAttribute("success", "Đơn hàng " + updatedHoaDon.getMaDonHang() + " đã được hủy do không còn sản phẩm nào. Cảm ơn bạn đã sử dụng dịch vụ.");
+            } else {
+                redirect.addFlashAttribute("success", "Đơn hàng " + updatedHoaDon.getMaDonHang() + " đã được cập nhật và chuyển sang trạng thái chờ xác nhận. Vui lòng đợi xác nhận từ cửa hàng.");
+            }
+            return "redirect:/don-hang/chi-tiet/" + id;
+        } catch (Exception e) {
+            redirect.addFlashAttribute("error", e.getMessage() != null ? e.getMessage() : "Có lỗi xảy ra khi cập nhật đơn hàng.");
+            return "redirect:/don-hang/chinh-sua/" + id;
+        }
+    }
+
     @GetMapping("/don-hang/chi-tiet/api/{id}")
     @ResponseBody
     public Map<String, Object> chiTietDonHangAjax(@PathVariable Integer id, HttpSession session) {
@@ -290,6 +379,7 @@ public class DonHangUserController {
         result.put("tienGiam", hoaDon.getTienGiam());
         result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
         result.put("trangThaiDonHang", hoaDon.getTrangThaiDonHang());
+        result.put("ghiChu", hoaDon.getGhiChu());
         result.put("tenTrangThai", getTenTrangThai(hoaDon.getTrangThaiDonHang()));
         result.put("phuongThucThanhToan", hoaDon.getPhuongThucThanhToan());
         result.put("tenPhuongThuc", hoaDon.getPhuongThucThanhToan() != null && hoaDon.getPhuongThucThanhToan().equals("COD") ? "Thanh toán khi nhận hàng (COD)" : "VNPay");
@@ -299,6 +389,7 @@ public class DonHangUserController {
                     .map(item -> {
                         Map<String, Object> itemMap = new HashMap<>();
                         itemMap.put("tenSanPham", item.getTenSanPham());
+                        itemMap.put("tenBienThe", item.getTenBienThe());
                         itemMap.put("soLuong", item.getSoLuong());
                         itemMap.put("donGia", item.getDonGia());
                         itemMap.put("thanhTien", item.getThanhTien());

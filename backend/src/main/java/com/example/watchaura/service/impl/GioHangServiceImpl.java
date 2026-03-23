@@ -6,6 +6,7 @@ import com.example.watchaura.dto.GioHangRequest;
 import com.example.watchaura.entity.GioHang;
 import com.example.watchaura.entity.GioHangChiTiet;
 import com.example.watchaura.entity.KhachHang;
+import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.GioHangChiTietRepository;
 import com.example.watchaura.repository.GioHangRepository;
 import com.example.watchaura.repository.KhachHangRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -125,7 +127,7 @@ public class GioHangServiceImpl implements GioHangService {
         dto.setNgayTao(gioHang.getNgayTao());
 
         // Lấy danh sách items
-        List<GioHangChiTiet> items = gioHangChiTietRepository.findByGioHangId(gioHang.getId());
+        List<GioHangChiTiet> items = gioHangChiTietRepository.findByGioHangIdWithSanPhamDetails(gioHang.getId());
         List<GioHangChiTietDTO> itemDTOs = items.stream()
                 .map(this::convertChiTietToDTO)
                 .collect(Collectors.toList());
@@ -155,6 +157,7 @@ public class GioHangServiceImpl implements GioHangService {
             dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
             dto.setGiaBan(chiTiet.getSanPhamChiTiet().getGiaBan());
             dto.setSoLuongTon(chiTiet.getSanPhamChiTiet().getSoLuongTon());
+            dto.setSoLuongKhaDung(chiTiet.getSanPhamChiTiet().getSoLuongKhaDung());
             if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
                 dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
                 dto.setMaSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getMaSanPham());
@@ -164,6 +167,7 @@ public class GioHangServiceImpl implements GioHangService {
                     dto.setTenDanhMuc(chiTiet.getSanPhamChiTiet().getSanPham().getDanhMuc().getTenDanhMuc());
                 }
             }
+            dto.setMoTaBienThe(buildMoTaBienThe(chiTiet.getSanPhamChiTiet()));
         }
         
         dto.setSoLuong(chiTiet.getSoLuong());
@@ -175,5 +179,29 @@ public class GioHangServiceImpl implements GioHangService {
         }
 
         return dto;
+    }
+
+    private static String buildMoTaBienThe(SanPhamChiTiet spct) {
+        if (spct == null) {
+            return null;
+        }
+        List<String> parts = new ArrayList<>();
+        if (spct.getMauSac() != null && spct.getMauSac().getTenMauSac() != null
+                && !spct.getMauSac().getTenMauSac().isBlank()) {
+            parts.add("Màu: " + spct.getMauSac().getTenMauSac().trim());
+        }
+        if (spct.getKichThuoc() != null && spct.getKichThuoc().getTenKichThuoc() != null
+                && !spct.getKichThuoc().getTenKichThuoc().isBlank()) {
+            parts.add("Kích thước: " + spct.getKichThuoc().getTenKichThuoc().trim());
+        }
+        if (spct.getChatLieuDay() != null && spct.getChatLieuDay().getTenChatLieu() != null
+                && !spct.getChatLieuDay().getTenChatLieu().isBlank()) {
+            parts.add("Dây: " + spct.getChatLieuDay().getTenChatLieu().trim());
+        }
+        if (spct.getLoaiMay() != null && spct.getLoaiMay().getTenLoaiMay() != null
+                && !spct.getLoaiMay().getTenLoaiMay().isBlank()) {
+            parts.add("Loại máy: " + spct.getLoaiMay().getTenLoaiMay().trim());
+        }
+        return parts.isEmpty() ? null : String.join(" · ", parts);
     }
 }

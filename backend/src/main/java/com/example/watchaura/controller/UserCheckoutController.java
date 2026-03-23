@@ -1,6 +1,8 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.GioHangDTO;
+import com.example.watchaura.dto.CheckoutStockResponse;
+import com.example.watchaura.dto.StockWarningItem;
 import com.example.watchaura.dto.HoaDonChiTietRequest;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
@@ -63,6 +65,32 @@ public class UserCheckoutController {
             redirect.addFlashAttribute("error", "Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.");
             return "redirect:/gio-hang";
         }
+
+        // Kiểm tra tồn kho ngay khi vào trang thanh toán (sau khi bấm "Thanh toán" từ giỏ hàng)
+        CheckoutStockResponse stockResponse = hoaDonService.checkAndAdjustStockBeforeCheckout(cart.getId(), userId);
+        if (stockResponse.hasWarnings()) {
+            cart = gioHangService.getOrCreateCart(userId);
+            if (cart.getItems() == null || cart.getItems().isEmpty()) {
+                redirect.addFlashAttribute("error", "Tất cả sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.");
+                return "redirect:/gio-hang";
+            }
+            StringBuilder warningMsg = new StringBuilder();
+            for (int i = 0; i < stockResponse.getWarnings().size(); i++) {
+                StockWarningItem w = stockResponse.getWarnings().get(i);
+                if (w.getSoLuongDuocDat() == null || w.getSoLuongDuocDat() == 0) {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã xóa khỏi giỏ hàng.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                } else {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã cập nhật lại số lượng trong giỏ.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                }
+                if (i < stockResponse.getWarnings().size() - 1) {
+                    warningMsg.append(" ");
+                }
+            }
+            model.addAttribute("stockWarning", warningMsg.toString());
+        }
+
         KhachHang khachHang = khachHangService.getById(userId);
         model.addAttribute("title", "Thanh toán - WatchAura");
         model.addAttribute("content", "user/thanh-toan :: content");
@@ -181,6 +209,36 @@ public class UserCheckoutController {
             redirect.addFlashAttribute("error", "Giỏ hàng trống.");
             return "redirect:/gio-hang";
         }
+
+        CheckoutStockResponse stockResponse = hoaDonService.checkAndAdjustStockBeforeCheckout(cart.getId(), userId);
+
+        if (stockResponse.hasWarnings()) {
+            cart = gioHangService.getOrCreateCart(userId);
+            if (cart.getItems() == null || cart.getItems().isEmpty()) {
+                redirect.addFlashAttribute("error", "Tất cả sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.");
+                return "redirect:/gio-hang";
+            }
+
+            StringBuilder warningMsg = new StringBuilder();
+            for (int i = 0; i < stockResponse.getWarnings().size(); i++) {
+                StockWarningItem w = stockResponse.getWarnings().get(i);
+                if (w.getSoLuongDuocDat() == null || w.getSoLuongDuocDat() == 0) {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã xóa khỏi giỏ hàng.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                } else {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã cập nhật lại số lượng trong giỏ.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                }
+                if (i < stockResponse.getWarnings().size() - 1) {
+                    warningMsg.append(" ");
+                }
+            }
+            redirect.addFlashAttribute("stockWarning", warningMsg.toString());
+            return "redirect:/thanh-toan";
+        }
+
+        cart = gioHangService.getOrCreateCart(userId);
+
         if (result.hasErrors()) {
             model.addAttribute("title", "Thanh toán - WatchAura");
             model.addAttribute("content", "user/thanh-toan :: content");
@@ -201,7 +259,7 @@ public class UserCheckoutController {
                 try {
                     voucherId = Integer.parseInt(voucherValue);
                     // Nếu là số, kiểm tra voucher có tồn tại không
-                    var voucher = voucherService.findById(voucherId);
+                    Voucher voucher = voucherService.findById(voucherId);
                     if (voucher == null) {
                         throw new RuntimeException("Voucher không tồn tại hoặc không hợp lệ.");
                     }

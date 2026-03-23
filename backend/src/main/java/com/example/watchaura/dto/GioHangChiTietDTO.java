@@ -23,6 +23,10 @@ public class GioHangChiTietDTO {
     private Integer soLuong;
     /** Số lượng tồn kho (để hiển thị giới hạn trên UI) */
     private Integer soLuongTon;
+    /** Số lượng khả dụng = tồn kho - đã đặt (giữ hàng) */
+    private Integer soLuongKhaDung;
     private BigDecimal thanhTien;
     private String tenDanhMuc;
+    /** Mô tả biến thể ngắn (màu, kích thước, dây, loại máy) để phân biệt trong giỏ */
+    private String moTaBienThe;
 }
