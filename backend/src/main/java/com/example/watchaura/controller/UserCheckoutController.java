@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.config.VNPayProperties;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.CheckoutStockResponse;
 import com.example.watchaura.dto.StockWarningItem;
@@ -52,6 +53,7 @@ public class UserCheckoutController {
     private final VNPayService vnPayService;
     private final VoucherService voucherService;
     private final DiaChiService diaChiService;
+    private final VNPayProperties vnPayProperties;
 
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
@@ -294,7 +296,11 @@ public class UserCheckoutController {
 
             if (isVnPay) {
                 String baseUrl = getBaseUrl(httpRequest);
-                String returnUrl = baseUrl + "/thanh-toan/vnpay/return";
+                String returnUrl = vnPayProperties.getReturnUrl();
+                // Nếu return URL là localhost, thay thế bằng base URL thực tế
+                if (returnUrl.contains("localhost") || returnUrl.contains("127.0.0.1")) {
+                    returnUrl = baseUrl + "/thanh-toan/vnpay/return";
+                }
                 long amountVnd = hoaDon.getTongTienThanhToan() != null ? hoaDon.getTongTienThanhToan().longValue() : 0L;
                 String orderInfo = "Thanh toan don hang " + hoaDon.getMaDonHang();
                 String clientIp = getClientIp(httpRequest);
@@ -438,6 +444,7 @@ public class UserCheckoutController {
     public String vnpayReturn(
             HttpServletRequest request,
             HttpSession session,
+            Model model,
             RedirectAttributes redirect) {
         Map<String, String> params = vnPayService.getReturnParams(request);
         String vnpTxnRef = params.get("vnp_TxnRef");
@@ -462,14 +469,21 @@ public class UserCheckoutController {
                     session.removeAttribute("pendingVnPayCartId");
                     session.removeAttribute("pendingVnPayUserId");
                 }
+                // Redirect sang trang thành công với mã đơn hàng
                 return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDon.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
             }
 
+            // Thanh toán thất bại
             hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "DA_HUY");
             session.removeAttribute("pendingVnPayCartId");
             session.removeAttribute("pendingVnPayUserId");
-            redirect.addFlashAttribute("error", "Thanh toán VN Pay thất bại hoặc đã hủy. Đơn hàng đã được hủy. Bạn có thể đặt lại từ giỏ hàng.");
-            return "redirect:/gio-hang";
+
+            // Hiển thị trang kết quả với thông tin từ VNPay
+            model.addAttribute("title", "Kết quả thanh toán - WatchAura");
+            model.addAttribute("content", "user/vnpay-result :: content");
+            model.addAttribute("vnpParams", params);
+            model.addAttribute("maDonHang", vnpTxnRef);
+            return "layout/user-layout";
         } catch (Exception e) {
             redirect.addFlashAttribute("error", "Xử lý kết quả thanh toán thất bại: " + (e.getMessage() != null ? e.getMessage() : "Vui lòng liên hệ hỗ trợ."));
             return "redirect:/thanh-toan";
