@@ -21,4 +21,5 @@ public class HoaDonChiTietDTO {
     private BigDecimal thanhTien;
     private String hinhAnh;
     private String tenBienThe;
+    private Integer soLuongKhaDung; // tồn kho khả dụng hiện tại của sản phẩm chi tiết
 }

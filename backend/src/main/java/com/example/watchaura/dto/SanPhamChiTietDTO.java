@@ -25,10 +25,13 @@ public class SanPhamChiTietDTO {
     private Integer idLoaiMay;
     private String tenLoaiMay;
     private Integer soLuongTon;
+    private Integer soLuongDaDat;
+    private Integer soLuongKhaDung;
     private BigDecimal giaBan;
     private Double duongKinh;
     private Integer doChiuNuoc;
     private Double beRongDay;
     private Double trongLuong;
     private Boolean trangThai;
+    private String hinhAnh;
 }

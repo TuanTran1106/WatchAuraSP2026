@@ -3,6 +3,7 @@ package com.example.watchaura.service;
 import com.example.watchaura.dto.DanhGiaDTO;
 
 import java.util.List;
+import java.util.Map;
 
 public interface DanhGiaService {
     List<DanhGiaDTO> getBySanPhamChiTietId(Integer sanPhamChiTietId);

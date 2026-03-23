@@ -1,7 +1,3 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<body>
-
 <div th:fragment="content" class="product-detail-page" th:with="sp=${sp}">
     <div class="container">
         <nav class="breadcrumb-wrap" aria-label="breadcrumb">
@@ -43,10 +39,12 @@
                             <span class="price-value" th:if="${variants == null or variants.isEmpty() or variants[0].giaBan == null}">Liên hệ để biết giá</span>
                         </div>
                     </div>
-                    <div class="mb-3">
+        <div class="mb-3" th:with="v0=${variants != null and !variants.isEmpty() ? variants[0] : null},
+                                  tongTon=${tongSoLuong != null ? tongSoLuong : 0}">
                         <span class="stock-status"
-                              th:classappend="${variants != null and !variants.isEmpty() ? ' in-stock' : ' out-of-stock'}"
-                              th:text="${variants != null and !variants.isEmpty() ? 'Còn hàng' : 'Hết hàng'}">Trạng thái</span>
+                              th:classappend="${variants != null and !variants.isEmpty() and tongTon > 0 ? 'in-stock' : 'out-of-stock'}"
+                              th:text="${variants != null and !variants.isEmpty() and tongTon > 0 ? 'Còn hàng' : 'Hết hàng'}"
+                              id="mainStockStatus">Trạng thái</span>
                     </div>
                     <div class="mb-3">
                         <small class="text-muted">
@@ -66,11 +64,13 @@
                     <div class="variants-section" th:if="${variants != null and !variants.isEmpty()}">
                         <h5><i class="fas fa-layer-group" style="margin-right: 0.5rem;"></i>Chọn biến thể</h5>
                         <div class="variants-grid" role="group" aria-label="Chọn phiên bản sản phẩm">
-                            <div th:each="v, iterStat : ${variants}" class="variant-box"
-                                 th:classappend="${iterStat.first ? 'variant-box--active' : ''}"
+                            <div th:each="v, iterStat : ${variants}"
+                                 class="variant-box"
+                                 th:classappend="${iterStat.first ? 'variant-box--active' : ''} + ${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? ' variant-box--disabled' : ''}"
                                  th:attr="data-variant-id=${v.id},
                                           data-gia-ban=${v.giaBan != null ? v.giaBan : ''},
                                           data-so-luong-ton=${v.soLuongTon != null ? v.soLuongTon : 0},
+                                          data-so-luong-kha-dung=${v.soLuongKhaDung != null ? v.soLuongKhaDung : 0},
                                           data-mau-sac=${v.tenMauSac},
                                           data-kich-thuoc=${v.tenKichThuoc},
                                           data-chat-lieu-day=${v.tenChatLieuDay},
@@ -78,8 +78,10 @@
                                           data-duong-kinh=${v.duongKinh},
                                           data-do-chiu-nuoc=${v.doChiuNuoc},
                                           data-be-rong-day=${v.beRongDay},
-                                          data-trong-luong=${v.trongLuong}"
-                                 th:data-disabled="${v.soLuongTon == null or v.soLuongTon == 0}">
+                                          data-trong-luong=${v.trongLuong},
+                                          data-disabled=${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? 'true' : 'false'}"
+                                 th:onclick="'window.selectVariantBox(this)'"
+                                 th:style="${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? 'cursor:not-allowed;opacity:0.6;' : 'cursor:pointer'}">
                                 <span class="variant-box__label">
                                     <span th:if="${v.tenMauSac != null}" th:text="${v.tenMauSac}">Màu</span>
                                     <span th:if="${v.tenMauSac != null and v.tenKichThuoc != null}"> / </span>
@@ -88,9 +90,9 @@
                                 </span>
                                 <span class="variant-box__price" th:text="${v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Liên hệ'}">Giá</span>
                                 <span class="variant-box__stock"
-                                      th:classappend="${v.soLuongTon != null and v.soLuongTon > 10 ? 'stock-ok' : (v.soLuongTon != null and v.soLuongTon > 0 ? 'stock-low' : 'stock-none')}">
-                                    <span th:if="${v.soLuongTon != null and v.soLuongTon > 0}" th:text="'Còn ' + ${v.soLuongTon}">Còn</span>
-                                    <span th:if="${v.soLuongTon == null or v.soLuongTon == 0}">Hết hàng</span>
+                                      th:classappend="${v.soLuongKhaDung != null and v.soLuongKhaDung > 10 ? 'stock-ok' : (v.soLuongKhaDung != null and v.soLuongKhaDung > 0 ? 'stock-low' : 'stock-none')}">
+                                    <span th:if="${v.soLuongKhaDung != null and v.soLuongKhaDung > 0}" th:text="'Còn ' + ${v.soLuongKhaDung}">Còn</span>
+                                    <span th:if="${v.soLuongKhaDung == null or v.soLuongKhaDung == 0}">Hết hàng</span>
                                 </span>
                             </div>
                         </div>
@@ -102,17 +104,24 @@
                             <input type="hidden" name="sanPhamChiTietId" th:value="${variants != null and !variants.isEmpty() ? variants[0].id : ''}" class="input-variant-id">
                             <div class="product-detail__field" style="margin-bottom: 1rem;">
                                 <label class="product-detail__label">Số lượng:</label>
-                                <div class="qty-group">
-                                    <button type="button" class="qty-btn-minus" aria-label="Giảm">−</button>
-                                    <input type="number" class="quantity-input" name="soLuong" value="1" min="1" th:max="${variants != null and !variants.isEmpty() ? variants[0].soLuongTon : (tongSoLuong != null ? tongSoLuong : 99)}">
-                                    <button type="button" class="qty-btn-plus" aria-label="Tăng">+</button>
+                                <div class="qty-group" id="productQtyGroup" data-qty-root>
+                                    <button type="button" class="qty-btn-minus" aria-label="Giảm" data-qty-action="minus">−</button>
+                                    <input type="number" class="quantity-input" name="soLuong" value="1" min="1" inputmode="numeric" pattern="[0-9]*"
+                                           th:max="${variants != null and !variants.isEmpty() ? variants[0].soLuongKhaDung : (tongSoLuong != null ? tongSoLuong : 99)}">
+                                    <button type="button" class="qty-btn-plus" aria-label="Tăng" data-qty-action="plus">+</button>
                                 </div>
-                                <small class="text-muted" style="margin-left: 0.5rem;">
-                                    Còn lại: <span class="fw-bold stock-remaining" th:text="${variants != null and !variants.isEmpty() ? variants[0].soLuongTon : (tongSoLuong != null ? tongSoLuong : 0)}">0</span>
+                                <small class="text-muted product-detail__stock-hint" style="margin-left: 0.5rem;">
+                                    <span class="product-detail__stock-line product-detail__stock-line--total">Còn lại : <span class="fw-bold stock-total-variants" th:text="${tongSoLuong != null ? tongSoLuong : 0}">0</span></span>
                                 </small>
                             </div>
-                            <button type="submit" class="btn-add-cart" id="btnAddToCart">
-                                <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+                            <button type="submit" class="btn-add-cart" id="btnAddToCart"
+                                    th:disabled="${variants[0].soLuongKhaDung == null or variants[0].soLuongKhaDung == 0}">
+                                <th:block th:if="${variants[0].soLuongKhaDung != null and variants[0].soLuongKhaDung > 0}">
+                                    <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+                                </th:block>
+                                <th:block th:unless="${variants[0].soLuongKhaDung != null and variants[0].soLuongKhaDung > 0}">
+                                    Hết hàng
+                                </th:block>
                             </button>
                             <a th:href="@{/san-pham}" class="btn btn--outline btn-back">Quay lại danh sách</a>
                         </form>
@@ -248,185 +257,237 @@
     </div>
     <script th:inline="javascript">
     (function() {
-        var page = document.querySelector('.product-detail-page');
-        if (!page) return;
+        var productId = /*[[${sp.id}]]*/ null;
 
         function formatNumber(n) {
             if (n == null) return '';
             return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        function initVariants() {
-            var boxes = page.querySelectorAll('.variant-box');
-            var row = page.querySelector('.specs-features-row');
-            var specContainer = page.querySelector('.product-specs');
-            var inputVariantId = page.querySelector('.input-variant-id');
-            var priceEl = page.querySelector('.price-value');
-            var stockRemaining = page.querySelector('.stock-remaining');
-            var qtyInput = page.querySelector('.quantity-input');
-            if (!boxes.length || !inputVariantId) return;
+        function getPage(el) {
+            if (!el) return null;
+            return el.closest ? el.closest('.product-detail-page') : null;
+        }
 
-            function updateSpecs(box) {
-                if (!specContainer || !row) return;
-                var spDuongKinh = row.getAttribute('data-sp-duong-kinh');
-                var spDoChiuNuoc = row.getAttribute('data-sp-do-chiu-nuoc');
-                var get = function(attr) { return box.getAttribute(attr) || ''; };
-                var specs = {
-                    mauSac: get('data-mau-sac') || 'Chưa cập nhật',
-                    kichThuoc: get('data-kich-thuoc') || 'Chưa cập nhật',
-                    chatLieuDay: get('data-chat-lieu-day') || 'Chưa cập nhật',
-                    loaiMay: get('data-loai-may') || 'Chưa cập nhật',
-                    duongKinh: (get('data-duong-kinh') || spDuongKinh) ? (get('data-duong-kinh') || spDuongKinh) + ' mm' : 'Chưa cập nhật',
-                    doChiuNuoc: (get('data-do-chiu-nuoc') || spDoChiuNuoc) ? (get('data-do-chiu-nuoc') || spDoChiuNuoc) + ' m' : 'Chưa cập nhật',
-                    beRongDay: get('data-be-rong-day') ? get('data-be-rong-day') + ' mm' : 'Chưa cập nhật',
-                    trongLuong: get('data-trong-luong') ? get('data-trong-luong') + ' g' : 'Chưa cập nhật'
+        window.selectVariantBox = function(box) {
+            if (!box) return;
+            var root = getPage(box) || document.body;
+
+            if (box.classList.contains('variant-box--disabled')) {
+                if (typeof window.showToast === 'function') window.showToast('Biến thể này đã hết hàng!', 'warning');
+                return;
+            }
+
+            root.querySelectorAll('.variant-box').forEach(function(b) { b.classList.remove('variant-box--active'); });
+            box.classList.add('variant-box--active');
+
+            var hid = root.querySelector('.input-variant-id');
+            var pEl = root.querySelector('.price-value');
+            var sRem = root.querySelector('.stock-remaining');
+            var qIn = root.querySelector('.quantity-input');
+            var btn = root.querySelector('#btnAddToCart');
+            var statusEl = root.querySelector('#mainStockStatus');
+
+            var id = box.getAttribute('data-variant-id');
+            var giaBan = box.getAttribute('data-gia-ban');
+            var soLuong = box.getAttribute('data-so-luong-kha-dung') || '0';
+
+            if (hid) hid.value = id || '';
+
+            if (pEl) {
+                pEl.textContent = (giaBan && parseFloat(giaBan) > 0) ? formatNumber(Math.round(parseFloat(giaBan))) + ' ₫' : 'Liên hệ để biết giá';
+            }
+
+            var maxStock = parseInt(soLuong, 10) || 0;
+            if (sRem) sRem.textContent = soLuong;
+            if (qIn) {
+                qIn.setAttribute('max', maxStock);
+                var cv = parseInt(qIn.value, 10) || 1;
+                qIn.value = (cv > maxStock || maxStock <= 0) ? (maxStock > 0 ? maxStock : 1) : cv;
+            }
+
+            if (btn) {
+                btn.disabled = maxStock <= 0;
+                btn.textContent = maxStock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng';
+                btn.style.background = maxStock <= 0 ? '#ccc' : '';
+            }
+
+            if (statusEl) {
+                statusEl.textContent = maxStock > 0 ? 'Còn hàng' : 'Hết hàng';
+                statusEl.className = 'stock-status ' + (maxStock > 0 ? 'in-stock' : 'out-of-stock');
+            }
+
+            var row = root.querySelector('.specs-features-row');
+            var specContainer = root.querySelector('.product-specs');
+            if (specContainer && row) {
+                var spDDK = row.getAttribute('data-sp-duong-kinh');
+                var spDCN = row.getAttribute('data-sp-do-chiu-nuoc');
+                var g = function(a) { return box.getAttribute(a) || ''; };
+                var sm = {
+                    mauSac: g('data-mau-sac') || 'Chưa cập nhật',
+                    kichThuoc: g('data-kich-thuoc') || 'Chưa cập nhật',
+                    chatLieuDay: g('data-chat-lieu-day') || 'Chưa cập nhật',
+                    loaiMay: g('data-loai-may') || 'Chưa cập nhật',
+                    duongKinh: (g('data-duong-kinh') || spDDK) ? (g('data-duong-kinh') || spDDK) + ' mm' : 'Chưa cập nhật',
+                    doChiuNuoc: (g('data-do-chiu-nuoc') || spDCN) ? (g('data-do-chiu-nuoc') || spDCN) + ' m' : 'Chưa cập nhật',
+                    beRongDay: g('data-be-rong-day') ? g('data-be-rong-day') + ' mm' : 'Chưa cập nhật',
+                    trongLuong: g('data-trong-luong') ? g('data-trong-luong') + ' g' : 'Chưa cập nhật'
                 };
                 specContainer.querySelectorAll('[data-spec]').forEach(function(el) {
                     var key = el.getAttribute('data-spec');
-                    if (specs[key] !== undefined) el.textContent = specs[key];
+                    if (sm[key] !== undefined) el.textContent = sm[key];
                 });
             }
+        };
 
-            function selectBox(box) {
-                var disabled = box.getAttribute('data-disabled') === 'true';
-                if (disabled) return;
-                boxes.forEach(function(b) { b.classList.remove('variant-box--active'); });
-                box.classList.add('variant-box--active');
-                var id = box.getAttribute('data-variant-id');
-                var giaBan = box.getAttribute('data-gia-ban');
-                var soLuong = box.getAttribute('data-so-luong-ton') || '0';
-                inputVariantId.value = id || '';
-                if (priceEl) {
-                    if (giaBan && parseFloat(giaBan) > 0) {
-                        priceEl.textContent = formatNumber(Math.round(parseFloat(giaBan))) + ' ₫';
-                        priceEl.style.display = '';
-                    } else {
-                        priceEl.textContent = 'Liên hệ để biết giá';
-                    }
-                }
-                if (stockRemaining) stockRemaining.textContent = soLuong;
-                if (qtyInput) {
-                    var max = parseInt(soLuong, 10) || 99;
-                    qtyInput.setAttribute('max', max);
-                    var v = parseInt(qtyInput.value, 10) || 1;
-                    if (v > max) qtyInput.value = max;
-                }
-                updateSpecs(box);
-            }
-
-            boxes.forEach(function(box) {
-                box.addEventListener('click', function() { selectBox(box); });
-            });
-        }
-
-        function initQty() {
-            var minus = page.querySelector('.qty-btn-minus');
-            var plus = page.querySelector('.qty-btn-plus');
-            var input = page.querySelector('.quantity-input');
+        function onQtyClick(e) {
+            var btn = e.target.closest('[data-qty-action]');
+            if (!btn) return;
+            var group = btn.closest('.qty-group');
+            if (!group) return;
+            var input = group.querySelector('.quantity-input');
             if (!input) return;
-            if (minus) minus.addEventListener('click', function() {
-                var v = parseInt(input.value, 10) || 1;
-                if (v > 1) input.value = v - 1;
-            });
-            if (plus) plus.addEventListener('click', function() {
-                var v = parseInt(input.value, 10) || 1;
-                var max = parseInt(input.getAttribute('max'), 10) || 99;
-                if (v < max) input.value = v + 1;
-            });
+            var current = parseInt(input.value, 10) || 1;
+            var max = parseInt(input.getAttribute('max'), 10) || 999;
+            if (btn.getAttribute('data-qty-action') === 'minus' && current > 1) input.value = current - 1;
+            else if (btn.getAttribute('data-qty-action') === 'plus' && (max <= 0 || current < max)) input.value = current + 1;
+        }
+        document.addEventListener('click', onQtyClick);
+
+        var pollInterval = null;
+        var lastStock = {};
+
+        function checkStock() {
+            if (!productId) return;
+            var page = document.querySelector('.product-detail-page');
+            if (!page) return;
+            fetch('/api/san-pham-chi-tiet/san-pham/' + productId)
+                .then(function(r) { return r.json(); })
+                .then(function(variants) {
+                    if (!variants || !Array.isArray(variants)) return;
+                    var sum = 0;
+                    variants.forEach(function(v) {
+                        var vid = v.id;
+                        var stock = v.soLuongKhaDung != null ? v.soLuongKhaDung : 0;
+                        sum += Math.max(0, stock);
+                        var prev = lastStock[vid];
+                        lastStock[vid] = stock;
+
+                        var box = page.querySelector('.variant-box[data-variant-id="' + vid + '"]');
+                        if (!box) return;
+
+                        var stockEl = box.querySelector('.variant-box__stock');
+                        if (stockEl) {
+                            stockEl.className = 'variant-box__stock ' + (stock > 10 ? 'stock-ok' : (stock > 0 ? 'stock-low' : 'stock-none'));
+                            stockEl.innerHTML = stock > 0 ? 'Còn ' + stock : 'Hết hàng';
+                        }
+
+                        box.setAttribute('data-so-luong-kha-dung', stock);
+                        if (stock <= 0) {
+                            box.setAttribute('data-disabled', 'true');
+                            box.classList.add('variant-box--disabled');
+                        } else {
+                            box.removeAttribute('data-disabled');
+                            box.classList.remove('variant-box--disabled');
+                        }
+
+                        if (box.classList.contains('variant-box--active')) {
+                            var sRem = page.querySelector('.stock-remaining');
+                            var qIn = page.querySelector('.quantity-input');
+                            var btn = page.querySelector('#btnAddToCart');
+                            if (sRem) sRem.textContent = stock;
+                            if (qIn) {
+                                qIn.setAttribute('max', stock);
+                                var cv = parseInt(qIn.value, 10) || 1;
+                                qIn.value = (cv > stock || stock <= 0) ? (stock > 0 ? stock : 1) : cv;
+                            }
+                            if (btn) {
+                                btn.disabled = stock <= 0;
+                                btn.textContent = stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng';
+                                btn.style.background = stock <= 0 ? '#ccc' : '';
+                            }
+                        }
+
+                        if (prev !== undefined && prev !== stock) {
+                            if (prev <= 0 && stock > 0 && typeof window.showToast === 'function') window.showToast('Sản phẩm đã có hàng trở lại!', 'success');
+                            else if (prev > 0 && stock <= 0 && typeof window.showToast === 'function') window.showToast('Sản phẩm đã hết hàng!', 'warning');
+                        }
+                    });
+                    var totalEl = page.querySelector('.stock-total-variants');
+                    if (totalEl) totalEl.textContent = sum;
+                })
+                .catch(function(err) { console.error('Lỗi kiểm tra tồn kho:', err); });
         }
 
         function initAddToCart() {
+            var page = document.querySelector('.product-detail-page');
+            if (!page) return;
             var form = page.querySelector('.product-detail-form');
             var input = page.querySelector('.quantity-input');
             var btn = page.querySelector('#btnAddToCart');
             if (!form || !input) return;
+
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 var qty = parseInt(input.value, 10) || 1;
                 var max = parseInt(input.getAttribute('max'), 10) || 999;
+                if (max <= 0) {
+                    if (typeof window.showToast === 'function') window.showToast('Sản phẩm này đã hết hàng.', 'error');
+                    else alert('Sản phẩm này đã hết hàng.');
+                    return;
+                }
                 if (qty > max) {
                     input.value = max;
-                    var msg = 'Số lượng vượt quá tồn kho. Hiện chỉ còn ' + max + ' sản phẩm.';
-                    if (typeof window.showToast === 'function') window.showToast(msg, 'error');
-                    else alert(msg);
-                    fetch('/gio-hang/so-luong').then(function(r) { return r.json(); }).then(function(data) {
-                        var el = document.querySelector('.nav-cart__count');
-                        if (el && data.soLuongGioHang !== undefined) {
-                            var c = data.soLuongGioHang;
-                            el.textContent = c;
-                            el.style.display = c > 0 ? '' : 'none';
-                        }
-                    }).catch(function() {});
-                    return false;
+                    if (typeof window.showToast === 'function') window.showToast('Số lượng vượt quá tồn kho. Hiện chỉ còn ' + max + '.', 'error');
+                    return;
                 }
                 var formData = new FormData(form);
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang thêm...';
-                }
-                var isAjax = form.classList.contains('ajax-add-to-cart');
-                var headers = {};
-                if (isAjax) {
-                    headers['X-Requested-With'] = 'XMLHttpRequest';
-                }
+                if (btn) { btn.disabled = true; btn.textContent = 'Đang thêm...'; }
                 fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: headers
-                }).then(function(res) {
-                    if (isAjax) {
-                        return res.json();
-                    } else {
-                        return res.text().then(function(text) {
-                            if (text.indexOf('redirect:') === 0) {
-                                window.location.href = text.substring(9);
-                            }
-                            return text;
-                        });
-                    }
-                }).then(function(data) {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng';
-                    }
-                    if (isAjax && data) {
-                        if (data.success) {
-                            if (typeof window.showToast === 'function') {
-                                window.showToast(data.message || 'Đã thêm sản phẩm vào giỏ hàng!', 'success');
-                            }
-                            var el = document.querySelector('.nav-cart__count');
-                            if (el && data.soLuongGioHang !== undefined) {
-                                el.textContent = data.soLuongGioHang;
-                                el.style.display = data.soLuongGioHang > 0 ? '' : 'none';
-                            }
-                        } else {
-                            if (typeof window.showToast === 'function') {
-                                window.showToast(data.error || 'Có lỗi xảy ra!', 'error');
-                            } else {
-                                alert(data.error || 'Có lỗi xảy ra!');
-                            }
-                        }
-                    }
-                }).catch(function() {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng';
-                    }
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
-                    } else {
-                        alert('Có lỗi xảy ra. Vui lòng thử lại!');
-                    }
-                });
-                return false;
+                    method: 'POST', body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function(r) { return r.json(); })
+                  .then(function(data) {
+                      if (data.success) {
+                          if (typeof window.showToast === 'function') window.showToast(data.message || 'Đã thêm vào giỏ!', 'success');
+                          var el = document.querySelector('.nav-cart__count');
+                          if (el && data.soLuongGioHang !== undefined) { el.textContent = data.soLuongGioHang; el.style.display = data.soLuongGioHang > 0 ? '' : 'none'; }
+                          checkStock();
+                      } else {
+                          if (typeof window.showToast === 'function') window.showToast(data.error || 'Có lỗi xảy ra!', 'error');
+                          else alert(data.error || 'Có lỗi xảy ra!');
+                      }
+                      if (btn) { btn.disabled = false; btn.textContent = 'Thêm vào giỏ hàng'; }
+                  })
+                  .catch(function() {
+                      if (typeof window.showToast === 'function') window.showToast('Có lỗi xảy ra!', 'error');
+                      if (btn) { btn.disabled = false; btn.textContent = 'Thêm vào giỏ hàng'; }
+                  });
             });
         }
 
         function init() {
-            initVariants();
-            initQty();
+            var page = document.querySelector('.product-detail-page');
+            if (!page) return;
+            var boxes = page.querySelectorAll('.variant-box');
+            var hid = page.querySelector('.input-variant-id');
+
+            var target = null;
+            if (hid && hid.value) {
+                boxes.forEach(function(b) { if (b.getAttribute('data-variant-id') === String(hid.value)) target = b; });
+            }
+            if (!target) {
+                boxes.forEach(function(b) { if (!target && !b.classList.contains('variant-box--disabled')) target = b; });
+            }
+            if (!target) target = boxes[0];
+            if (target) window.selectVariantBox(target);
+
             initAddToCart();
+            if (pollInterval) clearInterval(pollInterval);
+            checkStock();
+            pollInterval = setInterval(checkStock, 5000);
         }
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
@@ -435,6 +496,3 @@
     })();
     </script>
 </div>
-
-</body>
-</html>

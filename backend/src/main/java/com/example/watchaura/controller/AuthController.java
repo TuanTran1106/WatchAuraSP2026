@@ -63,8 +63,23 @@ public class AuthController {
             return "redirect:/dang-nhap";
         }
         session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
+        
+        // Kiểm tra chức vụ để chuyển hướng
+        String redirectUrl = "/";
+        if (kh.getChucVu() != null) {
+            String tenChucVu = kh.getChucVu().getTenChucVu();
+            if (tenChucVu != null) {
+                if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
+                    redirectUrl = "/ban-hang";
+                } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý") 
+                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
+                    redirectUrl = "/admin/san-pham";
+                }
+            }
+        }
+        
         redirect.addFlashAttribute("welcomeMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
-        return "redirect:/";
+        return "redirect:" + redirectUrl;
     }
 
     @GetMapping("/dang-xuat")

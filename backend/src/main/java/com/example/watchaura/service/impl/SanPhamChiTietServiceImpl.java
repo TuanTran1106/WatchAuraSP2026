@@ -184,6 +184,8 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         SanPhamChiTietDTO dto = new SanPhamChiTietDTO();
         dto.setId(spct.getId());
         dto.setSoLuongTon(spct.getSoLuongTon());
+        // FIFO: Số lượng khả dụng = tồn kho (không trừ giữ hàng)
+        dto.setSoLuongKhaDung(spct.getSoLuongTon() != null ? spct.getSoLuongTon() : 0);
         dto.setGiaBan(spct.getGiaBan());
         dto.setDuongKinh(spct.getDuongKinh());
         dto.setDoChiuNuoc(spct.getDoChiuNuoc());

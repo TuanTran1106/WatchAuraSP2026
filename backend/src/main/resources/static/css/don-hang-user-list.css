@@ -153,6 +153,13 @@
     color: #991b1b;
 }
 
+/* Cần xử lý (không đủ tồn kho) */
+.status-can-xu-ly {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #f59e0b;
+}
+
 /* ----- Card đơn hàng (danh sách) ----- */
 .order-list {
     display: flex;
@@ -181,6 +188,22 @@
     gap: 1rem;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid #f0f0f0;
+}
+
+.order-card__note {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    border-bottom: 1px solid #f0f0f0;
+}
+.order-card__note--warning {
+    background: #fffbeb;
+    color: #b45309;
+    border-left: 4px solid #f59e0b;
+}
+.order-card__note--warning i {
+    margin-right: 0.5rem;
+    color: #f59e0b;
 }
 
 .order-card__meta {
@@ -219,6 +242,13 @@
 
 .order-card__products-list {
     word-break: break-word;
+}
+
+.order-card__variant,
+.order-detail__variant {
+    color: #666;
+    font-weight: 400;
+    font-size: 0.92em;
 }
 
 .order-card__body {
@@ -301,6 +331,30 @@
 .btn-order--rebuy:hover {
     background: #15803d;
     color: #fff;
+}
+
+.btn-order--edit {
+    background: #d97706;
+    color: #fff;
+}
+
+.btn-order--edit:hover {
+    background: #b45309;
+    color: #fff;
+}
+
+/* Đồng bộ chiều cao với nút khác (cart.css có .btn-order--edit padding/font/margin khác) */
+.order-card__actions .btn-order {
+    line-height: 1.25;
+    min-height: 2.375rem;
+    box-sizing: border-box;
+}
+
+.order-card__actions .btn-order--edit {
+    margin-top: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 
 /* ----- Trống đơn ----- */
@@ -412,6 +466,29 @@
 .order-detail-meta__payment {
     font-weight: 500;
     color: #1a1a1a;
+}
+
+.order-detail-note {
+    margin-top: 1rem;
+}
+.order-detail-note .detail-card__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #b45309;
+}
+.order-detail-note--warning {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+.order-detail-note__text {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #92400e;
 }
 
 .order-detail-back {

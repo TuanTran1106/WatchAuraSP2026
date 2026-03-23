@@ -2,6 +2,7 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
+import com.example.watchaura.util.PaginationWindow;
 import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhachHangService;
@@ -42,6 +43,7 @@ public class HoaDonController {
         model.addAttribute("content", "admin/hoadon-list");
         model.addAttribute("list", pageResult.getContent());
         model.addAttribute("page", pageResult);
+        model.addAttribute("paginationItems", PaginationWindow.build(pageResult, 2));
         model.addAttribute("searchKeyword", q != null ? q : "");
         model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
@@ -53,11 +55,9 @@ public class HoaDonController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Model model) {
         HoaDonDTO dto = hoaDonService.getById(id);
-        String statusClass = statusToCssClass(dto.getTrangThaiDonHang());
         model.addAttribute("title", "Chi tiết hóa đơn");
         model.addAttribute("content", "admin/hoadon-detail");
         model.addAttribute("hoaDon", dto);
-        model.addAttribute("hoaDonStatusClass", statusClass);
         return "layout/admin-layout";
     }
 
@@ -65,7 +65,7 @@ public class HoaDonController {
         if (trangThai == null) return "";
         return switch (trangThai) {
             case "CHO_XAC_NHAN" -> "invoice-detail__status--cho-xac-nhan";
-            case "DANG_XU_LY" -> "invoice-detail__status--dang-xu-ly";
+            case "DA_XAC_NHAN" -> "invoice-detail__status--da-xac-nhan";
             case "DANG_GIAO" -> "invoice-detail__status--dang-giao";
             case "DA_GIAO" -> "invoice-detail__status--da-giao";
             case "DA_HUY" -> "invoice-detail__status--da-huy";
@@ -139,11 +139,34 @@ public class HoaDonController {
                                   @RequestParam(required = false) String q,
                                   @RequestParam(required = false) String trangThaiFilter,
                                   @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(required = false) String tuChiTiet,
                                   Model model,
                                   RedirectAttributes redirect,
                                   @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+        boolean veChiTiet = "1".equals(tuChiTiet)
+                || (tuChiTiet != null && "true".equalsIgnoreCase(tuChiTiet.trim()));
         try {
-            hoaDonService.updateTrangThaiDonHang(id, trangThai);
+            HoaDonDTO updated = hoaDonService.updateTrangThaiDonHang(id, trangThai);
+
+            // Kiểm tra nếu đơn bị chuyển sang "Cần xử lý" do không đủ tồn kho
+            boolean chuyenCanXuLy = "CAN_XU_LY".equals(updated.getTrangThaiDonHang())
+                    && ("DA_XAC_NHAN".equals(trangThai) || "DA THANH TOAN".equals(trangThai));
+            String msg = chuyenCanXuLy
+                    ? ("Không đủ tồn kho! Đơn hàng đã chuyển sang \"Cần xử lý\". Vui lòng liên hệ khách hàng để giảm số lượng hoặc hủy đơn.")
+                    : "Đã cập nhật trạng thái đơn hàng.";
+
+            if (veChiTiet) {
+                if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                    HoaDonDTO dto = hoaDonService.getById(id);
+                    model.addAttribute("hoaDon", dto);
+                    model.addAttribute("hoaDonStatusClass", statusToCssClass(dto.getTrangThaiDonHang()));
+                    model.addAttribute(chuyenCanXuLy ? "warning" : "message", msg);
+                    return "admin/hoadon-detail :: content";
+                }
+                redirect.addFlashAttribute(chuyenCanXuLy ? "warning" : "message", msg);
+                return "redirect:/admin/hoa-don/" + id;
+            }
+
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
                 Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable);
@@ -151,13 +174,26 @@ public class HoaDonController {
                 model.addAttribute("content", "admin/hoadon-list");
                 model.addAttribute("list", pageResult.getContent());
                 model.addAttribute("page", pageResult);
+                model.addAttribute("paginationItems", PaginationWindow.build(pageResult, 2));
                 model.addAttribute("searchKeyword", q != null ? q : "");
                 model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
-                model.addAttribute("message", "Đã cập nhật trạng thái đơn hàng.");
+                model.addAttribute(chuyenCanXuLy ? "warning" : "message", msg);
                 return "admin/hoadon-list :: content";
             }
-            redirect.addFlashAttribute("message", "Đã cập nhật trạng thái đơn hàng.");
+            redirect.addFlashAttribute(chuyenCanXuLy ? "warning" : "message", msg);
         } catch (RuntimeException e) {
+            String errorMsg = e.getMessage();
+            if (veChiTiet) {
+                if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                    HoaDonDTO dto = hoaDonService.getById(id);
+                    model.addAttribute("hoaDon", dto);
+                    model.addAttribute("hoaDonStatusClass", statusToCssClass(dto.getTrangThaiDonHang()));
+                    model.addAttribute("error", errorMsg);
+                    return "admin/hoadon-detail :: content";
+                }
+                redirect.addFlashAttribute("error", errorMsg);
+                return "redirect:/admin/hoa-don/" + id;
+            }
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
                 Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable);
@@ -165,12 +201,13 @@ public class HoaDonController {
                 model.addAttribute("content", "admin/hoadon-list");
                 model.addAttribute("list", pageResult.getContent());
                 model.addAttribute("page", pageResult);
+                model.addAttribute("paginationItems", PaginationWindow.build(pageResult, 2));
                 model.addAttribute("searchKeyword", q != null ? q : "");
                 model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
-                model.addAttribute("error", e.getMessage());
+                model.addAttribute("error", errorMsg);
                 return "admin/hoadon-list :: content";
             }
-            redirect.addFlashAttribute("error", e.getMessage());
+            redirect.addFlashAttribute("error", errorMsg);
         }
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThaiFilter != null && !trangThaiFilter.isBlank()) redirect.addAttribute("trangThai", trangThaiFilter);

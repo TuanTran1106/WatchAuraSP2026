@@ -40,7 +40,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="item : ${cart.items}" class="cart-row" th:attr="data-item-id=${item.id}, data-gia-ban=${item.giaBan != null ? item.giaBan : 0}, data-max-qty=${item.soLuongTon != null ? item.soLuongTon : 999}">
+                        <tr th:each="item : ${cart.items}" class="cart-row" th:attr="data-item-id=${item.id}, data-gia-ban=${item.giaBan != null ? item.giaBan : 0}, data-max-qty=${item.soLuongKhaDung != null ? item.soLuongKhaDung : 999}">
                             <td class="cart-table__product">
                                 <a th:if="${item.idSanPham != null}" th:href="@{/san-pham/{id}(id=${item.idSanPham})}" class="cart-table__img-link">
                                     <img th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}" th:src="@{${#strings.startsWith(item.hinhAnh, '/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}}" alt="" class="cart-table__img">
@@ -50,6 +50,7 @@
                                     <span class="cart-table__sku" th:if="${item.maSanPham != null}" th:text="|Mã: ${item.maSanPham}|">Mã: SP001</span>
                                     <a th:if="${item.idSanPham != null}" th:href="@{/san-pham/{id}(id=${item.idSanPham})}" class="cart-table__name cart-table__name--link" th:text="${item.tenSanPham}">Tên SP</a>
                                     <span th:if="${item.idSanPham == null}" class="cart-table__name" th:text="${item.tenSanPham}">Tên SP</span>
+                                    <p class="cart-table__variants" th:if="${item.moTaBienThe != null and !item.moTaBienThe.isEmpty()}" th:text="${item.moTaBienThe}">Màu · Kích thước</p>
                                 </div>
                             </td>
                             <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
@@ -61,13 +62,13 @@
                                         <button type="submit" class="qty-btn qty-btn--minus" aria-label="Giảm">−</button>
                                     </form>
                                     <span class="qty-controls__num cart-qty-display" th:text="${item.soLuong}">1</span>
-                                    <!-- Tăng: max = tồn kho -->
+                                    <!-- Tăng: max = tồn kho khả dụng -->
                                     <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update cart-form-plus">
                                         <input type="hidden" name="soLuong" th:value="${item.soLuong + 1}">
-                                        <button type="submit" class="qty-btn qty-btn--plus" aria-label="Tăng" th:disabled="${item.soLuongTon != null and item.soLuong >= item.soLuongTon}" title="Đã đạt tối đa tồn kho">+</button>
+                                        <button type="submit" class="qty-btn qty-btn--plus" aria-label="Tăng" th:disabled="${item.soLuongKhaDung != null and item.soLuong >= item.soLuongKhaDung}" title="Đã đạt tối đa tồn kho">+</button>
                                     </form>
                                 </div>
-                                <p class="cart-table__max-qty" th:if="${item.soLuongTon != null}" th:text="|Tối đa: ${item.soLuongTon} SP|">Tối đa</p>
+                                <p class="cart-table__max-qty" th:text="|Còn ${item.soLuongKhaDung != null ? item.soLuongKhaDung : 0} sản phẩm|">Còn 0 sản phẩm</p>
                             </td>
                             <td class="cart-table__total cart-line-total" th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
                             <td class="cart-table__remove">

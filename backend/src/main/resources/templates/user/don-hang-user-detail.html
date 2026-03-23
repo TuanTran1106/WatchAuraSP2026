@@ -58,7 +58,10 @@
                             </thead>
                             <tbody id="orderItemsBody">
                                 <tr th:each="item : ${hoaDon.items}">
-                                    <td class="cart-table__name" th:text="${item.tenSanPham}"></td>
+                                    <td class="cart-table__name">
+                                        <span th:text="${item.tenSanPham}"></span>
+                                        <span class="order-detail__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
+                                    </td>
                                     <td th:text="${item.soLuong}"></td>
                                     <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
                                     <td class="cart-table__total" th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|"></td>
@@ -89,6 +92,13 @@
                     </div>
                 </section>
 
+                <!-- Banner chỉ hiện khi Cần xử lý có ghi chú, hoặc ghi chú là thông báo không đủ tồn kho -->
+                <section id="orderDetailNoteSection" class="order-detail-card order-detail-note order-detail-note--warning"
+                         th:style="${((hoaDon.trangThaiDonHang == 'CAN_XU_LY' and hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()) or (hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho')))} ? 'display:block' : 'display:none'">
+                    <h2 class="detail-card__heading"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
+                    <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
+                </section>
+
                 <!-- Trạng thái & thanh toán -->
                 <section class="order-detail-card order-detail-meta">
                     <div class="order-detail-meta__item">
@@ -96,15 +106,17 @@
                         <span class="order-detail-meta__badge order-status"
                               id="orderStatus"
                               th:classappend="
-                                ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'status-waiting' :
-                                (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'status-processing' :
+                                ${hoaDon.trangThaiDonHang == 'CAN_XU_LY'} ? 'status-can-xu-ly' :
+                                (${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'status-waiting' :
+                                (${hoaDon.trangThaiDonHang == 'DA_XAC_NHAN'} ? 'status-processing' :
                                 (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'status-shipping' :
-                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'status-done' : 'status-cancel')))"
+                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'status-done' : 'status-cancel'))))"
                               th:text="
-                                ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'Chờ xác nhận' :
-                                (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'Đang xử lý' :
+                                ${hoaDon.trangThaiDonHang == 'CAN_XU_LY'} ? 'Cần xử lý' :
+                                (${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'Chờ xác nhận' :
+                                (${hoaDon.trangThaiDonHang == 'DA_XAC_NHAN'} ? 'Đã xác nhận' :
                                 (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'Đang giao' :
-                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'Đã giao' : 'Đã hủy')))">
+                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'Đã giao' : 'Đã hủy'))))">
                         </span>
                     </div>
                     <div class="order-detail-meta__item">
@@ -136,8 +148,9 @@
 
         function getTenTrangThai(trangThai) {
             var map = {
+                'CAN_XU_LY': 'Cần xử lý',
                 'CHO_XAC_NHAN': 'Chờ xác nhận',
-                'DANG_XU_LY': 'Đang xử lý',
+                'DA_XAC_NHAN': 'Đã xác nhận',
                 'DANG_GIAO': 'Đang giao',
                 'DA_GIAO': 'Đã giao',
                 'DA_HUY': 'Đã hủy'
@@ -147,8 +160,9 @@
 
         function getStatusClass(trangThai) {
             var map = {
+                'CAN_XU_LY': 'status-can-xu-ly',
                 'CHO_XAC_NHAN': 'status-waiting',
-                'DANG_XU_LY': 'status-processing',
+                'DA_XAC_NHAN': 'status-processing',
                 'DANG_GIAO': 'status-shipping',
                 'DA_GIAO': 'status-done',
                 'DA_HUY': 'status-cancel'
@@ -192,7 +206,8 @@
                         itemsBody.innerHTML = '';
                         data.items.forEach(function(item) {
                             var row = document.createElement('tr');
-                            row.innerHTML = '<td class="cart-table__name">' + (item.tenSanPham || '') + '</td>' +
+                            var nameCell = (item.tenSanPham || '') + (item.tenBienThe ? '<span class="order-detail__variant"> — ' + item.tenBienThe + '</span>' : '');
+                            row.innerHTML = '<td class="cart-table__name">' + nameCell + '</td>' +
                                 '<td>' + (item.soLuong || 0) + '</td>' +
                                 '<td class="cart-table__price">' + formatCurrencyVnd(item.donGia) + '</td>' +
                                 '<td class="cart-table__total">' + formatCurrencyVnd(item.thanhTien) + '</td>';
@@ -211,8 +226,20 @@
 
                     var orderStatus = document.getElementById('orderStatus');
                     if (orderStatus) {
-                        orderStatus.textContent = data.tenTrangThai || '';
+                        orderStatus.textContent = data.tenTrangThai || getTenTrangThai(data.trangThaiDonHang) || '';
                         orderStatus.className = 'order-detail-meta__badge order-status ' + getStatusClass(data.trangThaiDonHang);
+                    }
+
+                    var noteSection = document.getElementById('orderDetailNoteSection');
+                    var noteText = document.getElementById('orderDetailNoteText');
+                    if (noteSection && noteText) {
+                        var hasStockWarning = data.ghiChu && (data.trangThaiDonHang === 'CAN_XU_LY' || (data.ghiChu.indexOf('Không đủ tồn kho') !== -1));
+                        if (hasStockWarning) {
+                            noteSection.style.display = 'block';
+                            noteText.textContent = data.ghiChu;
+                        } else {
+                            noteSection.style.display = 'none';
+                        }
                     }
 
                     var paymentMethod = document.getElementById('paymentMethod');
