@@ -34,7 +34,6 @@ import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.example.watchaura.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -458,6 +457,64 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Lỗi khi xuất PDF: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi không xác định khi xuất PDF.", e);
+        }
+    }
+
+    @Override
+    public byte[] exportRevenueReportPdf(List<HoaDonDTO> orders, LocalDate fromDate, LocalDate toDate, String statusFilter) {
+        List<HoaDonDTO> safeOrders = orders != null ? orders : Collections.emptyList();
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document();
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 10);
+
+            Paragraph title = new Paragraph("BAO CAO DOANH THU", fontTitle);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(new Paragraph(" "));
+
+            document.add(new Paragraph("Tu ngay: " + (fromDate != null ? fromDate : "Tat ca"), fontNormal));
+            document.add(new Paragraph("Den ngay: " + (toDate != null ? toDate : "Tat ca"), fontNormal));
+            document.add(new Paragraph("Trang thai loc: " + safe(statusFilter), fontNormal));
+            document.add(new Paragraph("So don: " + safeOrders.size(), fontNormal));
+            document.add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(5);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{2f, 2f, 3f, 2f, 2f});
+
+            table.addCell(createCell("Ma don", fontHeader, Element.ALIGN_LEFT));
+            table.addCell(createCell("Ngay dat", fontHeader, Element.ALIGN_LEFT));
+            table.addCell(createCell("Khach hang", fontHeader, Element.ALIGN_LEFT));
+            table.addCell(createCell("Trang thai", fontHeader, Element.ALIGN_LEFT));
+            table.addCell(createCell("Tong tien", fontHeader, Element.ALIGN_RIGHT));
+
+            BigDecimal total = BigDecimal.ZERO;
+            for (HoaDonDTO order : safeOrders) {
+                table.addCell(createCell(safe(order.getMaDonHang()), fontNormal, Element.ALIGN_LEFT));
+                table.addCell(createCell(order.getNgayDat() != null
+                        ? order.getNgayDat().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                        : "", fontNormal, Element.ALIGN_LEFT));
+                table.addCell(createCell(safe(order.getTenKhachHang()), fontNormal, Element.ALIGN_LEFT));
+                table.addCell(createCell(safe(order.getTrangThaiDonHang()), fontNormal, Element.ALIGN_LEFT));
+                BigDecimal paid = order.getTongTienThanhToan() != null ? order.getTongTienThanhToan() : BigDecimal.ZERO;
+                total = total.add(paid);
+                table.addCell(createCell(formatMoney(paid), fontNormal, Element.ALIGN_RIGHT));
+            }
+            document.add(table);
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Tong doanh thu: " + formatMoney(total), fontHeader));
+
+            document.close();
+            return baos.toByteArray();
+        } catch (DocumentException e) {
+            throw new RuntimeException("Loi khi xuat bao cao PDF: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Loi khong xac dinh khi xuat bao cao doanh thu PDF.", e);
         }
     }
 

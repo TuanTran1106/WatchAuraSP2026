@@ -3,7 +3,6 @@ package com.example.watchaura.service;
 import com.example.watchaura.dto.CheckoutStockResponse;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
-import com.example.watchaura.dto.StockWarningItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -26,6 +25,7 @@ public interface HoaDonService {
     void delete(Integer id);
     String generateMaDonHang();
     byte[] exportPdf(HoaDonDTO dto);
+    byte[] exportRevenueReportPdf(List<HoaDonDTO> orders, LocalDate fromDate, LocalDate toDate, String statusFilter);
 
     Page<HoaDonDTO> filterDonHang(
             Integer userId,

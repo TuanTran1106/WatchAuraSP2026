@@ -19,6 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/hoa-don")
@@ -132,6 +135,42 @@ public class HoaDonController {
         response.setContentLength(pdf.length);
         response.getOutputStream().write(pdf);
         response.getOutputStream().flush();
+    }
+
+    @GetMapping("/bao-cao/pdf")
+    public void exportRevenueReportPdf(
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false, defaultValue = "DA_GIAO") String status,
+            jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        LocalDate from = parseDate(fromDate);
+        LocalDate to = parseDate(toDate);
+
+        List<HoaDonDTO> filtered = hoaDonService.getAll().stream()
+                .filter(o -> status == null || status.isBlank() || status.equals(o.getTrangThaiDonHang()))
+                .filter(o -> {
+                    if (o.getNgayDat() == null) return false;
+                    LocalDate d = o.getNgayDat().toLocalDate();
+                    return (from == null || !d.isBefore(from)) && (to == null || !d.isAfter(to));
+                })
+                .sorted((a, b) -> b.getNgayDat().compareTo(a.getNgayDat()))
+                .collect(Collectors.toList());
+
+        byte[] pdf = hoaDonService.exportRevenueReportPdf(filtered, from, to, status);
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=\"bao-cao-doanh-thu.pdf\"");
+        response.setContentLength(pdf.length);
+        response.getOutputStream().write(pdf);
+        response.getOutputStream().flush();
+    }
+
+    private LocalDate parseDate(String input) {
+        if (input == null || input.isBlank()) return null;
+        try {
+            return LocalDate.parse(input.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @PostMapping("/{id}/trang-thai")

@@ -25,6 +25,16 @@
                 <option value="DA_HUY" th:selected="${filterTrangThai == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
             </select>
         </form>
+        <form th:action="@{/admin/hoa-don/bao-cao/pdf}" method="get" class="toolbar toolbar--search-row">
+            <label class="toolbar__label">Từ ngày:</label>
+            <input type="date" name="fromDate" class="toolbar__input toolbar__input--date" />
+            <label class="toolbar__label">Đến ngày:</label>
+            <input type="date" name="toDate" class="toolbar__input toolbar__input--date" />
+            <input type="hidden" name="status" value="DA_GIAO" />
+            <button type="submit" class="btn btn--secondary toolbar__btn">
+                <i class="fa-solid fa-file-pdf"></i> Xuất báo cáo doanh thu
+            </button>
+        </form>
 
         <table class="table">
             <thead>
