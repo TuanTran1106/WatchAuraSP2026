@@ -28,7 +28,5 @@ public interface VoucherService {
 
     boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id);
 
-    List<Voucher> findVouchersByDanhMuc(String danhMuc);
-
     List<Voucher> findAllValidVouchers();
 }

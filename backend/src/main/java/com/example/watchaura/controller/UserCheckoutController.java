@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -129,12 +128,6 @@ public class UserCheckoutController {
                 return resp;
             }
 
-            // Lấy danh sách các danh mục trong giỏ hàng
-            Set<String> danhMucSet = cart.getItems().stream()
-                    .map(item -> item.getTenDanhMuc())
-                    .filter(dm -> dm != null && !dm.isBlank())
-                    .collect(Collectors.toSet());
-
             // Tính tổng tiền giỏ hàng
             BigDecimal tongTien = BigDecimal.ZERO;
             if (cart.getItems() != null) {
@@ -147,27 +140,7 @@ public class UserCheckoutController {
                 }
             }
 
-            List<Voucher> availableVouchers = new ArrayList<>();
-
-            // Lấy voucher áp dụng cho từng danh mục
-            for (String danhMuc : danhMucSet) {
-                List<Voucher> vouchers = voucherService.findVouchersByDanhMuc(danhMuc);
-                if (vouchers != null) {
-                    availableVouchers.addAll(vouchers);
-                }
-            }
-
-            // Lấy tất cả voucher chung (không giới hạn danh mục)
-            List<Voucher> allVouchers = voucherService.findAllValidVouchers();
-            if (allVouchers != null) {
-                for (Voucher v : allVouchers) {
-                    boolean exists = availableVouchers.stream()
-                            .anyMatch(av -> av.getId().equals(v.getId()));
-                    if (!exists) {
-                        availableVouchers.add(v);
-                    }
-                }
-            }
+            List<Voucher> availableVouchers = new ArrayList<>(voucherService.findAllValidVouchers());
 
             // Lọc bỏ voucher trùng lặp và sắp xếp theo giá trị giảm giá
             List<Voucher> distinctVouchers = availableVouchers.stream()

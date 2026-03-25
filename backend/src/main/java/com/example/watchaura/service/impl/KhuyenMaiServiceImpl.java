@@ -46,6 +46,9 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     public KhuyenMai save(KhuyenMai khuyenMai) {
         khuyenMai.setNgayTao(LocalDateTime.now());
         khuyenMai.setNgayCapNhat(LocalDateTime.now());
+        if (khuyenMai.getDanhMucApDung() == null) {
+            khuyenMai.setDanhMucApDung("");
+        }
         return khuyenMaiRepository.save(khuyenMai);
     }
 
@@ -61,6 +64,7 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         }
         existing.setTenChuongTrinh(khuyenMai.getTenChuongTrinh());
         existing.setMoTa(khuyenMai.getMoTa());
+        existing.setDanhMucApDung(khuyenMai.getDanhMucApDung() != null ? khuyenMai.getDanhMucApDung() : "");
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
         existing.setGiaTriGiam(khuyenMai.getGiaTriGiam());
         existing.setGiamToiDa(khuyenMai.getGiamToiDa());

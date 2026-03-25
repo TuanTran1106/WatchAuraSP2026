@@ -70,8 +70,10 @@
       elValue.textContent = '--';
       elValue.classList.remove('is-good', 'is-danger', 'is-na');
       elValue.classList.add('is-na');
-      elTrend.textContent = '—';
-      elTrend.style.color = '#64748b';
+      // hide icon + color
+      elTrend.textContent = '';
+      elTrend.style.color = '';
+      elTrend.style.display = 'none';
       return;
     }
 
@@ -81,11 +83,13 @@
       elValue.textContent = '--';
       elValue.classList.remove('is-good', 'is-danger', 'is-na');
       elValue.classList.add('is-na');
-      elTrend.textContent = '—';
-      elTrend.style.color = '#64748b';
+      elTrend.textContent = '';
+      elTrend.style.color = '';
+      elTrend.style.display = 'none';
       return;
     }
 
+    elTrend.style.display = '';
     var rounded = Math.round(n * 10) / 10;
     var sign = rounded > 0 ? '+' : '';
     elValue.textContent = sign + rounded.toFixed(1) + '%';
@@ -104,6 +108,39 @@
       elTrend.textContent = '→';
       elTrend.style.color = '#64748b';
     }
+  }
+
+  function renderCompareBlock(block, elValue, elTrend, elLabel) {
+    if (!elValue || !elTrend) return;
+    if (elLabel && block && block.compareLabel) {
+      // Only replace prefix label text if the span exists and is dedicated.
+      // (Our HTML wraps label + badge in one span; keep it as-is.)
+    }
+
+    // Practical: if previous=0 and current>0, backend returns null -> display "Mới"
+    if (block && block.percentChange === null && block.previous === 0 && block.current > 0) {
+      elValue.textContent = 'Mới';
+      elValue.classList.remove('is-good', 'is-danger', 'is-na');
+      elValue.classList.add('is-good');
+      elTrend.textContent = '↑';
+      elTrend.style.color = '#16a34a';
+      elTrend.style.display = '';
+    } else {
+      var pct = block ? block.percentChange : null;
+      applyTrendToEl(elValue, elTrend, pct);
+    }
+
+    // Tooltip for UX: “So với ngày trước đó (15 → 10)”
+    try {
+      var tip = block && block.tooltip ? String(block.tooltip) : '';
+      if (tip) {
+        elValue.setAttribute('title', tip);
+        elTrend.setAttribute('title', tip);
+      } else {
+        elValue.removeAttribute('title');
+        elTrend.removeAttribute('title');
+      }
+    } catch (e) {}
   }
 
   function setTextIfExists(id, text) {
@@ -343,15 +380,11 @@
       return formatCompactNumber(Math.round(n));
     });
     lastKpiNumeric.customers = customersVal;
-    applyTrendToEl($('dashKpiCustomersYesterday'), $('dashKpiCustomersYesterdayTrend'), kpi.customers && kpi.customers.yesterdayChangePercent);
-    applyTrendToEl($('dashKpiCustomersWeek'), $('dashKpiCustomersWeekTrend'), kpi.customers && kpi.customers.weekChangePercent);
 
     animateCountUp($('dashKpiOrders'), lastKpiNumeric.orders === null ? 0 : lastKpiNumeric.orders, ordersVal, 500, function (n) {
       return formatCompactNumber(Math.round(n));
     });
     lastKpiNumeric.orders = ordersVal;
-    applyTrendToEl($('dashKpiOrdersYesterday'), $('dashKpiOrdersYesterdayTrend'), kpi.orders && kpi.orders.yesterdayChangePercent);
-    applyTrendToEl($('dashKpiOrdersWeek'), $('dashKpiOrdersWeekTrend'), kpi.orders && kpi.orders.weekChangePercent);
 
     animateCountUp($('dashKpiProducts'), lastKpiNumeric.products === null ? 0 : lastKpiNumeric.products, productsVal, 500, function (n) {
       return formatCompactNumber(Math.round(n));
@@ -364,8 +397,44 @@
     });
     lastKpiNumeric.revenue = revenueVal;
 
-    applyTrendToEl($('dashKpiRevenueYesterday'), $('dashKpiRevenueYesterdayTrend'), kpi.revenue && kpi.revenue.yesterdayChangePercent);
-    applyTrendToEl($('dashKpiRevenueWeek'), $('dashKpiRevenueWeekTrend'), kpi.revenue && kpi.revenue.weekChangePercent);
+    renderCompareBlock(
+      kpi.customers && kpi.customers.dayCompare,
+      $('dashKpiCustomersDay'),
+      $('dashKpiCustomersDayTrend'),
+      $('dashKpiCustomersDayLabel')
+    );
+    renderCompareBlock(
+      kpi.customers && kpi.customers.periodCompare,
+      $('dashKpiCustomersPeriod'),
+      $('dashKpiCustomersPeriodTrend'),
+      $('dashKpiCustomersPeriodLabel')
+    );
+
+    renderCompareBlock(
+      kpi.orders && kpi.orders.dayCompare,
+      $('dashKpiOrdersDay'),
+      $('dashKpiOrdersDayTrend'),
+      $('dashKpiOrdersDayLabel')
+    );
+    renderCompareBlock(
+      kpi.orders && kpi.orders.periodCompare,
+      $('dashKpiOrdersPeriod'),
+      $('dashKpiOrdersPeriodTrend'),
+      $('dashKpiOrdersPeriodLabel')
+    );
+
+    renderCompareBlock(
+      kpi.revenue && kpi.revenue.dayCompare,
+      $('dashKpiRevenueDay'),
+      $('dashKpiRevenueDayTrend'),
+      $('dashKpiRevenueDayLabel')
+    );
+    renderCompareBlock(
+      kpi.revenue && kpi.revenue.periodCompare,
+      $('dashKpiRevenuePeriod'),
+      $('dashKpiRevenuePeriodTrend'),
+      $('dashKpiRevenuePeriodLabel')
+    );
   }
 
   function renderRevenueSparkline(payload) {

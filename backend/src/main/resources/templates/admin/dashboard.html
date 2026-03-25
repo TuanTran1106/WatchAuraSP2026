@@ -10,36 +10,38 @@
         <div class="dashboard-welcome__decor"></div>
     </div>
 
-    <section class="card dash-card dash-filters">
-        <div class="dash-filters__row">
-            <div class="dash-filter">
+    <section class="card dash-card dash-filters dash-filters--toolbar">
+        <div class="dash-toolbar">
+            <div class="dash-toolbar__group">
                 <i class="fas fa-calendar-days dash-filter__icon" aria-hidden="true"></i>
-                <label for="dashRangeSelect" class="dash-filter__label">Khoảng thời gian</label>
+                <label for="dashRangeSelect" class="dash-filter__label">Khoảng</label>
                 <select id="dashRangeSelect" class="dash-filter__select">
                     <option value="7">7 ngày</option>
                     <option value="30">30 ngày</option>
                     <option value="custom">Tùy chọn</option>
                 </select>
             </div>
-            <div class="dash-filter dash-filter--custom">
+
+            <div class="dash-toolbar__group dash-toolbar__group--dates">
                 <label for="dashFromDate" class="dash-filter__label">Từ</label>
                 <input type="date" id="dashFromDate" class="dash-filter__input" disabled />
                 <label for="dashToDate" class="dash-filter__label">Đến</label>
                 <input type="date" id="dashToDate" class="dash-filter__input" disabled />
             </div>
-        </div>
-        <div class="dash-filters__row">
-            <div class="dash-filter">
+
+            <div class="dash-toolbar__spacer"></div>
+
+            <div class="dash-toolbar__group">
                 <i class="fas fa-list-ol dash-filter__icon" aria-hidden="true"></i>
-                <label for="dashTopRangeSelect" class="dash-filter__label">Top sản phẩm</label>
+                <label for="dashTopRangeSelect" class="dash-filter__label">Top</label>
                 <select id="dashTopRangeSelect" class="dash-filter__select">
                     <option value="week" selected>Theo tuần</option>
                     <option value="month">Theo tháng</option>
                 </select>
             </div>
-            <div class="dash-filter dash-filter--actions">
-                <i class="fas fa-download dash-filter__icon" aria-hidden="true"></i>
-                <a id="dashExportPdfBtn" class="btn btn--secondary" href="#">
+
+            <div class="dash-toolbar__group">
+                <a id="dashExportPdfBtn" class="btn btn--secondary dash-toolbar__btn" href="#">
                     <i class="fas fa-file-pdf" aria-hidden="true"></i>
                     Export PDF
                 </a>
@@ -56,8 +58,8 @@
                 <h2 class="card__title">Tổng khách hàng</h2>
                 <p class="card__value" id="dashKpiCustomers">0</p>
                 <p class="dash-kpi-trends">
-                    <span>Hôm qua: <strong class="dash-trend-badge is-na" id="dashKpiCustomersYesterday">--</strong> <span id="dashKpiCustomersYesterdayTrend">—</span></span>
-                    <span>Tuần trước: <strong class="dash-trend-badge is-na" id="dashKpiCustomersWeek">--</strong> <span id="dashKpiCustomersWeekTrend">—</span></span>
+                    <span id="dashKpiCustomersDayLabel">So với hôm trước: <strong class="dash-trend-badge is-na" id="dashKpiCustomersDay">--</strong> <span id="dashKpiCustomersDayTrend"></span></span>
+                    <span id="dashKpiCustomersPeriodLabel">So với kỳ trước: <strong class="dash-trend-badge is-na" id="dashKpiCustomersPeriod">--</strong> <span id="dashKpiCustomersPeriodTrend"></span></span>
                 </p>
             </div>
         </section>
@@ -69,8 +71,8 @@
                 <h2 class="card__title">Tổng hóa đơn</h2>
                 <p class="card__value" id="dashKpiOrders">0</p>
                 <p class="dash-kpi-trends">
-                    <span>Hôm qua: <strong class="dash-trend-badge is-na" id="dashKpiOrdersYesterday">--</strong> <span id="dashKpiOrdersYesterdayTrend">—</span></span>
-                    <span>Tuần trước: <strong class="dash-trend-badge is-na" id="dashKpiOrdersWeek">--</strong> <span id="dashKpiOrdersWeekTrend">—</span></span>
+                    <span id="dashKpiOrdersDayLabel">So với hôm trước: <strong class="dash-trend-badge is-na" id="dashKpiOrdersDay">--</strong> <span id="dashKpiOrdersDayTrend"></span></span>
+                    <span id="dashKpiOrdersPeriodLabel">So với kỳ trước: <strong class="dash-trend-badge is-na" id="dashKpiOrdersPeriod">--</strong> <span id="dashKpiOrdersPeriodTrend"></span></span>
                 </p>
             </div>
         </section>
@@ -98,8 +100,8 @@
                     <canvas id="dashKpiRevenueSparkline" height="36"></canvas>
                 </div>
                 <p class="dash-kpi-trends">
-                    <span>Hôm qua: <strong class="dash-trend-badge is-na" id="dashKpiRevenueYesterday">--</strong> <span id="dashKpiRevenueYesterdayTrend">—</span></span>
-                    <span>Tuần trước: <strong class="dash-trend-badge is-na" id="dashKpiRevenueWeek">--</strong> <span id="dashKpiRevenueWeekTrend">—</span></span>
+                    <span id="dashKpiRevenueDayLabel">So với hôm trước: <strong class="dash-trend-badge is-na" id="dashKpiRevenueDay">--</strong> <span id="dashKpiRevenueDayTrend"></span></span>
+                    <span id="dashKpiRevenuePeriodLabel">So với kỳ trước: <strong class="dash-trend-badge is-na" id="dashKpiRevenuePeriod">--</strong> <span id="dashKpiRevenuePeriodTrend"></span></span>
                 </p>
             </div>
         </section>

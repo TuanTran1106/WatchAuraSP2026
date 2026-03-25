@@ -93,39 +93,38 @@ public class AdminController {
 
         LocalDate endDate = chartTo;
 
-        // KPI comparisons relative to the end of current range
-        LocalDate yesterday = endDate.minusDays(1);
-        LocalDate weekFrom = endDate.minusDays(6);
-        LocalDate weekTo = endDate;
-        LocalDate prevWeekFrom = endDate.minusDays(13);
-        LocalDate prevWeekTo = endDate.minusDays(7);
+        // Practical dashboard standard:
+        // - KPI values are scoped to selected range [chartFrom..chartTo]
+        // - Compare to previous period with same length (period-over-period)
+        // - Additionally provide day-over-day at range end (endDate vs endDate-1)
+        LocalDate prevDay = endDate.minusDays(1);
 
         long rangeDays = java.time.temporal.ChronoUnit.DAYS.between(chartFrom, chartTo) + 1;
         String revenueScopeText = rangeDays == 7
                 ? "Trong 7 ngày"
                 : (rangeDays == 30 ? "Trong 30 ngày" : "Theo khoảng thời gian");
 
+        LocalDate prevPeriodTo = chartFrom.minusDays(1);
+        LocalDate prevPeriodFrom = prevPeriodTo.minusDays(rangeDays - 1);
+
         // KPI values in current range
         long customersInRange = 0L;
 
         // KPI comparisons (yesterday + week-before)
         long customersEndDay = 0L;
-        long customersYesterdayDay = 0L;
-        long customersWeekTotal = 0L;
-        long customersPrevWeekTotal = 0L;
+        long customersPrevDay = 0L;
+        long customersPrevPeriod = 0L;
 
         long ordersEndDay = 0L;
-        long ordersYesterdayDay = 0L;
-        long ordersWeekTotal = 0L;
-        long ordersPrevWeekTotal = 0L;
+        long ordersPrevDay = 0L;
+        long ordersPrevPeriod = 0L;
 
-        long canceledOrdersWeekCount = 0L;
+        long canceledOrdersLast7Days = 0L;
 
         BigDecimal revenueInRange = BigDecimal.ZERO;
         BigDecimal revenueEndDay = BigDecimal.ZERO;
-        BigDecimal revenueYesterdayDay = BigDecimal.ZERO;
-        BigDecimal revenueWeekTotal = BigDecimal.ZERO;
-        BigDecimal revenuePrevWeekTotal = BigDecimal.ZERO;
+        BigDecimal revenuePrevDay = BigDecimal.ZERO;
+        BigDecimal revenuePrevPeriod = BigDecimal.ZERO;
 
         // Donut and line chart for chart range
         Map<LocalDate, BigDecimal> dailyRevenueMap = new LinkedHashMap<>();
@@ -158,10 +157,8 @@ public class AdminController {
                 if (!d.isBefore(chartFrom) && !d.isAfter(chartTo)) customersInRange++;
 
                 if (d.equals(endDate)) customersEndDay++;
-                if (d.equals(yesterday)) customersYesterdayDay++;
-
-                if (!d.isBefore(weekFrom) && !d.isAfter(weekTo)) customersWeekTotal++;
-                if (!d.isBefore(prevWeekFrom) && !d.isAfter(prevWeekTo)) customersPrevWeekTotal++;
+                if (d.equals(prevDay)) customersPrevDay++;
+                if (!d.isBefore(prevPeriodFrom) && !d.isAfter(prevPeriodTo)) customersPrevPeriod++;
             }
 
             // Orders & items
@@ -177,20 +174,20 @@ public class AdminController {
 
                 // KPI order counts (all statuses)
                 if (orderDate.equals(endDate)) ordersEndDay++;
-                if (orderDate.equals(yesterday)) ordersYesterdayDay++;
-                if (!orderDate.isBefore(weekFrom) && !orderDate.isAfter(weekTo)) ordersWeekTotal++;
-                if (!orderDate.isBefore(prevWeekFrom) && !orderDate.isAfter(prevWeekTo)) ordersPrevWeekTotal++;
+                if (orderDate.equals(prevDay)) ordersPrevDay++;
+                if (!orderDate.isBefore(prevPeriodFrom) && !orderDate.isAfter(prevPeriodTo)) ordersPrevPeriod++;
 
-                if (isCanceled && !orderDate.isBefore(weekFrom) && !orderDate.isAfter(weekTo)) {
-                    canceledOrdersWeekCount++;
+                // cancel insight in last 7 days (relative to endDate)
+                LocalDate last7From = endDate.minusDays(6);
+                if (isCanceled && !orderDate.isBefore(last7From) && !orderDate.isAfter(endDate)) {
+                    canceledOrdersLast7Days++;
                 }
 
                 // KPI revenue (delivered)
                 if (isDelivered) {
                     if (orderDate.equals(endDate)) revenueEndDay = revenueEndDay.add(paid);
-                    if (orderDate.equals(yesterday)) revenueYesterdayDay = revenueYesterdayDay.add(paid);
-                    if (!orderDate.isBefore(weekFrom) && !orderDate.isAfter(weekTo)) revenueWeekTotal = revenueWeekTotal.add(paid);
-                    if (!orderDate.isBefore(prevWeekFrom) && !orderDate.isAfter(prevWeekTo)) revenuePrevWeekTotal = revenuePrevWeekTotal.add(paid);
+                    if (orderDate.equals(prevDay)) revenuePrevDay = revenuePrevDay.add(paid);
+                    if (!orderDate.isBefore(prevPeriodFrom) && !orderDate.isAfter(prevPeriodTo)) revenuePrevPeriod = revenuePrevPeriod.add(paid);
                 }
 
                 // Donut + daily revenue for chart range
@@ -353,14 +350,12 @@ public class AdminController {
         }
 
         // ---- Insight: canceled orders in last 7 days ----
-        if (canceledOrdersWeekCount == 0) {
+        if (canceledOrdersLast7Days == 0) {
             insights.add(item("Không có đơn bị hủy trong 7 ngày gần nhất.", "good"));
         } else {
-            double cancelRateWeek = (ordersWeekTotal == 0) ? 0d : (canceledOrdersWeekCount * 100.0d / ordersWeekTotal);
             insights.add(item(
-                    "7 ngày gần nhất: <strong>" + canceledOrdersWeekCount + "</strong> đơn hủy (<strong>" +
-                            String.format(java.util.Locale.US, "%.1f", cancelRateWeek) + "%</strong>)",
-                    cancelRateWeek >= 20d ? "danger" : "info"
+                    "7 ngày gần nhất: <strong>" + canceledOrdersLast7Days + "</strong> đơn hủy",
+                    "danger"
             ));
         }
 
@@ -416,13 +411,14 @@ public class AdminController {
         }
 
         // ---- Warning: revenue low abnormal vs previous week ----
-        if (revenuePrevWeekTotal.compareTo(BigDecimal.ZERO) > 0
-                && revenueWeekTotal.compareTo(revenuePrevWeekTotal.multiply(new BigDecimal("0.5"))) < 0) {
-            Double pct = percentChangeBDNullable(revenueWeekTotal, revenuePrevWeekTotal);
+        // (kept) low abnormal vs previous period of same length
+        if (revenuePrevPeriod.compareTo(BigDecimal.ZERO) > 0
+                && revenueInRange.compareTo(revenuePrevPeriod.multiply(new BigDecimal("0.5"))) < 0) {
+            Double pct = percentChangeBDSpec(revenueInRange, revenuePrevPeriod);
             String pctTxt = pct == null ? "" : (" (" + (pct >= 0 ? "+" : "-") + String.format(java.util.Locale.US, "%.0f", Math.abs(pct)) + "%)");
             warnings.add(item(
-                    "🔴 Doanh thu 7 ngày thấp bất thường: <strong>" + formatMoneyInsight(revenueWeekTotal) +
-                            "</strong> (tuần trước: <strong>" + formatMoneyInsight(revenuePrevWeekTotal) + "</strong>)" + pctTxt,
+                    "🔴 Doanh thu giảm mạnh vs kỳ trước: <strong>" + formatMoneyInsight(revenueInRange) +
+                            "</strong> (kỳ trước: <strong>" + formatMoneyInsight(revenuePrevPeriod) + "</strong>)" + pctTxt,
                     "danger"
             ));
         }
@@ -432,26 +428,18 @@ public class AdminController {
         }
 
         // ---- KPI % changes (N/A khi KPI hiện tại = 0) ----
-        Double customersYesterdayPct = customersInRange == 0
-                ? null
-                : percentChangeLongNullable(customersEndDay, customersYesterdayDay);
-        Double customersWeekPct = customersInRange == 0
-                ? null
-                : percentChangeLongNullable(customersWeekTotal, customersPrevWeekTotal);
+        // Real-world standard percent handling:
+        // - previous == null => null
+        // - previous == 0 and current > 0 => null (display "Mới" instead of misleading 100% or ∞)
+        // - previous == 0 and current == 0 => 0
+        Double customersDayPct = percentChangeLongPractical(customersEndDay, customersPrevDay);
+        Double customersPeriodPct = percentChangeLongPractical(customersInRange, customersPrevPeriod);
 
-        Double ordersYesterdayPct = totalOrdersRange == 0
-                ? null
-                : percentChangeLongNullable(ordersEndDay, ordersYesterdayDay);
-        Double ordersWeekPct = totalOrdersRange == 0
-                ? null
-                : percentChangeLongNullable(ordersWeekTotal, ordersPrevWeekTotal);
+        Double ordersDayPct = percentChangeLongPractical(ordersEndDay, ordersPrevDay);
+        Double ordersPeriodPct = percentChangeLongPractical(totalOrdersRange, ordersPrevPeriod);
 
-        Double revenueYesterdayPct = revenueInRange.compareTo(BigDecimal.ZERO) == 0
-                ? null
-                : percentChangeBDNullable(revenueEndDay, revenueYesterdayDay);
-        Double revenueWeekComparePct = revenueInRange.compareTo(BigDecimal.ZERO) == 0
-                ? null
-                : percentChangeBDNullable(revenueWeekTotal, revenuePrevWeekTotal);
+        Double revenueDayPct = percentChangeBDPractical(revenueEndDay, revenuePrevDay);
+        Double revenuePeriodPct = percentChangeBDPractical(revenueInRange, revenuePrevPeriod);
 
         long totalProducts = 0L;
         try {
@@ -462,14 +450,34 @@ public class AdminController {
         Map<String, Object> kpi = new HashMap<>();
         Map<String, Object> customersMap = new HashMap<>();
         customersMap.put("value", customersInRange);
-        customersMap.put("yesterdayChangePercent", customersYesterdayPct);
-        customersMap.put("weekChangePercent", customersWeekPct);
+        customersMap.put("dayCompare", compareBlock(
+                customersEndDay,
+                customersPrevDay,
+                customersDayPct,
+                "So với hôm trước"
+        ));
+        customersMap.put("periodCompare", compareBlock(
+                customersInRange,
+                customersPrevPeriod,
+                customersPeriodPct,
+                "So với kỳ trước"
+        ));
         kpi.put("customers", customersMap);
 
         Map<String, Object> ordersMap = new HashMap<>();
         ordersMap.put("value", totalOrdersRange);
-        ordersMap.put("yesterdayChangePercent", ordersYesterdayPct);
-        ordersMap.put("weekChangePercent", ordersWeekPct);
+        ordersMap.put("dayCompare", compareBlock(
+                ordersEndDay,
+                ordersPrevDay,
+                ordersDayPct,
+                "So với hôm trước"
+        ));
+        ordersMap.put("periodCompare", compareBlock(
+                totalOrdersRange,
+                ordersPrevPeriod,
+                ordersPeriodPct,
+                "So với kỳ trước"
+        ));
         kpi.put("orders", ordersMap);
 
         Map<String, Object> productsMap = new HashMap<>();
@@ -478,13 +486,25 @@ public class AdminController {
 
         Map<String, Object> revenueMap = new HashMap<>();
         revenueMap.put("value", revenueInRange.doubleValue());
-        revenueMap.put("yesterdayChangePercent", revenueYesterdayPct);
-        revenueMap.put("weekChangePercent", revenueWeekComparePct);
+        revenueMap.put("dayCompare", compareBlockMoney(
+                revenueEndDay,
+                revenuePrevDay,
+                revenueDayPct,
+                "So với hôm trước"
+        ));
+        revenueMap.put("periodCompare", compareBlockMoney(
+                revenueInRange,
+                revenuePrevPeriod,
+                revenuePeriodPct,
+                "So với kỳ trước"
+        ));
         kpi.put("revenue", revenueMap);
 
         Map<String, Object> response = new HashMap<>();
         response.put("chartFrom", chartFrom.toString());
         response.put("chartTo", chartTo.toString());
+        response.put("prevPeriodFrom", prevPeriodFrom.toString());
+        response.put("prevPeriodTo", prevPeriodTo.toString());
         response.put("revenueScopeText", revenueScopeText);
         response.put("kpi", kpi);
         response.put("revenueDaily", revenueDaily);
@@ -509,22 +529,61 @@ public class AdminController {
         }
     }
 
-    private static Double percentChangeLongNullable(long current, long previous) {
-        // To avoid misinterpretation:
-        // - if current=0 => N/A
-        // - if previous=0 => N/A (would be +∞ / -∞)
-        if (current == 0L) return null;
-        if (previous == 0L) return null;
+    private static Double percentChangeBDSpec(BigDecimal current, BigDecimal previous) {
+        if (previous == null || current == null) return null;
+        if (previous.compareTo(BigDecimal.ZERO) == 0) {
+            if (current.compareTo(BigDecimal.ZERO) == 0) return 0d;
+            return 100d;
+        }
+        return current.subtract(previous).doubleValue() * 100.0d / previous.doubleValue();
+    }
+
+    private static Double percentChangeLongPractical(long current, long previous) {
+        // Practical dashboards avoid showing misleading 100%/∞ when previous=0 and current>0.
+        if (previous == 0L) {
+            return current == 0L ? 0d : null;
+        }
         return ((double) (current - previous)) * 100.0d / (double) previous;
     }
 
-    private static Double percentChangeBDNullable(BigDecimal current, BigDecimal previous) {
+    private static Double percentChangeBDPractical(BigDecimal current, BigDecimal previous) {
         BigDecimal c = current != null ? current : BigDecimal.ZERO;
         BigDecimal p = previous != null ? previous : BigDecimal.ZERO;
-        // N/A rules to avoid infinite/incorrect output.
-        if (c.compareTo(BigDecimal.ZERO) == 0) return null;
-        if (p.compareTo(BigDecimal.ZERO) == 0) return null;
+        if (p.compareTo(BigDecimal.ZERO) == 0) {
+            return c.compareTo(BigDecimal.ZERO) == 0 ? 0d : null;
+        }
         return c.subtract(p).doubleValue() * 100.0d / p.doubleValue();
+    }
+
+    private static Map<String, Object> compareBlock(long today, long yesterday, Double percentChange, String compareLabel) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("current", today);
+        m.put("previous", yesterday);
+        m.put("percentChange", percentChange);
+        m.put("trend", trendFromPercent(percentChange));
+        m.put("compareLabel", compareLabel);
+        m.put("tooltip", compareLabel + " (" + yesterday + " → " + today + ")");
+        return m;
+    }
+
+    private static Map<String, Object> compareBlockMoney(BigDecimal today, BigDecimal yesterday, Double percentChange, String compareLabel) {
+        BigDecimal t = today != null ? today : BigDecimal.ZERO;
+        BigDecimal y = yesterday != null ? yesterday : BigDecimal.ZERO;
+        Map<String, Object> m = new HashMap<>();
+        m.put("current", t.doubleValue());
+        m.put("previous", y.doubleValue());
+        m.put("percentChange", percentChange);
+        m.put("trend", trendFromPercent(percentChange));
+        m.put("compareLabel", compareLabel);
+        m.put("tooltip", compareLabel + " (" + formatMoneyInsight(y) + " → " + formatMoneyInsight(t) + ")");
+        return m;
+    }
+
+    private static String trendFromPercent(Double percentChange) {
+        if (percentChange == null) return null;
+        if (percentChange > 0d) return "up";
+        if (percentChange < 0d) return "down";
+        return "flat";
     }
 
     private static Map<String, Object> item(String text, String tone) {
