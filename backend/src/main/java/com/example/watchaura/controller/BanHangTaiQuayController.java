@@ -598,20 +598,36 @@ public class BanHangTaiQuayController {
         String trangThaiHienTai = hoaDon.getTrangThaiDonHang();
         String trangThaiMoi = normalizeOfflineStatusParam(trangThai);
 
-        // Không cho chuyển từ ĐÃ THANH TOÁN sang ĐÃ HUỶ
-        if (isPaidOfflineStatus(trangThaiHienTai) && "DA_HUY".equals(trangThaiMoi)) {
-            return "Không thể hủy đơn hàng đã thanh toán";
+        // Đã thanh toán: không đổi sang trạng thái khác (kể cả về chờ thanh toán)
+        if (isPaidOfflineStatus(trangThaiHienTai)) {
+            if (!"DA THANH TOAN".equals(trangThaiMoi)) {
+                return "Không thể đổi trạng thái sau khi đã thanh toán";
+            }
+            return "OK";
         }
 
-        // Không cho chuyển từ ĐÃ HUỶ sang trạng thái khác
+        // Đã hủy: không đổi sang trạng thái khác
         if ("DA_HUY".equals(trangThaiHienTai)) {
-            return "Đơn hàng đã hủy không thể thay đổi";
+            if (!"DA_HUY".equals(trangThaiMoi)) {
+                return "Đơn hàng đã hủy không thể thay đổi";
+            }
+            return "OK";
+        }
+
+        // Chờ thanh toán (hoặc tương đương): chỉ sang Thanh toán hoặc Đã hủy; giữ chờ chỉ để đồng bộ/no-op
+        if (!"DA THANH TOAN".equals(trangThaiMoi) && !"DA_HUY".equals(trangThaiMoi)) {
+            if ("CHO_THANH_TOAN".equals(trangThaiMoi) || "CHO_XAC_NHAN".equals(trangThaiMoi)) {
+                hoaDon.setTrangThaiDonHang("CHO_THANH_TOAN");
+                hoaDonRepository.save(hoaDon);
+                return "OK";
+            }
+            return "Chỉ có thể chuyển từ chờ thanh toán sang Thanh toán hoặc Đã hủy";
         }
 
         List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
 
         // Chuyển sang đã thanh toán: chỉ trừ kho khi trước đó chưa thanh toán (tránh trừ 2 lần)
-        if ("DA THANH TOAN".equals(trangThaiMoi) && !isPaidOfflineStatus(trangThaiHienTai)) {
+        if ("DA THANH TOAN".equals(trangThaiMoi)) {
             StringBuilder loiTonKho = new StringBuilder();
             for (HoaDonChiTiet ct : chiTiets) {
                 if (ct.getSanPhamChiTiet() != null) {
@@ -641,20 +657,11 @@ public class BanHangTaiQuayController {
                 }
             }
             hoaDon.setNgayDat(LocalDateTime.now());
+            hoaDon.setTrangThaiDonHang("DA THANH TOAN");
+        } else if ("DA_HUY".equals(trangThaiMoi)) {
+            hoaDon.setTrangThaiDonHang("DA_HUY");
         }
 
-        // Hủy đơn đã thanh toán -> hoàn kho
-        if ("DA_HUY".equals(trangThaiMoi) && isPaidOfflineStatus(trangThaiHienTai)) {
-            for (HoaDonChiTiet ct : chiTiets) {
-                if (ct.getSanPhamChiTiet() != null) {
-                    SanPhamChiTiet spct = ct.getSanPhamChiTiet();
-                    spct.setSoLuongTon(spct.getSoLuongTon() + ct.getSoLuong());
-                    sanPhamChiTietRepository.save(spct);
-                }
-            }
-        }
-
-        hoaDon.setTrangThaiDonHang(trangThaiMoi);
         hoaDonRepository.save(hoaDon);
         return "OK";
     }

@@ -476,14 +476,18 @@
                         <td th:text="${#temporals.format(hd.ngayDat, 'dd/MM/yyyy HH:mm')}"></td>
                         <td><span class="tong-tien" th:text="${#numbers.formatDecimal(hd.tongTienThanhToan, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></span></td>
                         <td>
-                            <th:block th:with="ts=${(hd.trangThaiDonHang != null and hd.trangThaiDonHang != '') ? hd.trangThaiDonHang : 'CHO_THANH_TOAN'}">
+                            <th:block th:with="ts=${(hd.trangThaiDonHang != null and hd.trangThaiDonHang != '') ? hd.trangThaiDonHang : 'CHO_THANH_TOAN'},
+                                      daThanhToan=${ts == 'DA_THANH_TOAN' or ts == 'DA THANH TOAN'},
+                                      daHuy=${ts == 'DA_HUY'},
+                                      trangThaiKetThuc=${daThanhToan or daHuy}">
                             <select class="form-select form-select-sm status-select"
                                     th:id="${'status-' + hd.id}"
+                                    th:disabled="${trangThaiKetThuc}"
                                     th:onchange="'capNhatTrangThai(' + ${hd.id} + ')'"
                                     th:attr="data-status=${ts}">
                                 <option value="CHO_THANH_TOAN" th:selected="${ts == 'CHO_THANH_TOAN' or ts == 'CHỜ THANH TOAN' or ts == 'CHO_XAC_NHAN' or ts == 'CHO XAC NHAN'}">Chờ thanh toán</option>
-                                <option value="DA_THANH_TOAN" th:selected="${ts == 'DA_THANH_TOAN' or ts == 'DA THANH TOAN'}">Thanh toán</option>
-                                <option value="DA_HUY" th:selected="${ts == 'DA_HUY'}">Đã hủy</option>
+                                <option value="DA_THANH_TOAN" th:selected="${daThanhToan}">Đã thanh toán</option>
+                                <option value="DA_HUY" th:selected="${daHuy}">Đã hủy</option>
                             </select>
                             </th:block>
                         </td>
@@ -544,20 +548,34 @@
         }, 3500);
     }
 
+    function normalizeTrangThaiSelect(raw) {
+        if (!raw) return 'CHO_THANH_TOAN';
+        if (raw === 'DA THANH TOAN' || raw === 'DA_THANH_TOAN') return 'DA_THANH_TOAN';
+        if (raw === 'DA_HUY') return 'DA_HUY';
+        if (raw === 'CHỜ THANH TOAN' || raw === 'CHO_XAC_NHAN' || raw === 'CHO XAC NHAN') return 'CHO_THANH_TOAN';
+        return raw;
+    }
+
     function capNhatTrangThai(id) {
         const select = document.getElementById('status-' + id);
+        if (select.disabled) return;
+
         const trangThai = select.value;
         const trangThaiHienTai = select.getAttribute('data-current') || select.value;
+        const cur = normalizeTrangThaiSelect(trangThaiHienTai);
+        const next = normalizeTrangThaiSelect(trangThai);
 
-        var daThanhToan = (trangThaiHienTai === 'DA THANH TOAN' || trangThaiHienTai === 'DA_THANH_TOAN');
-        if (daThanhToan && trangThai === 'DA_HUY') {
-            showToast('Không thể hủy đơn hàng đã thanh toán', 'warning');
-            select.value = trangThaiHienTai;
+        if (cur === 'DA_THANH_TOAN' && next !== 'DA_THANH_TOAN') {
+            showToast('Không thể đổi trạng thái sau khi đã thanh toán', 'warning');
+            select.value = 'DA_THANH_TOAN';
             return;
         }
-        if (trangThaiHienTai === 'DA_HUY') {
+        if (cur === 'DA_HUY' && next !== 'DA_HUY') {
             showToast('Đơn hàng đã hủy không thể thay đổi', 'warning');
-            select.value = trangThaiHienTai;
+            select.value = 'DA_HUY';
+            return;
+        }
+        if (cur === 'CHO_THANH_TOAN' && next === 'CHO_THANH_TOAN') {
             return;
         }
 

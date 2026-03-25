@@ -278,7 +278,7 @@ public class UserCheckoutController {
             HoaDonRequest request = new HoaDonRequest();
             request.setKhachHangId(userId);
             request.setPhuongThucThanhToan(paymentMethod);
-            request.setLoaiHoaDon("BAN_LE");
+            request.setLoaiHoaDon("ONLINE");
             request.setTenKhachHang(form.getTenKhachHang().trim());
             request.setSdtKhachHang(form.getSdtKhachHang().trim());
             request.setEmail(form.getEmail() != null ? form.getEmail().trim() : null);
@@ -540,6 +540,12 @@ public class UserCheckoutController {
         if (maDonHang == null || maDonHang.isBlank()) {
             redirect.addFlashAttribute("error", "Không tìm thấy thông tin đơn hàng.");
             return "redirect:/";
+        }
+        try {
+            HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(maDonHang);
+            model.addAttribute("hoaDon", hoaDon);
+        } catch (Exception e) {
+            model.addAttribute("hoaDon", null);
         }
         model.addAttribute("title", "Đặt hàng thành công - WatchAura");
         model.addAttribute("content", "user/thanh-toan-thanh-cong :: content");

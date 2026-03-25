@@ -124,7 +124,15 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         Page<HoaDon> page;
         if (status != null) {
-            if (q != null) {
+            // UI dùng DA_THANH_TOAN; DB bán tại quầy / sau cập nhật có thể lưu "DA THANH TOAN"
+            if ("DA_THANH_TOAN".equals(status)) {
+                List<String> paidCodes = List.of("DA_THANH_TOAN", "DA THANH TOAN");
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiInAndKeyword(paidCodes, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiDonHangInAndTrangThai(paidCodes, pageable);
+                }
+            } else if (q != null) {
                 page = hoaDonRepository.findByTrangThaiAndKeyword(status, q, pageable);
             } else {
                 page = hoaDonRepository.findByTrangThaiDonHangAndTrangThai(status, pageable);
@@ -289,16 +297,28 @@ public class HoaDonServiceImpl implements HoaDonService {
         return convertToDTO(hoaDonRepository.save(hoaDon));
     }
 
+    /** Chuẩn hóa mã đã thanh toán (DB/UI có thể dùng dấu cách hoặc gạch dưới). */
+    private static String normalizeDaThanhToanCode(String s) {
+        if (s == null) return null;
+        return "DA_THANH_TOAN".equals(s) ? "DA THANH TOAN" : s;
+    }
+
+    private static boolean isDaThanhToanCode(String s) {
+        return "DA THANH TOAN".equals(s) || "DA_THANH_TOAN".equals(s);
+    }
+
     @Override
     @Transactional
     public HoaDonDTO updateTrangThaiDonHang(Integer id, String trangThaiDonHang) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
+        String newStatus = normalizeDaThanhToanCode(trangThaiDonHang);
         String currentStatus = hoaDon.getTrangThaiDonHang();
+        String effectiveCurrent = normalizeDaThanhToanCode(currentStatus);
 
         // Xử lý khi xác nhận đơn (DA_XAC_NHAN) - trừ tồn kho ngay khi xác nhận (FIFO)
-        if ("DA_XAC_NHAN".equals(trangThaiDonHang) && !"DA_XAC_NHAN".equals(currentStatus)) {
+        if ("DA_XAC_NHAN".equals(newStatus) && !"DA_XAC_NHAN".equals(effectiveCurrent)) {
             List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
             StringBuilder loiTonKho = new StringBuilder();
 
@@ -329,9 +349,9 @@ public class HoaDonServiceImpl implements HoaDonService {
         }
 
         // Xử lý khi chuyển sang "Đã thanh toán" - trừ tồn kho nếu chưa trừ
-        if ("DA THANH TOAN".equals(trangThaiDonHang) && !"DA THANH TOAN".equals(currentStatus)) {
+        if (isDaThanhToanCode(newStatus) && !isDaThanhToanCode(effectiveCurrent)) {
             // Nếu đơn chưa xác nhận thì trừ kho ở đây
-            if (!"DA_XAC_NHAN".equals(currentStatus)) {
+            if (!"DA_XAC_NHAN".equals(effectiveCurrent)) {
                 List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
                 StringBuilder loiTonKho = new StringBuilder();
 
@@ -361,9 +381,12 @@ public class HoaDonServiceImpl implements HoaDonService {
             }
         }
 
-        // Hoàn tồn kho khi hủy đơn (nếu đơn đã xác nhận/thanhtoán)
-        if ("DA_HUY".equals(trangThaiDonHang) && !"DA_HUY".equals(currentStatus)) {
-            if ("DA_XAC_NHAN".equals(currentStatus) || "DA THANH TOAN".equals(currentStatus)) {
+        // Hoàn tồn kho khi hủy đơn (nếu đơn đã xác nhận/thanhtoán); KHÔNG cho hủy khi đã thanh toán
+        if ("DA_HUY".equals(newStatus) && !"DA_HUY".equals(effectiveCurrent)) {
+            if (isDaThanhToanCode(effectiveCurrent)) {
+                throw new RuntimeException("Không thể hủy đơn đã thanh toán.");
+            }
+            if ("DA_XAC_NHAN".equals(effectiveCurrent)) {
                 List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
                 for (HoaDonChiTiet chiTiet : chiTiets) {
                     sanPhamChiTietRepository.findByIdWithLock(chiTiet.getSanPhamChiTiet().getId())
@@ -373,7 +396,7 @@ public class HoaDonServiceImpl implements HoaDonService {
             }
         }
 
-        hoaDon.setTrangThaiDonHang(trangThaiDonHang);
+        hoaDon.setTrangThaiDonHang(newStatus);
         return convertToDTO(hoaDonRepository.save(hoaDon));
     }
 
@@ -888,8 +911,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         }
 
         hoaDon.setGhiChu("Đã chỉnh sửa số lượng.");
-
-        // Chuyển trạng thái về CHO_XAC_NHAN để admin kiểm tra và xác nhận lại
+        
         hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
         hoaDonRepository.save(hoaDon);
 

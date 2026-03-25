@@ -181,7 +181,9 @@ public class DonHangUserController {
         if (trangThai == null) return "";
         return switch (trangThai) {
             case "CAN_XU_LY" -> "Cần xử lý";
+            case "CHO_THANH_TOAN" -> "Chờ thanh toán";
             case "CHO_XAC_NHAN" -> "Chờ xác nhận";
+            case "DA_THANH_TOAN", "DA THANH TOAN" -> "Đã thanh toán";
             case "DA_XAC_NHAN" -> "Đã xác nhận";
             case "DANG_GIAO" -> "Đang giao";
             case "DA_GIAO" -> "Đã giao";

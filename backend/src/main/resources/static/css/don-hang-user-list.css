@@ -160,6 +160,20 @@
     border: 1px solid #f59e0b;
 }
 
+/* Chờ thanh toán (VNPay / tại quầy) */
+.status-cho-thanh-toan {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+/* Đã thanh toán (chưa giao / chờ xử lý tiếp) */
+.status-da-thanh-toan {
+    background: #d1fae5;
+    color: #047857;
+    border: 1px solid #6ee7b7;
+}
+
 /* ----- Card đơn hàng (danh sách) ----- */
 .order-list {
     display: flex;

@@ -29,7 +29,7 @@ public class HoaDonController {
     private final KhachHangService khachHangService;
     private final VoucherService voucherService;
 
-    private static final int PAGE_SIZE = 6;
+    private static final int PAGE_SIZE = 10;
 
     @GetMapping
     public String list(@RequestParam(required = false) String q,
@@ -64,11 +64,12 @@ public class HoaDonController {
     private static String statusToCssClass(String trangThai) {
         if (trangThai == null) return "";
         return switch (trangThai) {
-            case "CHO_XAC_NHAN" -> "invoice-detail__status--cho-xac-nhan";
+            case "CHO_XAC_NHAN", "CHO_THANH_TOAN", "DRAFT_OFFLINE" -> "invoice-detail__status--cho-xac-nhan";
             case "DA_XAC_NHAN" -> "invoice-detail__status--da-xac-nhan";
             case "DANG_GIAO" -> "invoice-detail__status--dang-giao";
-            case "DA_GIAO" -> "invoice-detail__status--da-giao";
+            case "DA_GIAO", "DA THANH TOAN", "DA_THANH_TOAN" -> "invoice-detail__status--da-giao";
             case "DA_HUY" -> "invoice-detail__status--da-huy";
+            case "CAN_XU_LY" -> "invoice-detail__status--dang-xu-ly";
             default -> "";
         };
     }
