@@ -1,31 +1,515 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="content" class="user-page cart-page success-page">
-    <div class="container cart-container success-container">
+<!-- Toàn bộ style nằm trong fragment vì layout/user-layout chỉ chèn fragment, không lấy <head> -->
+<div th:fragment="content" class="checkout-success-page">
+    <style>
+        .checkout-success-page {
+            --success-gold: #c9a227;
+            --success-gold-dark: #a68519;
+            --success-green: #16a34a;
+            --success-bg: linear-gradient(165deg, #faf9f7 0%, #f0ebe3 45%, #f5f3ef 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--success-bg);
+            min-height: 56vh;
+            padding: 2.5rem 1rem 4.5rem;
+            box-sizing: border-box;
+        }
+
+        .checkout-success-page *,
+        .checkout-success-page *::before,
+        .checkout-success-page *::after {
+            box-sizing: border-box;
+        }
+
+        .checkout-success-page .success-wrap {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .checkout-success-page .success-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.06),
+                0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: successCardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes successCardIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .checkout-success-page .success-card__hero {
+            text-align: center;
+            padding: 2.25rem 1.75rem 1.5rem;
+            border-bottom: 1px solid #f0ece6;
+            background: linear-gradient(180deg, #fffef9 0%, #fff 100%);
+        }
+
+        .checkout-success-page .success-card__icon {
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 1.25rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e 0%, var(--success-green) 100%);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.75rem;
+            font-weight: 700;
+            line-height: 1;
+            box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
+            animation: successIconPop 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+        }
+
+        @keyframes successIconPop {
+            from {
+                opacity: 0;
+                transform: scale(0.6);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .checkout-success-page .success-card__title {
+            font-size: clamp(1.35rem, 4vw, 1.65rem);
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0 0 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .checkout-success-page .success-card__text {
+            color: #6b7280;
+            margin: 0 auto;
+            max-width: 34em;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .checkout-success-page .order-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            margin: 1.5rem 1.75rem 0;
+            padding: 1rem 1.15rem;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            color: #92400e;
+            line-height: 1.5;
+        }
+
+        .checkout-success-page .order-note__icon {
+            flex-shrink: 0;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        .checkout-success-page .success-card__body {
+            padding: 1.5rem 1.75rem 1.75rem;
+        }
+
+        .checkout-success-page .section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin: 0 0 0.75rem;
+        }
+
+        .checkout-success-page .order-info {
+            background: #faf9f7;
+            border: 1px solid #f0ece6;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkout-success-page .order-info__row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.85rem 1.15rem;
+            border-bottom: 1px solid #f0ece6;
+        }
+
+        .checkout-success-page .order-info__row:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-success-page .order-info__label {
+            flex: 0 0 38%;
+            max-width: 11rem;
+            color: #6b7280;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .checkout-success-page .order-info__value {
+            flex: 1;
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 0.875rem;
+            text-align: right;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .checkout-success-page .order-info__value--highlight {
+            color: var(--success-gold);
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .checkout-success-page .order-info__value--success {
+            color: var(--success-green);
+        }
+
+        .checkout-success-page .order-info__badge {
+            display: inline-block;
+            margin-top: 0.25rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .checkout-success-page .order-items {
+            margin-bottom: 1.25rem;
+        }
+
+        .checkout-success-page .order-items__title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0ece6;
+        }
+
+        .checkout-success-page .order-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f3f4f6;
+            align-items: center;
+        }
+
+        .checkout-success-page .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-success-page .order-item__img-wrap {
+            flex-shrink: 0;
+            width: 88px;
+            height: 88px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f9fafb;
+            border: 1px solid #f0ece6;
+        }
+
+        .checkout-success-page .order-item__img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .checkout-success-page .order-item__info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .checkout-success-page .order-item__name {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 0 0 0.35rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .checkout-success-page .order-item__variant {
+            color: #6b7280;
+            font-size: 0.78rem;
+            margin: 0 0 0.35rem;
+            line-height: 1.35;
+        }
+
+        .checkout-success-page .order-item__qty {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        .checkout-success-page .order-item__price {
+            flex-shrink: 0;
+            font-weight: 700;
+            color: var(--success-gold);
+            font-size: 0.95rem;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .checkout-success-page .order-summary {
+            background: linear-gradient(180deg, #fffef9 0%, #fff 100%);
+            border: 1px solid #f0ece6;
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .checkout-success-page .order-summary__row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0;
+            font-size: 0.875rem;
+        }
+
+        .checkout-success-page .order-summary__label {
+            color: #6b7280;
+        }
+
+        .checkout-success-page .order-summary__value {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .checkout-success-page .order-summary__value--discount {
+            color: var(--success-green);
+        }
+
+        .checkout-success-page .order-summary__row--total {
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-top: 2px dashed #e8e4dc;
+            padding-top: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkout-success-page .order-summary__row--total .order-summary__label {
+            color: #1a1a2e;
+        }
+
+        .checkout-success-page .order-summary__row--total .order-summary__value {
+            color: var(--success-gold);
+            font-size: 1.15rem;
+        }
+
+        .checkout-success-page .success-card__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            padding: 1.5rem 1.75rem 2rem;
+            border-top: 1px solid #f0ece6;
+            background: #fafafa;
+        }
+
+        .checkout-success-page .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            padding: 0 1.65rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .checkout-success-page .btn--primary {
+            background: linear-gradient(135deg, var(--success-gold) 0%, #d4af37 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(201, 162, 39, 0.35);
+        }
+
+        .checkout-success-page .btn--primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(201, 162, 39, 0.4);
+        }
+
+        .checkout-success-page .btn--outline {
+            background: #fff;
+            border-color: #e5e0d8;
+            color: #4b5563;
+        }
+
+        .checkout-success-page .btn--outline:hover {
+            border-color: var(--success-gold);
+            color: var(--success-gold-dark);
+        }
+
+        @media (max-width: 540px) {
+            .checkout-success-page {
+                padding: 1.25rem 0.75rem 3.5rem;
+            }
+
+            .checkout-success-page .order-info__row {
+                flex-direction: column;
+                gap: 0.35rem;
+            }
+
+            .checkout-success-page .order-info__label {
+                max-width: none;
+            }
+
+            .checkout-success-page .order-info__value {
+                text-align: left;
+            }
+
+            .checkout-success-page .order-item {
+                flex-wrap: wrap;
+            }
+
+            .checkout-success-page .order-item__price {
+                width: 100%;
+                text-align: left;
+                padding-left: calc(88px + 1rem);
+            }
+
+            .checkout-success-page .success-card__actions .btn {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+
+    <div class="success-wrap">
         <div class="success-card">
-            <div class="success-card__icon">✓</div>
-            <h1 class="success-card__title">Đặt hàng thành công</h1>
-            <p class="success-card__text">Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ xử lý đơn hàng và liên hệ với bạn sớm nhất.</p>
-            <p class="success-card__code">Mã đơn hàng: <strong th:text="${maDonHang}">#MA_DON</strong></p>
-            <p class="success-card__note">Bạn có thể dùng mã đơn hàng để tra cứu đơn tại cửa hàng hoặc khi liên hệ hỗ trợ.</p>
+            <div class="success-card__hero">
+                <div class="success-card__icon" aria-hidden="true">✓</div>
+                <h1 class="success-card__title">Đặt hàng thành công!</h1>
+                <p class="success-card__text">
+                    Cảm ơn bạn đã đặt hàng tại WatchAura. Chúng tôi sẽ xử lý đơn hàng và liên hệ với bạn sớm nhất.
+                </p>
+            </div>
+
+            <div class="order-note">
+                <span class="order-note__icon" aria-hidden="true">💡</span>
+                <span>Đơn hàng của bạn đang được xử lý. Bạn sẽ nhận được thông báo khi đơn hàng được xác nhận.</span>
+            </div>
+
+            <div class="success-card__body">
+                <p class="section-label">Thông tin đơn hàng</p>
+
+                <div class="order-info" th:if="${hoaDon != null}">
+                    <div class="order-info__row">
+                        <span class="order-info__label">Mã đơn hàng</span>
+                        <span class="order-info__value order-info__value--highlight" th:text="${hoaDon.maDonHang}">#MA_DON</span>
+                    </div>
+                    <div class="order-info__row">
+                        <span class="order-info__label">Ngày đặt</span>
+                        <span class="order-info__value" th:text="${#temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm')}">--</span>
+                    </div>
+                    <div class="order-info__row">
+                        <span class="order-info__label">Phương thức thanh toán</span>
+                        <span class="order-info__value">
+                            <span th:text="${hoaDon.phuongThucThanhToan}">--</span>
+                            <span class="order-info__badge" th:if="${hoaDon.phuongThucThanhToan != null and #strings.contains(#strings.toUpperCase(hoaDon.phuongThucThanhToan), 'VNPAY')}">VNPay</span>
+                        </span>
+                    </div>
+                    <div class="order-info__row">
+                        <span class="order-info__label">Trạng thái</span>
+                        <span class="order-info__value order-info__value--success" th:text="${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN' ? 'Chờ xác nhận' : hoaDon.trangThaiDonHang}">--</span>
+                    </div>
+                    <div class="order-info__row" th:if="${hoaDon.tenKhachHang != null}">
+                        <span class="order-info__label">Người nhận</span>
+                        <span class="order-info__value" th:text="${hoaDon.tenKhachHang}">--</span>
+                    </div>
+                    <div class="order-info__row" th:if="${hoaDon.sdtKhachHang != null}">
+                        <span class="order-info__label">Số điện thoại</span>
+                        <span class="order-info__value" th:text="${hoaDon.sdtKhachHang}">--</span>
+                    </div>
+                    <div class="order-info__row" th:if="${hoaDon.diaChi != null}">
+                        <span class="order-info__label">Địa chỉ giao hàng</span>
+                        <span class="order-info__value" th:text="${hoaDon.diaChi}">--</span>
+                    </div>
+                </div>
+
+                <div class="order-info" th:if="${hoaDon == null}">
+                    <div class="order-info__row">
+                        <span class="order-info__label">Mã đơn hàng</span>
+                        <span class="order-info__value order-info__value--highlight" th:text="${maDonHang}">#MA_DON</span>
+                    </div>
+                </div>
+
+                <th:block th:if="${hoaDon != null and hoaDon.items != null and not #lists.isEmpty(hoaDon.items)}">
+                    <p class="section-label" style="margin-top: 1.5rem;">Sản phẩm</p>
+                    <div class="order-items">
+                        <h3 class="order-items__title">Sản phẩm đã đặt</h3>
+                        <div class="order-item" th:each="item : ${hoaDon.items}">
+                            <div class="order-item__img-wrap">
+                                <img th:src="${item.hinhAnh != null ? item.hinhAnh : '/images/placeholder.png'}"
+                                     th:alt="${item.tenSanPham}"
+                                     class="order-item__img"
+                                     onerror="this.src='/images/placeholder.png'">
+                            </div>
+                            <div class="order-item__info">
+                                <p class="order-item__name" th:text="${item.tenSanPham}">Tên sản phẩm</p>
+                                <p class="order-item__variant" th:if="${item.tenBienThe != null}" th:text="${item.tenBienThe}">Biến thể</p>
+                                <p class="order-item__qty">Số lượng: <span th:text="${item.soLuong}">1</span></p>
+                            </div>
+                            <div class="order-item__price">
+                                <span th:text="${#numbers.formatDecimal(item.thanhTien, 0, 'POINT', 0, 'NONE') + ' đ'}">0 đ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="order-summary">
+                        <div class="order-summary__row" th:if="${hoaDon.tongTienTamTinh != null}">
+                            <span class="order-summary__label">Tạm tính</span>
+                            <span class="order-summary__value" th:text="${#numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'POINT', 0, 'NONE') + ' đ'}">0 đ</span>
+                        </div>
+                        <div class="order-summary__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
+                            <span class="order-summary__label">Giảm giá</span>
+                            <span class="order-summary__value order-summary__value--discount" th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</span>
+                        </div>
+                        <div class="order-summary__row order-summary__row--total">
+                            <span class="order-summary__label">Tổng thanh toán</span>
+                            <span class="order-summary__value" th:text="${#numbers.formatDecimal(hoaDon.tongTienThanhToan, 0, 'POINT', 0, 'NONE') + ' đ'}">0 đ</span>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+
             <div class="success-card__actions">
-                <a th:href="@{/}" class="btn btn--primary btn--lg">Về trang chủ</a>
-                <a th:href="@{/san-pham}" class="btn btn--outline btn--lg">Tiếp tục mua sắm</a>
+                <a th:href="@{/}" class="btn btn--primary">Về trang chủ</a>
+                <a th:href="@{/san-pham}" class="btn btn--outline">Tiếp tục mua sắm</a>
             </div>
         </div>
     </div>
-    <style th:inline="text">
-        .success-page .success-container { max-width: 520px; margin: 2rem auto 4rem; }
-        .success-page .success-card { background: #fff; border-radius: 16px; border: 1px solid #eee; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 2.5rem; text-align: center; }
-        .success-page .success-card__icon { width: 64px; height: 64px; background: #28a745; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; margin: 0 auto 1.25rem; }
-        .success-page .success-card__title { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin: 0 0 0.5rem 0; }
-        .success-page .success-card__text { color: #555; margin: 0 0 1rem 0; line-height: 1.5; }
-        .success-page .success-card__code { font-size: 1.1rem; margin: 1rem 0 0.5rem; }
-        .success-page .success-card__code strong { color: #c9a227; }
-        .success-page .success-card__note { font-size: 0.9rem; color: #666; margin: 0 0 1.5rem 0; }
-        .success-page .success-card__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
-    </style>
 </div>
 </body>
 </html>

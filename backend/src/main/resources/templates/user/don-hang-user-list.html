@@ -80,20 +80,18 @@
                                 </span>
                             </div>
                         </div>
-                        <span class="order-card__status order-status"
-                              th:classappend="
-                                ${don.trangThaiDonHang == 'CAN_XU_LY'} ? 'status-can-xu-ly' :
-                                (${don.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'status-waiting' :
-                                (${don.trangThaiDonHang == 'DA_XAC_NHAN'} ? 'status-processing' :
-                                (${don.trangThaiDonHang == 'DANG_GIAO'} ? 'status-shipping' :
-                                (${don.trangThaiDonHang == 'DA_GIAO'} ? 'status-done' : 'status-cancel'))))"
-                              th:text="
-                                ${don.trangThaiDonHang == 'CAN_XU_LY'} ? 'Cần xử lý' :
-                                (${don.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'Chờ xác nhận' :
-                                (${don.trangThaiDonHang == 'DA_XAC_NHAN'} ? 'Đã xác nhận' :
-                                (${don.trangThaiDonHang == 'DANG_GIAO'} ? 'Đang giao' :
-                                (${don.trangThaiDonHang == 'DA_GIAO'} ? 'Đã giao' : 'Đã hủy'))))">
-                        </span>
+                        <th:block th:switch="${don.trangThaiDonHang}">
+                            <span th:case="'CAN_XU_LY'" class="order-card__status order-status status-can-xu-ly">Cần xử lý</span>
+                            <span th:case="'CHO_THANH_TOAN'" class="order-card__status order-status status-cho-thanh-toan">Chờ thanh toán</span>
+                            <span th:case="'CHO_XAC_NHAN'" class="order-card__status order-status status-waiting">Chờ xác nhận</span>
+                            <span th:case="'DA_THANH_TOAN'" class="order-card__status order-status status-da-thanh-toan">Đã thanh toán</span>
+                            <span th:case="'DA THANH TOAN'" class="order-card__status order-status status-da-thanh-toan">Đã thanh toán</span>
+                            <span th:case="'DA_XAC_NHAN'" class="order-card__status order-status status-processing">Đã xác nhận</span>
+                            <span th:case="'DANG_GIAO'" class="order-card__status order-status status-shipping">Đang giao</span>
+                            <span th:case="'DA_GIAO'" class="order-card__status order-status status-done">Đã giao</span>
+                            <span th:case="'DA_HUY'" class="order-card__status order-status status-cancel">Đã hủy</span>
+                            <span th:case="*" class="order-card__status order-status" th:text="${don.trangThaiDonHang}">—</span>
+                        </th:block>
                     </div>
                     <!-- Banner chỉ hiện khi Cần xử lý có ghi chú, hoặc khi ghi chú là thông báo không đủ tồn kho -->
                     <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho'))}" class="order-card__note order-card__note--warning">
@@ -183,28 +181,40 @@
             return Number(value).toLocaleString('vi-VN') + ' đ';
         }
 
+        function normalizeTrangThai(raw) {
+            if (!raw) return raw;
+            if (raw === 'DA THANH TOAN') return 'DA_THANH_TOAN';
+            return raw;
+        }
+
         function getTenTrangThai(trangThai) {
+            var t = normalizeTrangThai(trangThai);
             var map = {
                 'CAN_XU_LY': 'Cần xử lý',
+                'CHO_THANH_TOAN': 'Chờ thanh toán',
                 'CHO_XAC_NHAN': 'Chờ xác nhận',
+                'DA_THANH_TOAN': 'Đã thanh toán',
                 'DA_XAC_NHAN': 'Đã xác nhận',
                 'DANG_GIAO': 'Đang giao',
                 'DA_GIAO': 'Đã giao',
                 'DA_HUY': 'Đã hủy'
             };
-            return map[trangThai] || trangThai;
+            return map[t] || trangThai;
         }
 
         function getStatusClass(trangThai) {
+            var t = normalizeTrangThai(trangThai);
             var map = {
                 'CAN_XU_LY': 'status-can-xu-ly',
+                'CHO_THANH_TOAN': 'status-cho-thanh-toan',
                 'CHO_XAC_NHAN': 'status-waiting',
+                'DA_THANH_TOAN': 'status-da-thanh-toan',
                 'DA_XAC_NHAN': 'status-processing',
                 'DANG_GIAO': 'status-shipping',
                 'DA_GIAO': 'status-done',
                 'DA_HUY': 'status-cancel'
             };
-            return map[trangThai] || '';
+            return map[t] || '';
         }
 
         function renderOrderItem(item) {
@@ -265,7 +275,7 @@
                         itemsHtml +
                         '</div>' +
                         '<span class="order-card__status order-status ' + getStatusClass(don.trangThaiDonHang) + '">' +
-                        getTenTrangThai(don.trangThaiDonHang) +
+                        (don.tenTrangThai || getTenTrangThai(don.trangThaiDonHang)) +
                         '</span></div>' +
                         noteHtml +
                         '<div class="order-card__body">' +

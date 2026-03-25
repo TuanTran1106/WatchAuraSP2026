@@ -49,12 +49,18 @@ public class VNPayServiceImpl implements VNPayService {
         StringBuilder queryEncoded = new StringBuilder();
         for (Map.Entry<String, String> e : params.entrySet()) {
             if (e.getValue() != null && !e.getValue().isEmpty()) {
+
+                String encodedValue = urlEncode(e.getValue());
+
                 if (signData.length() > 0) {
                     signData.append("&");
                     queryEncoded.append("&");
                 }
-                signData.append(e.getKey()).append("=").append(e.getValue());
-                queryEncoded.append(e.getKey()).append("=").append(urlEncode(e.getValue()));
+
+                // VNPay yêu cầu encode trước khi ký
+                signData.append(e.getKey()).append("=").append(encodedValue);
+
+                queryEncoded.append(e.getKey()).append("=").append(encodedValue);
             }
         }
         String secureHash = hmacSha512(vnPayProperties.getHashSecret(), signData.toString());
@@ -77,7 +83,7 @@ public class VNPayServiceImpl implements VNPayService {
                 .forEach(e -> {
                     if (e.getValue() != null && !e.getValue().isEmpty()) {
                         if (signData.length() > 0) signData.append("&");
-                        signData.append(e.getKey()).append("=").append(e.getValue());
+                        signData.append(e.getKey()).append("=").append(urlEncode(e.getValue()));
                     }
                 });
         String computedHash = hmacSha512(vnPayProperties.getHashSecret(), signData.toString());

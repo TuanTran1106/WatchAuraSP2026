@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +34,13 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
     Page<HoaDon> findByTrangThaiAndKeyword(@Param("trangThai") String trangThai, @Param("q") String q, Pageable pageable);
+
+    /** Lọc theo một trong nhiều mã trạng thái (ví dụ Đã thanh toán: DA_THANH_TOAN và DA THANH TOAN). */
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true")
+    Page<HoaDon> findByTrangThaiDonHangInAndTrangThai(@Param("trangThaiList") Collection<String> trangThaiList, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiInAndKeyword(@Param("trangThaiList") Collection<String> trangThaiList, @Param("q") String q, Pageable pageable);
 
     Page<HoaDon> findByKhachHangIdOrderByNgayDatDesc(Integer khachHangId, Pageable pageable);
 

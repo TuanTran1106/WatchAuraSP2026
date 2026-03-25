@@ -1376,6 +1376,11 @@ body {
 .pagination-info {
   color: #64748b;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
 }
 
 .pagination-controls {
@@ -2696,6 +2701,7 @@ body:has(.admin-layout.theme-dark) {
 
 .admin-layout.theme-dark .pagination-info {
   color: #94a3b8;
+  background: transparent;
 }
 
 .admin-layout.theme-dark .pagination__link {
