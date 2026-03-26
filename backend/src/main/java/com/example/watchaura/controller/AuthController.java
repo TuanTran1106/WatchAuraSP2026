@@ -86,7 +86,7 @@ public class AuthController {
     public String dangXuat(HttpSession session, RedirectAttributes redirect) {
         session.invalidate();
         redirect.addFlashAttribute("infoMessage", "Bạn đã đăng xuất.");
-        return "redirect:/";
+        return "redirect:/home";
     }
 
     @GetMapping("/dang-ky")

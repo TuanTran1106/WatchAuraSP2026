@@ -63,6 +63,11 @@ public class BanHangTaiQuayController {
     @GetMapping
     public String banHang(Model model, HttpSession session){
 
+        // Bắt buộc đăng nhập
+        if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
+            return "redirect:/dang-nhap?error=Vui lòng đăng nhập để sử dụng chức năng bán hàng.";
+        }
+
         List<SanPhamChiTiet> sanPhamList =
                 sanPhamChiTietRepository.findAllWithDetails();
 
@@ -531,6 +536,11 @@ public class BanHangTaiQuayController {
                                   @RequestParam(required = false) String q,
                                   @RequestParam(required = false) String trangThai,
                                   @RequestParam(defaultValue = "0") int page) {
+
+        // Bắt buộc đăng nhập
+        if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
+            return "redirect:/dang-nhap?error=Vui lòng đăng nhập để xem đơn hàng.";
+        }
 
         // Lấy danh sách hóa đơn bán OFFLINE cho nhân viên
         List<HoaDon> hoaDonList = hoaDonRepository.findByLoaiHoaDon("OFFLINE");

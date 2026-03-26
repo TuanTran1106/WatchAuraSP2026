@@ -187,56 +187,72 @@
                 </button>
                 <div class="account-form-wrap" id="accountChangePasswordForm" role="region" aria-labelledby="btnTogglePasswordForm"
                      th:classappend="${passwordFormVisible != null and passwordFormVisible} ? 'account-form-wrap--visible' : ''">
-                <form class="auth-form account-form" th:action="@{/doi-mat-khau}" th:object="${changePasswordRequest}" method="post">
-                <div class="form-group">
-                    <label for="matKhauHienTai">Mật khẩu hiện tại <span class="required">*</span></label>
-                    <div class="password-field">
-                        <input type="password" id="matKhauHienTai" th:field="*{matKhauHienTai}"
-                               placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password">
-                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
-                            <span class="icon-eye" aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </span>
-                            <span class="icon-eye-off" aria-hidden="true" hidden>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            </span>
-                        </button>
-                    </div>
-                    <p th:if="${#fields.hasErrors('matKhauHienTai')}" class="field-error" th:errors="*{matKhauHienTai}"></p>
-                </div>
-                <div class="form-group">
-                    <label for="matKhauMoi">Mật khẩu mới <span class="required">*</span></label>
-                    <div class="password-field">
-                        <input type="password" id="matKhauMoi" th:field="*{matKhauMoi}"
-                               placeholder="Tối thiểu 6 ký tự" minlength="6" autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
-                            <span class="icon-eye" aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </span>
-                            <span class="icon-eye-off" aria-hidden="true" hidden>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            </span>
-                        </button>
-                    </div>
-                    <p th:if="${#fields.hasErrors('matKhauMoi')}" class="field-error" th:errors="*{matKhauMoi}"></p>
-                </div>
-                <div class="form-group">
-                    <label for="xacNhanMatKhauMoi">Xác nhận mật khẩu mới <span class="required">*</span></label>
-                    <div class="password-field">
-                        <input type="password" id="xacNhanMatKhauMoi" th:field="*{xacNhanMatKhauMoi}"
-                               placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
-                            <span class="icon-eye" aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </span>
-                            <span class="icon-eye-off" aria-hidden="true" hidden>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            </span>
-                        </button>
-                    </div>
-                    <p th:if="${#fields.hasErrors('xacNhanMatKhauMoi')}" class="field-error" th:errors="*{xacNhanMatKhauMoi}"></p>
-                </div>
-                <button type="submit" class="btn-submit">Đổi mật khẩu</button>
+                <form class="auth-form account-form account-form--address" th:action="@{/doi-mat-khau}" th:object="${changePasswordRequest}" method="post">
+                    <table class="account-address-form-table">
+                        <tbody>
+                            <tr>
+                                <td class="account-address-form-table__label">
+                                    <label for="matKhauHienTai">Mật khẩu hiện tại <span class="required">*</span></label>
+                                </td>
+                                <td class="account-address-form-table__input">
+                                    <div class="password-field">
+                                        <input type="password" id="matKhauHienTai" th:field="*{matKhauHienTai}"
+                                               placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password">
+                                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                                            <span class="icon-eye" aria-hidden="true">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </span>
+                                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <p th:if="${#fields.hasErrors('matKhauHienTai')}" class="field-error" th:errors="*{matKhauHienTai}"></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label">
+                                    <label for="matKhauMoi">Mật khẩu mới <span class="required">*</span></label>
+                                </td>
+                                <td class="account-address-form-table__input">
+                                    <div class="password-field">
+                                        <input type="password" id="matKhauMoi" th:field="*{matKhauMoi}"
+                                               placeholder="Tối thiểu 6 ký tự" minlength="6" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                                            <span class="icon-eye" aria-hidden="true">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </span>
+                                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <p th:if="${#fields.hasErrors('matKhauMoi')}" class="field-error" th:errors="*{matKhauMoi}"></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label">
+                                    <label for="xacNhanMatKhauMoi">Xác nhận mật khẩu mới <span class="required">*</span></label>
+                                </td>
+                                <td class="account-address-form-table__input">
+                                    <div class="password-field">
+                                        <input type="password" id="xacNhanMatKhauMoi" th:field="*{xacNhanMatKhauMoi}"
+                                               placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                                            <span class="icon-eye" aria-hidden="true">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </span>
+                                            <span class="icon-eye-off" aria-hidden="true" hidden>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <p th:if="${#fields.hasErrors('xacNhanMatKhauMoi')}" class="field-error" th:errors="*{xacNhanMatKhauMoi}"></p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn-submit"><i class="fas fa-key"></i> Đổi mật khẩu</button>
                 </form>
                 </div>
             </div>

@@ -62,7 +62,7 @@
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: #fff;
     background: #c9a227;
     border: none;
     border-radius: 8px;
@@ -91,7 +91,7 @@
 }
 
 .account-card__password-block .account-form {
-    max-width: 400px;
+    max-width: 560px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -103,6 +103,12 @@
 
 .account-form-wrap.account-form-wrap--visible {
     display: block;
+}
+
+/* Căn giữa form thêm địa chỉ giống khối đổi mật khẩu */
+.account-form-wrap--address .account-form {
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .account-info {
@@ -438,6 +444,35 @@
     margin: 0.25rem 0 0;
     font-size: 0.8rem;
     color: #c0392b;
+}
+
+.account-address-form-table__input .password-field {
+    position: relative;
+    display: inline-flex;
+    width: 100%;
+}
+
+.account-address-form-table__input .password-field input {
+    padding-right: 2.5rem;
+}
+
+.account-address-form-table__input .password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.account-address-form-table__input .password-toggle:hover {
+    color: #555;
 }
 
 .btn-toggle-address-form .fa-map-pin {
