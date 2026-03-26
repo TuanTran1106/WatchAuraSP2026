@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class VoucherServiceImpl implements VoucherService {
@@ -107,11 +106,6 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id) {
         return voucherRepository.existsByMaVoucherAndIdNot(maVoucher, id);
-    }
-
-    @Override
-    public List<Voucher> findVouchersByDanhMuc(String danhMuc) {
-        return voucherRepository.findVouchersByDanhMuc(danhMuc);
     }
 
     @Override
