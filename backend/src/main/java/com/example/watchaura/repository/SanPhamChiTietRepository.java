@@ -27,7 +27,8 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
 
     // Lấy chi tiết kèm thông tin liên quan (tránh N+1 query)
     @Query("SELECT spct FROM SanPhamChiTiet spct " +
-            "LEFT JOIN FETCH spct.sanPham " +
+            "LEFT JOIN FETCH spct.sanPham sp " +
+            "LEFT JOIN FETCH sp.danhMuc " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
             "LEFT JOIN FETCH spct.chatLieuDay " +

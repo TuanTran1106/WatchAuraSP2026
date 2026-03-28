@@ -83,4 +83,7 @@ public class HoaDon {
 
     @Column(name = "ghi_chu", length = 255)
     private String ghiChu;
+
+    @Column(name = "email", length = 100)
+    private String email;
 }

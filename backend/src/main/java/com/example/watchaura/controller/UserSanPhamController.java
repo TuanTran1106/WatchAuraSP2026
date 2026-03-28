@@ -162,9 +162,8 @@ public class UserSanPhamController {
                 .mapToInt(v -> v.getSoLuongTon() != null ? v.getSoLuongTon() : 0)
                 .sum();
 
-        // Lấy đánh giá cho tất cả biến thể của sản phẩm
-        List<DanhGiaDTO> allReviews = danhGiaService.getBySanPhamChiTietId(
-                variants.isEmpty() ? null : variants.get(0).getId());
+        // Đánh giá gắn theo từng biến thể — gom theo id sản phẩm
+        List<DanhGiaDTO> allReviews = danhGiaService.getBySanPhamId(id);
         // Tính trung bình sao
         double trungBinhSao = 0;
         if (!allReviews.isEmpty()) {

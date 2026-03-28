@@ -2,12 +2,14 @@ package com.example.watchaura.service.impl;
 
 import com.example.watchaura.dto.DanhGiaDTO;
 import com.example.watchaura.entity.DanhGia;
+import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.DanhGiaRepository;
 import com.example.watchaura.service.DanhGiaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +18,17 @@ import java.util.stream.Collectors;
 public class DanhGiaServiceImpl implements DanhGiaService {
 
     private final DanhGiaRepository danhGiaRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DanhGiaDTO> getBySanPhamId(Integer sanPhamId) {
+        if (sanPhamId == null) {
+            return List.of();
+        }
+        return danhGiaRepository.findBySanPhamIdOrderByNgayDanhGiaDesc(sanPhamId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -56,6 +69,38 @@ public class DanhGiaServiceImpl implements DanhGiaService {
         if (danhGia.getKhachHang() != null) {
             dto.setTenKhachHang(danhGia.getKhachHang().getTenNguoiDung());
         }
+        SanPhamChiTiet spct = danhGia.getSanPhamChiTiet();
+        if (spct != null) {
+            if (spct.getSanPham() != null) {
+                dto.setTenSanPham(spct.getSanPham().getTenSanPham());
+            }
+            dto.setMoTaBienThe(buildMoTaBienThe(spct));
+        }
         return dto;
+    }
+
+    /** Cùng quy tắc với HoaDonServiceImpl.buildTenBienTheForChiTiet (đơn hàng / giỏ). */
+    private static String buildMoTaBienThe(SanPhamChiTiet spct) {
+        if (spct == null) {
+            return null;
+        }
+        List<String> parts = new ArrayList<>();
+        if (spct.getMauSac() != null && spct.getMauSac().getTenMauSac() != null
+                && !spct.getMauSac().getTenMauSac().isBlank()) {
+            parts.add("Màu: " + spct.getMauSac().getTenMauSac().trim());
+        }
+        if (spct.getKichThuoc() != null && spct.getKichThuoc().getTenKichThuoc() != null
+                && !spct.getKichThuoc().getTenKichThuoc().isBlank()) {
+            parts.add("Kích thước: " + spct.getKichThuoc().getTenKichThuoc().trim());
+        }
+        if (spct.getChatLieuDay() != null && spct.getChatLieuDay().getTenChatLieu() != null
+                && !spct.getChatLieuDay().getTenChatLieu().isBlank()) {
+            parts.add("Dây: " + spct.getChatLieuDay().getTenChatLieu().trim());
+        }
+        if (spct.getLoaiMay() != null && spct.getLoaiMay().getTenLoaiMay() != null
+                && !spct.getLoaiMay().getTenLoaiMay().isBlank()) {
+            parts.add("Loại máy: " + spct.getLoaiMay().getTenLoaiMay().trim());
+        }
+        return parts.isEmpty() ? null : String.join(" · ", parts);
     }
 }

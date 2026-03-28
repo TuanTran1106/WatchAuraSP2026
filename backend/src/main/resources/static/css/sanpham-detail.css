@@ -370,7 +370,7 @@
 
 .variant-box__price {
     font-weight: 700;
-    color: var(--primary-orange);
+    color: #dc3545;
     font-size: 0.85rem;
 }
 
@@ -785,7 +785,8 @@
 .review-item__header {
     display: flex;
     gap: 0.6rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
+    align-items: flex-start;
 }
 
 .review-item__avatar {
@@ -805,13 +806,25 @@
 .review-item__meta {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+    align-items: flex-start;
+}
+
+.review-item__topline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    width: 100%;
 }
 
 .review-item__name {
     font-weight: 600;
     color: #333;
     font-size: 0.85rem;
+    line-height: 1.3;
 }
 
 .review-item__verified {
@@ -821,9 +834,12 @@
     font-size: 0.7rem;
     color: #16a34a;
     background: rgba(22, 163, 74, 0.1);
-    padding: 1px 6px;
+    padding: 2px 8px;
     border-radius: 10px;
     font-weight: 500;
+    flex-shrink: 0;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .review-item__verified i {
@@ -845,11 +861,38 @@
     color: #999;
 }
 
-.review-item__content {
-    margin: 0;
+.review-item__product {
+    margin: 0.1rem 0 0;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: #777;
+    width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.review-item__product-name {
+    font-weight: 600;
     color: #555;
-    line-height: 1.4;
+}
+
+.review-item__variant {
+    color: #666;
+}
+
+.review-item__content {
+    margin: 0.5rem 0 0;
+    margin-left: calc(35px + 0.6rem);
+    padding: 0;
+    color: #444;
+    line-height: 1.5;
     font-size: 0.85rem;
+    width: calc(100% - 35px - 0.6rem);
+    max-width: calc(100% - 35px - 0.6rem);
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 @media (max-width: 576px) {
@@ -864,9 +907,15 @@
     }
 
     .review-item__meta {
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        width: 100%;
+    }
+
+    .review-item__content {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
     }
 }

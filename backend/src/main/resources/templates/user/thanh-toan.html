@@ -100,6 +100,11 @@
                             <span class="cart-summary__label cart-summary__label--voucher">Voucher:</span>
                             <span class="cart-summary__value cart-summary__value--discount" id="checkout-voucher-discount">- 0 ₫</span>
                         </div>
+                        <div class="cart-summary__row cart-summary__row--compact" id="shipping-fee-row">
+                            <span class="cart-summary__label">Phí giao hàng</span>
+                            <span class="cart-summary__value" id="checkout-shipping-fee">40.000 ₫</span>
+                        </div>
+                        <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 1.000.000₫ được miễn phí giao hàng</p>
                         <div class="cart-summary__row cart-summary__row--total">
                             <span class="cart-summary__label">Tổng thanh toán</span>
                             <span class="cart-summary__value cart-summary__value--large" id="checkout-tong-tien" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
@@ -141,10 +146,10 @@
         .checkout-page .checkout-item__name { display: block; font-size: 0.9rem; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .checkout-page .checkout-item__variants { display: block; font-size: 0.8rem; color: #666; margin-top: 0.2rem; line-height: 1.35; white-space: normal; }
         .checkout-page .checkout-item__qty { font-size: 0.85rem; color: #666; }
-        .checkout-page .checkout-item__total { font-weight: 600; color: #1a1a1a; white-space: nowrap; }
+        .checkout-page .checkout-item__total { font-weight: 600; color: #dc3545; white-space: nowrap; }
         .checkout-page .cart-summary__row--total { padding-top: 0.75rem; margin-top: 0.5rem; border-top: 2px solid #eee; }
-        .checkout-page .cart-summary__value--large { font-size: 1.25rem; font-weight: 700; color: #c9a227; }
-        .checkout-page .cart-summary__value--discount { color: #c9302c; font-size: 0.95rem; font-weight: 600; }
+        .checkout-page .cart-summary__value--large { font-size: 1.25rem; font-weight: 700; color: #dc3545; }
+        .checkout-page .cart-summary__value--discount { color: #0277bd; font-size: 0.95rem; font-weight: 600; }
         .checkout-page .cart-summary__label--voucher { color: #1976d2; font-size: 0.95rem; font-weight: 600; }
         .checkout-page .cart-summary__actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
         .checkout-page .voucher-input-row { display: flex; gap: 0.5rem; align-items: center; }
@@ -171,6 +176,9 @@
         .checkout-page .selected-voucher-info .voucher-tag { flex: 1; color: #2e7d32; font-weight: 500; }
         .checkout-page .btn-remove-voucher { background: none; border: none; color: #c9302c; cursor: pointer; font-size: 1rem; padding: 0 0.25rem; }
         .checkout-page .btn-remove-voucher:hover { color: #a00; }
+        .checkout-page .cart-summary__note--free-ship { color: #555; font-size: 0.85rem; font-weight: 500; margin-top: 0.5rem; margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .checkout-page #checkout-shipping-fee,
+        .checkout-page .cart-summary__value--free-ship { color: #16a34a; font-weight: 600; }
         @media (max-width: 900px) {
             .checkout-page .checkout-layout { grid-template-columns: 1fr; }
             .checkout-page .checkout-summary { position: static; }
@@ -197,7 +205,12 @@
             var tongTienEl = document.getElementById('checkout-tong-tien');
             var voucherRow = document.getElementById('voucher-row');
             var voucherDiscountEl = document.getElementById('checkout-voucher-discount');
+            var shippingFeeEl = document.getElementById('checkout-shipping-fee');
+            var shippingNoteEl = document.getElementById('shipping-note');
             var baseTotal = /*[[${cart.tongTien}]]*/ 0;
+
+            var SHIPPING_FEE = 40000;
+            var FREE_SHIPPING_THRESHOLD = 1000000;
 
             var getVouchersUrl = /*[[@{/thanh-toan/vouchers}]]*/ '/thanh-toan/vouchers';
             var applyVoucherUrl = /*[[@{/thanh-toan/apply-voucher-by-id}]]*/ '/thanh-toan/apply-voucher-by-id';
@@ -206,6 +219,26 @@
                 var num = Number(value || 0);
                 if (isNaN(num)) num = 0;
                 return num.toLocaleString('vi-VN') + ' ₫';
+            }
+
+            function calculateShippingFee(subtotal) {
+                return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+            }
+
+            function updateShippingDisplay(subtotal) {
+                var shippingFee = calculateShippingFee(subtotal);
+                if (shippingFeeEl) {
+                    shippingFeeEl.textContent = formatCurrencyVnd(shippingFee);
+                    if (shippingFee === 0 && subtotal > 0) {
+                        shippingFeeEl.classList.add('cart-summary__value--free-ship');
+                    } else {
+                        shippingFeeEl.classList.remove('cart-summary__value--free-ship');
+                    }
+                }
+                if (shippingNoteEl) {
+                    shippingNoteEl.style.display = shippingFee === 0 && subtotal > 0 ? '' : 'none';
+                }
+                return shippingFee;
             }
 
             function formatDiscount(voucher) {
@@ -334,9 +367,10 @@
                     if (radio) radio.checked = false;
                 });
 
-                // Reset total
+                var shippingFee = updateShippingDisplay(baseTotal);
+                var grandTotal = baseTotal + shippingFee;
                 if (tongTienEl) {
-                    tongTienEl.textContent = formatCurrencyVnd(baseTotal);
+                    tongTienEl.textContent = formatCurrencyVnd(grandTotal);
                 }
                 if (voucherRow) {
                     voucherRow.style.display = 'none';
@@ -362,12 +396,16 @@
                     voucherMsg.textContent = data.message || '';
                     if (data.success) {
                         voucherMsg.classList.add('voucher-message--success');
-                        if (typeof data.finalTotal !== 'undefined' && data.finalTotal !== null) {
-                            tongTienEl.textContent = formatCurrencyVnd(data.finalTotal);
+                        var discount = typeof data.discount !== 'undefined' && data.discount !== null ? data.discount : 0;
+                        var finalTotal = typeof data.finalTotal !== 'undefined' && data.finalTotal !== null ? data.finalTotal : baseTotal;
+                        var shippingFee = updateShippingDisplay(finalTotal);
+                        var grandTotal = finalTotal + shippingFee;
+                        if (tongTienEl) {
+                            tongTienEl.textContent = formatCurrencyVnd(grandTotal);
                         }
-                        if (voucherRow && voucherDiscountEl && typeof data.discount !== 'undefined' && data.discount !== null) {
+                        if (voucherRow && voucherDiscountEl) {
                             voucherRow.style.display = '';
-                            voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(data.discount);
+                            voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(discount);
                         }
                     } else {
                         voucherMsg.classList.add('voucher-message--error');
@@ -381,6 +419,9 @@
 
             // Load vouchers on page load
             loadVouchers();
+
+            // Initialize shipping fee display
+            updateShippingDisplay(baseTotal);
         })();
     </script>
 </div>

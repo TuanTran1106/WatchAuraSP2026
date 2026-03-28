@@ -348,7 +348,7 @@
 .cart-table__total {
     font-weight: 700;
     font-size: 1.05rem;
-    color: #c9a227;
+    color: #dc3545;
     white-space: nowrap;
 }
 
@@ -473,6 +473,20 @@
     align-items: center;
     margin-bottom: 0.75rem;
 }
+/* Tạm tính, phí giao hàng — nhỏ hơn dòng tổng */
+.cart-summary__row--compact {
+    margin-bottom: 0.5rem;
+}
+.cart-summary__row--compact .cart-summary__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #444;
+}
+.cart-summary__row--compact .cart-summary__value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #dc3545;
+}
 .cart-summary__label {
     font-size: 1rem;
     font-weight: 600;
@@ -481,7 +495,15 @@
 .cart-summary__value {
     font-size: 1.35rem;
     font-weight: 700;
-    color: #c9a227;
+    color: #dc3545;
+}
+.cart-summary__value--shipping {
+    font-size: 1rem;
+    color: #666;
+}
+.cart-summary__value--free-ship {
+    color: #16a34a;
+    font-weight: 600;
 }
 .cart-summary__note {
     font-size: 0.8rem;
@@ -489,6 +511,15 @@
     margin: 0 0 1.25rem 0;
     padding-bottom: 1rem;
     border-bottom: 1px dashed #eee;
+}
+.cart-summary__note--free-ship {
+    color: #16a34a;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
 }
 .cart-summary__actions {
     display: flex;
@@ -777,7 +808,7 @@
 .edit-order-table__total {
     font-weight: 700;
     font-size: 1.05rem;
-    color: #c9a227;
+    color: #dc3545;
     white-space: nowrap;
 }
 
@@ -1015,7 +1046,7 @@
 .edit-order-totals__total {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #c9a227;
+    color: #dc3545;
 }
 
 /* Change info */

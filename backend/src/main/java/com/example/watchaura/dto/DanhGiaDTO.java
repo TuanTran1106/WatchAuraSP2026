@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class DanhGiaDTO {
     private Integer id;
     private Integer sanPhamChiTietId;
+    private String tenSanPham;
+    private String moTaBienThe;
     private String tenKhachHang;
     private Integer soSao;
     private String noiDung;

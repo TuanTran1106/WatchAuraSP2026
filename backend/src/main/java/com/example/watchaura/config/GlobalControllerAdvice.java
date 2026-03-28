@@ -58,7 +58,17 @@ public class GlobalControllerAdvice {
             }
         } else {
             model.addAttribute("currentUser", null);
-            model.addAttribute("soLuongGioHang", 0);
+            int guestCount = 0;
+            Object cartAttr = session.getAttribute("cart");
+            if (cartAttr instanceof java.util.Map) {
+                java.util.Map<?, ?> m = (java.util.Map<?, ?>) cartAttr;
+                for (Object v : m.values()) {
+                    if (v instanceof Integer) {
+                        guestCount += ((Integer) v).intValue();
+                    }
+                }
+            }
+            model.addAttribute("soLuongGioHang", guestCount);
         }
     }
 

@@ -3,8 +3,10 @@ package com.example.watchaura.controller;
 import com.example.watchaura.dto.CartAjaxResponse;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.GioHangChiTietRequest;
+import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.service.GioHangChiTietService;
 import com.example.watchaura.service.GioHangService;
+import com.example.watchaura.service.GuestCartViewService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
 @Controller
 @RequestMapping("/gio-hang")
 @RequiredArgsConstructor
@@ -21,26 +27,47 @@ public class UserGioHangController {
 
     private final GioHangService gioHangService;
     private final GioHangChiTietService gioHangChiTietService;
+    private final SanPhamChiTietRepository sanPhamChiTietRepository;
+    private final GuestCartViewService guestCartViewService;
 
     @GetMapping("/so-luong")
     @ResponseBody
     public java.util.Map<String, Integer> soLuong(HttpSession session) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
-        int count = (userId != null) ? gioHangService.getSoLuongGioHang(userId) : 0;
+        int count = 0;
+        
+        if (userId != null) {
+            count = gioHangService.getSoLuongGioHang(userId);
+        } else {
+            // Đếm số lượng trong session cart của guest
+            Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
+            if (cart != null) {
+                count = cart.values().stream().mapToInt(Integer::intValue).sum();
+            }
+        }
+        
         return java.util.Map.of("soLuongGioHang", count);
     }
 
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
+        // =============================
+        // ✅ GUEST
+        // =============================
         if (userId == null) {
-            redirect.addAttribute("error", "Vui lòng đăng nhập để xem giỏ hàng.");
-            return "redirect:/dang-nhap";
+            GioHangDTO cart = guestCartViewService.buildCartDto(session);
+            model.addAttribute("cart", cart);
+            model.addAttribute("guestCart", true);
+            model.addAttribute("content", "user/gio-hang :: content");
+            return "layout/user-layout";
         }
         GioHangDTO cart = gioHangService.getOrCreateCart(userId);
-        model.addAttribute("title", "Giỏ hàng - WatchAura");
-        model.addAttribute("content", "user/gio-hang :: content");
+
         model.addAttribute("cart", cart);
+        model.addAttribute("guestCart", false);
+        model.addAttribute("content", "user/gio-hang :: content");
+
         return "layout/user-layout";
     }
 
@@ -52,13 +79,44 @@ public class UserGioHangController {
                        HttpServletRequest request,
                        RedirectAttributes redirect) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
-        if (userId == null) {
-            if (isAjax(request)) {
-                return ResponseEntity.ok(new CartAjaxResponse(false, "Vui lòng đăng nhập để thêm vào giỏ hàng.", null, 0, null, null, null));
-            }
-            redirect.addAttribute("error", "Vui lòng đăng nhập để thêm vào giỏ hàng.");
-            return "redirect:/dang-nhap";
+
+        if (soLuong == null || soLuong < 1) {
+            soLuong = 1;
         }
+
+        // =============================
+        // ✅ CHƯA LOGIN → dùng SESSION CART
+        // =============================
+        if (userId == null) {
+
+            Map<Integer, Integer> cart =
+                    (Map<Integer, Integer>) session.getAttribute("cart");
+
+            if (cart == null) {
+                cart = new java.util.HashMap<>();
+            }
+
+            cart.put(
+                    sanPhamChiTietId,
+                    cart.getOrDefault(sanPhamChiTietId, 0) + soLuong
+            );
+
+            session.setAttribute("cart", cart);
+            
+            if (isAjax(request)) {
+                int totalItems = cart.values().stream().mapToInt(Integer::intValue).sum();
+                return ResponseEntity.ok(new CartAjaxResponse(true, "Đã thêm sản phẩm vào giỏ hàng.", null, totalItems, null, null, null));
+            }
+            redirect.addFlashAttribute("success", "Đã thêm sản phẩm vào giỏ hàng.");
+            if (redirectUrl != null && !redirectUrl.isBlank() && redirectUrl.startsWith("/")) {
+                return "redirect:" + redirectUrl;
+            }
+            return "redirect:/gio-hang";
+        }
+        
+        // =============================
+        // ✅ ĐÃ LOGIN → dùng DB CART
+        // =============================
         if (soLuong == null || soLuong < 1) soLuong = 1;
         try {
             GioHangDTO cart = gioHangService.getOrCreateCart(userId);
@@ -159,7 +217,109 @@ public class UserGioHangController {
         return "redirect:/gio-hang";
     }
 
-    private static boolean isAjax(HttpServletRequest request) {
-        return "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"));
+    private Object handleNotLogin(HttpServletRequest request,
+                                  RedirectAttributes redirect,
+                                  String message) {
+        if (isAjax(request)) {
+            return ResponseEntity.ok(
+                    new CartAjaxResponse(false, message, null, 0, null, null, null)
+            );
+        }
+
+        redirect.addAttribute("error", message);
+        return "redirect:/dang-nhap";
+    }
+
+    private Object handleException(Exception e,
+                                   HttpServletRequest request,
+                                   RedirectAttributes redirect) {
+
+        String msg = (e.getMessage() != null)
+                ? e.getMessage()
+                : "Có lỗi xảy ra.";
+
+        if (isAjax(request)) {
+            return ResponseEntity.ok(
+                    new CartAjaxResponse(false, msg, null, 0, null, null, null)
+            );
+        }
+
+        redirect.addFlashAttribute("error", msg);
+        return "redirect:/gio-hang";
+    }
+
+    private boolean isAjax(HttpServletRequest request) {
+        return "XMLHttpRequest".equalsIgnoreCase(
+                request.getHeader("X-Requested-With")
+        );
+    }
+
+    private int guestCartTotalSoLuong(Map<Integer, Integer> cart) {
+        if (cart == null) {
+            return 0;
+        }
+        return cart.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    private BigDecimal guestCartTongTien(Map<Integer, Integer> cart) {
+        if (cart == null || cart.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal t = BigDecimal.ZERO;
+        for (Map.Entry<Integer, Integer> e : cart.entrySet()) {
+            var sp = sanPhamChiTietRepository.findById(e.getKey()).orElse(null);
+            if (sp != null && sp.getGiaBan() != null && e.getValue() != null) {
+                t = t.add(sp.getGiaBan().multiply(BigDecimal.valueOf(e.getValue())));
+            }
+        }
+        return t;
+    }
+
+    @PostMapping("/guest/update")
+    @ResponseBody
+    public ResponseEntity<CartAjaxResponse> updateGuest(
+            @RequestParam Integer sanPhamChiTietId,
+            @RequestParam Integer soLuong,
+            HttpSession session
+    ) {
+        Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
+        if (cart == null) {
+            cart = new HashMap<>();
+        }
+        if (soLuong == null || soLuong <= 0) {
+            cart.remove(sanPhamChiTietId);
+        } else {
+            cart.put(sanPhamChiTietId, soLuong);
+        }
+        session.setAttribute("cart", cart);
+
+        int count = guestCartTotalSoLuong(cart);
+        BigDecimal tongTien = guestCartTongTien(cart);
+
+        var spOpt = sanPhamChiTietRepository.findById(sanPhamChiTietId);
+        Integer lineSoLuong = cart.get(sanPhamChiTietId);
+        BigDecimal thanhTien = null;
+        if (spOpt.isPresent() && lineSoLuong != null && spOpt.get().getGiaBan() != null) {
+            thanhTien = spOpt.get().getGiaBan().multiply(BigDecimal.valueOf(lineSoLuong));
+        }
+        return ResponseEntity.ok(new CartAjaxResponse(true, null, tongTien, count, sanPhamChiTietId, lineSoLuong, thanhTien));
+    }
+
+    @PostMapping("/guest/delete")
+    @ResponseBody
+    public ResponseEntity<CartAjaxResponse> deleteGuest(
+            @RequestParam Integer sanPhamChiTietId,
+            HttpSession session
+    ) {
+        Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
+        if (cart != null) {
+            cart.remove(sanPhamChiTietId);
+        }
+        if (cart != null) {
+            session.setAttribute("cart", cart);
+        }
+        int count = guestCartTotalSoLuong(cart);
+        BigDecimal tongTien = guestCartTongTien(cart);
+        return ResponseEntity.ok(new CartAjaxResponse(true, null, tongTien, count, sanPhamChiTietId, null, null));
     }
 }

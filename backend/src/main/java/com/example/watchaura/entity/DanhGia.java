@@ -19,6 +19,10 @@ public class DanhGia {
     @Column(name = "id_san_pham_chi_tiet")
     private Integer idSanPhamChiTiet;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_san_pham_chi_tiet", insertable = false, updatable = false)
+    private SanPhamChiTiet sanPhamChiTiet;
+
     @ManyToOne
     @JoinColumn(name = "id_khach_hang")
     private KhachHang khachHang;

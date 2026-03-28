@@ -240,14 +240,21 @@
                             <div class="review-item__header">
                                 <div class="review-item__avatar" th:text="${#strings.substring(dg.tenKhachHang, 0, 1)}">A</div>
                                 <div class="review-item__meta">
-                                    <span class="review-item__name" th:text="${dg.tenKhachHang}">Tên khách</span>
-                                    <span class="review-item__verified"><i class="fas fa-check-circle"></i> Đã mua</span>
+                                    <div class="review-item__topline">
+                                        <span class="review-item__name" th:text="${dg.tenKhachHang}">Tên khách</span>
+                                        <span class="review-item__verified"><i class="fas fa-check-circle"></i> Đã mua</span>
+                                    </div>
                                     <div class="review-item__stars">
                                         <th:block th:each="i : ${#numbers.sequence(1,5)}">
                                             <i class="fas fa-star" th:classappend="${i <= dg.soSao ? 'star-filled' : ''}"></i>
                                         </th:block>
                                     </div>
                                     <span class="review-item__date" th:text="${#temporals.format(dg.ngayDanhGia, 'dd/MM/yyyy')}">01/01/2024</span>
+                                    <p class="review-item__product" th:if="${dg.tenSanPham != null or dg.moTaBienThe != null}">
+                                        <span class="review-item__product-name" th:if="${dg.tenSanPham != null}" th:text="${dg.tenSanPham}">Tên SP</span>
+                                        <span class="review-item__product-sep" th:if="${dg.tenSanPham != null and dg.moTaBienThe != null}"> · </span>
+                                        <span class="review-item__variant" th:if="${dg.moTaBienThe != null}" th:text="${dg.moTaBienThe}">Biến thể</span>
+                                    </p>
                                 </div>
                             </div>
                             <p class="review-item__content" th:text="${dg.noiDung}">Nội dung đánh giá</p>

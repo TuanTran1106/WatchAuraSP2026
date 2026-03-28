@@ -285,7 +285,7 @@
 
 .order-card__total-value {
     font-weight: 700;
-    color: #c0392b;
+    color: #dc3545;
 }
 
 .order-card__actions {
@@ -456,7 +456,7 @@
 }
 
 .order-detail-summary__total {
-    color: #c0392b;
+    color: #dc3545;
 }
 
 .order-detail-meta {
