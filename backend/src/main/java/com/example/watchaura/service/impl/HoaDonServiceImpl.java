@@ -316,6 +316,10 @@ public class HoaDonServiceImpl implements HoaDonService {
         String currentStatus = hoaDon.getTrangThaiDonHang();
         String effectiveCurrent = normalizeDaThanhToanCode(currentStatus);
 
+        if ("DA_GIAO".equals(effectiveCurrent) && !"DA_GIAO".equals(newStatus)) {
+            throw new RuntimeException("Đơn đã giao, không thể đổi sang trạng thái khác.");
+        }
+
         // Xử lý khi xác nhận đơn (DA_XAC_NHAN) - trừ tồn kho ngay khi xác nhận (FIFO)
         if ("DA_XAC_NHAN".equals(newStatus) && !"DA_XAC_NHAN".equals(effectiveCurrent)) {
             List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);

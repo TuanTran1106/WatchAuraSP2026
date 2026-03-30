@@ -96,16 +96,18 @@
                             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
                             <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
                             <!-- cur = trạng thái hiện tại (coi null/trống là Chờ xác nhận); chỉ hiện các bước chuyển hợp lệ -->
-                            <select name="trangThai" class="form__select form__select--sm table-status-select" onchange="this.form.submit()" title="Đổi trạng thái đơn hàng"
+                            <select name="trangThai" class="form__select form__select--sm table-status-select" onchange="this.form.submit()"
                                     th:with="cur=${item.trangThaiDonHang != null and !#strings.isEmpty(item.trangThaiDonHang) ? item.trangThaiDonHang : 'CHO_XAC_NHAN'}"
+                                    th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'"
+                                    th:disabled="${cur == 'DA_GIAO'}"
                                     th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : (cur == 'DA_GIAO' ? 'status--da-giao' : 'status--da-huy'))))}">
                                 <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
                                 <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
                                 <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
                                 <option th:if="${cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="${cur == 'DANG_GIAO'}" th:text="'Đang giao'">Đang giao</option>
                                 <option th:if="${cur == 'DANG_GIAO' or cur == 'DA_GIAO'}" th:value="DA_GIAO" th:selected="${cur == 'DA_GIAO'}" th:text="'Đã giao'">Đã giao</option>
-                                <option th:if="${cur == 'DA_GIAO' or cur == 'DA_THANH_TOAN'}" th:value="DA_THANH_TOAN" th:selected="${cur == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'">Đã thanh toán</option>
-                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO' or cur == 'DA_GIAO' or cur == 'DA_HUY' or cur == 'CAN_XU_LY' or cur == 'DA_THANH_TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
+                                <option th:if="${cur == 'DA_THANH_TOAN'}" th:value="DA_THANH_TOAN" th:selected="${cur == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'">Đã thanh toán</option>
+                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO' or cur == 'DA_HUY' or cur == 'CAN_XU_LY' or cur == 'DA_THANH_TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
                             </select>
                         </form>
                     </td>

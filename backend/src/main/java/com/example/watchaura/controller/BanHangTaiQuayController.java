@@ -69,7 +69,7 @@ public class BanHangTaiQuayController {
         }
 
         List<SanPhamChiTiet> sanPhamList =
-                sanPhamChiTietRepository.findAllWithDetails();
+                sanPhamChiTietRepository.findActiveForSaleWithDetails();
 
         model.addAttribute("sanPhamList", sanPhamList);
 
@@ -130,6 +130,14 @@ public class BanHangTaiQuayController {
         // DÙNG PESSIMISTIC LOCK - Khóa dòng sản phẩm để tránh race condition
         SanPhamChiTiet sp = sanPhamChiTietRepository.findByIdWithLock(sanPhamChiTietId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        SanPham spParent = sp.getSanPham();
+        if (spParent == null || !Boolean.TRUE.equals(spParent.getTrangThai())) {
+            return "Sản phẩm này đã tắt hoạt động, không thể bán tại quầy.";
+        }
+        if (!Boolean.TRUE.equals(sp.getTrangThai())) {
+            return "Biến thể này đã tắt hoạt động, không thể bán tại quầy.";
+        }
 
         List<HoaDonChiTiet> list = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
 

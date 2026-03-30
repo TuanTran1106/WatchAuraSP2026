@@ -142,11 +142,36 @@
             font-weight: 600;
             color: var(--text);
             font-size: 0.9375rem;
-            line-height: 1.3;
+            line-height: 1.35;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 6;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            word-break: break-word;
+        }
+        .product-variants {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-top: 0.4rem;
+        }
+        .product-variants .variant-row {
+            display: flex;
+            gap: 0.35rem;
+            align-items: baseline;
+            flex-wrap: wrap;
+        }
+        .product-variants .variant-row + .variant-row {
+            margin-top: 0.15rem;
+        }
+        .product-variants .v-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .product-variants .v-label::after {
+            content: ":";
+            margin-left: 1px;
         }
         .product-card .price {
             font-weight: 700;
@@ -220,6 +245,15 @@
             font-weight: 600;
             color: var(--text);
             font-size: 0.9375rem;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .cart-item .item-variant {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+            line-height: 1.35;
+            word-break: break-word;
         }
         .cart-item .item-price {
             color: var(--text-muted);
@@ -428,7 +462,27 @@
                             <p class="brand mb-0"
                                th:text="${sp.sanPham != null && sp.sanPham.thuongHieu != null ? sp.sanPham.thuongHieu.tenThuongHieu : 'N/A'}"></p>
                             <p class="name mb-0"
+                               th:attr="title=${sp.sanPham != null && sp.sanPham.tenSanPham != null ? sp.sanPham.tenSanPham : 'N/A'}"
                                th:text="${sp.sanPham != null ? sp.sanPham.tenSanPham : 'N/A'}"></p>
+                            <div class="product-variants"
+                                 th:if="${sp.mauSac != null or sp.kichThuoc != null or sp.chatLieuDay != null or sp.loaiMay != null}">
+                                <div th:if="${sp.mauSac != null}" class="variant-row">
+                                    <span class="v-label">Màu</span>
+                                    <span th:text="${sp.mauSac.tenMauSac}">—</span>
+                                </div>
+                                <div th:if="${sp.kichThuoc != null}" class="variant-row">
+                                    <span class="v-label">Kích cỡ</span>
+                                    <span th:text="${sp.kichThuoc.tenKichThuoc}">—</span>
+                                </div>
+                                <div th:if="${sp.chatLieuDay != null}" class="variant-row">
+                                    <span class="v-label">Dây</span>
+                                    <span th:text="${sp.chatLieuDay.tenChatLieu}">—</span>
+                                </div>
+                                <div th:if="${sp.loaiMay != null}" class="variant-row">
+                                    <span class="v-label">Loại máy</span>
+                                    <span th:text="${sp.loaiMay.tenLoaiMay}">—</span>
+                                </div>
+                            </div>
                             <p class="price mb-0"
                                th:text="${#numbers.formatDecimal(sp.giaBan,0,'COMMA',0,'POINT') + ' ₫'}"></p>
                         </div>
@@ -506,6 +560,16 @@
 </div>
 
 <script>
+    function posFormatVariant(spct) {
+        if (!spct) return "";
+        var parts = [];
+        if (spct.mauSac && spct.mauSac.tenMauSac) parts.push("Màu: " + spct.mauSac.tenMauSac);
+        if (spct.kichThuoc && spct.kichThuoc.tenKichThuoc) parts.push("Kích cỡ: " + spct.kichThuoc.tenKichThuoc);
+        if (spct.chatLieuDay && spct.chatLieuDay.tenChatLieu) parts.push("Dây: " + spct.chatLieuDay.tenChatLieu);
+        if (spct.loaiMay && spct.loaiMay.tenLoaiMay) parts.push("Loại máy: " + spct.loaiMay.tenLoaiMay);
+        return parts.join(" · ");
+    }
+
     function showToast(message, type) {
         type = type || "info";
         var titles = { warning: "Thông báo", success: "Thành công", error: "Lỗi", info: "Thông báo" };
@@ -563,12 +627,14 @@
                 data.items.forEach(function(item) {
                     var tenSanPham = (item.sanPhamChiTiet && item.sanPhamChiTiet.sanPham)
                         ? item.sanPhamChiTiet.sanPham.tenSanPham : "Sản phẩm";
+                    var bienThe = posFormatVariant(item.sanPhamChiTiet);
                     var thanhTien = item.donGia * item.soLuong;
 
                     var div = document.createElement("div");
                     div.className = "cart-item";
                     div.innerHTML =
                         '<div class="item-name">' + tenSanPham + '</div>' +
+                        (bienThe ? '<div class="item-variant">' + bienThe + '</div>' : '') +
                         '<div class="item-price">' + item.donGia.toLocaleString() + ' ₫</div>' +
                         '<div class="d-flex align-items-center justify-content-between mt-2">' +
                         '<div class="d-flex align-items-center gap-1 btn-group-cart">' +
