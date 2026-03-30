@@ -25,14 +25,20 @@
                         <span class="invoice-detail__code" th:text="${hoaDon.maDonHang}">#Mã</span>
                     </h1>
                     <form th:if="${hoaDon.loaiHoaDon == 'OFFLINE'}"
-                          th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}" method="post"
-                          class="invoice-detail__status-form">
+                          th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}"
+                          method="post"
+                          class="invoice-detail__status-form"
+                          data-confirm="Bạn có chắc chắn muốn đổi trạng thái hóa đơn này?"
+                          data-confirm-title="Đổi trạng thái hóa đơn"
+                          data-confirm-ok="Đổi trạng thái"
+                          data-confirm-cancel="Hủy"
+                          data-confirm-tone="info">
                         <input type="hidden" name="tuChiTiet" value="1"/>
                         <div class="invoice-detail__status-field">
                         <label for="invoiceDetailTrangThai" class="invoice-detail__status-field-label">Trạng thái đơn</label>
                         <select name="trangThai" id="invoiceDetailTrangThai"
                                 class="invoice-detail__status-select"
-                                onchange="this.form.submit()" title="Đổi trạng thái hóa đơn tại quầy"
+                                onchange="(this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit())" title="Đổi trạng thái hóa đơn tại quầy"
                                 th:with="raw=${hoaDon.trangThaiDonHang},
                                          cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_THANH_TOAN'},
                                          isCho=${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'},
@@ -60,14 +66,20 @@
                         </div>
                     </form>
                     <form th:unless="${hoaDon.loaiHoaDon == 'OFFLINE'}"
-                          th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}" method="post"
-                          class="invoice-detail__status-form">
+                          th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}"
+                          method="post"
+                          class="invoice-detail__status-form"
+                          data-confirm="Bạn có chắc chắn muốn đổi trạng thái đơn hàng này?"
+                          data-confirm-title="Đổi trạng thái đơn hàng"
+                          data-confirm-ok="Đổi trạng thái"
+                          data-confirm-cancel="Hủy"
+                          data-confirm-tone="info">
                         <input type="hidden" name="tuChiTiet" value="1"/>
                         <div class="invoice-detail__status-field">
                         <label for="invoiceDetailTrangThaiOnline" class="invoice-detail__status-field-label">Trạng thái đơn</label>
                         <select name="trangThai" id="invoiceDetailTrangThaiOnline"
                                 class="invoice-detail__status-select"
-                                onchange="this.form.submit()"
+                                onchange="(this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit())"
                                 th:with="cur=${hoaDon.trangThaiDonHang != null and !#strings.isEmpty(hoaDon.trangThaiDonHang) ? hoaDon.trangThaiDonHang : 'CHO_XAC_NHAN'}"
                                 th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'"
                                 th:disabled="${cur == 'DA_GIAO'}"

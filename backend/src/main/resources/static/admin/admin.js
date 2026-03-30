@@ -158,6 +158,12 @@
       return;
     }
 
+    // A global confirm modal may be awaiting user decision.
+    // In that phase, do not process AJAX submit yet.
+    if (form.__confirmPending) {
+      return;
+    }
+
     if (!adminContent) {
       return;
     }

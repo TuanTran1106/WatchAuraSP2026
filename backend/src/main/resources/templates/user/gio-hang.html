@@ -87,11 +87,27 @@
                             </td>
                             <td class="cart-table__total cart-line-total" th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
                             <td class="cart-table__remove">
-                                <form th:if="${guestCart}" th:action="@{/gio-hang/guest/delete}" method="post" class="cart-form-delete">
+                                <form th:if="${guestCart}"
+                                      th:action="@{/gio-hang/guest/delete}"
+                                      method="post"
+                                      class="cart-form-delete"
+                                      data-confirm="Xóa sản phẩm này khỏi giỏ hàng?"
+                                      data-confirm-title="Xóa sản phẩm"
+                                      data-confirm-ok="Xóa"
+                                      data-confirm-cancel="Hủy"
+                                      data-confirm-tone="danger">
                                     <input type="hidden" name="sanPhamChiTietId" th:value="${item.sanPhamChiTietId}">
                                     <button type="submit" class="btn-remove" aria-label="Xóa">×</button>
                                 </form>
-                                <form th:unless="${guestCart}" th:action="@{/gio-hang/xoa/{id}(id=${item.id})}" method="post" class="cart-form-delete">
+                                <form th:unless="${guestCart}"
+                                      th:action="@{/gio-hang/xoa/{id}(id=${item.id})}"
+                                      method="post"
+                                      class="cart-form-delete"
+                                      data-confirm="Xóa sản phẩm này khỏi giỏ hàng?"
+                                      data-confirm-title="Xóa sản phẩm"
+                                      data-confirm-ok="Xóa"
+                                      data-confirm-cancel="Hủy"
+                                      data-confirm-tone="danger">
                                     <button type="submit" class="btn-remove" aria-label="Xóa">×</button>
                                 </form>
                             </td>
@@ -197,7 +213,6 @@
     document.querySelectorAll('.cart-form-update, .cart-form-delete').forEach(function(form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (form.classList.contains('cart-form-delete') && form.closest('.cart-table__remove') && !confirm('Xóa sản phẩm này khỏi giỏ?')) return;
             var btn = form.querySelector('button[type="submit"]');
             if (btn) btn.disabled = true;
             var fd = new FormData(form);

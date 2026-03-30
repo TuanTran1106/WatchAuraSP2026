@@ -111,7 +111,14 @@
                         </div>
                         <div class="cart-summary__actions">
                             <a th:href="@{/gio-hang}" class="btn btn--outline btn--lg">← Quay lại giỏ hàng</a>
-                            <button type="submit" class="btn btn--primary btn--lg" id="btnSubmitOrder">Đặt hàng</button>
+                            <button type="submit"
+                                    class="btn btn--primary btn--lg"
+                                    id="btnSubmitOrder"
+                                    data-confirm="Bạn có chắc chắn muốn đặt đơn hàng này không?"
+                                    data-confirm-title="Xác nhận đặt hàng"
+                                    data-confirm-ok="Đặt hàng"
+                                    data-confirm-cancel="Xem lại"
+                                    data-confirm-tone="info">Đặt hàng</button>
                         </div>
                     </div>
                 </div>
