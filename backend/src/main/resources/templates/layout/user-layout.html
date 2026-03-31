@@ -16,6 +16,7 @@
     <link rel="stylesheet" th:href="@{/css/don-hang-user-list.css}">
     <link rel="stylesheet" th:href="@{/css/danh-gia.css}">
     <link rel="stylesheet" th:href="@{/css/tai-khoan.css}">
+    <link rel="stylesheet" th:href="@{/css/confirm-modal.css}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
@@ -35,8 +36,16 @@
             <li><a th:href="@{/tin-tuc}"><i class="fas fa-newspaper"></i> Tin tức</a></li>
             <li><a th:href="@{/lien-he}"><i class="fas fa-envelope"></i> Liên hệ</a></li>
             <li><a th:href="@{/tu-van-ai}"><i class="fas fa-robot"></i> Tư vấn thông minh</a></li>
-            <li th:if="${currentUser != null}"><a th:href="@{/dang-xuat}" onclick="return handleLogout(event);"><i
-                        class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+            <li th:if="${currentUser != null}">
+                <a th:href="@{/dang-xuat}"
+                   data-confirm="Bạn có chắc chắn muốn đăng xuất?"
+                   data-confirm-title="Đăng xuất"
+                   data-confirm-ok="Đăng xuất"
+                   data-confirm-cancel="Ở lại"
+                   data-confirm-tone="danger">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </a>
+            </li>
         </ul>
     </div>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebarMenu()"></div>
@@ -56,14 +65,7 @@
                 if (sidebar && sidebar.classList.contains('show')) toggleSidebarMenu();
             }
         });
-        function handleLogout(event) {
-            if (!confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-                event.preventDefault();
-                return false;
-            }
-            window.location.href = /*[[@{/dang-xuat}]]*/ '/dang-xuat';
-            return false;
-        }
+        // Logout confirmation handled by shared confirm modal (data-confirm)
     </script>
 
     <!-- CONTENT -->
@@ -77,6 +79,7 @@
     <!-- Toast notification (thêm giỏ thành công, lỗi, v.v.) -->
     <div id="toastStack" class="toast-stack" aria-live="polite"></div>
     <div id="flashData" style="display:none" th:attr="data-success=${success}, data-error=${error}"></div>
+    <script th:src="@{/js/confirm-modal.js}"></script>
     <script th:inline="javascript">
         (function() {
             // Nút +/- số lượng (trang chi tiết SP, giỏ hàng, v.v.) – delegation trên document

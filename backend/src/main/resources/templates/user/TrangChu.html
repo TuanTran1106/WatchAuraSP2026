@@ -1887,10 +1887,8 @@
             }
 
             function deleteProduct(productId) {
-                if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-                    fetch('/san_pham/delete/' + productId, {
-                        method: 'GET'
-                    })
+                var doDelete = function () {
+                    fetch('/san_pham/delete/' + productId, { method: 'GET' })
                         .then(response => {
                             if (response.ok) {
                                 window.location.reload();
@@ -1904,6 +1902,20 @@
                             console.error('Error:', error);
                             alert('Có lỗi xảy ra khi xóa sản phẩm: ' + error.message);
                         });
+                };
+
+                if (typeof window.confirmModal === 'function') {
+                    window.confirmModal({
+                        title: 'Xóa sản phẩm',
+                        message: 'Bạn có chắc chắn muốn xóa sản phẩm này?',
+                        confirmText: 'Xóa',
+                        cancelText: 'Hủy',
+                        tone: 'danger'
+                    }).then(function (ok) {
+                        if (ok) doDelete();
+                    });
+                } else if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+                    doDelete();
                 }
             }
 
@@ -2386,9 +2398,19 @@
             }
 
             function deleteBlog(id) {
-                if (confirm('Bạn có chắc muốn xóa blog này?')) {
-                    // Redirect to delete URL
+                var go = function() {
                     window.location.href = '/san_pham/blog/delete/' + id;
+                };
+                if (typeof window.confirmModal === 'function') {
+                    window.confirmModal({
+                        title: 'Xóa blog',
+                        message: 'Bạn có chắc muốn xóa blog này?',
+                        confirmText: 'Xóa',
+                        cancelText: 'Hủy',
+                        tone: 'danger'
+                    }).then(function(ok) { if (ok) go(); });
+                } else if (confirm('Bạn có chắc muốn xóa blog này?')) {
+                    go();
                 }
             }
 
@@ -2498,10 +2520,20 @@
                 });
             }
             function logout() {
-                if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                var go = function() {
                     alert('Đăng xuất thành công!');
-                    // Có thể redirect đến trang login
                     window.location.href = '/login';
+                };
+                if (typeof window.confirmModal === 'function') {
+                    window.confirmModal({
+                        title: 'Đăng xuất',
+                        message: 'Bạn có chắc chắn muốn đăng xuất?',
+                        confirmText: 'Đăng xuất',
+                        cancelText: 'Ở lại',
+                        tone: 'danger'
+                    }).then(function(ok) { if (ok) go(); });
+                } else if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                    go();
                 }
             }
         </script>

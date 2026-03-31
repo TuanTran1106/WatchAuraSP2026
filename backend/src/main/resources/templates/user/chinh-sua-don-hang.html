@@ -317,12 +317,24 @@
                 var item = itemMap[itemId];
                 if (!item) return;
                 if (item.currentQty <= 1) {
-                    if (confirm('Xóa sản phẩm "' + (item.row ? item.row.querySelector('.edit-order-table__name').textContent.trim() : '') + '" khỏi đơn?')) {
-                        // Xóa row
+                    var name = (item.row ? item.row.querySelector('.edit-order-table__name').textContent.trim() : '');
+                    var msg = 'Xóa sản phẩm "' + name + '" khỏi đơn?';
+                    var doRemove = function() {
                         if (item.row) item.row.remove();
                         delete itemMap[itemId];
                         recalcTotal();
                         checkEmpty();
+                    };
+                    if (typeof window.confirmModal === 'function') {
+                        window.confirmModal({
+                            title: 'Xóa sản phẩm',
+                            message: msg,
+                            confirmText: 'Xóa',
+                            cancelText: 'Hủy',
+                            tone: 'danger'
+                        }).then(function(ok) { if (ok) doRemove(); });
+                    } else if (confirm(msg)) {
+                        doRemove();
                     }
                     return;
                 }
@@ -352,11 +364,23 @@
             btn.addEventListener('click', function() {
                 var itemId = this.getAttribute('data-item-id');
                 var itemName = this.getAttribute('data-item-name') || 'sản phẩm này';
-                if (confirm('Xóa "' + itemName + '" khỏi đơn hàng?')) {
+                var msg = 'Xóa "' + itemName + '" khỏi đơn hàng?';
+                var doRemove = function() {
                     if (item.row) item.row.remove();
                     delete itemMap[itemId];
                     recalcTotal();
                     checkEmpty();
+                };
+                if (typeof window.confirmModal === 'function') {
+                    window.confirmModal({
+                        title: 'Xóa sản phẩm',
+                        message: msg,
+                        confirmText: 'Xóa',
+                        cancelText: 'Hủy',
+                        tone: 'danger'
+                    }).then(function(ok) { if (ok) doRemove(); });
+                } else if (confirm(msg)) {
+                    doRemove();
                 }
             });
         });

@@ -288,6 +288,87 @@
     var warnEl = $('dashWarningsList');
     if (!listEl || !warnEl) return;
 
+    function ensureWarnModal() {
+      var existing = document.getElementById('dashWarnModal');
+      if (existing) return existing;
+
+      var modal = document.createElement('div');
+      modal.id = 'dashWarnModal';
+      modal.className = 'dash-modal';
+      modal.setAttribute('aria-hidden', 'true');
+      modal.innerHTML =
+        '<div class="dash-modal__backdrop" data-modal-close="true"></div>' +
+        '<div class="dash-modal__panel" role="dialog" aria-modal="true" aria-labelledby="dashWarnModalTitle">' +
+        '  <div class="dash-modal__header">' +
+        '    <h3 class="dash-modal__title" id="dashWarnModalTitle">Cảnh báo</h3>' +
+        '    <button type="button" class="dash-modal__close" aria-label="Đóng" data-modal-close="true">×</button>' +
+        '  </div>' +
+        '  <div class="dash-modal__body">' +
+        '    <div class="dash-modal__content" id="dashWarnModalContent"></div>' +
+        '  </div>' +
+        '  <div class="dash-modal__actions">' +
+        '    <button type="button" class="btn btn--secondary" data-modal-close="true">Đóng</button>' +
+        '    <button type="button" class="btn btn--primary" id="dashWarnModalGoBtn">Đi tới biểu đồ</button>' +
+        '  </div>' +
+        '</div>';
+
+      document.body.appendChild(modal);
+
+      function close() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('dash-modal-open');
+      }
+
+      modal.addEventListener('click', function (e) {
+        var t = e && e.target ? e.target : null;
+        if (!t) return;
+        if (t.getAttribute && t.getAttribute('data-modal-close') === 'true') {
+          close();
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (!modal.classList.contains('is-open')) return;
+        if (e.key === 'Escape') close();
+      });
+
+      // expose a close helper for internal use
+      modal.__dashClose = close;
+      return modal;
+    }
+
+    function openWarnModal(opts) {
+      var modal = ensureWarnModal();
+      var content = document.getElementById('dashWarnModalContent');
+      var goBtn = document.getElementById('dashWarnModalGoBtn');
+      if (!content || !goBtn) return;
+
+      var text = opts && opts.text ? String(opts.text) : '';
+      var targetId = opts && opts.targetId ? String(opts.targetId) : '';
+
+      // warning text already contains some <strong> from backend, keep it
+      content.innerHTML = text || '—';
+
+      goBtn.onclick = function () {
+        if (modal.__dashClose) modal.__dashClose();
+        if (!targetId) return;
+        var el = $(targetId);
+        if (!el) return;
+        el.classList.remove('dash-focus-pulse');
+        el.offsetHeight;
+        el.classList.add('dash-focus-pulse');
+        setTimeout(function () {
+          el.classList.remove('dash-focus-pulse');
+        }, 950);
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('dash-modal-open');
+    }
+
     var safeTone = function (tone) {
       if (!tone) return 'info';
       tone = String(tone).toLowerCase();
@@ -319,7 +400,7 @@
       warnEl.innerHTML = '<li class="dashboard-muted">Tình trạng ổn định trong giai đoạn này.</li>';
     } else {
       warnEl.innerHTML = warnings
-        .map(function (it) {
+        .map(function (it, idx) {
           var text = it && it.text ? it.text : '';
           var tone = safeTone(it && it.tone);
           var icon =
@@ -334,7 +415,7 @@
           }
           var cta =
             tone === 'danger'
-              ? '<button type="button" class="dash-warning-cta" data-cta-target="' + scrollTarget + '">Xem chi tiết</button>'
+              ? '<button type="button" class="dash-warning-cta" data-cta-target="' + scrollTarget + '" data-cta-idx="' + idx + '">Xem chi tiết</button>'
               : '';
 
           return '<li class="dash-warning dash-warning--' + tone + '">' +
@@ -346,22 +427,36 @@
         .join('');
     }
 
-    // CTA click: scroll to related block
+    // CTA click: open modal + optional scroll
     warnEl.onclick = function (e) {
-      var target = e.target;
-      if (!target || !target.matches || !target.matches('.dash-warning-cta')) return;
-      var targetId = target.getAttribute('data-cta-target');
-      if (!targetId) return;
-      var el = $(targetId);
-      if (!el) return;
-      el.classList.remove('dash-focus-pulse');
-      // Force reflow
-      el.offsetHeight;
-      el.classList.add('dash-focus-pulse');
-      setTimeout(function () {
-        el.classList.remove('dash-focus-pulse');
-      }, 950);
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var target = e && e.target ? e.target : null;
+      // In some browsers e.target can be a Text node inside the button.
+      if (target && target.nodeType === 3) target = target.parentElement;
+
+      // Robust: allow clicking on inner nodes and still resolve the button.
+      var btn = null;
+      if (target && target.closest) {
+        btn = target.closest('.dash-warning-cta');
+      } else if (target) {
+        // Fallback for very old browsers without closest()
+        var cur = target;
+        while (cur && cur !== warnEl) {
+          if (cur.classList && cur.classList.contains('dash-warning-cta')) {
+            btn = cur;
+            break;
+          }
+          cur = cur.parentElement;
+        }
+      }
+      if (!btn) return;
+
+      var targetId = btn.getAttribute('data-cta-target');
+      var idxStr = btn.getAttribute('data-cta-idx');
+      var idx = idxStr != null ? parseInt(idxStr, 10) : NaN;
+      var item = (!isNaN(idx) && warnings && warnings[idx]) ? warnings[idx] : null;
+      var text = item && item.text ? item.text : '';
+
+      openWarnModal({ text: text, targetId: targetId });
     };
   }
 
@@ -857,18 +952,6 @@
       var shareEl = $('dashTopProductDetailShare');
       if (shareEl) shareEl.textContent = share.toFixed(1) + '%';
       detail.style.display = 'block';
-
-      // Micro drill-down: focus revenue chart
-      var chartWrap = $('dashRevenueChartWrap');
-      if (chartWrap) {
-        chartWrap.classList.remove('dash-focus-pulse');
-        chartWrap.offsetHeight;
-        chartWrap.classList.add('dash-focus-pulse');
-        setTimeout(function () {
-          chartWrap.classList.remove('dash-focus-pulse');
-        }, 950);
-        chartWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
     };
   }
 

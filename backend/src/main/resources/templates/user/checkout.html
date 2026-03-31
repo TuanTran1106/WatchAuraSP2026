@@ -56,7 +56,13 @@
 
         <div class="checkout-grid">
             <div class="checkout-form">
-                <form th:action="@{/checkout}" method="post">
+                <form th:action="@{/checkout}"
+                      method="post"
+                      data-confirm="Bạn có chắc chắn muốn đặt đơn hàng (COD) không?"
+                      data-confirm-title="Xác nhận đặt hàng"
+                      data-confirm-ok="Đặt hàng"
+                      data-confirm-cancel="Xem lại"
+                      data-confirm-tone="info">
                     <div class="form-section">
                         <h3>Thông tin khách hàng</h3>
                         <div class="form-group">
