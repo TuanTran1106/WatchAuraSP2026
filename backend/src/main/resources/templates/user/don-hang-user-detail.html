@@ -84,7 +84,8 @@
                     </div>
                     <div class="order-detail-summary__row cart-summary__row">
                         <span class="order-detail-summary__label">Phí vận chuyển</span>
-                        <span class="order-detail-summary__value">0 đ</span>
+                        <span class="order-detail-summary__value" id="shippingFee"
+                              th:text="|${#numbers.formatDecimal(hoaDon.phiVanChuyen != null ? hoaDon.phiVanChuyen : 0, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</span>
                     </div>
                     <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
                         <span class="order-detail-summary__label">Tổng thanh toán</span>
@@ -229,6 +230,12 @@
 
                     var discount = document.getElementById('discount');
                     if (discount) discount.textContent = formatCurrencyVnd(data.tienGiam);
+
+                    var shippingFee = document.getElementById('shippingFee');
+                    if (shippingFee) {
+                        var phi = data.phiVanChuyen != null ? Number(data.phiVanChuyen) : 0;
+                        shippingFee.textContent = formatCurrencyVnd(phi);
+                    }
 
                     var totalPayment = document.getElementById('totalPayment');
                     if (totalPayment) totalPayment.textContent = formatCurrencyVnd(data.tongTienThanhToan);

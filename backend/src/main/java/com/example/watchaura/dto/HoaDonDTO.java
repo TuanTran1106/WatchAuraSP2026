@@ -23,6 +23,8 @@ public class HoaDonDTO {
     private String maVoucher;
     private BigDecimal tongTienTamTinh;
     private BigDecimal tienGiam;
+    /** Phí ship suy ra: tổng thanh toán − tạm tính + giảm giá (đồng bộ logic checkout). */
+    private BigDecimal phiVanChuyen;
     private BigDecimal tongTienThanhToan;
     private String phuongThucThanhToan;
     private String loaiHoaDon;

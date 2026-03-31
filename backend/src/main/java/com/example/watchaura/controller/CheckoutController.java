@@ -8,6 +8,7 @@ import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.service.EmailService;
 import com.example.watchaura.service.GuestCartViewService;
+import com.example.watchaura.util.ShippingFeeUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -56,6 +57,9 @@ public class CheckoutController {
         }
 
         model.addAttribute("cart", cart);
+        BigDecimal sub = cart.getTongTien() != null ? cart.getTongTien() : BigDecimal.ZERO;
+        model.addAttribute("checkoutShippingFee", ShippingFeeUtil.feeForMerchandiseSubtotal(sub));
+        model.addAttribute("checkoutGrandTotal", sub.add(ShippingFeeUtil.feeForMerchandiseSubtotal(sub)));
         model.addAttribute("title", "Thanh toán - WatchAura");
         model.addAttribute("content", "user/checkout :: content");
         return "layout/user-layout";
@@ -82,13 +86,16 @@ public class CheckoutController {
             return "redirect:/gio-hang";
         }
 
-        BigDecimal tongTien = BigDecimal.ZERO;
+        BigDecimal tongTienTamTinh = BigDecimal.ZERO;
         for (Map.Entry<Integer, Integer> item : cart.entrySet()) {
             var spct = sanPhamChiTietRepository.findById(item.getKey()).orElse(null);
             if (spct != null && spct.getGiaBan() != null) {
-                tongTien = tongTien.add(spct.getGiaBan().multiply(BigDecimal.valueOf(item.getValue())));
+                tongTienTamTinh = tongTienTamTinh.add(spct.getGiaBan().multiply(BigDecimal.valueOf(item.getValue())));
             }
         }
+
+        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tongTienTamTinh);
+        BigDecimal tongTienThanhToan = tongTienTamTinh.add(phiVanChuyen);
 
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaDonHang("WA" + System.currentTimeMillis());
@@ -97,8 +104,8 @@ public class CheckoutController {
         hoaDon.setSdtKhachHang(sdt);
         hoaDon.setDiaChi(diaChi);
         hoaDon.setGhiChu(ghiChu);
-        hoaDon.setTongTienTamTinh(tongTien);
-        hoaDon.setTongTienThanhToan(tongTien);
+        hoaDon.setTongTienTamTinh(tongTienTamTinh);
+        hoaDon.setTongTienThanhToan(tongTienThanhToan);
         hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
         hoaDon.setPhuongThucThanhToan("COD");
         hoaDon.setLoaiHoaDon("ONLINE");

@@ -45,10 +45,6 @@ public class SanPhamChiTiet {
     @JoinColumn(name = "id_chat_lieu_day")
     private ChatLieuDay chatLieuDay;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_loai_may")
-    private LoaiMay loaiMay;
-
     @Column(name = "so_luong_ton")
     private Integer soLuongTon;
 

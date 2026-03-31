@@ -44,7 +44,7 @@ public class SanPhamRequest {
     private Integer idKichThuoc;
     /** Chất liệu dây (biến thể mặc định) */
     private Integer idChatLieuDay;
-    /** Loại máy (biến thể mặc định) */
+    /** Loại máy (thuộc sản phẩm, không phân theo biến thể) */
     private Integer idLoaiMay;
 
     /** Đường kính (mm) - biến thể mặc định */

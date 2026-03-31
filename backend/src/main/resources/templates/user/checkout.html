@@ -121,12 +121,13 @@
                         <span class="summary-amount" th:if="${cart != null}" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                     </div>
                     <div class="total-row">
-                        <span>Phí vận chuyển</span>
-                        <span class="summary-amount">Miễn phí</span>
+                        <span>Phí giao hàng</span>
+                        <span class="summary-amount" th:if="${checkoutShippingFee != null and checkoutShippingFee == 0}" style="color:#16a34a;font-weight:600;">Miễn phí</span>
+                        <span class="summary-amount" th:if="${checkoutShippingFee == null or checkoutShippingFee != 0}" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
                     </div>
                     <div class="total-row final">
                         <span>Tổng cộng</span>
-                        <span class="summary-amount" th:if="${cart != null}" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        <span class="summary-amount" th:if="${checkoutGrandTotal != null}" th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                     </div>
                 </div>
 

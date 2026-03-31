@@ -379,6 +379,7 @@ public class DonHangUserController {
         result.put("diaChi", hoaDon.getDiaChi());
         result.put("tongTienTamTinh", hoaDon.getTongTienTamTinh());
         result.put("tienGiam", hoaDon.getTienGiam());
+        result.put("phiVanChuyen", hoaDon.getPhiVanChuyen());
         result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
         result.put("trangThaiDonHang", hoaDon.getTrangThaiDonHang());
         result.put("ghiChu", hoaDon.getGhiChu());

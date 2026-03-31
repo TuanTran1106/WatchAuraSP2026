@@ -15,9 +15,14 @@ import java.util.Optional;
 @Repository
 public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, Integer> {
 
-    List<SanPhamChiTiet> findBySanPham_Id(Integer sanPhamId);
-    // Tìm theo sản phẩm
-    List<SanPhamChiTiet> findBySanPhamId(Integer sanPhamId);
+    @Query("SELECT DISTINCT spct FROM SanPhamChiTiet spct " +
+            "LEFT JOIN FETCH spct.sanPham sp " +
+            "LEFT JOIN FETCH sp.loaiMay " +
+            "LEFT JOIN FETCH spct.mauSac " +
+            "LEFT JOIN FETCH spct.kichThuoc " +
+            "LEFT JOIN FETCH spct.chatLieuDay " +
+            "WHERE sp.id = :sanPhamId")
+    List<SanPhamChiTiet> findBySanPhamId(@Param("sanPhamId") Integer sanPhamId);
 
     // Tìm theo trạng thái
     List<SanPhamChiTiet> findByTrangThai(Boolean trangThai);
@@ -29,20 +34,20 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
     @Query("SELECT spct FROM SanPhamChiTiet spct " +
             "LEFT JOIN FETCH spct.sanPham sp " +
             "LEFT JOIN FETCH sp.danhMuc " +
+            "LEFT JOIN FETCH sp.loaiMay " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
             "LEFT JOIN FETCH spct.chatLieuDay " +
-            "LEFT JOIN FETCH spct.loaiMay " +
             "WHERE spct.id = :id")
     Optional<SanPhamChiTiet> findByIdWithDetails(@Param("id") Integer id);
 
     // Lấy tất cả kèm thông tin
     @Query("SELECT DISTINCT spct FROM SanPhamChiTiet spct " +
-            "LEFT JOIN FETCH spct.sanPham " +
+            "LEFT JOIN FETCH spct.sanPham sp " +
+            "LEFT JOIN FETCH sp.loaiMay " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
-            "LEFT JOIN FETCH spct.chatLieuDay " +
-            "LEFT JOIN FETCH spct.loaiMay")
+            "LEFT JOIN FETCH spct.chatLieuDay ")
     List<SanPhamChiTiet> findAllWithDetails();
 
     /**
@@ -50,10 +55,10 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
      */
     @Query("SELECT DISTINCT spct FROM SanPhamChiTiet spct " +
             "LEFT JOIN FETCH spct.sanPham sp " +
+            "LEFT JOIN FETCH sp.loaiMay " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
             "LEFT JOIN FETCH spct.chatLieuDay " +
-            "LEFT JOIN FETCH spct.loaiMay " +
             "WHERE sp.trangThai = true AND spct.trangThai = true")
     List<SanPhamChiTiet> findActiveForSaleWithDetails();
 

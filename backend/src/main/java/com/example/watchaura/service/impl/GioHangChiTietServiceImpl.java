@@ -178,9 +178,9 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
                 && !spct.getChatLieuDay().getTenChatLieu().isBlank()) {
             parts.add("Dây: " + spct.getChatLieuDay().getTenChatLieu().trim());
         }
-        if (spct.getLoaiMay() != null && spct.getLoaiMay().getTenLoaiMay() != null
-                && !spct.getLoaiMay().getTenLoaiMay().isBlank()) {
-            parts.add("Loại máy: " + spct.getLoaiMay().getTenLoaiMay().trim());
+        var lm = spct.getSanPham() != null ? spct.getSanPham().getLoaiMay() : null;
+        if (lm != null && lm.getTenLoaiMay() != null && !lm.getTenLoaiMay().isBlank()) {
+            parts.add("Loại máy: " + lm.getTenLoaiMay().trim());
         }
         return parts.isEmpty() ? null : String.join(" · ", parts);
     }

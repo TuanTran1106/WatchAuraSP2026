@@ -17,10 +17,10 @@ public interface GioHangChiTietRepository extends JpaRepository<GioHangChiTiet, 
            "LEFT JOIN FETCH ghct.sanPhamChiTiet spct " +
            "LEFT JOIN FETCH spct.sanPham sp " +
            "LEFT JOIN FETCH sp.danhMuc " +
+           "LEFT JOIN FETCH sp.loaiMay " +
            "LEFT JOIN FETCH spct.mauSac " +
            "LEFT JOIN FETCH spct.kichThuoc " +
            "LEFT JOIN FETCH spct.chatLieuDay " +
-           "LEFT JOIN FETCH spct.loaiMay " +
            "WHERE ghct.id = :id")
     Optional<GioHangChiTiet> findByIdWithSanPhamDetails(@Param("id") Integer id);
     List<GioHangChiTiet> findByGioHangId(Integer gioHangId);
@@ -29,10 +29,10 @@ public interface GioHangChiTietRepository extends JpaRepository<GioHangChiTiet, 
            "LEFT JOIN FETCH ghct.sanPhamChiTiet spct " +
            "LEFT JOIN FETCH spct.sanPham sp " +
            "LEFT JOIN FETCH sp.danhMuc " +
+           "LEFT JOIN FETCH sp.loaiMay " +
            "LEFT JOIN FETCH spct.mauSac " +
            "LEFT JOIN FETCH spct.kichThuoc " +
            "LEFT JOIN FETCH spct.chatLieuDay " +
-           "LEFT JOIN FETCH spct.loaiMay " +
            "WHERE ghct.gioHang.id = :gioHangId")
     List<GioHangChiTiet> findByGioHangIdWithSanPhamDetails(@Param("gioHangId") Integer gioHangId);
 

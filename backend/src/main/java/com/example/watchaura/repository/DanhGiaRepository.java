@@ -27,10 +27,10 @@ public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
     JOIN FETCH dg.khachHang
     JOIN FETCH dg.sanPhamChiTiet spct
     JOIN FETCH spct.sanPham sp
+    LEFT JOIN FETCH sp.loaiMay
     LEFT JOIN FETCH spct.mauSac
     LEFT JOIN FETCH spct.kichThuoc
     LEFT JOIN FETCH spct.chatLieuDay
-    LEFT JOIN FETCH spct.loaiMay
     WHERE sp.id = :sanPhamId
     ORDER BY dg.ngayDanhGia DESC
     """)

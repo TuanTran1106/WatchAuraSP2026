@@ -20,7 +20,6 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
     private final MauSacRepository mauSacRepository;
     private final KichThuocRepository kichThuocRepository;
     private final ChatLieuDayRepository chatLieuDayRepository;
-    private final LoaiMayRepository loaiMayRepository;
 
     /**
      * Lấy tất cả sản phẩm chi tiết
@@ -86,12 +85,6 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
             spct.setChatLieuDay(chatLieuDay);
         }
 
-        if (request.getIdLoaiMay() != null) {
-            LoaiMay loaiMay = loaiMayRepository.findById(request.getIdLoaiMay())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy với ID: " + request.getIdLoaiMay()));
-            spct.setLoaiMay(loaiMay);
-        }
-
         spct.setSoLuongTon(request.getSoLuongTon());
         spct.setGiaBan(request.getGiaBan());
         spct.setDuongKinh(request.getDuongKinh());
@@ -143,14 +136,6 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
             spct.setChatLieuDay(chatLieuDay);
         } else {
             spct.setChatLieuDay(null);
-        }
-
-        if (request.getIdLoaiMay() != null) {
-            LoaiMay loaiMay = loaiMayRepository.findById(request.getIdLoaiMay())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy với ID: " + request.getIdLoaiMay()));
-            spct.setLoaiMay(loaiMay);
-        } else {
-            spct.setLoaiMay(null);
         }
 
         spct.setSoLuongTon(request.getSoLuongTon());
@@ -214,9 +199,9 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
             dto.setTenChatLieuDay(spct.getChatLieuDay().getTenChatLieu());
         }
 
-        if (spct.getLoaiMay() != null) {
-            dto.setIdLoaiMay(spct.getLoaiMay().getId());
-            dto.setTenLoaiMay(spct.getLoaiMay().getTenLoaiMay());
+        if (spct.getSanPham() != null && spct.getSanPham().getLoaiMay() != null) {
+            dto.setIdLoaiMay(spct.getSanPham().getLoaiMay().getId());
+            dto.setTenLoaiMay(spct.getSanPham().getLoaiMay().getTenLoaiMay());
         }
 
         return dto;

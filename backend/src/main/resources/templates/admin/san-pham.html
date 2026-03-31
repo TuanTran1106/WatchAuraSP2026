@@ -51,12 +51,47 @@
                 color: #dc3545;
                 font-weight: bold;
                 font-size: 15px;
+                white-space: nowrap;
+                vertical-align: top;
+            }
+
+            /* Hàng chính + hàng biến thể: căn trên để không lệch khi tên dài / giá khoảng */
+            #productsTable tbody tr.product-main-row td {
+                vertical-align: top;
+            }
+
+            #productsTable tbody tr.variant-list-row td {
+                vertical-align: top;
+            }
+
+            #productsTable thead th:nth-child(5) {
+                min-width: 12rem;
             }
 
             .actions {
                 display: flex;
                 gap: 5px;
                 flex-wrap: wrap;
+            }
+
+            /* Nút sửa + công tắc luôn cùng một hàng (cột THAO TÁC) */
+            #productsTable .actions {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: center;
+                gap: 10px;
+            }
+
+            #productsTable .actions .btn {
+                flex-shrink: 0;
+            }
+
+            #productsTable .actions .toggle-switch {
+                flex-shrink: 0;
+            }
+
+            #productsTable tbody tr.product-main-row td:last-child {
+                white-space: nowrap;
             }
 
             /* Variant list under each product row */
@@ -71,6 +106,7 @@
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                 gap: 12px;
+                width: 100%;
                 color: #4a5568;
                 font-size: 13px;
             }
@@ -757,6 +793,16 @@
                 .actions .btn {
                     width: 100%;
                 }
+
+                #productsTable .actions {
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    align-items: center;
+                }
+
+                #productsTable .actions .btn {
+                    width: auto;
+                }
             }
         </style>
         <div class="container">
@@ -867,6 +913,13 @@
                             <label for="idDanhMuc">Danh mục *</label>
                             <select id="idDanhMuc" required>
                                 <option value="">-- Chọn danh mục --</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label for="idLoaiMay">Loại máy *</label>
+                            <select id="idLoaiMay" required>
+                                <option value="">-- Chọn loại máy --</option>
                             </select>
                         </div>
 
@@ -1071,13 +1124,6 @@
                 </div>
 
                 <div class="modal-form-group">
-                    <label>Loại máy</label>
-                    <select class="variant-loaiMay" required>
-                        <option value="">-- Chọn loại máy --</option>
-                    </select>
-                </div>
-
-                <div class="modal-form-group">
                     <label>Giá bán *</label>
                     <input type="number" class="variant-giaBan" step="0.01" min="0" required>
                 </div>
@@ -1169,15 +1215,13 @@
                 const mauSacSelect = variantRow.querySelector('.variant-mauSac');
                 const kichThuocSelect = variantRow.querySelector('.variant-kichThuoc');
                 const chatLieuSelect = variantRow.querySelector('.variant-chatLieuDay');
-                const loaiMaySelect = variantRow.querySelector('.variant-loaiMay');
 
                 // Load data từ API
                 return Promise.all([
                     fetch(`${API_URL}/mau-sac`).then(r => r.json()),
                     fetch(`${API_URL}/kich-thuoc`).then(r => r.json()),
-                    fetch(`${API_URL}/chat-lieu-day`).then(r => r.json()),
-                    fetch(`${API_URL}/loai-may`).then(r => r.json())
-                ]).then(([mauSacs, kichThuocs, chatLieus, loaiMays]) => {
+                    fetch(`${API_URL}/chat-lieu-day`).then(r => r.json())
+                ]).then(([mauSacs, kichThuocs, chatLieus]) => {
                     mauSacs.forEach(item => {
                         const option = document.createElement('option');
                         option.value = item.id;
@@ -1197,13 +1241,6 @@
                         option.value = item.id;
                         option.textContent = item.tenChatLieu;
                         chatLieuSelect.appendChild(option);
-                    });
-
-                    loaiMays.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.tenLoaiMay;
-                        loaiMaySelect.appendChild(option);
                     });
                 }).catch(error => console.error('Lỗi load dữ liệu:', error));
             }
@@ -1279,19 +1316,26 @@
                             if (detailResponse.ok) {
                                 variantDetails = await detailResponse.json();
                                 if (variantDetails && variantDetails.length > 0) {
-                                    // Tính tổng số lượng từ tất cả các variant
+                                    // Tính tổng số lượng từ tất cả các variant; giá: khoảng min–max
                                     let totalSoLuong = 0;
-                                    let totalGia = 0;
+                                    const giaValues = [];
 
                                     variantDetails.forEach(detail => {
                                         totalSoLuong += detail.soLuongTon || 0;
-                                        if (detail.giaBan && totalGia === 0) {
-                                            totalGia = detail.giaBan; // Lấy giá từ variant đầu tiên
+                                        if (detail.giaBan != null && detail.giaBan !== '') {
+                                            const g = parseFloat(detail.giaBan);
+                                            if (!isNaN(g) && g >= 0) {
+                                                giaValues.push(g);
+                                            }
                                         }
                                     });
 
-                                    if (totalGia > 0) {
-                                        giaBan = formatPrice(totalGia);
+                                    if (giaValues.length > 0) {
+                                        const minGia = Math.min(...giaValues);
+                                        const maxGia = Math.max(...giaValues);
+                                        giaBan = minGia === maxGia
+                                            ? formatPrice(minGia)
+                                            : `${formatPrice(minGia)} – ${formatPrice(maxGia)}`;
                                     }
                                     soLuongTon = totalSoLuong;
                                 }
@@ -1311,7 +1355,7 @@
                                 const color = getMauSacName(detail.idMauSac);
                                 const size = getKichThuocName(detail.idKichThuoc);
                                 const material = getChatLieuDayName(detail.idChatLieuDay);
-                                const machine = getLoaiMayName(detail.idLoaiMay);
+                                const machine = getLoaiMayName(product.idLoaiMay);
                                 const price = detail.giaBan ? formatPrice(detail.giaBan) : '0₫';
                                 const qty = detail.soLuongTon || 0;
 
@@ -1386,7 +1430,7 @@
                         }
 
                         htmlRows += `
-                        <tr>
+                        <tr class="product-main-row">
                             <td><strong>${product.id}</strong></td>
                             <td><code>${product.maSanPham}</code></td>
                             <td>${imgHtml}</td>
@@ -1400,7 +1444,7 @@
                                         <i class="fas fa-edit"></i>
                                     </button>
 
-                                    <label class="toggle-switch" title="Bật/tắt trạng thái sản phẩm" style="margin-left: 10px;">
+                                    <label class="toggle-switch" title="Bật/tắt trạng thái sản phẩm">
                                         <input type="checkbox" ${product.trangThai ? 'checked' : ''} onchange="toggleProductStatus(${product.id}, this)">
                                         <span class="slider"></span>
                                     </label>
@@ -1506,7 +1550,7 @@
                 // Kiểm tra trùng lặp biến thể
                 const duplicateIndices = checkDuplicateVariants();
                 if (duplicateIndices.length > 0) {
-                    alert(`Lỗi: Biến thể bị trùng lặp!\n\nCác biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây + Loại máy:\n- Hàng ${duplicateIndices.map(i => i + 1).join(', ')}\n\nVui lòng sửa lại trước khi lưu.`);
+                    alert(`Lỗi: Biến thể bị trùng lặp!\n\nCác biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây:\n- Hàng ${duplicateIndices.map(i => i + 1).join(', ')}\n\nVui lòng sửa lại trước khi lưu.`);
                     return;
                 }
 
@@ -1565,6 +1609,7 @@
                     hinhAnh: hinhAnh,
                     idThuongHieu: parseInt(document.getElementById('idThuongHieu').value),
                     idDanhMuc: parseInt(document.getElementById('idDanhMuc').value),
+                    idLoaiMay: parseInt(document.getElementById('idLoaiMay').value) || null,
                     phongCach: document.getElementById('phongCach').value,
                     trangThai: document.querySelector('input[name="trangThai"]:checked').value === 'true'
                 };
@@ -1610,7 +1655,6 @@
                             idMauSac: parseInt(variantRow.querySelector('.variant-mauSac').value) || null,
                             idKichThuoc: parseInt(variantRow.querySelector('.variant-kichThuoc').value) || null,
                             idChatLieuDay: parseInt(variantRow.querySelector('.variant-chatLieuDay').value) || null,
-                            idLoaiMay: parseInt(variantRow.querySelector('.variant-loaiMay').value) || null,
                             giaBan: parseFloat(variantRow.querySelector('.variant-giaBan').value),
                             soLuongTon: parseInt(variantRow.querySelector('.variant-soLuongTon').value),
                             duongKinh: parseFloat(variantRow.querySelector('.variant-duongKinh').value) || null,
@@ -1676,6 +1720,7 @@
                     document.getElementById('hinhAnh').value = product.hinhAnh || '';
                     document.getElementById('idThuongHieu').value = product.idThuongHieu;
                     document.getElementById('idDanhMuc').value = product.idDanhMuc;
+                    document.getElementById('idLoaiMay').value = product.idLoaiMay || '';
                     document.getElementById('phongCach').value = product.phongCach || '';
 
                     // Hiển thị ảnh hiện tại
@@ -1724,13 +1769,6 @@
                                 <label>Chất liệu dây</label>
                                 <select class="variant-chatLieuDay" required>
                                     <option value="">-- Chọn chất liệu dây --</option>
-                                </select>
-                            </div>
-
-                            <div class="modal-form-group">
-                                <label>Loại máy</label>
-                                <select class="variant-loaiMay" required>
-                                    <option value="">-- Chọn loại máy --</option>
                                 </select>
                             </div>
 
@@ -1793,7 +1831,6 @@
                             variantRow.querySelector('.variant-mauSac').value = variant.idMauSac || '';
                             variantRow.querySelector('.variant-kichThuoc').value = variant.idKichThuoc || '';
                             variantRow.querySelector('.variant-chatLieuDay').value = variant.idChatLieuDay || '';
-                            variantRow.querySelector('.variant-loaiMay').value = variant.idLoaiMay || '';
                             variantRow.querySelector('.variant-giaBan').value = variant.giaBan || '';
                             variantRow.querySelector('.variant-soLuongTon').value = variant.soLuongTon || '';
                             variantRow.querySelector('.variant-duongKinh').value = variant.duongKinh || '';
@@ -1937,8 +1974,7 @@
                 const mauSac = row.querySelector('.variant-mauSac').value;
                 const kichThuoc = row.querySelector('.variant-kichThuoc').value;
                 const chatLieuDay = row.querySelector('.variant-chatLieuDay').value;
-                const loaiMay = row.querySelector('.variant-loaiMay').value;
-                return `${mauSac}|${kichThuoc}|${chatLieuDay}|${loaiMay}`;
+                return `${mauSac}|${kichThuoc}|${chatLieuDay}`;
             }
 
             // Kiểm tra trùng lặp biến thể
@@ -1951,7 +1987,7 @@
                     const key = getVariantKey(row);
 
                     // Bỏ qua variant trống (tất cả select đều trống)
-                    if (key === '||') {
+                    if (key === '||' || key === '|') {
                         return;
                     }
 

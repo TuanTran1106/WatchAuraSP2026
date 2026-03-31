@@ -145,6 +145,7 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     @Query("SELECT sp FROM SanPham sp " +
             "LEFT JOIN FETCH sp.thuongHieu " +
             "LEFT JOIN FETCH sp.danhMuc " +
+            "LEFT JOIN FETCH sp.loaiMay " +
             "WHERE sp.id = :id")
     Optional<SanPham> findByIdWithDetails(@Param("id") Integer id);
 

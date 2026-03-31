@@ -33,6 +33,7 @@ public class SanPhamDTO {
     private Integer idKichThuoc;
     private Integer idChatLieuDay;
     private Integer idLoaiMay;
+    private String tenLoaiMay;
 
     private Double duongKinh;
     private Integer doChiuNuoc;

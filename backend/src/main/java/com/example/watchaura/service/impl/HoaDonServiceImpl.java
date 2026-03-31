@@ -24,6 +24,7 @@ import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.repository.VoucherUserRepository;
 import com.example.watchaura.service.HoaDonService;
+import com.example.watchaura.util.ShippingFeeUtil;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
@@ -192,10 +193,12 @@ public class HoaDonServiceImpl implements HoaDonService {
             tienGiam = validateAndCalculateVoucherForUser(voucher, tongTienTamTinh, khachHang.getId());
         }
 
-        BigDecimal tongTienThanhToan = tongTienTamTinh.subtract(tienGiam);
-        if (tongTienThanhToan.compareTo(BigDecimal.ZERO) < 0) {
-            tongTienThanhToan = BigDecimal.ZERO;
+        BigDecimal tienHangSauGiam = tongTienTamTinh.subtract(tienGiam);
+        if (tienHangSauGiam.compareTo(BigDecimal.ZERO) < 0) {
+            tienHangSauGiam = BigDecimal.ZERO;
         }
+        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tienHangSauGiam);
+        BigDecimal tongTienThanhToan = tienHangSauGiam.add(phiVanChuyen);
 
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaDonHang(generateMaDonHang());
@@ -665,6 +668,10 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setTongTienTamTinh(hoaDon.getTongTienTamTinh());
         dto.setTienGiam(hoaDon.getTienGiam());
         dto.setTongTienThanhToan(hoaDon.getTongTienThanhToan());
+        dto.setPhiVanChuyen(derivePhiVanChuyen(
+                hoaDon.getTongTienTamTinh(),
+                hoaDon.getTienGiam(),
+                hoaDon.getTongTienThanhToan()));
         dto.setPhuongThucThanhToan(hoaDon.getPhuongThucThanhToan());
         dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
         dto.setTrangThai(hoaDon.getTrangThai());
@@ -702,6 +709,20 @@ public class HoaDonServiceImpl implements HoaDonService {
         }
 
         return dto;
+    }
+
+    /**
+     * Phí vận chuyển không lưu cột riêng: suy ra từ tổng thanh toán = (tạm tính − giảm giá) + phí ship.
+     */
+    private static BigDecimal derivePhiVanChuyen(BigDecimal tongTienTamTinh, BigDecimal tienGiam, BigDecimal tongTienThanhToan) {
+        BigDecimal tam = tongTienTamTinh != null ? tongTienTamTinh : BigDecimal.ZERO;
+        BigDecimal giam = tienGiam != null ? tienGiam : BigDecimal.ZERO;
+        BigDecimal tt = tongTienThanhToan != null ? tongTienThanhToan : BigDecimal.ZERO;
+        BigDecimal phi = tt.subtract(tam).add(giam);
+        if (phi.compareTo(BigDecimal.ZERO) < 0) {
+            return BigDecimal.ZERO;
+        }
+        return phi;
     }
 
     private HoaDonChiTietDTO convertChiTietToDTO(HoaDonChiTiet chiTiet) {
@@ -750,9 +771,9 @@ public class HoaDonServiceImpl implements HoaDonService {
                 && !spct.getChatLieuDay().getTenChatLieu().isBlank()) {
             parts.add("Dây: " + spct.getChatLieuDay().getTenChatLieu().trim());
         }
-        if (spct.getLoaiMay() != null && spct.getLoaiMay().getTenLoaiMay() != null
-                && !spct.getLoaiMay().getTenLoaiMay().isBlank()) {
-            parts.add("Loại máy: " + spct.getLoaiMay().getTenLoaiMay().trim());
+        var lm = spct.getSanPham() != null ? spct.getSanPham().getLoaiMay() : null;
+        if (lm != null && lm.getTenLoaiMay() != null && !lm.getTenLoaiMay().isBlank()) {
+            parts.add("Loại máy: " + lm.getTenLoaiMay().trim());
         }
         return parts.isEmpty() ? null : String.join(" · ", parts);
     }

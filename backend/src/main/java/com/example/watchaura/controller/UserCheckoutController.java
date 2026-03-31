@@ -15,6 +15,7 @@ import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
 import com.example.watchaura.service.DiaChiService;
+import com.example.watchaura.util.ShippingFeeUtil;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.entity.Voucher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -96,6 +97,7 @@ public class UserCheckoutController {
         model.addAttribute("title", "Thanh toán - WatchAura");
         model.addAttribute("content", "user/thanh-toan :: content");
         model.addAttribute("cart", cart);
+        addCheckoutPricingAttributes(model, cart);
         model.addAttribute("khachHang", khachHang);
         if (!model.containsAttribute("checkoutForm")) {
             CheckoutForm form = new CheckoutForm();
@@ -218,6 +220,7 @@ public class UserCheckoutController {
             model.addAttribute("title", "Thanh toán - WatchAura");
             model.addAttribute("content", "user/thanh-toan :: content");
             model.addAttribute("cart", cart);
+            addCheckoutPricingAttributes(model, cart);
             model.addAttribute("khachHang", khachHangService.getById(userId));
             return "layout/user-layout";
         }
@@ -461,6 +464,13 @@ public class UserCheckoutController {
             redirect.addFlashAttribute("error", "Xử lý kết quả thanh toán thất bại: " + (e.getMessage() != null ? e.getMessage() : "Vui lòng liên hệ hỗ trợ."));
             return "redirect:/thanh-toan";
         }
+    }
+
+    private void addCheckoutPricingAttributes(Model model, GioHangDTO cart) {
+        BigDecimal sub = cart != null && cart.getTongTien() != null ? cart.getTongTien() : BigDecimal.ZERO;
+        BigDecimal ship = ShippingFeeUtil.feeForMerchandiseSubtotal(sub);
+        model.addAttribute("checkoutShippingFee", ship);
+        model.addAttribute("checkoutGrandTotal", sub.add(ship));
     }
 
     private static String getBaseUrl(HttpServletRequest request) {

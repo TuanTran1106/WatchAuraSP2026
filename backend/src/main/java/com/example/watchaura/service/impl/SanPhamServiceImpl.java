@@ -3,10 +3,12 @@ package com.example.watchaura.service.impl;
 import com.example.watchaura.dto.SanPhamDTO;
 import com.example.watchaura.dto.SanPhamRequest;
 import com.example.watchaura.entity.DanhMuc;
+import com.example.watchaura.entity.LoaiMay;
 import com.example.watchaura.entity.SanPham;
 import com.example.watchaura.entity.ThuongHieu;
 import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.DanhMucRepository;
+import com.example.watchaura.repository.LoaiMayRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.repository.SanPhamRepository;
 import com.example.watchaura.repository.ThuongHieuRepository;
@@ -34,6 +36,7 @@ public class SanPhamServiceImpl implements SanPhamService {
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final ThuongHieuRepository thuongHieuRepository;
     private final DanhMucRepository danhMucRepository;
+    private final LoaiMayRepository loaiMayRepository;
     private final FileUploadService fileUploadService;
 
     @Override
@@ -46,7 +49,7 @@ public class SanPhamServiceImpl implements SanPhamService {
 
     @Override
     public SanPhamDTO getSanPhamById(Integer id) {
-        SanPham sanPham = sanPhamRepository.findById(id)
+        SanPham sanPham = sanPhamRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
         return convertToDTO(sanPham);
     }
@@ -83,6 +86,11 @@ public class SanPhamServiceImpl implements SanPhamService {
         sanPham.setPhongCach(request.getPhongCach());
         sanPham.setTrangThai(request.getTrangThai());
         sanPham.setNgayTao(LocalDateTime.now());
+        if (request.getIdLoaiMay() != null) {
+            LoaiMay loaiMay = loaiMayRepository.findById(request.getIdLoaiMay())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy với ID: " + request.getIdLoaiMay()));
+            sanPham.setLoaiMay(loaiMay);
+        }
 
         return convertToDTO(sanPhamRepository.save(sanPham));
     }
@@ -108,6 +116,13 @@ public class SanPhamServiceImpl implements SanPhamService {
         sanPham.setDanhMuc(danhMuc);
         sanPham.setPhongCach(request.getPhongCach());
         sanPham.setTrangThai(request.getTrangThai());
+        if (request.getIdLoaiMay() != null) {
+            LoaiMay loaiMay = loaiMayRepository.findById(request.getIdLoaiMay())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy loại máy với ID: " + request.getIdLoaiMay()));
+            sanPham.setLoaiMay(loaiMay);
+        } else {
+            sanPham.setLoaiMay(null);
+        }
 
         return convertToDTO(sanPhamRepository.save(sanPham));
     }
@@ -203,9 +218,14 @@ public class SanPhamServiceImpl implements SanPhamService {
             dto.setTenDanhMuc(sanPham.getDanhMuc().getTenDanhMuc());
         }
 
+        if (sanPham.getLoaiMay() != null) {
+            dto.setIdLoaiMay(sanPham.getLoaiMay().getId());
+            dto.setTenLoaiMay(sanPham.getLoaiMay().getTenLoaiMay());
+        }
+
         // Giá bán: lấy giá thấp nhất trong các biến thể đang bán
         if (sanPham.getId() != null) {
-            List<SanPhamChiTiet> variants = sanPhamChiTietRepository.findBySanPham_Id(sanPham.getId());
+            List<SanPhamChiTiet> variants = sanPhamChiTietRepository.findBySanPhamId(sanPham.getId());
             BigDecimal minGia = variants.stream()
                     .map(SanPhamChiTiet::getGiaBan)
                     .filter(Objects::nonNull)

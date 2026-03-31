@@ -102,12 +102,12 @@
                         </div>
                         <div class="cart-summary__row cart-summary__row--compact" id="shipping-fee-row">
                             <span class="cart-summary__label">Phí giao hàng</span>
-                            <span class="cart-summary__value" id="checkout-shipping-fee">40.000 ₫</span>
+                            <span class="cart-summary__value" id="checkout-shipping-fee" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
                         </div>
                         <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 1.000.000₫ được miễn phí giao hàng</p>
                         <div class="cart-summary__row cart-summary__row--total">
                             <span class="cart-summary__label">Tổng thanh toán</span>
-                            <span class="cart-summary__value cart-summary__value--large" id="checkout-tong-tien" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                            <span class="cart-summary__value cart-summary__value--large" id="checkout-tong-tien" th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                         </div>
                         <div class="cart-summary__actions">
                             <a th:href="@{/gio-hang}" class="btn btn--outline btn--lg">← Quay lại giỏ hàng</a>
@@ -427,8 +427,11 @@
             // Load vouchers on page load
             loadVouchers();
 
-            // Initialize shipping fee display
-            updateShippingDisplay(baseTotal);
+            // Đồng bộ tổng thanh toán = tiền hàng + phí ship (mặc định chưa có voucher)
+            var shippingFeeInit = updateShippingDisplay(baseTotal);
+            if (tongTienEl) {
+                tongTienEl.textContent = formatCurrencyVnd(Number(baseTotal) + shippingFeeInit);
+            }
         })();
     </script>
 </div>

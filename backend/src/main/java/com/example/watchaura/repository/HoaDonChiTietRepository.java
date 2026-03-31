@@ -14,11 +14,11 @@ public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, In
 
     @Query("SELECT DISTINCT hdct FROM HoaDonChiTiet hdct " +
            "LEFT JOIN FETCH hdct.sanPhamChiTiet spct " +
-           "LEFT JOIN FETCH spct.sanPham " +
+           "LEFT JOIN FETCH spct.sanPham sp " +
+           "LEFT JOIN FETCH sp.loaiMay " +
            "LEFT JOIN FETCH spct.mauSac " +
            "LEFT JOIN FETCH spct.kichThuoc " +
            "LEFT JOIN FETCH spct.chatLieuDay " +
-           "LEFT JOIN FETCH spct.loaiMay " +
            "WHERE hdct.hoaDon.id = :hoaDonId")
     List<HoaDonChiTiet> findByHoaDonIdWithDetails(@Param("hoaDonId") Integer hoaDonId);
     void deleteByHoaDonId(Integer hoaDonId);

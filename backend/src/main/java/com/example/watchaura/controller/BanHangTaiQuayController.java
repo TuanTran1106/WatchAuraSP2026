@@ -17,7 +17,9 @@ import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -73,18 +75,26 @@ public class BanHangTaiQuayController {
 
         model.addAttribute("sanPhamList", sanPhamList);
 
-
-        Optional<HoaDon> existingHoaDon = hoaDonRepository
-                .findFirstByLoaiHoaDonAndTrangThaiDonHangAndTrangThaiOrderByIdDesc(
-                        "OFFLINE",
-                        TRANG_THAI_GIO_QUAY,
-                        true
-                );
+        // Tìm đơn đang mở: ưu tiên CHO_THANH_TOAN, sau đó DRAFT_OFFLINE
+        List<HoaDon> allOffline = hoaDonRepository.findByLoaiHoaDon("OFFLINE");
+        
+        Optional<HoaDon> choThanhToan = allOffline.stream()
+                .filter(hd -> "CHO_THANH_TOAN".equals(hd.getTrangThaiDonHang()))
+                .filter(hd -> hd.getChiTietList() != null && !hd.getChiTietList().isEmpty())
+                .max(Comparator.comparing(HoaDon::getId));
+        
+        Optional<HoaDon> existingHoaDon = choThanhToan;
+        
+        if (existingHoaDon.isEmpty()) {
+            existingHoaDon = allOffline.stream()
+                    .filter(hd -> TRANG_THAI_GIO_QUAY.equals(hd.getTrangThaiDonHang()))
+                    .filter(hd -> hd.getChiTietList() != null && !hd.getChiTietList().isEmpty())
+                    .max(Comparator.comparing(HoaDon::getId));
+        }
 
         if (existingHoaDon.isPresent()) {
             model.addAttribute("hoaDonId", existingHoaDon.get().getId());
         } else {
-
             model.addAttribute("hoaDonId", 0);
         }
 
@@ -99,7 +109,6 @@ public class BanHangTaiQuayController {
     @ResponseBody
     @Transactional
     public String themSanPham(Integer hoaDonId, Integer sanPhamChiTietId){
-
 
         boolean taoMoi = (hoaDonId == null || hoaDonId == 0);
         HoaDon hoaDon;
@@ -122,8 +131,10 @@ public class BanHangTaiQuayController {
         } else {
             hoaDon = hoaDonRepository.findById(hoaDonId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
-            if (!TRANG_THAI_GIO_QUAY.equals(hoaDon.getTrangThaiDonHang())) {
-                return "Hóa đơn đã chốt hoặc đã thanh toán. Vui lòng làm mới trang để bắt đầu giỏ mới.";
+            // Cho phép thêm sản phẩm vào đơn đang chờ thanh toán (chưa trừ kho)
+            if (!TRANG_THAI_GIO_QUAY.equals(hoaDon.getTrangThaiDonHang()) 
+                && !"CHO_THANH_TOAN".equals(hoaDon.getTrangThaiDonHang())) {
+                return "Hóa đơn đã thanh toán hoặc đã hủy. Vui lòng tạo đơn mới.";
             }
         }
 
@@ -318,7 +329,9 @@ public class BanHangTaiQuayController {
     public String tangSoLuong(Integer id){
 
         HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).get();
-        if (!TRANG_THAI_GIO_QUAY.equals(ct.getHoaDon().getTrangThaiDonHang())) {
+        String trangThai = ct.getHoaDon().getTrangThaiDonHang();
+        // Cho phép tăng số lượng với cả DRAFT_OFFLINE và CHO_THANH_TOAN
+        if (!TRANG_THAI_GIO_QUAY.equals(trangThai) && !"CHO_THANH_TOAN".equals(trangThai)) {
             return "HOA_DON_DA_CHOT";
         }
 
@@ -349,7 +362,10 @@ public class BanHangTaiQuayController {
     public String giamSoLuong(Integer id){
 
         HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).get();
-        if (!TRANG_THAI_GIO_QUAY.equals(ct.getHoaDon().getTrangThaiDonHang())) {
+        String trangThai = ct.getHoaDon().getTrangThaiDonHang();
+        boolean laChoThanhToan = "CHO_THANH_TOAN".equals(trangThai);
+        // Cho phép giảm số lượng với cả DRAFT_OFFLINE và CHO_THANH_TOAN
+        if (!TRANG_THAI_GIO_QUAY.equals(trangThai) && !laChoThanhToan) {
             return "HOA_DON_DA_CHOT";
         }
 
@@ -371,7 +387,8 @@ public class BanHangTaiQuayController {
             hoaDonChiTietRepository.delete(ct);
 
             List<HoaDonChiTiet> conLai = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
-            if (conLai == null || conLai.isEmpty()) {
+            // Với đơn CHO_THANH_TOAN, không xóa đơn khi hết sản phẩm (giữ lại để thanh toán)
+            if ((conLai == null || conLai.isEmpty()) && !laChoThanhToan) {
                 hoaDonRepository.delete(hoaDon);
                 return "CART_EMPTY";
             }
@@ -390,7 +407,9 @@ public class BanHangTaiQuayController {
     public String xoaSanPham(Integer id){
 
         HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).get();
-        if (!TRANG_THAI_GIO_QUAY.equals(ct.getHoaDon().getTrangThaiDonHang())) {
+        String trangThai = ct.getHoaDon().getTrangThaiDonHang();
+        // Cho phép xóa sản phẩm với cả DRAFT_OFFLINE và CHO_THANH_TOAN
+        if (!TRANG_THAI_GIO_QUAY.equals(trangThai) && !"CHO_THANH_TOAN".equals(trangThai)) {
             return "HOA_DON_DA_CHOT";
         }
 
@@ -532,6 +551,81 @@ public class BanHangTaiQuayController {
         hoaDonRepository.save(hoaDon);
 
         return "Áp dụng voucher thành công";
+    }
+
+    // =============================
+    // TABS - LẤY DANH SÁCH ĐƠN ĐANG MỞ
+    // =============================
+
+    @GetMapping("/api/don-dang-mo")
+    @ResponseBody
+    public List<Map<String, Object>> getDonDangMo(HttpSession session) {
+        // Bắt buộc đăng nhập
+        if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
+            return List.of();
+        }
+        
+        List<HoaDon> hoaDonList = hoaDonRepository.findByLoaiHoaDon("OFFLINE");
+        
+        // Lọc các đơn đang mở: DRAFT_OFFLINE hoặc CHO_THANH_TOAN
+        List<HoaDon> dangMo = hoaDonList.stream()
+                .filter(hd -> TRANG_THAI_GIO_QUAY.equals(hd.getTrangThaiDonHang()) 
+                           || "CHO_THANH_TOAN".equals(hd.getTrangThaiDonHang()))
+                .filter(hd -> hd.getChiTietList() != null && !hd.getChiTietList().isEmpty())
+                .sorted(Comparator
+                        .comparing(HoaDon::getNgayDat, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(HoaDon::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        return dangMo.stream().map(hd -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", hd.getId());
+            map.put("maDonHang", hd.getMaDonHang());
+            map.put("trangThai", hd.getTrangThaiDonHang());
+            map.put("tenTrangThai", TRANG_THAI_GIO_QUAY.equals(hd.getTrangThaiDonHang()) ? "Đang soạn" : "Chờ thanh toán");
+            map.put("tongTien", hd.getTongTienThanhToan());
+            map.put("soSanPham", hd.getChiTietList() != null ? hd.getChiTietList().size() : 0);
+            map.put("ngayDat", hd.getNgayDat() != null ? hd.getNgayDat().toString() : "");
+            return map;
+        }).toList();
+    }
+
+    @PostMapping("/api/tao-don-moi")
+    @ResponseBody
+    public Map<String, Object> taoDonMoi(HttpSession session) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        
+        // Bắt buộc đăng nhập
+        if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
+            result.put("success", false);
+            result.put("message", "Vui lòng đăng nhập");
+            return result;
+        }
+
+        HoaDon hoaDon = new HoaDon();
+        hoaDon.setMaDonHang("HD" + System.currentTimeMillis());
+        hoaDon.setTenKhachHang("Khách vãng lai");
+        hoaDon.setSdtKhachHang("0000000000");
+        hoaDon.setDiaChi("Mua tại cửa hàng");
+        hoaDon.setLoaiHoaDon("OFFLINE");
+        hoaDon.setTrangThaiDonHang(TRANG_THAI_GIO_QUAY);
+        hoaDon.setPhuongThucThanhToan("TIEN_MAT");
+        hoaDon.setTongTienTamTinh(BigDecimal.ZERO);
+        hoaDon.setTienGiam(BigDecimal.ZERO);
+        hoaDon.setTongTienThanhToan(BigDecimal.ZERO);
+        hoaDon.setTrangThai(true);
+        hoaDon.setNgayDat(LocalDateTime.now());
+        hoaDon = hoaDonRepository.save(hoaDon);
+
+        result.put("success", true);
+        result.put("id", hoaDon.getId());
+        result.put("maDonHang", hoaDon.getMaDonHang());
+        result.put("trangThai", hoaDon.getTrangThaiDonHang());
+        result.put("tenTrangThai", "Đang soạn");
+        result.put("tongTien", hoaDon.getTongTienThanhToan());
+        result.put("soSanPham", 0);
+        result.put("ngayDat", hoaDon.getNgayDat().toString());
+        return result;
     }
 
     // =============================
@@ -752,6 +846,32 @@ public class BanHangTaiQuayController {
                     return ResponseEntity.ok(dto);
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Dọn dẹp các hóa đơn trống (không có sản phẩm, tổng tiền = 0)
+     * Được gọi định kỳ hoặc khi load trang bán hàng
+     */
+    @PostMapping("/api/cleanup-empty")
+    @ResponseBody
+    @Transactional
+    public String cleanupEmptyOrders() {
+        List<HoaDon> allOffline = hoaDonRepository.findByLoaiHoaDon("OFFLINE");
+        
+        int deletedCount = 0;
+        for (HoaDon hd : allOffline) {
+            // Chỉ xóa đơn đang soạn, không có sản phẩm, tổng tiền = 0
+            if (TRANG_THAI_GIO_QUAY.equals(hd.getTrangThaiDonHang())) {
+                List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hd.getId());
+                if ((chiTiets == null || chiTiets.isEmpty()) 
+                        && (hd.getTongTienThanhToan() == null || hd.getTongTienThanhToan().compareTo(BigDecimal.ZERO) == 0)) {
+                    hoaDonRepository.delete(hd);
+                    deletedCount++;
+                }
+            }
+        }
+        
+        return "Đã xóa " + deletedCount + " hóa đơn trống";
     }
 
 }
