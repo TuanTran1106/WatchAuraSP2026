@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chỉnh sửa đơn hàng - WatchAura</title>
+</head>
+<body>
+<div th:fragment="content" class="user-page edit-order-page" th:if="${hoaDon != null}">
+
+    <div class="container edit-order-container">
+
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb edit-order-breadcrumb">
+            <a th:href="@{/}">Trang chủ</a>
+            <span class="breadcrumb__sep">/</span>
+            <a th:href="@{/don-hang}">Đơn hàng của tôi</a>
+            <span class="breadcrumb__sep">/</span>
+            <span class="breadcrumb__current">Chỉnh sửa đơn hàng</span>
+        </nav>
+
+        <!-- Header -->
+        <header class="edit-order-header">
+            <div class="edit-order-header__left">
+                <h1 class="edit-order-page__title">Chỉnh sửa đơn hàng</h1>
+                <p class="edit-order-page__subtitle">
+                    Mã đơn: <strong th:text="${hoaDon.maDonHang}"></strong>
+                </p>
+            </div>
+            <div class="edit-order-header__right">
+                <span class="order-status-badge status-badge--warning">
+                    <i class="fas fa-exclamation-triangle"></i> Cần xử lý
+                </span>
+            </div>
+        </header>
+
+        <!-- Thông báo stock cảnh báo -->
+        <div th:if="${hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()}" class="alert alert--warning edit-order-warning">
+            <i class="fas fa-exclamation-circle"></i>
+            <div>
+                <strong>Một số sản phẩm không đủ hàng:</strong>
+                <p class="edit-order-warning__text" th:text="${hoaDon.ghiChu}"></p>
+            </div>
+        </div>
+
+        <!-- Form chính -->
+        <form th:action="@{'/don-hang/chinh-sua/' + ${hoaDon.id}}" method="post" id="editOrderForm">
+
+            <!-- Danh sách sản phẩm -->
+            <div class="edit-order-table-wrap">
+                <table class="edit-order-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Đơn giá</th>
+                            <th>Số lượng</th>
+                            <th>Thành tiền</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${hoaDon.items}"
+                            class="edit-order-row"
+                            th:classappend="${item.soLuongKhaDung != null and item.soLuongKhaDung == 0} ? 'edit-order-row--out-of-stock'"
+                            th:attr="data-item-id=${item.id},
+                                     data-spct-id=${item.sanPhamChiTietId},
+                                     data-gia-ban=${item.donGia != null ? item.donGia : 0},
+                                     data-max-qty=${item.soLuongKhaDung != null ? item.soLuongKhaDung : 999}">
+                            <td class="edit-order-table__product">
+                                <div class="edit-order-table__img-wrap">
+                                    <img th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}"
+                                         th:src="@{${#strings.startsWith(item.hinhAnh, '/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}}"
+                                         alt="" class="edit-order-table__img">
+                                    <span th:unless="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}"
+                                          class="edit-order-table__img-placeholder">⌚</span>
+                                    <th:block th:if="${item.soLuongKhaDung != null and item.soLuongKhaDung == 0}">
+                                        <div class="edit-order-table__out-badge">Hết hàng</div>
+                                    </th:block>
+                                    <th:block th:if="${item.soLuongKhaDung != null and item.soLuongKhaDung > 0 and item.soLuongKhaDung < item.soLuong}">
+                                        <div class="edit-order-table__warn-badge">Thiếu hàng</div>
+                                    </th:block>
+                                </div>
+                                <div class="edit-order-table__info">
+                                    <span class="edit-order-table__name" th:text="${item.tenSanPham}"></span>
+                                    <span class="edit-order-table__variant" th:if="${item.tenBienThe != null}" th:text="${item.tenBienThe}"></span>
+                                </div>
+                            </td>
+                            <td class="edit-order-table__price">
+                                <span th:text="|${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT')} ₫|"></span>
+                            </td>
+                            <td class="edit-order-table__qty">
+                                <div class="qty-controls edit-order-qty-controls" th:classappend="${item.soLuongKhaDung != null and item.soLuongKhaDung == 0} ? 'qty-controls--disabled' : ''">
+                                    <button type="button" class="qty-btn qty-btn--minus" aria-label="Giảm số lượng"
+                                            th:disabled="${item.soLuongKhaDung != null and item.soLuongKhaDung == 0}"
+                                            th:attr="data-item-id=|${item.id}|">−</button>
+                                    <span class="qty-display"
+                                          th:attr="
+                                              data-original-qty=|${item.soLuong}|,
+                                              data-max-qty=|${item.soLuongKhaDung != null ? item.soLuongKhaDung : 999}|"
+                                          th:text="${item.soLuong}">1</span>
+                                    <button type="button" class="qty-btn qty-btn--plus" aria-label="Tăng số lượng"
+                                            th:disabled="${item.soLuongKhaDung != null and item.soLuong >= item.soLuongKhaDung}"
+                                            th:attr="data-item-id=|${item.id}|">+</button>
+                                </div>
+                                <p class="edit-order-table__qty-hint"
+                                   th:if="${item.soLuongKhaDung != null and item.soLuongKhaDung > 0 and item.soLuong > item.soLuongKhaDung}">
+                                    <i class="fas fa-info-circle"></i> Tối đa có thể đặt: <strong th:text="${item.soLuongKhaDung}"></strong>
+                                </p>
+                                <p class="edit-order-table__qty-hint edit-order-table__qty-hint--error"
+                                   th:if="${item.soLuongKhaDung != null and item.soLuongKhaDung == 0}">
+                                    <i class="fas fa-times-circle"></i> Sản phẩm này đã hết hàng, vui lòng xóa.
+                                </p>
+                            </td>
+                            <td class="edit-order-table__total">
+                                <span class="item-total-price"
+                                      th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">
+                                </span>
+                            </td>
+                            <td class="edit-order-table__remove">
+                                <button type="button" class="btn-remove btn-remove--lg"
+                                        th:attr="data-item-id=|${item.id}|, data-item-name=|${item.tenSanPham}|"
+                                        title="Xóa sản phẩm">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tóm tắt & hành động -->
+            <div class="edit-order-summary">
+                <div class="edit-order-summary__box">
+
+                    <!-- Thông tin đơn hàng gốc -->
+                    <div class="edit-order-original-info">
+                        <h3 class="edit-order-original-info__title">Thông tin đơn hàng</h3>
+                        <div class="edit-order-original-info__row">
+                            <span class="edit-order-original-info__label">Khách hàng</span>
+                            <span class="edit-order-original-info__value" th:text="${hoaDon.tenKhachHang}"></span>
+                        </div>
+                        <div class="edit-order-original-info__row">
+                            <span class="edit-order-original-info__label">SĐT</span>
+                            <span class="edit-order-original-info__value" th:text="${hoaDon.sdtKhachHang}"></span>
+                        </div>
+                        <div class="edit-order-original-info__row">
+                            <span class="edit-order-original-info__label">Địa chỉ</span>
+                            <span class="edit-order-original-info__value" th:text="${hoaDon.diaChi}"></span>
+                        </div>
+                        <div class="edit-order-original-info__row">
+                            <span class="edit-order-original-info__label">Thanh toán</span>
+                            <span class="edit-order-original-info__value"
+                                  th:text="${hoaDon.phuongThucThanhToan == 'COD'} ? 'COD - Thanh toán khi nhận hàng' : 'VNPay'"></span>
+                        </div>
+                    </div>
+
+                    <hr class="edit-order-divider">
+
+                    <!-- Tổng tiền -->
+                    <div class="edit-order-totals">
+                        <div class="edit-order-totals__row">
+                            <span class="edit-order-totals__label">Tạm tính</span>
+                            <span class="edit-order-totals__value" id="editOrderTamTinh"
+                                  th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        </div>
+                        <div class="edit-order-totals__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
+                            <span class="edit-order-totals__label">Giảm giá</span>
+                            <span class="edit-order-totals__value edit-order-totals__value--discount"
+                                  th:text="|- ${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'COMMA', 0, 'POINT')} ₫|">-0 ₫</span>
+                        </div>
+                        <div class="edit-order-totals__row edit-order-totals__row--total">
+                            <span class="edit-order-totals__label">Tổng thanh toán</span>
+                            <span class="edit-order-totals__total" id="editOrderTongTien"
+                                  th:text="|${#numbers.formatDecimal(hoaDon.tongTienThanhToan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        </div>
+                    </div>
+
+                    <!-- Thay đổi số lượng -->
+                    <div class="edit-order-change-info" id="editOrderChangeInfo" style="display:none;">
+                        <div class="edit-order-change-info__inner">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="editOrderChangeText"></span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="edit-order-actions">
+                        <a th:href="@{'/don-hang/chi-tiet/' + ${hoaDon.id}}" class="btn btn--outline btn--lg">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                        <button type="submit" class="btn btn--primary btn--lg" id="btnUpdateOrder">
+                            <i class="fas fa-check"></i> Xác nhận
+                        </button>
+                    </div>
+
+                    <p class="edit-order-note">
+                        <i class="fas fa-info-circle"></i>
+                        Thay đổi số lượng sản phẩm theo tồn kho hiện có. Sản phẩm hết hàng sẽ được xóa khỏi đơn.
+                    </p>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <script th:inline="javascript">
+    (function() {
+        var hoaDonId = /*[[${hoaDon.id}]]*/ null;
+        var originalTotal = /*[[${hoaDon.tongTienThanhToan}]]*/ 0;
+        var tienGiam = /*[[${hoaDon.tienGiam != null ? hoaDon.tienGiam : 0}]]*/ 0;
+
+        function formatVnd(num) {
+            if (num == null) return '0 ₫';
+            return Number(num).toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function parseVnd(str) {
+            if (!str) return 0;
+            return parseInt(String(str).replace(/[^\d]/g, ''), 10) || 0;
+        }
+
+        // Map item.id -> {giaBan, maxQty, originalQty, soLuongYeuCau}
+        var itemMap = {};
+        document.querySelectorAll('.edit-order-row').forEach(function(row) {
+            var itemId = row.getAttribute('data-item-id');
+            var spctId = row.getAttribute('data-spct-id');
+            var giaBan = parseFloat(row.getAttribute('data-gia-ban')) || 0;
+            var maxQty = parseInt(row.getAttribute('data-max-qty'), 10) || 999;
+            var originalQty = parseInt(row.querySelector('.qty-display').getAttribute('data-original-qty'), 10) || 1;
+            var currentQty = originalQty;
+            itemMap[itemId] = { giaBan: giaBan, maxQty: maxQty, originalQty: originalQty, currentQty: currentQty, spctId: spctId, row: row };
+        });
+
+        function recalcTotal() {
+            var tamTinh = 0;
+            var changes = [];
+            var hasChanges = false;
+
+            Object.keys(itemMap).forEach(function(itemId) {
+                var item = itemMap[itemId];
+                var qty = item.currentQty;
+                tamTinh += qty * item.giaBan;
+
+                if (qty !== item.originalQty) {
+                    hasChanges = true;
+                    var diff = qty - item.originalQty;
+                    var sign = diff > 0 ? '+' : '';
+                    changes.push(itemId + ':' + qty + ':' + diff);
+                }
+            });
+
+            var tongTien = tamTinh - tienGiam;
+            if (tongTien < 0) tongTien = 0;
+
+            document.getElementById('editOrderTamTinh').textContent = formatVnd(tamTinh);
+            document.getElementById('editOrderTongTien').textContent = formatVnd(tongTien);
+
+            var changeInfo = document.getElementById('editOrderChangeInfo');
+            var changeText = document.getElementById('editOrderChangeText');
+            if (changeInfo && changeText) {
+                if (hasChanges) {
+                    var parts = [];
+                    Object.keys(itemMap).forEach(function(itemId) {
+                        var item = itemMap[itemId];
+                        if (item.currentQty !== item.originalQty) {
+                            var diff = item.currentQty - item.originalQty;
+                            var sign = diff > 0 ? '+' : '';
+                            var row = item.row;
+                            var name = row ? row.querySelector('.edit-order-table__name') : null;
+                            var nameText = name ? name.textContent.trim() : ('SP#' + itemId);
+                            parts.push(nameText + ': ' + sign + diff);
+                        }
+                    });
+                    changeText.textContent = 'Thay đổi: ' + parts.join('; ');
+                    changeInfo.style.display = '';
+                } else {
+                    changeInfo.style.display = 'none';
+                }
+            }
+
+            // Tạo hidden inputs cho changes
+            var existingHidden = document.getElementById('editOrderChangesData');
+            if (existingHidden) existingHidden.remove();
+            if (hasChanges) {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'changesData';
+                hidden.id = 'editOrderChangesData';
+                hidden.value = changes.join('|');
+                document.getElementById('editOrderForm').appendChild(hidden);
+            }
+        }
+
+        function updateRowDisplay(row, itemId) {
+            var item = itemMap[itemId];
+            if (!item) return;
+            var qty = item.currentQty;
+            var total = qty * item.giaBan;
+            var totalEl = row.querySelector('.item-total-price');
+            if (totalEl) totalEl.textContent = formatVnd(total);
+
+            var qtyDisplay = row.querySelector('.qty-display');
+            if (qtyDisplay) qtyDisplay.textContent = qty;
+
+            var minusBtn = row.querySelector('.qty-btn--minus');
+            var plusBtn = row.querySelector('.qty-btn--plus');
+            if (minusBtn) minusBtn.disabled = false;
+            if (plusBtn) {
+                var max = parseInt(row.querySelector('.qty-display').getAttribute('data-max-qty') || '999', 10);
+                plusBtn.disabled = (qty >= max);
+            }
+        }
+
+        // Minus
+        document.querySelectorAll('.qty-btn--minus').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var itemId = this.getAttribute('data-item-id');
+                var item = itemMap[itemId];
+                if (!item) return;
+                if (item.currentQty <= 1) {
+                    var name = (item.row ? item.row.querySelector('.edit-order-table__name').textContent.trim() : '');
+                    var msg = 'Xóa sản phẩm "' + name + '" khỏi đơn?';
+                    var doRemove = function() {
+                        if (item.row) item.row.remove();
+                        delete itemMap[itemId];
+                        recalcTotal();
+                        checkEmpty();
+                    };
+                    if (typeof window.confirmModal === 'function') {
+                        window.confirmModal({
+                            title: 'Xóa sản phẩm',
+                            message: msg,
+                            confirmText: 'Xóa',
+                            cancelText: 'Hủy',
+                            tone: 'danger'
+                        }).then(function(ok) { if (ok) doRemove(); });
+                    } else if (confirm(msg)) {
+                        doRemove();
+                    }
+                    return;
+                }
+                item.currentQty--;
+                updateRowDisplay(item.row, itemId);
+                recalcTotal();
+            });
+        });
+
+        // Plus
+        document.querySelectorAll('.qty-btn--plus').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var itemId = this.getAttribute('data-item-id');
+                var item = itemMap[itemId];
+                if (!item) return;
+                var max = parseInt(item.row.querySelector('.qty-display').getAttribute('data-max-qty') || '999', 10);
+                if (item.currentQty < max) {
+                    item.currentQty++;
+                    updateRowDisplay(item.row, itemId);
+                    recalcTotal();
+                }
+            });
+        });
+
+        // Remove
+        document.querySelectorAll('.btn-remove').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var itemId = this.getAttribute('data-item-id');
+                var itemName = this.getAttribute('data-item-name') || 'sản phẩm này';
+                var msg = 'Xóa "' + itemName + '" khỏi đơn hàng?';
+                var doRemove = function() {
+                    if (item.row) item.row.remove();
+                    delete itemMap[itemId];
+                    recalcTotal();
+                    checkEmpty();
+                };
+                if (typeof window.confirmModal === 'function') {
+                    window.confirmModal({
+                        title: 'Xóa sản phẩm',
+                        message: msg,
+                        confirmText: 'Xóa',
+                        cancelText: 'Hủy',
+                        tone: 'danger'
+                    }).then(function(ok) { if (ok) doRemove(); });
+                } else if (confirm(msg)) {
+                    doRemove();
+                }
+            });
+        });
+
+        function checkEmpty() {
+            var count = Object.keys(itemMap).length;
+            if (count === 0) {
+                var tableWrap = document.querySelector('.edit-order-table-wrap');
+                var summaryBox = document.querySelector('.edit-order-summary__box');
+                if (tableWrap) tableWrap.style.display = 'none';
+                if (summaryBox && !summaryBox.querySelector('.edit-order-empty')) {
+                    var emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'edit-order-empty';
+                    emptyMsg.innerHTML = '<div class="edit-order-empty__icon">🛒</div><h3>Không còn sản phẩm nào</h3><p>Bấm <strong>Xác nhận</strong> bên dưới để hủy đơn hàng này.</p>';
+                    summaryBox.insertBefore(emptyMsg, summaryBox.firstChild);
+                }
+                // Giữ nút Xác nhận hiển thị để user bấm hủy đơn (gửi form rỗng -> backend chuyển sang Đã hủy)
+            }
+        }
+
+        // Submit form
+        document.getElementById('editOrderForm').addEventListener('submit', function(e) {
+            // Kiểm tra số lượng không vượt tồn kho trước khi gửi
+            var errors = [];
+            Object.keys(itemMap).forEach(function(itemId) {
+                var item = itemMap[itemId];
+                if (item.currentQty > item.maxQty) {
+                    var nameEl = item.row ? item.row.querySelector('.edit-order-table__name') : null;
+                    var name = nameEl ? nameEl.textContent.trim() : 'Sản phẩm #' + itemId;
+                    errors.push(name + ': đang đặt ' + item.currentQty + ', tối đa ' + item.maxQty);
+                }
+            });
+            if (errors.length > 0) {
+                e.preventDefault();
+                var msg = 'Số lượng vượt tồn kho. Vui lòng giảm xuống theo từng sản phẩm:\n\n' + errors.join('\n');
+                if (typeof window.showToast === 'function') {
+                    window.showToast(msg, 'error');
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+
+            // Thu thập dữ liệu cuối cùng
+            var itemsData = [];
+            Object.keys(itemMap).forEach(function(itemId) {
+                var item = itemMap[itemId];
+                itemsData.push({
+                    id: itemId,
+                    spctId: item.spctId,
+                    soLuong: item.currentQty,
+                    giaBan: item.giaBan
+                });
+            });
+
+            var existingData = document.getElementById('editOrderItemsData');
+            if (existingData) existingData.remove();
+            var hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'itemsData';
+            hidden.id = 'editOrderItemsData';
+            hidden.value = JSON.stringify(itemsData);
+            this.appendChild(hidden);
+        });
+
+        recalcTotal();
+    })();
+    </script>
+</div>
+
+<!-- Khi không có đơn hàng hợp lệ -->
+<div th:fragment="content" class="user-page edit-order-page" th:if="${hoaDon == null}">
+    <div class="container edit-order-container">
+        <div class="edit-order-empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>Không tìm thấy đơn hàng</h2>
+            <p>Đơn hàng không tồn tại hoặc không cho phép chỉnh sửa.</p>
+            <a th:href="@{/don-hang}" class="btn btn--primary">Quay lại đơn hàng</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

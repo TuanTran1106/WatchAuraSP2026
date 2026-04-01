@@ -58,7 +58,10 @@
                             </thead>
                             <tbody id="orderItemsBody">
                                 <tr th:each="item : ${hoaDon.items}">
-                                    <td class="cart-table__name" th:text="${item.tenSanPham}"></td>
+                                    <td class="cart-table__name">
+                                        <span th:text="${item.tenSanPham}"></span>
+                                        <span class="order-detail__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
+                                    </td>
                                     <td th:text="${item.soLuong}"></td>
                                     <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
                                     <td class="cart-table__total" th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|"></td>
@@ -81,7 +84,8 @@
                     </div>
                     <div class="order-detail-summary__row cart-summary__row">
                         <span class="order-detail-summary__label">Phí vận chuyển</span>
-                        <span class="order-detail-summary__value">0 đ</span>
+                        <span class="order-detail-summary__value" id="shippingFee"
+                              th:text="|${#numbers.formatDecimal(hoaDon.phiVanChuyen != null ? hoaDon.phiVanChuyen : 0, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</span>
                     </div>
                     <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
                         <span class="order-detail-summary__label">Tổng thanh toán</span>
@@ -89,23 +93,29 @@
                     </div>
                 </section>
 
+                <!-- Banner chỉ hiện khi Cần xử lý có ghi chú, hoặc ghi chú là thông báo không đủ tồn kho -->
+                <section id="orderDetailNoteSection" class="order-detail-card order-detail-note order-detail-note--warning"
+                         th:style="${((hoaDon.trangThaiDonHang == 'CAN_XU_LY' and hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()) or (hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho')))} ? 'display:block' : 'display:none'">
+                    <h2 class="detail-card__heading"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
+                    <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
+                </section>
+
                 <!-- Trạng thái & thanh toán -->
                 <section class="order-detail-card order-detail-meta">
                     <div class="order-detail-meta__item">
                         <span class="detail-card__label">Trạng thái đơn</span>
-                        <span class="order-detail-meta__badge order-status"
-                              id="orderStatus"
-                              th:classappend="
-                                ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'status-waiting' :
-                                (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'status-processing' :
-                                (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'status-shipping' :
-                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'status-done' : 'status-cancel')))"
-                              th:text="
-                                ${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN'} ? 'Chờ xác nhận' :
-                                (${hoaDon.trangThaiDonHang == 'DANG_XU_LY'} ? 'Đang xử lý' :
-                                (${hoaDon.trangThaiDonHang == 'DANG_GIAO'} ? 'Đang giao' :
-                                (${hoaDon.trangThaiDonHang == 'DA_GIAO'} ? 'Đã giao' : 'Đã hủy')))">
-                        </span>
+                        <th:block th:switch="${hoaDon.trangThaiDonHang}">
+                            <span th:case="'CAN_XU_LY'" id="orderStatus" class="order-detail-meta__badge order-status status-can-xu-ly">Cần xử lý</span>
+                            <span th:case="'CHO_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-cho-thanh-toan">Chờ thanh toán</span>
+                            <span th:case="'CHO_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-waiting">Chờ xác nhận</span>
+                            <span th:case="'DA_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
+                            <span th:case="'DA THANH TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
+                            <span th:case="'DA_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-processing">Đã xác nhận</span>
+                            <span th:case="'DANG_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
+                            <span th:case="'DA_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-done">Đã giao</span>
+                            <span th:case="'DA_HUY'" id="orderStatus" class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
+                            <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status" th:text="${hoaDon.trangThaiDonHang}">—</span>
+                        </th:block>
                     </div>
                     <div class="order-detail-meta__item">
                         <span class="detail-card__label">Thanh toán</span>
@@ -134,26 +144,40 @@
             return Number(value).toLocaleString('vi-VN') + ' đ';
         }
 
+        function normalizeTrangThai(raw) {
+            if (!raw) return raw;
+            if (raw === 'DA THANH TOAN') return 'DA_THANH_TOAN';
+            return raw;
+        }
+
         function getTenTrangThai(trangThai) {
+            var t = normalizeTrangThai(trangThai);
             var map = {
+                'CAN_XU_LY': 'Cần xử lý',
+                'CHO_THANH_TOAN': 'Chờ thanh toán',
                 'CHO_XAC_NHAN': 'Chờ xác nhận',
-                'DANG_XU_LY': 'Đang xử lý',
+                'DA_THANH_TOAN': 'Đã thanh toán',
+                'DA_XAC_NHAN': 'Đã xác nhận',
                 'DANG_GIAO': 'Đang giao',
                 'DA_GIAO': 'Đã giao',
                 'DA_HUY': 'Đã hủy'
             };
-            return map[trangThai] || trangThai;
+            return map[t] || trangThai;
         }
 
         function getStatusClass(trangThai) {
+            var t = normalizeTrangThai(trangThai);
             var map = {
+                'CAN_XU_LY': 'status-can-xu-ly',
+                'CHO_THANH_TOAN': 'status-cho-thanh-toan',
                 'CHO_XAC_NHAN': 'status-waiting',
-                'DANG_XU_LY': 'status-processing',
+                'DA_THANH_TOAN': 'status-da-thanh-toan',
+                'DA_XAC_NHAN': 'status-processing',
                 'DANG_GIAO': 'status-shipping',
                 'DA_GIAO': 'status-done',
                 'DA_HUY': 'status-cancel'
             };
-            return map[trangThai] || '';
+            return map[t] || '';
         }
 
         function loadOrderDetail() {
@@ -192,7 +216,8 @@
                         itemsBody.innerHTML = '';
                         data.items.forEach(function(item) {
                             var row = document.createElement('tr');
-                            row.innerHTML = '<td class="cart-table__name">' + (item.tenSanPham || '') + '</td>' +
+                            var nameCell = (item.tenSanPham || '') + (item.tenBienThe ? '<span class="order-detail__variant"> — ' + item.tenBienThe + '</span>' : '');
+                            row.innerHTML = '<td class="cart-table__name">' + nameCell + '</td>' +
                                 '<td>' + (item.soLuong || 0) + '</td>' +
                                 '<td class="cart-table__price">' + formatCurrencyVnd(item.donGia) + '</td>' +
                                 '<td class="cart-table__total">' + formatCurrencyVnd(item.thanhTien) + '</td>';
@@ -206,13 +231,31 @@
                     var discount = document.getElementById('discount');
                     if (discount) discount.textContent = formatCurrencyVnd(data.tienGiam);
 
+                    var shippingFee = document.getElementById('shippingFee');
+                    if (shippingFee) {
+                        var phi = data.phiVanChuyen != null ? Number(data.phiVanChuyen) : 0;
+                        shippingFee.textContent = formatCurrencyVnd(phi);
+                    }
+
                     var totalPayment = document.getElementById('totalPayment');
                     if (totalPayment) totalPayment.textContent = formatCurrencyVnd(data.tongTienThanhToan);
 
                     var orderStatus = document.getElementById('orderStatus');
                     if (orderStatus) {
-                        orderStatus.textContent = data.tenTrangThai || '';
+                        orderStatus.textContent = data.tenTrangThai || getTenTrangThai(data.trangThaiDonHang) || '';
                         orderStatus.className = 'order-detail-meta__badge order-status ' + getStatusClass(data.trangThaiDonHang);
+                    }
+
+                    var noteSection = document.getElementById('orderDetailNoteSection');
+                    var noteText = document.getElementById('orderDetailNoteText');
+                    if (noteSection && noteText) {
+                        var hasStockWarning = data.ghiChu && (data.trangThaiDonHang === 'CAN_XU_LY' || (data.ghiChu.indexOf('Không đủ tồn kho') !== -1));
+                        if (hasStockWarning) {
+                            noteSection.style.display = 'block';
+                            noteText.textContent = data.ghiChu;
+                        } else {
+                            noteSection.style.display = 'none';
+                        }
                     }
 
                     var paymentMethod = document.getElementById('paymentMethod');

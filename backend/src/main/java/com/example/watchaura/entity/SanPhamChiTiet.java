@@ -45,12 +45,11 @@ public class SanPhamChiTiet {
     @JoinColumn(name = "id_chat_lieu_day")
     private ChatLieuDay chatLieuDay;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_loai_may")
-    private LoaiMay loaiMay;
-
     @Column(name = "so_luong_ton")
     private Integer soLuongTon;
+
+    @Column(name = "so_luong_da_dat")
+    private Integer soLuongDaDat;
 
     @Column(name = "gia_ban", precision = 18, scale = 2)
     private BigDecimal giaBan;
@@ -69,4 +68,12 @@ public class SanPhamChiTiet {
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
+
+    /**
+     * Số lượng khả dụng để bán (FIFO: không trừ giữ hàng).
+     * Với kiểu FIFO, ai thanh toán trước được mua trước, không giữ hàng trước.
+     */
+    public Integer getSoLuongKhaDung() {
+        return soLuongTon != null ? soLuongTon : 0;
+    }
 }

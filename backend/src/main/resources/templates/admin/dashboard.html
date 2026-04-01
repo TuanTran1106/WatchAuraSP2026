@@ -5,37 +5,191 @@
     <div class="dashboard-welcome">
         <div class="dashboard-welcome__content">
             <h1 class="dashboard-welcome__title">Chào mừng trở lại</h1>
-            <p class="dashboard-welcome__subtitle">Quản lý cửa hàng đồng hồ WatchAura của bạn một cách dễ dàng.</p>
+            <p class="dashboard-welcome__subtitle">Theo dõi KPI, doanh thu và top sản phẩm theo thời gian thực (có cache).</p>
         </div>
         <div class="dashboard-welcome__decor"></div>
     </div>
 
+    <section class="card dash-card dash-filters dash-filters--toolbar">
+        <div class="dash-toolbar">
+            <div class="dash-toolbar__group">
+                <i class="fas fa-calendar-days dash-filter__icon" aria-hidden="true"></i>
+                <label for="dashRangeSelect" class="dash-filter__label">Khoảng</label>
+                <select id="dashRangeSelect" class="dash-filter__select">
+                    <option value="7">7 ngày</option>
+                    <option value="30">30 ngày</option>
+                    <option value="custom">Tùy chọn</option>
+                </select>
+            </div>
+
+            <div class="dash-toolbar__group dash-toolbar__group--dates">
+                <label for="dashFromDate" class="dash-filter__label">Từ</label>
+                <input type="date" id="dashFromDate" class="dash-filter__input" disabled />
+                <label for="dashToDate" class="dash-filter__label">Đến</label>
+                <input type="date" id="dashToDate" class="dash-filter__input" disabled />
+            </div>
+
+            <div class="dash-toolbar__spacer"></div>
+
+            <div class="dash-toolbar__group">
+                <i class="fas fa-list-ol dash-filter__icon" aria-hidden="true"></i>
+                <label for="dashTopRangeSelect" class="dash-filter__label">Top</label>
+                <select id="dashTopRangeSelect" class="dash-filter__select">
+                    <option value="week" selected>Theo tuần</option>
+                    <option value="month">Theo tháng</option>
+                </select>
+            </div>
+
+            <div class="dash-toolbar__group">
+                <a id="dashExportPdfBtn" class="btn btn--secondary dash-toolbar__btn" href="#">
+                    <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                    Export PDF
+                </a>
+            </div>
+        </div>
+    </section>
+
     <div class="content__grid dashboard-stats">
-        <section class="card stat-card stat-card--customers">
+        <section class="card dash-card stat-card stat-card--customers">
             <div class="stat-card__icon">
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-card__body">
                 <h2 class="card__title">Tổng khách hàng</h2>
-                <p class="card__value" th:text="${totalKhachHang}">0</p>
+                <p class="card__value" id="dashKpiCustomers">0</p>
+                <p class="dash-kpi-trends">
+                    <span id="dashKpiCustomersDayLabel">So với hôm trước: <strong class="dash-trend-badge is-na" id="dashKpiCustomersDay">--</strong> <span id="dashKpiCustomersDayTrend"></span></span>
+                    <span id="dashKpiCustomersPeriodLabel">So với kỳ trước: <strong class="dash-trend-badge is-na" id="dashKpiCustomersPeriod">--</strong> <span id="dashKpiCustomersPeriodTrend"></span></span>
+                </p>
             </div>
         </section>
-        <section class="card stat-card stat-card--orders">
+        <section class="card dash-card stat-card stat-card--orders">
             <div class="stat-card__icon">
                 <i class="fas fa-receipt"></i>
             </div>
             <div class="stat-card__body">
                 <h2 class="card__title">Tổng hóa đơn</h2>
-                <p class="card__value" th:text="${totalHoaDon}">0</p>
+                <p class="card__value" id="dashKpiOrders">0</p>
+                <p class="dash-kpi-trends">
+                    <span id="dashKpiOrdersDayLabel">So với hôm trước: <strong class="dash-trend-badge is-na" id="dashKpiOrdersDay">--</strong> <span id="dashKpiOrdersDayTrend"></span></span>
+                    <span id="dashKpiOrdersPeriodLabel">So với kỳ trước: <strong class="dash-trend-badge is-na" id="dashKpiOrdersPeriod">--</strong> <span id="dashKpiOrdersPeriodTrend"></span></span>
+                </p>
             </div>
         </section>
-        <section class="card stat-card stat-card--products">
+        <section class="card dash-card stat-card stat-card--products">
             <div class="stat-card__icon">
-                <i class="fas fa-clock"></i>
+                <i class="fas fa-box"></i>
             </div>
             <div class="stat-card__body">
                 <h2 class="card__title">Tổng sản phẩm</h2>
-                <p class="card__value" th:text="${totalSanPham}">0</p>
+                <p class="card__value" id="dashKpiProducts">0</p>
+                <p class="dash-kpi-trends">
+                    <span class="dash-kpi-muted">Danh mục tĩnh từ DB</span>
+                </p>
+            </div>
+        </section>
+        <section class="card dash-card stat-card stat-card--revenue">
+            <div class="stat-card__icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-card__body">
+                <h2 class="card__title">Doanh thu đã giao</h2>
+                <p class="card__value" id="dashKpiRevenue">0₫</p>
+                <p class="dash-kpi-scope" id="dashKpiRevenueScope">Trong 7 ngày</p>
+                <div class="dash-sparkline-wrap">
+                    <canvas id="dashKpiRevenueSparkline" height="36"></canvas>
+                </div>
+                <p class="dash-kpi-trends">
+                    <span id="dashKpiRevenueDayLabel">So với hôm trước: <strong class="dash-trend-badge is-na" id="dashKpiRevenueDay">--</strong> <span id="dashKpiRevenueDayTrend"></span></span>
+                    <span id="dashKpiRevenuePeriodLabel">So với kỳ trước: <strong class="dash-trend-badge is-na" id="dashKpiRevenuePeriod">--</strong> <span id="dashKpiRevenuePeriodTrend"></span></span>
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <div class="content__grid dashboard-analytics dash-dashboard-analytics">
+        <section class="card dash-card card--full">
+            <div class="card__header-row">
+                <h2 class="card__title"><i class="fas fa-chart-line" aria-hidden="true"></i> Doanh thu theo ngày</h2>
+                <div class="dash-chart-meta">
+                    <span>Max: <strong id="dashRevenueMaxLabel">-</strong></span>
+                    <span>Min: <strong id="dashRevenueMinLabel">-</strong></span>
+                </div>
+            </div>
+            <div class="dash-chart-wrap dash-skeleton-parent" id="dashRevenueChartWrap">
+                <div class="dash-skeleton" id="dashRevenueChartSkeleton">
+                    <div class="dash-skeleton__bar"></div>
+                    <div class="dash-skeleton__bar dash-skeleton__bar--short"></div>
+                    <div class="dash-skeleton__bar dash-skeleton__bar--shorter"></div>
+                </div>
+                <canvas id="dashRevenueChart" height="140"></canvas>
+            </div>
+        </section>
+        <section class="card dash-card">
+            <div class="card__header-row">
+                <h2 class="card__title"><i class="fas fa-chart-pie" aria-hidden="true"></i> Tỉ lệ xử lý đơn</h2>
+            </div>
+            <div class="dash-chart-wrap dash-skeleton-parent" id="dashOrderStatusChartWrap">
+                <div class="dash-skeleton dash-skeleton--donut" id="dashOrderStatusChartSkeleton">
+                    <div class="dash-skeleton__circle"></div>
+                    <div class="dash-skeleton__line"></div>
+                    <div class="dash-skeleton__line dash-skeleton__line--short"></div>
+                </div>
+                <canvas id="dashOrderStatusChart" height="140"></canvas>
+            </div>
+            <div class="dash-order-status__summary">
+                Tổng đơn: <strong id="dashOrderTotal">0</strong>
+            </div>
+            <div class="dash-order-status__legend">
+                <span>Đang xử lý: <strong id="dashOrderProcessingCount">0</strong></span>
+                <span>Đã giao: <strong id="dashOrderDeliveredCount">0</strong></span>
+                <span>Đã hủy: <strong id="dashOrderCanceledCount">0</strong></span>
+            </div>
+        </section>
+        <section class="card dash-card">
+            <div class="card__header-row">
+                <h2 class="card__title"><i class="fas fa-lightbulb" aria-hidden="true"></i> Insight thông minh</h2>
+            </div>
+            <div class="dash-insights">
+                <div class="dash-insights__block">
+                    <h3 class="dash-insights__title">Gợi ý</h3>
+                    <ul class="dash-insights__list" id="dashInsightsList">
+                        <li class="dashboard-muted">Đang tải gợi ý...</li>
+                    </ul>
+                </div>
+                <div class="dash-insights__block">
+                    <h3 class="dash-insights__title dash-insights__title--warning">Cảnh báo</h3>
+                    <ul class="dash-warnings__list" id="dashWarningsList">
+                        <li class="dashboard-muted">Đang tải cảnh báo...</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <section class="card dash-card card--full">
+            <div class="card__header-row">
+                <h2 class="card__title"><i class="fas fa-trophy" aria-hidden="true"></i> Top sản phẩm</h2>
+                <div class="dash-top-meta dash-kpi-muted">
+                    Click vào sản phẩm để xem chi tiết trong bảng.
+                </div>
+            </div>
+            <div class="dash-chart-wrap dash-skeleton-parent" id="dashTopProductsWrap">
+                <div class="dash-skeleton dash-skeleton--top" id="dashTopProductsSkeleton">
+                    <div class="dash-skeleton__line"></div>
+                    <div class="dash-skeleton__line dash-skeleton__line--short"></div>
+                    <div class="dash-skeleton__line"></div>
+                    <div class="dash-skeleton__line dash-skeleton__line--short"></div>
+                </div>
+                <ul class="dashboard-top-list" id="dashTopProductsList"></ul>
+                <p id="dashTopProductsEmpty" class="dashboard-muted" style="display:none;">
+                    Chưa có dữ liệu đơn đã giao trong khoảng thời gian này.
+                </p>
+            </div>
+            <div class="dash-product-detail" id="dashTopProductDetail" style="display:none;">
+                <h3 class="dash-product-detail__title">Chi tiết sản phẩm</h3>
+                <p class="dash-product-detail__row">Sản phẩm: <strong id="dashTopProductDetailName">-</strong></p>
+                <p class="dash-product-detail__row">Số lượng bán: <strong id="dashTopProductDetailQty">0</strong></p>
+                <p class="dash-product-detail__row">Doanh thu: <strong id="dashTopProductDetailRevenue">0₫</strong></p>
+                <p class="dash-product-detail__row">Đóng góp doanh thu: <strong id="dashTopProductDetailShare">0%</strong></p>
             </div>
         </section>
     </div>
@@ -49,6 +203,10 @@
             </div>
         </div>
     </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+            crossorigin="anonymous"></script>
+    <script th:src="@{/admin/dashboard.js}"></script>
 </div>
 </body>
 </html>

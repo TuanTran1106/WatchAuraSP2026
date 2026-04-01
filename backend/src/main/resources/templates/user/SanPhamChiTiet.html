@@ -1086,19 +1086,19 @@
                                 <div class="action-buttons">
                                     <div class="d-grid gap-2 d-md-flex">
                                         <form th:action="@{/gio-hang/them}" method="post" id="addToCartForm" novalidate>
-                                            <input type="hidden" name="spctId"
+                                            <input type="hidden" name="sanPhamChiTietId"
                                                 th:value="${chiTiet != null ? chiTiet.id : 0}" id="hiddenSpctId" />
                                             <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
                                                 <label class="me-2 fw-bold mb-0">Số lượng:</label>
                                                 <div class="qty-group">
                                                     <button type="button" id="decreaseBtn" aria-label="Giảm">−</button>
                                                     <input type="number" class="quantity-input" value="1"
-                                                        min="1" th:max="${chiTiet != null ? chiTiet.soLuongTon : 0}"
+                                                        min="1" th:max="${chiTiet != null ? chiTiet.soLuongKhaDung : 0}"
                                                         id="quantityInput" name="soLuong">
                                                     <button type="button" id="increaseBtn" aria-label="Tăng">+</button>
                                                 </div>
                                                 <small class="ms-2 text-muted mb-0">
-                                                    Còn lại: <span th:text="${chiTiet != null ? chiTiet.soLuongTon : 0}"
+                                                    Còn lại: <span th:text="${chiTiet != null ? chiTiet.soLuongKhaDung : 0}"
                                                         class="fw-bold" id="remainingStock">số
                                                         lượng</span>
                                                 </small>
@@ -1130,6 +1130,7 @@
                                             th:data-trong-luong="${variant.trongLuong != null ? variant.trongLuong : 0}"
                                             th:data-gia-ban="${variant.giaBan}"
                                             th:data-so-luong-ton="${variant.soLuongTon}"
+                                            th:data-so-luong-kha-dung="${variant.soLuongKhaDung != null ? variant.soLuongKhaDung : 0}"
                                             th:id="'variant-' + ${variant.id}" onclick="selectVariant(this)">
                                             <div class="variant-name">Option <span th:text="${iterStat.count}"></span>
                                             </div>
@@ -1145,10 +1146,10 @@
                                                 th:text="${#numbers.formatDecimal(variant.giaBan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
                                             </div>
                                             <div class="variant-stock"
-                                                th:classappend="${variant.soLuongTon > 10 ? 'stock-available' : (variant.soLuongTon > 0 ? 'stock-low' : 'stock-unavailable')}">
-                                                <span th:if="${variant.soLuongTon > 0}"
-                                                    th:text="'Còn ' + ${variant.soLuongTon}"></span>
-                                                <span th:if="${variant.soLuongTon == 0}">Hết hàng</span>
+                                                th:classappend="${variant.soLuongKhaDung > 10 ? 'stock-available' : (variant.soLuongKhaDung > 0 ? 'stock-low' : 'stock-unavailable')}">
+                                                <span th:if="${variant.soLuongKhaDung > 0}"
+                                                    th:text="'Còn ' + ${variant.soLuongKhaDung}"></span>
+                                                <span th:if="${variant.soLuongKhaDung == 0 or variant.soLuongKhaDung == null}">Hết hàng</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1554,7 +1555,17 @@
                             var input = document.getElementById('quantityInput');
                             if (!input) return;
                             var qty = parseInt(input.value, 10) || 1;
-                            var max = parseInt(input.getAttribute('max'), 10) || 999;
+                            var max = parseInt(input.getAttribute('max'), 10) || 0;
+
+                            // Kiểm tra nếu hết hàng
+                            if (max <= 0) {
+                                e.preventDefault();
+                                var msg = 'Sản phẩm này đã hết hàng, không thể thêm vào giỏ.';
+                                if (typeof window.showToast === 'function') window.showToast(msg, 'error');
+                                else alert(msg);
+                                return false;
+                            }
+
                             if (qty > max) {
                                 e.preventDefault();
                                 input.value = max;
@@ -1599,8 +1610,9 @@
                         const trongLuong = element.getAttribute('data-trong-luong') || '0';
                         const giaBan = parseFloat(element.getAttribute('data-gia-ban'));
                         const soLuongTon = parseInt(element.getAttribute('data-so-luong-ton'));
+                        const soLuongKhaDung = parseInt(element.getAttribute('data-so-luong-kha-dung') || '0');
 
-                        console.log('Selected variant:', variantId, giaBan, soLuongTon);
+                        console.log('Selected variant:', variantId, giaBan, soLuongKhaDung);
 
                         // Update hidden input with selected variant ID
                         document.getElementById('hiddenSpctId').value = variantId;
@@ -1612,17 +1624,33 @@
                         if (priceEl) priceEl.textContent = formatted;
                         if (promoEl) promoEl.textContent = formatted;
 
-                        // Update stock
+                        // Update stock - hiển thị số lượng khả dụng (đã trừ phần giữ hàng)
                         const remainingStock = document.getElementById('remainingStock');
                         if (remainingStock) {
-                            remainingStock.textContent = soLuongTon;
+                            remainingStock.textContent = soLuongKhaDung;
                         }
 
-                        // Update quantity input max value
+                        // Update quantity input max value - dùng số lượng khả dụng
                         const quantityInput = document.getElementById('quantityInput');
                         if (quantityInput) {
-                            quantityInput.setAttribute('max', soLuongTon);
+                            quantityInput.setAttribute('max', soLuongKhaDung);
                             quantityInput.value = 1;
+                        }
+
+                        // Disable add to cart button if out of stock
+                        const addToCartBtn = document.querySelector('.btn-add-cart');
+                        if (addToCartBtn) {
+                            if (soLuongKhaDung <= 0) {
+                                addToCartBtn.disabled = true;
+                                addToCartBtn.textContent = 'Hết hàng';
+                                addToCartBtn.style.background = '#ccc';
+                                addToCartBtn.style.cursor = 'not-allowed';
+                            } else {
+                                addToCartBtn.disabled = false;
+                                addToCartBtn.innerHTML = '<i class="fas fa-cart-plus me-2"></i> Thêm vào giỏ hàng';
+                                addToCartBtn.style.background = '';
+                                addToCartBtn.style.cursor = 'pointer';
+                            }
                         }
 
                         // Update specs grid if available

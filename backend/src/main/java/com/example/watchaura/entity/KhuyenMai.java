@@ -38,6 +38,9 @@ public class KhuyenMai {
     @Column(name = "mo_ta", length = 500)
     private String moTa;
 
+    @Column(name = "danh_muc_ap_dung", length = 255)
+    private String danhMucApDung;
+
     @Column(name = "loai_giam", nullable = false, length = 20)
     private String loaiGiam;
 

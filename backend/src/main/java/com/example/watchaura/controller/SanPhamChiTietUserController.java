@@ -21,7 +21,7 @@ public class SanPhamChiTietUserController {
 
     @GetMapping("/chi-tiet/{id}")
     public String hienThi(@PathVariable("id") Integer id, Model model) {
-        SanPhamChiTiet chiTiet = sanPhamChiTietRepository.findById(id).orElse(null);
+        SanPhamChiTiet chiTiet = sanPhamChiTietRepository.findByIdWithDetails(id).orElse(null);
 
         if (chiTiet != null) {
             try {
@@ -36,13 +36,13 @@ public class SanPhamChiTietUserController {
                 if (chiTiet.getChatLieuDay() != null) {
                     chiTiet.getChatLieuDay().getId();
                 }
-                if (chiTiet.getLoaiMay() != null) {
-                    chiTiet.getLoaiMay().getId();
+                if (chiTiet.getSanPham() != null && chiTiet.getSanPham().getLoaiMay() != null) {
+                    chiTiet.getSanPham().getLoaiMay().getId();
                 }
 
                 // Lấy tất cả các biến thể của sản phẩm này
                 List<SanPhamChiTiet> danhSachBienThe = sanPhamChiTietRepository
-                        .findBySanPham_Id(chiTiet.getSanPham().getId());
+                        .findBySanPhamId(chiTiet.getSanPham().getId());
 
                 // Force load từng biến thể
                 for (SanPhamChiTiet bt : danhSachBienThe) {
@@ -52,8 +52,8 @@ public class SanPhamChiTietUserController {
                         bt.getKichThuoc().getId();
                     if (bt.getChatLieuDay() != null)
                         bt.getChatLieuDay().getId();
-                    if (bt.getLoaiMay() != null)
-                        bt.getLoaiMay().getId();
+                    if (bt.getSanPham() != null && bt.getSanPham().getLoaiMay() != null)
+                        bt.getSanPham().getLoaiMay().getId();
                 }
 
                 // Tìm khuyến mãi đang hoạt động cho sản phẩm này
@@ -98,7 +98,8 @@ public class SanPhamChiTietUserController {
                 model.addAttribute("mauSac", chiTiet.getMauSac());
                 model.addAttribute("kichThuoc", chiTiet.getKichThuoc());
                 model.addAttribute("chatLieuDay", chiTiet.getChatLieuDay());
-                model.addAttribute("loaiMay", chiTiet.getLoaiMay());
+                model.addAttribute("loaiMay",
+                        chiTiet.getSanPham() != null ? chiTiet.getSanPham().getLoaiMay() : null);
                 model.addAttribute("giaGoc", giaGoc);
                 model.addAttribute("giaKhuyenMai", giaKhuyenMai);
                 model.addAttribute("soTienGiam", soTienGiam);

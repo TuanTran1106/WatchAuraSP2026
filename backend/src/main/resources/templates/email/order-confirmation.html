@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đơn hàng - WatchAura</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .logo {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .success-badge {
+            display: inline-block;
+            background-color: #27ae60;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .greeting strong {
+            color: #1a1a2e;
+        }
+        .order-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .order-info h3 {
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .info-row .label {
+            color: #666;
+        }
+        .info-row .value {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        .order-id {
+            background-color: #1a1a2e;
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        .items-table th {
+            background-color: #1a1a2e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+        .items-table .product-name {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        .items-table .product-price {
+            text-align: right;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .total-section {
+            background-color: #1a1a2e;
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: right;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .total-row:last-child {
+            margin-bottom: 0;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        .total-row.final {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffd700;
+        }
+        .shipping-info {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+        }
+        .shipping-info h4 {
+            color: #27ae60;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .shipping-info p {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 25px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        .footer p {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .footer .brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .footer .contact {
+            margin-top: 15px;
+        }
+        .footer .contact a {
+            color: #1a1a2e;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 13px;
+        }
+        .social-icons {
+            margin-top: 15px;
+        }
+        .social-icons span {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #1a1a2e;
+            color: white;
+            border-radius: 50%;
+            line-height: 30px;
+            margin: 0 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">⌚</div>
+        <h1>WatchAura</h1>
+        <p>Đồng hồ cao cấp • Chính hãng 100%</p>
+        <div class="success-badge">✓ Đặt hàng thành công</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <div class="greeting">
+            Xin chào <strong th:text="${hoaDon.tenKhachHang}">Khách hàng</strong>!<br>
+            Cảm ơn bạn đã đặt hàng tại WatchAura. Đơn hàng của bạn đã được tiếp nhận.
+        </div>
+
+        <!-- Order Info -->
+        <div class="order-info">
+            <h3>📋 Thông tin đơn hàng</h3>
+            <div class="info-row">
+                <span class="label">Mã đơn hàng:</span>
+                <span class="order-id" th:text="${hoaDon.maDonHang}">HD123456</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Ngày đặt:</span>
+                <span class="value" th:text="${orderDate}">10:30 27/03/2026</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Phương thức thanh toán:</span>
+                <span class="value">Thanh toán khi nhận hàng (COD)</span>
+            </div>
+        </div>
+
+        <!-- Shipping Info -->
+        <div class="shipping-info">
+            <h4>📍 Địa chỉ giao hàng</h4>
+            <p>
+                <strong th:text="${hoaDon.tenKhachHang}">Nguyễn Văn A</strong><br>
+                📞 <span th:text="${hoaDon.sdtKhachHang}">0123456789</span><br>
+                📍 <span th:text="${hoaDon.diaChi}">123 Đường ABC, Quận 1, TP.HCM</span>
+            </p>
+        </div>
+
+        <!-- Product Items -->
+        <div class="items-section" style="margin-top: 25px;">
+            <h3 style="color: #1a1a2e; font-size: 16px; margin-bottom: 15px;">📦 Chi tiết sản phẩm</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th style="text-align: right;">Số lượng</th>
+                        <th style="text-align: right;">Đơn giá</th>
+                        <th style="text-align: right;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <th:block th:if="${hoaDon.chiTietList != null}">
+                        <tr th:each="item : ${hoaDon.chiTietList}">
+                            <td class="product-name">
+                                <th:block th:if="${item.sanPhamChiTiet != null and item.sanPhamChiTiet.sanPham != null}">
+                                    <span th:text="${item.sanPhamChiTiet.sanPham.tenSanPham}">Đồng hồ WatchAura</span>
+                                </th:block>
+                                <th:block th:unless="${item.sanPhamChiTiet != null and item.sanPhamChiTiet.sanPham != null}">
+                                    Sản phẩm
+                                </th:block>
+                            </td>
+                            <td style="text-align: right;" th:text="${item.soLuong}">1</td>
+                            <td class="product-price" th:if="${item.donGia != null}"
+                                th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                            <td class="product-price" th:unless="${item.donGia != null}">0 ₫</td>
+                            <td class="product-price" th:if="${item.donGia != null and item.soLuong != null}"
+                                th:text="${#numbers.formatDecimal(item.donGia.multiply(T(java.math.BigDecimal).valueOf(item.soLuong)), 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                            <td class="product-price" th:unless="${item.donGia != null and item.soLuong != null}">0 ₫</td>
+                        </tr>
+                    </th:block>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Total -->
+        <div class="total-section" style="margin-top: 25px;">
+            <div class="total-row">
+                <span>Tổng tiền sản phẩm:</span>
+                <span th:text="${totalFormatted}">5,000,000 VND</span>
+            </div>
+            <div class="total-row" th:if="${hoaDon.tienGiam != null && hoaDon.tienGiam > 0}">
+                <span>Giảm giá:</span>
+                <span>-0 VND</span>
+            </div>
+            <div class="total-row final">
+                <span>Thanh toán:</span>
+                <span th:text="${totalFormatted}">5,000,000 VND</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p class="brand">⌚ WatchAura</p>
+        <p>Chúc bạn một ngày tốt lành!</p>
+        <p>Đây là email tự động, vui lòng không reply.</p>
+        <div class="contact">
+            <a href="#">Website</a> |
+            <a href="#">Hotline: 1900 1234</a> |
+            <a href="#">Email: support@watchaura.com</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

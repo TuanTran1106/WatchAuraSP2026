@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            background: var(--bg-page);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar-donhang {
+            background: var(--bg-card) !important;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+        }
+        .navbar-donhang .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text) !important;
+        }
+        .navbar-donhang .navbar-brand i {
+            color: var(--accent);
+        }
+        .navbar-donhang .nav-link {
+            color: var(--text-muted) !important;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem !important;
+        }
+        .navbar-donhang .nav-link:hover {
+            color: var(--text) !important;
+            background: var(--bg-card-hover);
+        }
+        .navbar-donhang .nav-link.active {
+            color: var(--accent) !important;
+            background: rgba(59, 130, 246, 0.12);
+        }
+        .navbar-donhang .btn-outline-light {
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+        .navbar-donhang .btn-outline-light:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .navbar-donhang .navbar-user-name {
+            font-weight: 600;
+            color: var(--text) !important;
+        }
+
+        /* Main content */
+        .donhang-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 1.5rem 2rem;
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-title i {
+            color: var(--accent);
+        }
+
+        /* Filter bar - compact */
+        .filter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+        .filter-card .form-control,
+        .filter-card .form-select {
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: var(--radius-sm);
+            font-size: 0.9375rem;
+        }
+        .filter-card .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        .filter-card .form-control:focus,
+        .filter-card .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: var(--bg-page);
+            color: var(--text);
+        }
+        .filter-card .btn-primary {
+            background: var(--accent);
+            border: none;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+        }
+        .filter-card .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+        .filter-card .btn-secondary {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+        }
+        .filter-card .btn-secondary:hover {
+            background: var(--border);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        /* Chờ thanh toán - vàng cam */
+        .status--cho-thanh-toan {
+            background: #fbbf24 !important;
+            color: #111827 !important;
+            border-color: #d97706 !important;
+        }
+
+        /* Table card */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .table-donhang {
+            color: var(--text);
+            margin-bottom: 0;
+        }
+        .table-donhang thead th {
+            background: var(--bg-page);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.25rem;
+            white-space: nowrap;
+        }
+        .table-donhang tbody td {
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.25rem;
+            vertical-align: middle;
+            font-size: 0.9375rem;
+        }
+        .table-donhang tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .table-donhang tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+        .table-donhang .ma-don {
+            font-weight: 700;
+            color: #111827;
+            font-size: 1rem;
+            letter-spacing: 0.02em;
+        }
+        .table-donhang .tong-tien {
+            font-weight: 600;
+            color: var(--success);
+        }
+        .status-select {
+            min-width: 140px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            background: #ffffff !important;
+            color: #111827 !important;
+            border: 1px solid #111827 !important;
+            border-radius: 6px;
+            padding: 0.4rem 0.65rem;
+            cursor: pointer;
+        }
+        .status-select:focus {
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+            outline: none;
+        }
+        .status-select.status--cho-thanh-toan {
+            background: #fbbf24 !important;
+            color: #111827 !important;
+            border-color: #d97706 !important;
+        }
+        .status-select.status--da-thanh-toan {
+            background: #ffffff !important;
+            color: #111827 !important;
+            border: 2px solid #111827 !important;
+        }
+        .status-select.status--da-huy {
+            background: #9ca3af !important;
+            color: #111827 !important;
+            border-color: #374151 !important;
+        }
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            background: rgba(59, 130, 246, 0.15);
+            border: none;
+            color: var(--accent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-action:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-state {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        .empty-state p {
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Modal */
+        .modal-donhang .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+        }
+        .modal-donhang .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
+        }
+        .modal-donhang .modal-title {
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+        .modal-donhang .modal-title i {
+            color: var(--accent);
+        }
+        .modal-donhang .btn-close {
+            filter: invert(1);
+            opacity: 0.7;
+        }
+        .modal-donhang .modal-body {
+            padding: 1.5rem;
+        }
+        .modal-donhang .table {
+            color: var(--text);
+        }
+        .modal-donhang .table th {
+            border-color: var(--border);
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+        .modal-donhang .table td {
+            border-color: var(--border);
+        }
+        .modal-donhang hr {
+            border-color: var(--border);
+        }
+        .modal-donhang .text-warning { color: var(--warning) !important; }
+        .modal-donhang .text-success { color: var(--success) !important; }
+        .modal-donhang .text-danger { color: var(--danger) !important; }
+
+        /* Toast thông báo */
+        #toastContainer {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast-pos {
+            pointer-events: auto;
+            min-width: 320px;
+            max-width: 420px;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: toastIn 0.35s ease;
+            border: 1px solid;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .toast-pos .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .toast-pos .toast-body { flex: 1; }
+        .toast-pos .toast-title {
+            font-weight: 700;
+            font-size: 0.9375rem;
+            margin-bottom: 2px;
+        }
+        .toast-pos .toast-msg {
+            font-size: 0.875rem;
+            opacity: 0.95;
+        }
+        .toast-pos.toast-warning {
+            background: #1e293b;
+            border-color: #f59e0b;
+            color: #fef3c7;
+        }
+        .toast-pos.toast-warning .toast-icon { color: #f59e0b; }
+        .toast-pos.toast-success {
+            background: #1e293b;
+            border-color: #10b981;
+            color: #d1fae5;
+        }
+        .toast-pos.toast-success .toast-icon { color: #10b981; }
+        .toast-pos.toast-error {
+            background: #1e293b;
+            border-color: #ef4444;
+            color: #fecaca;
+        }
+        .toast-pos.toast-error .toast-icon { color: #ef4444; }
+        .toast-pos.toast-info {
+            background: #1e293b;
+            border-color: #3b82f6;
+            color: #dbeafe;
+        }
+        .toast-pos.toast-info .toast-icon { color: #3b82f6; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toastContainer" aria-live="polite"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-donhang mb-0">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-shop"></i> WatchAura
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: var(--border);">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/ban-hang">
+                        <i class="bi bi-cart-plus"></i> Bán hàng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/ban-hang/don-hang">
+                        <i class="bi bi-list-check"></i> Quản lý đơn hàng
+                    </a>
+                </li>
+            </ul>
+            <span class="navbar-text text-light me-2 d-flex align-items-center gap-2">
+                <i class="bi bi-person-circle" style="color: var(--accent);"></i>
+                <span class="navbar-user-name" th:text="${tenNhanVien}">Nhân viên</span>
+            </span>
+            <a href="/dang-xuat" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Đăng xuất
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="donhang-container">
+
+    <h1 class="page-title">
+        <i class="bi bi-receipt"></i> Quản lý đơn hàng
+    </h1>
+
+    <!-- TÌM KIẾM VÀ LỌC -->
+    <div class="filter-card">
+        <form method="get" action="/ban-hang/don-hang">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" name="q" class="form-control"
+                           placeholder="Tìm theo mã đơn, tên khách, SĐT..."
+                           th:value="${searchKeyword}">
+                </div>
+                <div class="col-md-3">
+                    <select name="trangThai" class="form-select">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="CHO_THANH_TOAN" th:selected="${filterTrangThai == 'CHO_THANH_TOAN'}">Chờ thanh toán</option>
+                        <option value="DA_THANH_TOAN" th:selected="${filterTrangThai == 'DA_THANH_TOAN'}">Thanh toán</option>
+                        <option value="DA_HUY" th:selected="${filterTrangThai == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="/ban-hang/don-hang" class="btn btn-secondary w-100">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- BẢNG DANH SÁCH ĐƠN HÀNG -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-donhang">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>SĐT</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="hd : ${hoaDonList}">
+                        <td th:text="${hd.id}"></td>
+                        <td><span class="ma-don" th:text="${hd.maDonHang}"></span></td>
+                        <td th:text="${hd.tenKhachHang}"></td>
+                        <td th:text="${hd.sdtKhachHang}"></td>
+                        <td th:text="${#temporals.format(hd.ngayDat, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td><span class="tong-tien" th:text="${#numbers.formatDecimal(hd.tongTienThanhToan, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></span></td>
+                        <td>
+                            <th:block th:with="ts=${(hd.trangThaiDonHang != null and hd.trangThaiDonHang != '') ? hd.trangThaiDonHang : 'CHO_THANH_TOAN'},
+                                      daThanhToan=${ts == 'DA_THANH_TOAN' or ts == 'DA THANH TOAN'},
+                                      daHuy=${ts == 'DA_HUY'},
+                                      trangThaiKetThuc=${daThanhToan or daHuy}">
+                            <select class="form-select form-select-sm status-select"
+                                    th:id="${'status-' + hd.id}"
+                                    th:disabled="${trangThaiKetThuc}"
+                                    th:onchange="'capNhatTrangThai(' + ${hd.id} + ')'"
+                                    th:attr="data-status=${ts}">
+                                <option value="CHO_THANH_TOAN" th:selected="${ts == 'CHO_THANH_TOAN' or ts == 'CHỜ THANH TOAN' or ts == 'CHO_XAC_NHAN' or ts == 'CHO XAC NHAN'}">Chờ thanh toán</option>
+                                <option value="DA_THANH_TOAN" th:selected="${daThanhToan}">Đã thanh toán</option>
+                                <option value="DA_HUY" th:selected="${daHuy}">Đã hủy</option>
+                            </select>
+                            </th:block>
+                        </td>
+                        <td>
+                            <button class="btn btn-action"
+                                    th:onclick="'xemChiTiet(' + ${hd.id} + ')'"
+                                    title="Xem chi tiết">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(hoaDonList)}">
+                        <td colspan="8" class="border-0">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox d-block"></i>
+                                <p>Chưa có đơn hàng nào</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL CHI TIẾT ĐƠN HÀNG -->
+<div class="modal fade modal-donhang" id="chiTietModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-receipt"></i> Chi tiết đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="chiTietContent">
+                <!-- Nội dung chi tiết load bằng AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showToast(message, type) {
+        type = type || 'info';
+        const titles = { warning: 'Thông báo', success: 'Thành công', error: 'Lỗi', info: 'Thông báo' };
+        const icons = { warning: 'bi-exclamation-triangle', success: 'bi-check-circle', error: 'bi-x-circle', info: 'bi-info-circle' };
+        const container = document.getElementById('toastContainer');
+        const el = document.createElement('div');
+        el.className = 'toast-pos toast-' + type;
+        el.setAttribute('role', 'alert');
+        el.innerHTML = '<span class="toast-icon bi ' + icons[type] + '"></span>' +
+            '<div class="toast-body"><div class="toast-title">' + titles[type] + '</div><div class="toast-msg">' + message + '</div></div>';
+        container.appendChild(el);
+        setTimeout(function() {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-8px)';
+            setTimeout(function() { el.remove(); }, 300);
+        }, 3500);
+    }
+
+    function normalizeTrangThaiSelect(raw) {
+        if (!raw) return 'CHO_THANH_TOAN';
+        if (raw === 'DA THANH TOAN' || raw === 'DA_THANH_TOAN') return 'DA_THANH_TOAN';
+        if (raw === 'DA_HUY') return 'DA_HUY';
+        if (raw === 'CHỜ THANH TOAN' || raw === 'CHO_XAC_NHAN' || raw === 'CHO XAC NHAN') return 'CHO_THANH_TOAN';
+        return raw;
+    }
+
+    function capNhatTrangThai(id) {
+        const select = document.getElementById('status-' + id);
+        if (select.disabled) return;
+
+        const trangThai = select.value;
+        const trangThaiHienTai = select.getAttribute('data-current') || select.value;
+        const cur = normalizeTrangThaiSelect(trangThaiHienTai);
+        const next = normalizeTrangThaiSelect(trangThai);
+
+        if (cur === 'DA_THANH_TOAN' && next !== 'DA_THANH_TOAN') {
+            showToast('Không thể đổi trạng thái sau khi đã thanh toán', 'warning');
+            select.value = 'DA_THANH_TOAN';
+            return;
+        }
+        if (cur === 'DA_HUY' && next !== 'DA_HUY') {
+            showToast('Đơn hàng đã hủy không thể thay đổi', 'warning');
+            select.value = 'DA_HUY';
+            return;
+        }
+        if (cur === 'CHO_THANH_TOAN' && next === 'CHO_THANH_TOAN') {
+            return;
+        }
+
+        fetch('/ban-hang/don-hang/cap-nhat-trang-thai?id=' + id + '&trangThai=' + encodeURIComponent(trangThai), { method: 'POST' })
+            .then(res => res.text())
+            .then(data => {
+                if (data === 'OK') {
+                    showToast('Cập nhật trạng thái thành công!', 'success');
+                    select.setAttribute('data-current', trangThai);
+                    setTimeout(function() { location.reload(); }, 1200);
+                } else if (data.startsWith && data.startsWith('KHONG_DU_TON_KHO:')) {
+                    showToast('Tồn kho không đủ! ' + data.replace('KHONG_DU_TON_KHO:', ''), 'warning');
+                    select.value = trangThaiHienTai;
+                } else {
+                    showToast(data, 'error');
+                    select.value = trangThaiHienTai;
+                }
+            })
+            .catch(() => {
+                showToast('Có lỗi xảy ra', 'error');
+                select.value = trangThaiHienTai;
+            });
+    }
+
+    // Cập nhật màu dropdown khi đổi option (trước khi reload)
+    document.querySelectorAll('.status-select').forEach(function(sel) {
+        sel.addEventListener('change', function() {
+            this.classList.remove('status--cho-thanh-toan', 'status--da-thanh-toan', 'status--da-huy');
+            var v = this.value;
+            if (v === 'CHO_THANH_TOAN') this.classList.add('status--cho-thanh-toan');
+            else if (v === 'DA_THANH_TOAN') this.classList.add('status--da-thanh-toan');
+            else if (v === 'DA_HUY') this.classList.add('status--da-huy');
+            else {
+                this.style.background = '#ffffff';
+                this.style.color = '#111827';
+                this.style.border = '1px solid #111827';
+            }
+        });
+    });
+
+    // Set đúng option và màu dropdown khi trang load (mặc định Chờ thanh toán nếu trống)
+    document.querySelectorAll('.status-select').forEach(function(sel) {
+        var currentStatus = (sel.getAttribute('data-status') || '').trim();
+        var targetValue = currentStatus;
+        if (!targetValue || targetValue === 'CHỜ THANH TOAN' || targetValue === 'CHO_XAC_NHAN' || targetValue === 'CHO XAC NHAN') targetValue = 'CHO_THANH_TOAN';
+        else if (targetValue === 'DA THANH TOAN') targetValue = 'DA_THANH_TOAN';
+
+        sel.value = targetValue;
+        sel.setAttribute('data-current', targetValue);
+
+        sel.classList.remove('status--cho-thanh-toan', 'status--da-thanh-toan', 'status--da-huy');
+        if (targetValue === 'CHO_THANH_TOAN') sel.classList.add('status--cho-thanh-toan');
+        else if (targetValue === 'DA_THANH_TOAN') sel.classList.add('status--da-thanh-toan');
+        else if (targetValue === 'DA_HUY') sel.classList.add('status--da-huy');
+    });
+
+    function xemChiTiet(id) {
+        fetch('/ban-hang/don-hang/' + id)
+            .then(res => res.json())
+            .then(data => {
+                if (!data) {
+                    showToast('Không tìm thấy đơn hàng', 'warning');
+                    return;
+                }
+                const modal = new bootstrap.Modal(document.getElementById('chiTietModal'));
+                const content = document.getElementById('chiTietContent');
+
+                let itemsHtml = '';
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(item => {
+                        itemsHtml += `
+                            <tr>
+                                <td>
+                                    ${item.hinhAnh ? '<img src="/uploads/' + item.hinhAnh + '" width="48" height="48" style="object-fit:cover;border-radius:8px;">' : '<div style="width:48px;height:48px;background:var(--bg-card-hover);border-radius:8px;"></div>'}
+                                </td>
+                                <td>${item.tenSanPham || '—'}</td>
+                                <td>${item.tenBienThe || '—'}</td>
+                                <td>${item.soLuong}</td>
+                                <td class="text-warning">${(item.donGia || 0).toLocaleString()} ₫</td>
+                                <td class="text-success fw-bold">${((item.donGia || 0) * (item.soLuong || 0)).toLocaleString()} ₫</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    itemsHtml = '<tr><td colspan="6" class="text-center text-muted">Không có sản phẩm</td></tr>';
+                }
+
+                content.innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Mã đơn:</strong> ${data.maDonHang || '—'}</p>
+                            <p class="mb-1"><strong>Khách hàng:</strong> ${data.tenKhachHang || '—'}</p>
+                            <p class="mb-1"><strong>SĐT:</strong> ${data.sdtKhachHang || '—'}</p>
+                            <p class="mb-1"><strong>Địa chỉ:</strong> ${data.diaChi || '—'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Ngày đặt:</strong> ${data.ngayDat ? new Date(data.ngayDat).toLocaleString('vi-VN') : '—'}</p>
+                            <p class="mb-1"><strong>Thanh toán:</strong> ${data.phuongThucThanhToan || '—'}</p>
+                            <p class="mb-1"><strong>Loại hóa đơn:</strong> ${data.loaiHoaDon || '—'}</p>
+                            <p class="mb-1"><strong>Trạng thái:</strong> <span class="badge bg-${(data.trangThaiDonHang === 'DA_THANH_TOAN' || data.trangThaiDonHang === 'DA THANH TOAN') ? 'success' : data.trangThaiDonHang === 'DA_HUY' ? 'danger' : 'warning'}">${(data.trangThaiDonHang === 'DA_THANH_TOAN' || data.trangThaiDonHang === 'DA THANH TOAN') ? 'Thanh toán' : data.trangThaiDonHang === 'DA_HUY' ? 'Đã hủy' : 'Chờ thanh toán'}</span></p>
+                        </div>
+                    </div>
+                    ${data.ghiChu ? '<div class="alert alert-warning py-2 px-3 mb-3"><i class="bi bi-exclamation-triangle me-1"></i> <strong>Ghi chú:</strong> ' + data.ghiChu + '</div>' : ''}
+                    <hr>
+                    <h6 class="mb-2">Danh sách sản phẩm</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Ảnh</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Biến thể</th>
+                                    <th>SL</th>
+                                    <th>Đơn giá</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                    </div>
+                    <hr>
+                    <h6 class="mb-2">Thanh toán</h6>
+                    <div class="row">
+                        <div class="col-md-4"><p class="mb-0">Tạm tính: <span class="text-warning">${(data.tongTienTamTinh || 0).toLocaleString()} ₫</span></p></div>
+                        <div class="col-md-4"><p class="mb-0">Giảm giá: <span class="text-danger">-${(data.tienGiam || 0).toLocaleString()} ₫</span></p></div>
+                        <div class="col-md-4"><p class="mb-0"><strong>Tổng cộng: <span class="text-success">${(data.tongTienThanhToan || 0).toLocaleString()} ₫</span></strong></p></div>
+                    </div>
+                `;
+                modal.show();
+            });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

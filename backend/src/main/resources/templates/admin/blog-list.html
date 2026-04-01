@@ -119,7 +119,15 @@
                                     title="Sửa"><i class="fas fa-edit"></i></a>
                                 <form
                                     th:action="@{/admin/blog/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''})}"
-                                    method="post" style="display:inline;" onsubmit="return confirm('Xóa blog này?');" class="js-admin-ajax-form" data-ajax="true">
+                                    method="post"
+                                    style="display:inline;"
+                                    class="js-admin-ajax-form"
+                                    data-ajax="true"
+                                    data-confirm="Xóa blog này? Hành động này không thể hoàn tác."
+                                    data-confirm-title="Xóa blog"
+                                    data-confirm-ok="Xóa"
+                                    data-confirm-cancel="Hủy"
+                                    data-confirm-tone="danger">
                                     <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i
                                             class="fa-solid fa-trash"></i></button>
                                 </form>

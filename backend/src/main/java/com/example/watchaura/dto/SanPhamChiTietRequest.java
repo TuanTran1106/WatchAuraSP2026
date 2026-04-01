@@ -21,7 +21,6 @@ public class SanPhamChiTietRequest {
     private Integer idMauSac;
     private Integer idKichThuoc;
     private Integer idChatLieuDay;
-    private Integer idLoaiMay;
 
     @Min(value = 0, message = "Số lượng tồn phải >= 0")
     private Integer soLuongTon = 0;

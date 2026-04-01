@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,14 +35,14 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
 
     @Override
     public GioHangChiTietDTO getById(Integer id) {
-        GioHangChiTiet chiTiet = gioHangChiTietRepository.findById(id)
+        GioHangChiTiet chiTiet = gioHangChiTietRepository.findByIdWithSanPhamDetails(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết giỏ hàng với ID: " + id));
         return convertToDTO(chiTiet);
     }
 
     @Override
     public List<GioHangChiTietDTO> getByGioHangId(Integer gioHangId) {
-        return gioHangChiTietRepository.findByGioHangId(gioHangId).stream()
+        return gioHangChiTietRepository.findByGioHangIdWithSanPhamDetails(gioHangId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -55,12 +56,13 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
         SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(request.getSanPhamChiTietId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
 
-        Integer tonKho = sanPhamChiTiet.getSoLuongTon();
-        if (tonKho == null || tonKho < 1) {
+        // Khả dụng = tồn - đã giữ cho đơn online (soLuongDaDat)
+        int khaDung = sanPhamChiTiet.getSoLuongKhaDung() != null ? sanPhamChiTiet.getSoLuongKhaDung() : 0;
+        if (khaDung < 1) {
             throw new RuntimeException("Sản phẩm không còn hàng.");
         }
-        if (tonKho < request.getSoLuong()) {
-            throw new RuntimeException("Thêm sản phẩm thất bại: muốn thêm " + request.getSoLuong() + " nhưng chỉ còn " + tonKho + " trong kho.");
+        if (khaDung < request.getSoLuong()) {
+            throw new RuntimeException("Thêm sản phẩm thất bại: muốn thêm " + request.getSoLuong() + " nhưng chỉ còn " + khaDung + " có thể bán.");
         }
 
         // Kiểm tra sản phẩm đã có trong giỏ chưa
@@ -74,8 +76,8 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
             int soLuongMoi = soLuongHienTai + request.getSoLuong();
 
             // Kiểm tra lại tồn kho
-            if (tonKho < soLuongMoi) {
-                throw new RuntimeException("Thêm sản phẩm thất bại: đã có " + soLuongHienTai + " trong giỏ, thêm " + request.getSoLuong() + " -> tổng " + soLuongMoi + " vượt quá tồn kho (" + tonKho + ").");
+            if (khaDung < soLuongMoi) {
+                throw new RuntimeException("Thêm sản phẩm thất bại: đã có " + soLuongHienTai + " trong giỏ, thêm " + request.getSoLuong() + " -> tổng " + soLuongMoi + " vượt quá số lượng khả dụng (" + khaDung + ").");
             }
 
             existing.setSoLuong(soLuongMoi);
@@ -98,11 +100,9 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết giỏ hàng"));
 
         SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
-        Integer ton = sanPhamChiTiet.getSoLuongTon();
-        if (ton == null || ton < request.getSoLuong()) {
-            throw new RuntimeException(ton != null
-                    ? "Số lượng tồn kho không đủ (còn " + ton + " sản phẩm)."
-                    : "Số lượng tồn kho không đủ.");
+        int khaDung = sanPhamChiTiet.getSoLuongKhaDung() != null ? sanPhamChiTiet.getSoLuongKhaDung() : 0;
+        if (khaDung < request.getSoLuong()) {
+            throw new RuntimeException("Số lượng khả dụng không đủ (còn " + khaDung + " sản phẩm).");
         }
 
         chiTiet.setSoLuong(request.getSoLuong());
@@ -129,20 +129,29 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
         GioHangChiTietDTO dto = new GioHangChiTietDTO();
         dto.setId(chiTiet.getId());
         dto.setGioHangId(chiTiet.getGioHang().getId());
-        
+
         if (chiTiet.getSanPhamChiTiet() != null) {
             dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
             dto.setGiaBan(chiTiet.getSanPhamChiTiet().getGiaBan());
-            dto.setSoLuongTon(chiTiet.getSanPhamChiTiet().getSoLuongTon());
+
+            Integer soLuongTon = chiTiet.getSanPhamChiTiet().getSoLuongTon() != null
+                    ? chiTiet.getSanPhamChiTiet().getSoLuongTon() : 0;
+            Integer soLuongDaDat = chiTiet.getSanPhamChiTiet().getSoLuongDaDat() != null
+                    ? chiTiet.getSanPhamChiTiet().getSoLuongDaDat() : 0;
+            dto.setSoLuongTon(soLuongTon);
+            dto.setSoLuongKhaDung(soLuongTon - soLuongDaDat);
+
             if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
                 dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
+                dto.setMaSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getMaSanPham());
                 dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
                 dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
             }
+            dto.setMoTaBienThe(buildMoTaBienThe(chiTiet.getSanPhamChiTiet()));
         }
-        
+
         dto.setSoLuong(chiTiet.getSoLuong());
-        
+
         if (dto.getGiaBan() != null && dto.getSoLuong() != null) {
             dto.setThanhTien(dto.getGiaBan().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         } else {
@@ -150,5 +159,29 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
         }
 
         return dto;
+    }
+
+    private static String buildMoTaBienThe(SanPhamChiTiet spct) {
+        if (spct == null) {
+            return null;
+        }
+        List<String> parts = new ArrayList<>();
+        if (spct.getMauSac() != null && spct.getMauSac().getTenMauSac() != null
+                && !spct.getMauSac().getTenMauSac().isBlank()) {
+            parts.add("Màu: " + spct.getMauSac().getTenMauSac().trim());
+        }
+        if (spct.getKichThuoc() != null && spct.getKichThuoc().getTenKichThuoc() != null
+                && !spct.getKichThuoc().getTenKichThuoc().isBlank()) {
+            parts.add("Kích thước: " + spct.getKichThuoc().getTenKichThuoc().trim());
+        }
+        if (spct.getChatLieuDay() != null && spct.getChatLieuDay().getTenChatLieu() != null
+                && !spct.getChatLieuDay().getTenChatLieu().isBlank()) {
+            parts.add("Dây: " + spct.getChatLieuDay().getTenChatLieu().trim());
+        }
+        var lm = spct.getSanPham() != null ? spct.getSanPham().getLoaiMay() : null;
+        if (lm != null && lm.getTenLoaiMay() != null && !lm.getTenLoaiMay().isBlank()) {
+            parts.add("Loại máy: " + lm.getTenLoaiMay().trim());
+        }
+        return parts.isEmpty() ? null : String.join(" · ", parts);
     }
 }

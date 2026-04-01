@@ -3,6 +3,10 @@
 <body>
 <div th:fragment="content">
     <div class="invoice-detail">
+        <p th:if="${message}" class="message" th:text="${message}"></p>
+        <p th:if="${warning}" class="message message--warning" th:text="${warning}"></p>
+        <p th:if="${error}" class="message message--error" th:text="${error}"></p>
+
         <!-- Breadcrumb / Back -->
         <div class="invoice-detail__top">
             <a th:href="@{/admin/hoa-don}" class="invoice-detail__back">
@@ -20,9 +24,76 @@
                         Hóa đơn
                         <span class="invoice-detail__code" th:text="${hoaDon.maDonHang}">#Mã</span>
                     </h1>
-                    <span class="invoice-detail__status"
-                          th:classappend="${hoaDonStatusClass}"
-                          th:text="${hoaDon.tenTrangThaiDonHang != null ? hoaDon.tenTrangThaiDonHang : '—'}">—</span>
+                    <form th:if="${hoaDon.loaiHoaDon == 'OFFLINE'}"
+                          th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}"
+                          method="post"
+                          class="invoice-detail__status-form"
+                          data-confirm="Bạn có chắc chắn muốn đổi trạng thái hóa đơn này?"
+                          data-confirm-title="Đổi trạng thái hóa đơn"
+                          data-confirm-ok="Đổi trạng thái"
+                          data-confirm-cancel="Hủy"
+                          data-confirm-tone="info">
+                        <input type="hidden" name="tuChiTiet" value="1"/>
+                        <div class="invoice-detail__status-field">
+                        <label for="invoiceDetailTrangThai" class="invoice-detail__status-field-label">Trạng thái đơn</label>
+                        <select name="trangThai" id="invoiceDetailTrangThai"
+                                class="invoice-detail__status-select"
+                                onchange="(this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit())" title="Đổi trạng thái hóa đơn tại quầy"
+                                th:with="raw=${hoaDon.trangThaiDonHang},
+                                         cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_THANH_TOAN'},
+                                         isCho=${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'},
+                                         isPaid=${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'},
+                                         isHuy=${cur == 'DA_HUY'},
+                                         isCanXuLy=${cur == 'CAN_XU_LY'}"
+                                th:classappend="${isCanXuLy ? 'status--can-xu-ly' : (isHuy ? 'status--da-huy' : (isPaid ? 'status--da-giao' : 'status--cho-xac-nhan'))}">
+                            <th:block th:if="${isCho}">
+                                <option value="CHO_THANH_TOAN" th:selected="${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'}" th:text="'Chờ thanh toán'">Chờ thanh toán</option>
+                                <option value="DA THANH TOAN" th:text="'Đã thanh toán'">Đã thanh toán</option>
+                                <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
+                            </th:block>
+                            <th:block th:if="${isPaid}">
+                                <option value="DA THANH TOAN" th:selected="true" th:text="'Đã thanh toán'">Đã thanh toán</option>
+                            </th:block>
+                            <th:block th:if="${isHuy and !isCho and !isPaid}">
+                                <option value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
+                            </th:block>
+                            <th:block th:if="${isCanXuLy}">
+                                <option value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lý'">Cần xử lý</option>
+                                <option value="DA THANH TOAN" th:text="'Đã thanh toán'">Đã thanh toán</option>
+                                <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
+                            </th:block>
+                        </select>
+                        </div>
+                    </form>
+                    <form th:unless="${hoaDon.loaiHoaDon == 'OFFLINE'}"
+                          th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}"
+                          method="post"
+                          class="invoice-detail__status-form"
+                          data-confirm="Bạn có chắc chắn muốn đổi trạng thái đơn hàng này?"
+                          data-confirm-title="Đổi trạng thái đơn hàng"
+                          data-confirm-ok="Đổi trạng thái"
+                          data-confirm-cancel="Hủy"
+                          data-confirm-tone="info">
+                        <input type="hidden" name="tuChiTiet" value="1"/>
+                        <div class="invoice-detail__status-field">
+                        <label for="invoiceDetailTrangThaiOnline" class="invoice-detail__status-field-label">Trạng thái đơn</label>
+                        <select name="trangThai" id="invoiceDetailTrangThaiOnline"
+                                class="invoice-detail__status-select"
+                                onchange="(this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit())"
+                                th:with="cur=${hoaDon.trangThaiDonHang != null and !#strings.isEmpty(hoaDon.trangThaiDonHang) ? hoaDon.trangThaiDonHang : 'CHO_XAC_NHAN'}"
+                                th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'"
+                                th:disabled="${cur == 'DA_GIAO'}"
+                                th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : ((cur == 'DA_GIAO' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN') ? 'status--da-giao' : (cur == 'DA_HUY' ? 'status--da-huy' : 'status--cho-xac-nhan')))))}">
+                            <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
+                            <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
+                            <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                            <option th:if="${cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="${cur == 'DANG_GIAO'}" th:text="'Đang giao'">Đang giao</option>
+                            <option th:if="${cur == 'DANG_GIAO' or cur == 'DA_GIAO'}" th:value="DA_GIAO" th:selected="${cur == 'DA_GIAO'}" th:text="'Đã giao'">Đã giao</option>
+                            <option th:if="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA THANH TOAN" th:selected="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'">Đã thanh toán</option>
+                            <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO' or cur == 'DA_HUY' or cur == 'CAN_XU_LY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
+                        </select>
+                        </div>
+                    </form>
                 </div>
                 <div class="invoice-detail__header-actions">
                     <a class="btn btn--primary btn--sm" th:href="@{/admin/hoa-don/{id}/pdf(id=${hoaDon.id})}" target="_blank">

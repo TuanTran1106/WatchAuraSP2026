@@ -1,6 +1,9 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.config.VNPayProperties;
 import com.example.watchaura.dto.GioHangDTO;
+import com.example.watchaura.dto.CheckoutStockResponse;
+import com.example.watchaura.dto.StockWarningItem;
 import com.example.watchaura.dto.HoaDonChiTietRequest;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
@@ -12,6 +15,7 @@ import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
 import com.example.watchaura.service.DiaChiService;
+import com.example.watchaura.util.ShippingFeeUtil;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.entity.Voucher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +39,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -50,6 +53,7 @@ public class UserCheckoutController {
     private final VNPayService vnPayService;
     private final VoucherService voucherService;
     private final DiaChiService diaChiService;
+    private final VNPayProperties vnPayProperties;
 
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
@@ -63,10 +67,37 @@ public class UserCheckoutController {
             redirect.addFlashAttribute("error", "Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.");
             return "redirect:/gio-hang";
         }
+
+        // Kiểm tra tồn kho ngay khi vào trang thanh toán (sau khi bấm "Thanh toán" từ giỏ hàng)
+        CheckoutStockResponse stockResponse = hoaDonService.checkAndAdjustStockBeforeCheckout(cart.getId(), userId);
+        if (stockResponse.hasWarnings()) {
+            cart = gioHangService.getOrCreateCart(userId);
+            if (cart.getItems() == null || cart.getItems().isEmpty()) {
+                redirect.addFlashAttribute("error", "Tất cả sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.");
+                return "redirect:/gio-hang";
+            }
+            StringBuilder warningMsg = new StringBuilder();
+            for (int i = 0; i < stockResponse.getWarnings().size(); i++) {
+                StockWarningItem w = stockResponse.getWarnings().get(i);
+                if (w.getSoLuongDuocDat() == null || w.getSoLuongDuocDat() == 0) {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã xóa khỏi giỏ hàng.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                } else {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã cập nhật lại số lượng trong giỏ.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                }
+                if (i < stockResponse.getWarnings().size() - 1) {
+                    warningMsg.append(" ");
+                }
+            }
+            model.addAttribute("stockWarning", warningMsg.toString());
+        }
+
         KhachHang khachHang = khachHangService.getById(userId);
         model.addAttribute("title", "Thanh toán - WatchAura");
         model.addAttribute("content", "user/thanh-toan :: content");
         model.addAttribute("cart", cart);
+        addCheckoutPricingAttributes(model, cart);
         model.addAttribute("khachHang", khachHang);
         if (!model.containsAttribute("checkoutForm")) {
             CheckoutForm form = new CheckoutForm();
@@ -99,12 +130,6 @@ public class UserCheckoutController {
                 return resp;
             }
 
-            // Lấy danh sách các danh mục trong giỏ hàng
-            Set<String> danhMucSet = cart.getItems().stream()
-                    .map(item -> item.getTenDanhMuc())
-                    .filter(dm -> dm != null && !dm.isBlank())
-                    .collect(Collectors.toSet());
-
             // Tính tổng tiền giỏ hàng
             BigDecimal tongTien = BigDecimal.ZERO;
             if (cart.getItems() != null) {
@@ -117,27 +142,7 @@ public class UserCheckoutController {
                 }
             }
 
-            List<Voucher> availableVouchers = new ArrayList<>();
-
-            // Lấy voucher áp dụng cho từng danh mục
-            for (String danhMuc : danhMucSet) {
-                List<Voucher> vouchers = voucherService.findVouchersByDanhMuc(danhMuc);
-                if (vouchers != null) {
-                    availableVouchers.addAll(vouchers);
-                }
-            }
-
-            // Lấy tất cả voucher chung (không giới hạn danh mục)
-            List<Voucher> allVouchers = voucherService.findAllValidVouchers();
-            if (allVouchers != null) {
-                for (Voucher v : allVouchers) {
-                    boolean exists = availableVouchers.stream()
-                            .anyMatch(av -> av.getId().equals(v.getId()));
-                    if (!exists) {
-                        availableVouchers.add(v);
-                    }
-                }
-            }
+            List<Voucher> availableVouchers = new ArrayList<>(voucherService.findAllValidVouchers());
 
             // Lọc bỏ voucher trùng lặp và sắp xếp theo giá trị giảm giá
             List<Voucher> distinctVouchers = availableVouchers.stream()
@@ -181,10 +186,41 @@ public class UserCheckoutController {
             redirect.addFlashAttribute("error", "Giỏ hàng trống.");
             return "redirect:/gio-hang";
         }
+
+        CheckoutStockResponse stockResponse = hoaDonService.checkAndAdjustStockBeforeCheckout(cart.getId(), userId);
+
+        if (stockResponse.hasWarnings()) {
+            cart = gioHangService.getOrCreateCart(userId);
+            if (cart.getItems() == null || cart.getItems().isEmpty()) {
+                redirect.addFlashAttribute("error", "Tất cả sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.");
+                return "redirect:/gio-hang";
+            }
+
+            StringBuilder warningMsg = new StringBuilder();
+            for (int i = 0; i < stockResponse.getWarnings().size(); i++) {
+                StockWarningItem w = stockResponse.getWarnings().get(i);
+                if (w.getSoLuongDuocDat() == null || w.getSoLuongDuocDat() == 0) {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã xóa khỏi giỏ hàng.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                } else {
+                    warningMsg.append(String.format("Sản phẩm \"%s\" chỉ còn %d sản phẩm, đã cập nhật lại số lượng trong giỏ.",
+                            w.getTenSanPham(), w.getSoLuongKhaDung()));
+                }
+                if (i < stockResponse.getWarnings().size() - 1) {
+                    warningMsg.append(" ");
+                }
+            }
+            redirect.addFlashAttribute("stockWarning", warningMsg.toString());
+            return "redirect:/thanh-toan";
+        }
+
+        cart = gioHangService.getOrCreateCart(userId);
+
         if (result.hasErrors()) {
             model.addAttribute("title", "Thanh toán - WatchAura");
             model.addAttribute("content", "user/thanh-toan :: content");
             model.addAttribute("cart", cart);
+            addCheckoutPricingAttributes(model, cart);
             model.addAttribute("khachHang", khachHangService.getById(userId));
             return "layout/user-layout";
         }
@@ -201,7 +237,7 @@ public class UserCheckoutController {
                 try {
                     voucherId = Integer.parseInt(voucherValue);
                     // Nếu là số, kiểm tra voucher có tồn tại không
-                    var voucher = voucherService.findById(voucherId);
+                    Voucher voucher = voucherService.findById(voucherId);
                     if (voucher == null) {
                         throw new RuntimeException("Voucher không tồn tại hoặc không hợp lệ.");
                     }
@@ -218,7 +254,7 @@ public class UserCheckoutController {
             HoaDonRequest request = new HoaDonRequest();
             request.setKhachHangId(userId);
             request.setPhuongThucThanhToan(paymentMethod);
-            request.setLoaiHoaDon("BAN_LE");
+            request.setLoaiHoaDon("ONLINE");
             request.setTenKhachHang(form.getTenKhachHang().trim());
             request.setSdtKhachHang(form.getSdtKhachHang().trim());
             request.setEmail(form.getEmail() != null ? form.getEmail().trim() : null);
@@ -232,37 +268,24 @@ public class UserCheckoutController {
                     .collect(Collectors.toList());
             request.setItems(items);
 
+            HoaDonDTO hoaDon = hoaDonService.create(request);
+
             if (isVnPay) {
-                // VNPay: Không tạo đơn hàng ngay, chỉ lưu vào session để chờ callback
-                // Lưu vào session: userId, checkoutForm, để sau callback VNPay sẽ tạo đơn hàng
-                session.setAttribute("pendingVnPayCheckoutRequest", request);
+                String baseUrl = getBaseUrl(httpRequest);
+                String returnUrl = vnPayProperties.getReturnUrl();
+                // Nếu return URL là localhost, thay thế bằng base URL thực tế
+                if (returnUrl.contains("localhost") || returnUrl.contains("127.0.0.1")) {
+                    returnUrl = baseUrl + "/thanh-toan/vnpay/return";
+                }
+                long amountVnd = hoaDon.getTongTienThanhToan() != null ? hoaDon.getTongTienThanhToan().longValue() : 0L;
+                String orderInfo = "Thanh toan don hang " + hoaDon.getMaDonHang();
+                String clientIp = getClientIp(httpRequest);
+                String paymentUrl = vnPayService.createPaymentUrl(amountVnd, hoaDon.getMaDonHang(), orderInfo, returnUrl, clientIp, "vn");
                 session.setAttribute("pendingVnPayCartId", cart.getId());
                 session.setAttribute("pendingVnPayUserId", userId);
-                
-                // Tạo URL thanh toán VNPay
-                String baseUrl = getBaseUrl(httpRequest);
-                String returnUrl = baseUrl + "/thanh-toan/vnpay/return";
-                // Tính tổng tiền từ request
-                BigDecimal tongTien = BigDecimal.ZERO;
-                for (var item : cart.getItems()) {
-                    if (item.getThanhTien() != null) {
-                        tongTien = tongTien.add(item.getThanhTien());
-                    } else if (item.getGiaBan() != null && item.getSoLuong() != null) {
-                        tongTien = tongTien.add(item.getGiaBan().multiply(BigDecimal.valueOf(item.getSoLuong())));
-                    }
-                }
-                long amountVnd = tongTien.longValue();
-                String maDonHang = "HD" + System.currentTimeMillis(); // Tạo mã tạm thời
-                session.setAttribute("pendingVnPayMaDonHang", maDonHang);
-                
-                String orderInfo = "Thanh toan don hang " + maDonHang;
-                String clientIp = getClientIp(httpRequest);
-                String paymentUrl = vnPayService.createPaymentUrl(amountVnd, maDonHang, orderInfo, returnUrl, clientIp, "vn");
                 return "redirect:" + paymentUrl;
             }
 
-            // COD: Tạo đơn hàng ngay
-            HoaDonDTO hoaDon = hoaDonService.create(request);
             gioHangChiTietService.deleteByGioHangId(cart.getId());
             return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDon.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
         } catch (Exception e) {
@@ -397,6 +420,7 @@ public class UserCheckoutController {
     public String vnpayReturn(
             HttpServletRequest request,
             HttpSession session,
+            Model model,
             RedirectAttributes redirect) {
         Map<String, String> params = vnPayService.getReturnParams(request);
         String vnpTxnRef = params.get("vnp_TxnRef");
@@ -407,57 +431,46 @@ public class UserCheckoutController {
         }
 
         try {
+            HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(vnpTxnRef);
             Integer userId = (Integer) session.getAttribute("pendingVnPayUserId");
             Integer pendingCartId = (Integer) session.getAttribute("pendingVnPayCartId");
-            HoaDonRequest checkoutRequest = (HoaDonRequest) session.getAttribute("pendingVnPayCheckoutRequest");
 
-            // Xác thực chữ ký VNPay
-            if (!vnPayService.verifyReturn(request)) {
-                // Thanh toán thất bại - không tạo đơn hàng
-                redirect.addFlashAttribute("error", "Thanh toán VN Pay thất bại. Vui lòng thử lại.");
-                session.removeAttribute("pendingVnPayCheckoutRequest");
-                session.removeAttribute("pendingVnPayCartId");
-                session.removeAttribute("pendingVnPayUserId");
-                session.removeAttribute("pendingVnPayMaDonHang");
-                return "redirect:/thanh-toan";
-            }
-
-            // Thanh toán thành công - tạo đơn hàng ngay
-            if (checkoutRequest != null && userId != null) {
-                HoaDonDTO hoaDon = hoaDonService.create(checkoutRequest);
-                
-                // Cập nhật trạng thái từ CHO_THANH_TOAN → CHO_XAC_NHAN (vì đã thanh toán VNPay thành công)
+            if (vnPayService.verifyReturn(request)) {
                 hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "CHO_XAC_NHAN");
-                
-                // Xóa giỏ hàng sau khi tạo đơn hàng thành công
-                if (pendingCartId != null) {
+                if (pendingCartId != null && userId != null) {
                     GioHangDTO cart = gioHangService.getOrCreateCart(userId);
                     if (cart.getId().equals(pendingCartId)) {
                         gioHangChiTietService.deleteByGioHangId(cart.getId());
                     }
+                    session.removeAttribute("pendingVnPayCartId");
+                    session.removeAttribute("pendingVnPayUserId");
                 }
-                
-                // Xóa session attributes
-                session.removeAttribute("pendingVnPayCheckoutRequest");
-                session.removeAttribute("pendingVnPayCartId");
-                session.removeAttribute("pendingVnPayUserId");
-                session.removeAttribute("pendingVnPayMaDonHang");
-                
+                // Redirect sang trang thành công với mã đơn hàng
                 return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDon.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
             }
-            
-            redirect.addFlashAttribute("error", "Không tìm thấy thông tin đơn hàng. Vui lòng thử lại.");
-            return "redirect:/thanh-toan";
+
+            // Thanh toán thất bại
+            hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "DA_HUY");
+            session.removeAttribute("pendingVnPayCartId");
+            session.removeAttribute("pendingVnPayUserId");
+
+            // Hiển thị trang kết quả với thông tin từ VNPay
+            model.addAttribute("title", "Kết quả thanh toán - WatchAura");
+            model.addAttribute("content", "user/vnpay-result :: content");
+            model.addAttribute("vnpParams", params);
+            model.addAttribute("maDonHang", vnpTxnRef);
+            return "layout/user-layout";
         } catch (Exception e) {
             redirect.addFlashAttribute("error", "Xử lý kết quả thanh toán thất bại: " + (e.getMessage() != null ? e.getMessage() : "Vui lòng liên hệ hỗ trợ."));
             return "redirect:/thanh-toan";
-        } finally {
-            // Luôn xóa session attributes
-            session.removeAttribute("pendingVnPayCheckoutRequest");
-            session.removeAttribute("pendingVnPayCartId");
-            session.removeAttribute("pendingVnPayUserId");
-            session.removeAttribute("pendingVnPayMaDonHang");
         }
+    }
+
+    private void addCheckoutPricingAttributes(Model model, GioHangDTO cart) {
+        BigDecimal sub = cart != null && cart.getTongTien() != null ? cart.getTongTien() : BigDecimal.ZERO;
+        BigDecimal ship = ShippingFeeUtil.feeForMerchandiseSubtotal(sub);
+        model.addAttribute("checkoutShippingFee", ship);
+        model.addAttribute("checkoutGrandTotal", sub.add(ship));
     }
 
     private static String getBaseUrl(HttpServletRequest request) {
@@ -510,6 +523,12 @@ public class UserCheckoutController {
         if (maDonHang == null || maDonHang.isBlank()) {
             redirect.addFlashAttribute("error", "Không tìm thấy thông tin đơn hàng.");
             return "redirect:/";
+        }
+        try {
+            HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(maDonHang);
+            model.addAttribute("hoaDon", hoaDon);
+        } catch (Exception e) {
+            model.addAttribute("hoaDon", null);
         }
         model.addAttribute("title", "Đặt hàng thành công - WatchAura");
         model.addAttribute("content", "user/thanh-toan-thanh-cong :: content");

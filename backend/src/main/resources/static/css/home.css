@@ -583,7 +583,7 @@
 .product-card__price {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #c9a227;
+    color: #dc3545;
 }
 
 .product-card__price--na {
@@ -1227,14 +1227,14 @@
 .product-detail__price {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #c9a227;
+    color: #dc3545;
     margin: 0;
 }
 
 .user-page--detail .product-detail__price {
     font-size: 1.65rem;
     letter-spacing: -0.02em;
-    color: #b8921f;
+    color: #dc3545;
 }
 
 .product-detail__price--na {

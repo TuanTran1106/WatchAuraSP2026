@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragment dùng trong layout/user-layout — PHẢI có th:fragment="content" -->
+<div th:fragment="content" class="vnpay-result-embed">
+    <style>
+        .vnpay-result-embed {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            padding: 1.5rem 1rem 3rem;
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .vnpay-result-embed .payment-result {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eee;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .vnpay-result-embed .payment-result__icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            margin: 0 auto 24px;
+        }
+        .vnpay-result-embed .payment-result__icon--success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #fff;
+        }
+        .vnpay-result-embed .payment-result__icon--failed {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: #fff;
+        }
+        .vnpay-result-embed .payment-result__icon--pending {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #fff;
+        }
+        .vnpay-result-embed .payment-result__title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+        .vnpay-result-embed .payment-result__text {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .vnpay-result-embed .payment-result__details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .vnpay-result-embed .payment-result__detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .vnpay-result-embed .payment-result__detail:last-child {
+            border-bottom: none;
+        }
+        .vnpay-result-embed .payment-result__detail-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .vnpay-result-embed .payment-result__detail-value {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 14px;
+        }
+        .vnpay-result-embed .payment-result__detail-value--highlight {
+            color: #c9a227;
+        }
+        .vnpay-result-embed .payment-result__actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .vnpay-result-embed .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .vnpay-result-embed .btn--primary {
+            background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%);
+            color: #fff;
+        }
+        .vnpay-result-embed .btn--outline {
+            background: transparent;
+            border: 2px solid #ddd;
+            color: #666;
+        }
+        .vnpay-result-embed .payment-result__vnpay {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .vnpay-result-embed .payment-result__vnpay-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #0066cc;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .vnpay-result-embed .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .vnpay-result-embed .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: vnpay-spin 1s linear infinite;
+        }
+        @keyframes vnpay-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .vnpay-result-embed .spinner-text {
+            color: #666;
+            font-size: 16px;
+        }
+    </style>
+
+    <div class="payment-result" id="paymentResult">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="spinner-text">Đang xử lý kết quả thanh toán...</p>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        var vnpParams = /*[[${vnpParams}]]*/ {};
+        var maDonHang = /*[[${maDonHang}]]*/ '';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const responseCode = urlParams.get('vnp_ResponseCode') || (vnpParams && vnpParams['vnp_ResponseCode']) || '';
+        const txnRef = urlParams.get('vnp_TxnRef') || (vnpParams && vnpParams['vnp_TxnRef']) || maDonHang || '';
+        const amount = urlParams.get('vnp_Amount') || (vnpParams && vnpParams['vnp_Amount']) || '';
+        const transactionNo = urlParams.get('vnp_TransactionNo') || (vnpParams && vnpParams['vnp_TransactionNo']) || '';
+        const payDate = urlParams.get('vnp_PayDate') || (vnpParams && vnpParams['vnp_PayDate']) || '';
+
+        function formatAmount(amount) {
+            if (!amount) return '0';
+            return new Intl.NumberFormat('vi-VN').format(parseInt(amount, 10) / 100) + ' ₫';
+        }
+
+        function formatDate(payDate) {
+            if (!payDate || payDate.length < 14) return '';
+            const year = payDate.substring(0, 4);
+            const month = payDate.substring(4, 6);
+            const day = payDate.substring(6, 8);
+            const hour = payDate.substring(8, 10);
+            const minute = payDate.substring(10, 12);
+            const second = payDate.substring(12, 14);
+            return day + '/' + month + '/' + year + ' ' + hour + ':' + minute + ':' + second;
+        }
+
+        function getResponseMessage(code) {
+            const messages = {
+                '00': 'Giao dịch thành công',
+                '07': 'Giao dịch bị nghi ngờ',
+                '09': 'Chưa đăng ký internet banking',
+                '10': 'Xác thực thẻ thất bại',
+                '11': 'Đang xử lý',
+                '12': 'Thẻ hết hạn',
+                '13': 'Sai mật khẩu OTP',
+                '24': 'Khách hàng hủy giao dịch',
+                '51': 'Tài khoản không đủ tiền',
+                '65': 'Vượt quá giới hạn',
+                '99': 'Lỗi không xác định'
+            };
+            return messages[code] || 'Xử lý thất bại';
+        }
+
+        setTimeout(function () {
+            const resultDiv = document.getElementById('paymentResult');
+            if (!resultDiv) return;
+
+            if (responseCode === '00') {
+                const successUrl = '/thanh-toan/thanh-cong?maDonHang=' + encodeURIComponent(txnRef || '');
+                resultDiv.innerHTML =
+                    '<div class="payment-result__icon payment-result__icon--success">✓</div>' +
+                    '<h1 class="payment-result__title">Thanh toán thành công!</h1>' +
+                    '<p class="payment-result__text">Đang chuyển hướng đến trang xác nhận đơn hàng...</p>' +
+                    '<div class="loading" style="margin-top: 20px;"><div class="spinner"></div></div>';
+                setTimeout(function () {
+                    window.location.href = successUrl;
+                }, 1500);
+            } else if (responseCode) {
+                const text = getResponseMessage(responseCode) + '. Bạn có thể thử lại hoặc chọn phương thức thanh toán khác.';
+                let detailsHtml =
+                    '<div class="payment-result__details">' +
+                    '<div class="payment-result__detail">' +
+                    '<span class="payment-result__detail-label">Mã đơn hàng</span>' +
+                    '<span class="payment-result__detail-value">' + (txnRef || 'N/A') + '</span></div>';
+                if (amount) {
+                    detailsHtml +=
+                        '<div class="payment-result__detail">' +
+                        '<span class="payment-result__detail-label">Số tiền</span>' +
+                        '<span class="payment-result__detail-value payment-result__detail-value--highlight">' + formatAmount(amount) + '</span></div>';
+                }
+                detailsHtml +=
+                    '<div class="payment-result__detail">' +
+                    '<span class="payment-result__detail-label">Phương thức</span>' +
+                    '<span class="payment-result__detail-value">VNPay</span></div></div>';
+
+                resultDiv.innerHTML =
+                    '<div class="payment-result__icon payment-result__icon--failed">✕</div>' +
+                    '<h1 class="payment-result__title">Thanh toán thất bại</h1>' +
+                    '<p class="payment-result__text">' + text + '</p>' +
+                    detailsHtml +
+                    '<div class="payment-result__actions">' +
+                    '<a href="/gio-hang" class="btn btn--primary">Quay lại giỏ hàng</a>' +
+                    '<a href="/" class="btn btn--outline">Về trang chủ</a></div>' +
+                    '<div class="payment-result__vnpay"><div class="payment-result__vnpay-logo">Thanh toán qua VNPay</div></div>';
+            } else {
+                resultDiv.innerHTML =
+                    '<div class="payment-result__icon payment-result__icon--pending">!</div>' +
+                    '<h1 class="payment-result__title">Đang xử lý</h1>' +
+                    '<p class="payment-result__text">Kết quả thanh toán đang được xử lý. Vui lòng đợi trong giây lát.</p>' +
+                    '<div class="payment-result__actions">' +
+                    '<a href="/gio-hang" class="btn btn--primary">Quay lại giỏ hàng</a>' +
+                    '<a href="/" class="btn btn--outline">Về trang chủ</a></div>';
+            }
+        }, 1000);
+    </script>
+</div>
+</body>
+</html>
