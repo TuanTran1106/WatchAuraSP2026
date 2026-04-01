@@ -44,6 +44,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     Page<HoaDon> findByKhachHangIdOrderByNgayDatDesc(Integer khachHangId, Pageable pageable);
 
+
     @Query("""
 SELECT h FROM HoaDon h
 WHERE h.khachHang.id = :userId

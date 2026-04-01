@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
-public class UsersController {
+public class    UsersController {
 
     private final SanPhamService sanPhamService;
     private final SanPhamChiTietService sanPhamChiTietService;
