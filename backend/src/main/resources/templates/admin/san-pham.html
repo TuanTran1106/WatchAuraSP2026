@@ -1752,7 +1752,11 @@
                 // Kiểm tra trùng lặp biến thể
                 const duplicateIndices = checkDuplicateVariants();
                 if (duplicateIndices.length > 0) {
+<<<<<<< feature/updateThongBao
                     showToast(`Các biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây: Hàng ${duplicateIndices.map(i => i + 1).join(', ')}. Vui lòng sửa lại trước khi lưu.`, 'error', 'Lỗi: Biến thể bị trùng lặp!');
+=======
+                    alert(`Lỗi: Biến thể bị trùng lặp!\n\nCác biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây:\n- Hàng ${duplicateIndices.map(i => i + 1).join(', ')}\n\nVui lòng sửa lại trước khi lưu.`);
+>>>>>>> main
                     return;
                 }
 
