@@ -91,6 +91,7 @@ ORDER BY h.ngayDat DESC
             Boolean trangThai
     );
 
+
     /**
      * Tìm tất cả đơn hàng online (khách không đăng nhập) theo email và chưa có khachHang
      */
@@ -103,5 +104,9 @@ ORDER BY h.ngayDat DESC
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE HoaDon h SET h.khachHang.id = :khachHangId WHERE h.email = :email AND h.khachHang IS NULL AND h.loaiHoaDon = 'ONLINE'")
     int linkOrdersToCustomerByEmail(@Param("email") String email, @Param("khachHangId") Integer khachHangId);
+
+    List<HoaDon> findByEmailIgnoreCaseAndKhachHangIsNull(String email);
+
+
 }
 

@@ -140,7 +140,7 @@ public class CheckoutController {
 
         session.removeAttribute("cart");
 
-        // Redirect về giỏ hàng với thông tin để hỏi đăng ký
+        // Redirect về giỏ hàng với thông tin để hiện modal đăng ký
         redirect.addFlashAttribute("checkoutSuccess", true);
         redirect.addFlashAttribute("checkoutMaDon", hoaDon.getMaDonHang());
         redirect.addFlashAttribute("checkoutEmail", email);

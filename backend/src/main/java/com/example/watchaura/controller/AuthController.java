@@ -66,6 +66,7 @@ public class AuthController {
             return "redirect:/dang-nhap";
         }
         session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
+
         
         // Kiểm tra chức vụ để chuyển hướng
         String redirectUrl = "/";
@@ -126,8 +127,9 @@ public class AuthController {
             model.addAttribute("passwordMismatch", "Mật khẩu và xác nhận mật khẩu không khớp.");
             return "layout/user-layout";
         }
+        KhachHang khachHang = null;
         try {
-            khachHangService.registerKhachHang(
+            khachHang = khachHangService.registerKhachHang(
                     request.getTenNguoiDung(),
                     request.getEmail().trim(),
                     request.getSdt(),
@@ -143,10 +145,8 @@ public class AuthController {
         }
 
         // Liên kết đơn hàng có cùng email với tài khoản mới
-        String email = request.getEmail().trim();
-        KhachHang khachHang = khachHangService.findByEmail(email).orElse(null);
         if (khachHang != null) {
-            int linked = hoaDonRepository.linkOrdersToCustomerByEmail(email, khachHang.getId());
+            int linked = hoaDonRepository.linkOrdersToCustomerByEmail(khachHang.getEmail(), khachHang.getId());
             if (linked > 0) {
                 redirect.addFlashAttribute("infoMessage", "Đã liên kết " + linked + " đơn hàng với tài khoản của bạn.");
             }
@@ -206,4 +206,5 @@ public class AuthController {
         redirect.addFlashAttribute("successMessage", "Đổi mật khẩu thành công. Lần đăng nhập sau hãy dùng mật khẩu mới.");
         return "redirect:/nguoidung";
     }
+
 }
