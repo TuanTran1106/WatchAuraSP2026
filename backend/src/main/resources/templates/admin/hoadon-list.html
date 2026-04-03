@@ -121,7 +121,7 @@
                                     th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : (cur == 'DA_GIAO' ? 'status--da-giao' : 'status--da-huy'))))}">
                                 <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
                                 <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
-                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
                                 <option th:if="${cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="${cur == 'DANG_GIAO'}" th:text="'Đang giao'">Đang giao</option>
                                 <option th:if="${cur == 'DANG_GIAO' or cur == 'DA_GIAO'}" th:value="DA_GIAO" th:selected="${cur == 'DA_GIAO'}" th:text="'Đã giao'">Đã giao</option>
                                 <option th:if="${cur == 'DA_THANH_TOAN'}" th:value="DA_THANH_TOAN" th:selected="${cur == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'">Đã thanh toán</option>
@@ -159,6 +159,92 @@
             </ul>
         </nav>
     </section>
+
+    <script>
+    (function () {
+        // For each non-OFFLINE status form, intercept select change for DA_XAC_NHAN
+        document.querySelectorAll('form[action*="/trang-thai"]:not([enctype])').forEach(function (form) {
+            var select = form.querySelector('select[name="trangThai"]');
+            if (!select) return;
+            var originalOnChange = select.getAttribute('onchange');
+
+            select.addEventListener('change', function () {
+                var newVal = select.value;
+                // Intercept transitions that require inventory check:
+                // - online/online orders: DA_XAC_NHAN
+                // - OFFLINE orders from CAN_XU_LY: DA THANH TOAN (online payment)
+                var needCheck = (newVal === 'DA_XAC_NHAN') ||
+                    (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
+                if (!needCheck) {
+                    if (originalOnChange) select.setAttribute('onchange', originalOnChange);
+                    return;
+                }
+
+                // Extract hoaDonId from form action: /admin/hoa-don/{id}/trang-thai
+                var actionParts = (form.getAttribute('action') || '').split('/');
+                var idIdx = actionParts.indexOf('hoa-don');
+                var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
+                if (!hoaDonId) return;
+
+                // Check inventory via API first
+                fetch('/api/hoa-don/' + hoaDonId + '/check-ton-kho')
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.du) {
+                            // OK – let the normal confirm-modal flow continue
+                            if (originalOnChange) {
+                                select.setAttribute('onchange', originalOnChange);
+                            }
+                            select.setAttribute('data-confirm-prev', select.querySelector('option[th\\:selected]') ?
+                                select.querySelector('option[th\\:selected]').value :
+                                (select.getAttribute('data-confirm-prev') || select.options[0].value));
+                            // trigger default submit
+                            if (form.requestSubmit) {
+                                form.requestSubmit();
+                            } else {
+                                form.submit();
+                            }
+                        } else {
+                            // Not enough inventory – revert and show warning
+                            var prev = select.getAttribute('data-confirm-prev') ||
+                                select.querySelector('option[th\\:selected]') ?
+                                select.querySelector('option[th\\:selected]').value :
+                                (select.options[0] ? select.options[0].value : '');
+                            if (prev) select.value = prev;
+
+                            var missingItems = data.items.filter(function (i) { return !i.du; })
+                                .map(function (i) {
+                                    return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
+                                });
+                            var msg = 'Số lượng không đủ! Vui lòng nhập thêm hàng để bán.\n\n' +
+                                missingItems.join('\n');
+
+                            if (window.confirmModal) {
+                                window.confirmModal({
+                                    title: 'Cảnh báo tồn kho',
+                                    message: msg,
+                                    confirmText: 'Đóng',
+                                    cancelText: null,
+                                    tone: 'danger'
+                                });
+                            } else {
+                                alert(msg);
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        // On error, allow normal flow
+                        if (originalOnChange) {
+                            select.setAttribute('onchange', originalOnChange);
+                        }
+                    });
+
+                // Prevent default while async check runs
+                return false;
+            });
+        });
+    })();
+    </script>
 </div>
 </body>
 </html>

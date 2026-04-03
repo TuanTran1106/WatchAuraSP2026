@@ -93,8 +93,13 @@
                             <span th:case="*" class="order-card__status order-status" th:text="${don.trangThaiDonHang}">—</span>
                         </th:block>
                     </div>
-                    <!-- Banner chỉ hiện khi Cần xử lý có ghi chú, hoặc khi ghi chú là thông báo không đủ tồn kho -->
-                    <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho'))}" class="order-card__note order-card__note--warning">
+                    <!-- Đã xác nhận sau khi từng báo không đủ tồn kho -->
+                    <div th:if="${don.trangThaiDonHang == 'DA_XAC_NHAN' and don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho')}" class="order-card__note order-card__note--success">
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span>
+                    </div>
+                    <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi chưa chuyển sang Đã xác nhận -->
+                    <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho') and don.trangThaiDonHang != 'DA_XAC_NHAN')}" class="order-card__note order-card__note--warning">
                         <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         <span th:text="${don.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</span>
                     </div>
@@ -263,10 +268,14 @@
                             '</span></div>';
                     }
 
-                    var hasStockWarning = don.ghiChu && (don.trangThaiDonHang === 'CAN_XU_LY' || (don.ghiChu.indexOf('Không đủ tồn kho') !== -1));
-                    var noteHtml = hasStockWarning ?
+                    var stockResolved = don.trangThaiDonHang === 'DA_XAC_NHAN' && don.ghiChu && don.ghiChu.indexOf('Không đủ tồn kho') !== -1;
+                    var hasStockWarning = don.ghiChu && (don.trangThaiDonHang === 'CAN_XU_LY' || (don.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
+                    var noteHtml = stockResolved ?
+                        '<div class="order-card__note order-card__note--success">' +
+                        '<i class="fas fa-check-circle" aria-hidden="true"></i><span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span></div>' :
+                        (hasStockWarning ?
                         '<div class="order-card__note order-card__note--warning">' +
-                        '<i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>' + (don.ghiChu || '') + '</span></div>' : '';
+                        '<i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>' + (don.ghiChu || '') + '</span></div>' : '');
 
                     card.innerHTML = '<div class="order-card__top">' +
                         '<div class="order-card__meta">' +
