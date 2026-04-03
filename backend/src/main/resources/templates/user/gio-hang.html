@@ -13,9 +13,58 @@
             <p class="cart-page__subtitle" th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}" th:text="|${cart.items.size()} sản phẩm|">0 sản phẩm</p>
         </header>
 
-        <!-- Toast hiển thị từ layout khi success/error -->
+<!-- Modal đăng ký sau checkout -->
+<th:block th:if="${checkoutSuccess}">
+    <div id="registerPromptModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon">🎉</div>
+            <h2 class="modal-title">Đặt hàng thành công!</h2>
+            <p class="modal-order">Mã đơn: <strong th:text="${checkoutMaDon}"></strong></p>
+            <p class="modal-message">Bạn có muốn tạo tài khoản để theo dõi đơn hàng không?</p>
+            <div class="modal-buttons">
+                <a th:href="@{/dang-ky(ten=${checkoutTen},email=${checkoutEmail},sdt=${checkoutSdt})}" class="btn btn--primary">Đăng ký ngay</a>
+                <button type="button" class="btn btn--outline" onclick="closeRegisterModal()">Không, cảm ơn</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .modal-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.5rem; color: #1a1a1a; margin: 0 0 0.5rem; }
+        .modal-order { font-size: 1rem; color: #27ae60; margin: 0 0 1rem; }
+        .modal-order strong { font-size: 1.2rem; }
+        .modal-message { font-size: 1rem; color: #555; margin: 0 0 1.5rem; }
+        .modal-buttons { display: flex; flex-direction: column; gap: 0.75rem; }
+        .modal-buttons .btn { width: 100%; justify-content: center; }
+    </style>
+    <script>
+        function closeRegisterModal() {
+            var modal = document.getElementById('registerPromptModal');
+            if (modal) { modal.style.display = 'none'; }
+        }
+    </script>
+</th:block>
 
-        <th:block th:if="${cart == null or cart.items == null or cart.items.isEmpty()}">
+<!-- Toast hiển thị từ layout khi success/error -->
+
+<th:block th:if="${cart == null or cart.items == null or cart.items.isEmpty()}">
             <div class="cart-empty">
                 <div class="cart-empty__icon">🛒</div>
                 <h2 class="cart-empty__title">Giỏ hàng trống</h2>

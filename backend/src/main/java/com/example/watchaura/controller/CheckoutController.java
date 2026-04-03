@@ -140,7 +140,12 @@ public class CheckoutController {
 
         session.removeAttribute("cart");
 
-        redirect.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + hoaDon.getMaDonHang());
+        // Redirect về giỏ hàng với thông tin để hỏi đăng ký
+        redirect.addFlashAttribute("checkoutSuccess", true);
+        redirect.addFlashAttribute("checkoutMaDon", hoaDon.getMaDonHang());
+        redirect.addFlashAttribute("checkoutEmail", email);
+        redirect.addFlashAttribute("checkoutTen", tenKhachHang);
+        redirect.addFlashAttribute("checkoutSdt", sdt);
         return "redirect:/gio-hang";
     }
 }
