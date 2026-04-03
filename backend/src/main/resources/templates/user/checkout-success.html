@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Đặt hàng thành công</title>
+</head>
+<body style="font-family: Arial; text-align:center; padding:50px;">
+
+<h2>🎉 Đặt hàng thành công!</h2>
+<p>Mã đơn của bạn: <b th:text="${maDonHang}"></b></p>
+
+<div style="margin-top:30px;">
+    <p style="font-size:18px;">
+        Bạn có muốn tạo tài khoản để theo dõi đơn hàng không?
+    </p>
+
+    <div style="margin-top:20px;">
+        <a href="/dang-nhap"
+           style="padding:10px 20px;background:#28a745;color:#fff;text-decoration:none;border-radius:5px;">
+            Có, tạo tài khoản
+        </a>
+
+        <a href="/"
+           style="padding:10px 20px;background:#ccc;color:#000;text-decoration:none;border-radius:5px;margin-left:10px;">
+            Không, về trang chủ
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

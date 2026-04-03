@@ -89,5 +89,7 @@ ORDER BY h.ngayDat DESC
             String trangThaiDonHang,
             Boolean trangThai
     );
+    List<HoaDon> findByEmailIgnoreCaseAndKhachHangIsNull(String email);
+
 }
 
