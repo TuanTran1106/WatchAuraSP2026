@@ -17,11 +17,11 @@ import java.util.Map;
 @Service
 public class ChatService {
 
-<<<<<<< feature/updateThongBao
+
     @Value("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")
-=======
-    @Value("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")
->>>>>>> main
+
+//    @Value("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")
+
     private String groqApiKey;
 
     @Value("${openai.api.url:https://api.groq.com/openai/v1/chat/completions}")
