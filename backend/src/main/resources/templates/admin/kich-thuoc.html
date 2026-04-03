@@ -214,7 +214,71 @@
                 background: #f0f0f0;
                 color: #333;
             }
+
+            .toast {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                min-width: 300px;
+                max-width: 420px;
+                padding: 12px 14px;
+                border-radius: 10px;
+                border: 1px solid;
+                background: #fff;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+            }
+
+            .toast.success {
+                border-color: #86efac;
+                background: #f0fdf4;
+            }
+
+            .toast.error {
+                border-color: #fca5a5;
+                background: #fef2f2;
+            }
+
+            .toast.warning {
+                border-color: #fcd34d;
+                background: #fffbeb;
+            }
+
+            .toast.info {
+                border-color: #93c5fd;
+                background: #eff6ff;
+            }
+
+            .toast-icon {
+                width: 20px;
+            }
+
+            .toast-content {
+                flex: 1;
+            }
+
+            .toast-title {
+                margin: 0 0 2px;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .toast-message {
+                margin: 0;
+                font-size: 13px;
+                color: #334155;
+            }
+
+            .toast-close {
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                font-size: 18px;
+                color: #64748b;
+            }
         </style>
+        <div id="toastContainer"
+            style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+        </div>
         <div class="container">
             <div class="content-section">
                 <div class="section-title">
@@ -277,6 +341,21 @@
         <script>
             const API_URL = 'http://localhost:8080/api';
             let isEditing = false;
+
+            function showToast(message, type = 'info', title = '') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                const icons = { success: '<i class="fas fa-check-circle"></i>', error: '<i class="fas fa-exclamation-circle"></i>', warning: '<i class="fas fa-exclamation-triangle"></i>', info: '<i class="fas fa-info-circle"></i>' };
+                toast.innerHTML = `<div class="toast-icon">${icons[type] || icons.info}</div><div class="toast-content">${title ? `<p class="toast-title">${title}</p>` : ''}<p class="toast-message">${message}</p></div><button class="toast-close" onclick="this.closest('.toast').remove()">&times;</button>`;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+
+            async function showConfirmPopup({ title = 'Xác nhận', message = 'Bạn có chắc chắn muốn thực hiện thao tác này?', confirmText = 'Xác nhận', cancelText = 'Hủy', tone = 'danger' } = {}) {
+                if (typeof window.confirmModal === 'function') return await window.confirmModal({ title, message, confirmText, cancelText, tone });
+                return window.confirm(message);
+            }
 
             function openAddModal() {
                 resetModal();
@@ -355,6 +434,15 @@
                 };
 
                 try {
+                    const confirmed = await showConfirmPopup({
+                        title: isEditing ? 'Xác nhận cập nhật kích thước' : 'Xác nhận thêm kích thước',
+                        message: isEditing ? 'Bạn có chắc chắn muốn lưu thay đổi kích thước này?' : 'Bạn có chắc chắn muốn thêm kích thước mới?',
+                        confirmText: isEditing ? 'Cập nhật' : 'Thêm mới',
+                        cancelText: 'Hủy',
+                        tone: 'info'
+                    });
+                    if (!confirmed) return;
+
                     let response;
 
                     if (isEditing && id) {
@@ -372,15 +460,15 @@
                     }
 
                     if (response.ok) {
-                        alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+                        showToast(isEditing ? 'Cập nhật kích thước thành công!' : 'Thêm kích thước thành công!', 'success');
                         closeModal();
                         loadKichthuoc();
                     } else {
-                        alert('Lỗi: ' + await response.text());
+                        showToast('Lỗi: ' + await response.text(), 'error');
                     }
                 } catch (error) {
                     console.error('Lỗi:', error);
-                    alert('Có lỗi xảy ra!');
+                    showToast('Có lỗi xảy ra!', 'error');
                 }
             });
 
@@ -398,12 +486,19 @@
                     document.getElementById('kichThuocModal').classList.add('show');
                 } catch (error) {
                     console.error('Lỗi:', error);
-                    alert('Không thể tải thông tin');
+                    showToast('Không thể tải thông tin', 'error');
                 }
             }
 
             async function deleteKichthuoc(id) {
-                if (!confirm('Bạn có chắc chắn muốn xóa?')) {
+                const confirmed = await showConfirmPopup({
+                    title: 'Xác nhận xóa kích thước',
+                    message: 'Bạn có chắc chắn muốn xóa kích thước này?',
+                    confirmText: 'Xóa',
+                    cancelText: 'Hủy',
+                    tone: 'danger'
+                });
+                if (!confirmed) {
                     return;
                 }
 
@@ -413,14 +508,14 @@
                     });
 
                     if (response.ok) {
-                        alert('Xóa thành công!');
+                        showToast('Xóa kích thước thành công!', 'success');
                         loadKichthuoc();
                     } else {
-                        alert('Lỗi: ' + await response.text());
+                        showToast('Lỗi: ' + await response.text(), 'error');
                     }
                 } catch (error) {
                     console.error('Lỗi:', error);
-                    alert('Có lỗi xảy ra khi xóa!');
+                    showToast('Có lỗi xảy ra khi xóa!', 'error');
                 }
             }
 

@@ -44,6 +44,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     Page<HoaDon> findByKhachHangIdOrderByNgayDatDesc(Integer khachHangId, Pageable pageable);
 
+
     @Query("""
 SELECT h FROM HoaDon h
 WHERE h.khachHang.id = :userId
@@ -88,5 +89,7 @@ ORDER BY h.ngayDat DESC
             String trangThaiDonHang,
             Boolean trangThai
     );
+    List<HoaDon> findByEmailIgnoreCaseAndKhachHangIsNull(String email);
+
 }
 

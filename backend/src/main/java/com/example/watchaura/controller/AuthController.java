@@ -2,7 +2,9 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.ChangePasswordRequest;
 import com.example.watchaura.dto.RegisterRequest;
+import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.KhachHang;
+import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.service.KhachHangService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -27,6 +30,7 @@ public class AuthController {
 
     private final KhachHangService khachHangService;
     private final PasswordEncoder passwordEncoder;
+    private final HoaDonRepository hoaDonRepository;
 
     @GetMapping("/dang-nhap")
     public String dangNhapPage(
@@ -63,6 +67,7 @@ public class AuthController {
             return "redirect:/dang-nhap";
         }
         session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
+
         
         // Kiểm tra chức vụ để chuyển hướng
         String redirectUrl = "/";
@@ -114,8 +119,9 @@ public class AuthController {
             model.addAttribute("passwordMismatch", "Mật khẩu và xác nhận mật khẩu không khớp.");
             return "layout/user-layout";
         }
+        KhachHang khachHang;
         try {
-            khachHangService.registerKhachHang(
+            khachHang = khachHangService.registerKhachHang(
                     request.getTenNguoiDung(),
                     request.getEmail().trim(),
                     request.getSdt(),
@@ -129,6 +135,16 @@ public class AuthController {
             model.addAttribute("registerError", e.getMessage());
             return "layout/user-layout";
         }
+
+// 🔥 GÁN HÓA ĐƠN VÀO TÀI KHOẢN
+        List<HoaDon> hoaDonList = hoaDonRepository
+                .findByEmailIgnoreCaseAndKhachHangIsNull(khachHang.getEmail());
+
+        for (HoaDon hd : hoaDonList) {
+            hd.setKhachHang(khachHang);
+        }
+
+        hoaDonRepository.saveAll(hoaDonList);
         redirect.addFlashAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         return "redirect:/dang-nhap";
     }
@@ -183,4 +199,5 @@ public class AuthController {
         redirect.addFlashAttribute("successMessage", "Đổi mật khẩu thành công. Lần đăng nhập sau hãy dùng mật khẩu mới.");
         return "redirect:/nguoidung";
     }
+
 }

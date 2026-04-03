@@ -141,6 +141,14 @@ public class CheckoutController {
         session.removeAttribute("cart");
 
         redirect.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + hoaDon.getMaDonHang());
-        return "redirect:/gio-hang";
+        redirect.addFlashAttribute("orderSuccess", true);
+        redirect.addFlashAttribute("maDonHang", hoaDon.getMaDonHang());
+
+        return "redirect:/checkout-success";
+    }
+
+    @GetMapping("/checkout-success")
+    public String checkoutSuccess() {
+        return "user/checkout-success";
     }
 }

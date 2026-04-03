@@ -6,65 +6,113 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.4</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.example</groupId>
     <artifactId>watchaura</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>watchaura</name>
     <description>Demo project for Spring Boot</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
+
     <properties>
         <java.version>17</java.version>
         <lombok.version>1.18.42</lombok.version>
     </properties>
+
     <dependencies>
+
+        <!-- ===== Web / MVC ===== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- ===== Data / JPA ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Jackson Hibernate6 module for handling lazy loading -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-hibernate6</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.8.1.jre11</version>
             <scope>runtime</scope>
-            <optional>true</optional>
+        </dependency>
+
+        <!-- ===== Security ===== -->
+        <!--
+            spring-security-crypto 6.4.2 được khai báo tường minh ở đây
+            vì project không dùng spring-boot-starter-security (chỉ cần BCrypt/hash).
+            Nếu sau này thêm starter-security thì xóa dòng này để tránh conflict.
+        -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>6.4.2</version>
+        </dependency>
+
+        <!-- ===== JWT ===== -->
+        <!--
+            jjwt 0.9.1 yêu cầu javax.xml.bind (JAXB) — không có sẵn trên Java 17.
+            Thêm jaxb-api để tránh NoClassDefFoundError khi parse/generate token.
+        -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
         </dependency>
+
+        <!-- ===== PDF ===== -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>5.5.13.3</version>
+        </dependency>
+
+        <!-- ===== Lombok ===== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation -->
+
+        <!-- ===== Config Processor (fix VNPay HMAC SHA512 error) ===== -->
+        <!--
+            Cho phép Spring Boot bind @ConfigurationProperties (VNPayProperties)
+            đúng cách. Thiếu dependency này → tmnCode và hashSecret bị null → HMAC lỗi.
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-            <!--            <version>3.4.0</version>-->
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
+
+        <!-- ===== Dev tools ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
+<<<<<<< feature/updateThongBao
+            <artifactId>spring-boot-devtools</artifactId>
+=======
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
@@ -83,19 +131,22 @@
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
             <version>12.8.1.jre11</version>
+>>>>>>> main
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
 
+        <!-- ===== Test ===== -->
         <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>itextpdf</artifactId>
-            <version>5.5.13.3</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
+        <!-- Spring Mail for sending emails -->
         <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
         <!-- Spring Mail for sending emails -->
@@ -119,12 +170,26 @@
                             <artifactId>lombok</artifactId>
                             <version>${lombok.version}</version>
                         </path>
+                        <!-- Processor cho @ConfigurationProperties cũng cần chạy lúc compile -->
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Loại bỏ lombok khỏi fat-jar (chỉ cần lúc compile) -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
