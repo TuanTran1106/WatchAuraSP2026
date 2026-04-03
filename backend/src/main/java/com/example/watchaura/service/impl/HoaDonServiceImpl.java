@@ -323,6 +323,11 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Đơn đã giao, không thể đổi sang trạng thái khác.");
         }
 
+        // Không cho chuyển từ "Đang giao" sang "Đã hủy"
+        if ("DANG_GIAO".equals(effectiveCurrent) && "DA_HUY".equals(newStatus)) {
+            throw new RuntimeException("Đơn đang giao, không thể hủy. Vui lòng chờ đơn được giao thành công hoặc liên hệ khách hàng.");
+        }
+
         // Xử lý khi xác nhận đơn (DA_XAC_NHAN) - trừ tồn kho ngay khi xác nhận (FIFO)
         if ("DA_XAC_NHAN".equals(newStatus) && !"DA_XAC_NHAN".equals(effectiveCurrent)) {
             List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
