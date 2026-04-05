@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -55,4 +56,11 @@ public class SanPhamRequest {
     private Double beRongDay;
     /** Trọng lượng (g) - biến thể mặc định */
     private Double trongLuong;
+
+    /** Khuyến mãi cấp sản phẩm: PHAN_TRAM / TIEN (hoặc PERCENT / TIEN_MAT) */
+    private String loaiKhuyenMai;
+    private BigDecimal giaTriKhuyenMai;
+    private LocalDateTime ngayBatDauKhuyenMai;
+    private LocalDateTime ngayKetThucKhuyenMai;
+    private Boolean trangThaiKhuyenMai;
 }

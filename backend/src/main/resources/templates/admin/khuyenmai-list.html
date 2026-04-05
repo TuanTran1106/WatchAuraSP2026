@@ -32,30 +32,33 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Loại giảm</label>
-                    <select class="form__input form__select" th:field="*{loaiGiam}">
+                    <select class="form__input form__select" id="loaiGiamSelect" th:field="*{loaiGiam}" required>
                         <option value="">-- Chọn loại giảm --</option>
-                        <option value="PHAN_TRAM">Giảm theo %</option>
-                        <option value="TIEN">Giảm theo tiền</option>
+                        <option value="PHAN_TRAM">Giảm theo % trên giá niêm yết</option>
+                        <option value="TIEN">Giảm số tiền cố định (VNĐ)</option>
                     </select>
+                    <span class="form__error" th:if="${#fields.hasErrors('loaiGiam')}" th:errors="*{loaiGiam}"></span>
                 </div>
                 <div class="form__group">
-                    <label class="form__label">Giá trị giảm</label>
-                    <input class="form__input" type="number" step="0.01" th:field="*{giaTriGiam}" required placeholder="0" />
+                    <label class="form__label" id="labelGiaTriGiam">Giá trị giảm</label>
+                    <input class="form__input" type="number" step="0.01" min="0" th:field="*{giaTriGiam}" id="giaTriGiamInput" required placeholder="0" />
+                    <small class="form__hint" id="hintGiaTriGiam" style="display:block;color:#64748b;font-size:0.82rem;margin-top:4px;">
+                        Chọn loại giảm ở trên để hiển thị đúng đơn vị ( % hoặc ₫ ).
+                    </small>
                 </div>
-                <div class="form__group">
-                    <label class="form__label">Giảm tối đa</label>
-                    <input class="form__input" type="number" step="0.01" th:field="*{giamToiDa}" placeholder="0" />
+                <div class="form__group" id="giamToiDaGroup">
+                    <label class="form__label">Trần tiền giảm (VNĐ)</label>
+                    <input class="form__input" type="number" step="0.01" min="0" th:field="*{giamToiDa}" id="giamToiDaInput" placeholder="Để trống = không giới hạn" />
+                    <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Chỉ áp khi loại là <strong>giảm %</strong>: giới hạn tối đa số tiền được trừ (ví dụ giảm 50% nhưng không quá 500.000₫).</small>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày bắt đầu</label>
-                    <input class="form__input" type="datetime-local" name="ngayBatDau" id="ngayBatDau" min=""
-                           th:value="${khuyenMai != null and khuyenMai.ngayBatDau != null ? #temporals.format(khuyenMai.ngayBatDau, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+                    <input class="form__input" type="datetime-local" th:field="*{ngayBatDau}" id="ngayBatDau" />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayBatDau')}" th:errors="*{ngayBatDau}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày kết thúc</label>
-                    <input class="form__input" type="datetime-local" name="ngayKetThuc" id="ngayKetThuc" min=""
-                           th:value="${khuyenMai != null and khuyenMai.ngayKetThuc != null ? #temporals.format(khuyenMai.ngayKetThuc, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+                    <input class="form__input" type="datetime-local" th:field="*{ngayKetThuc}" id="ngayKetThuc" />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThuc')}" th:errors="*{ngayKetThuc}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThucSauNgayBatDau')}" th:errors="*{ngayKetThucSauNgayBatDau}"></span>
                 </div>
@@ -69,8 +72,15 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Danh mục áp dụng</label>
-                    <input class="form__input" type="text" th:field="*{danhMucApDung}" placeholder="Để trống = áp dụng cho tất cả" />
-                    <small style="color: #666; font-size: 0.85rem;">Nhập tên danh mục cụ thể (VD: Đồng hồ nam, Đồng hồ nữ) để khuyến mãi chỉ áp dụng cho danh mục đó.</small>
+                    <select class="form__input form__select" th:field="*{danhMucApDung}">
+                        <option value="">— Tất cả danh mục —</option>
+                        <option th:if="${khuyenMai != null and khuyenMai.danhMucApDung != null and !#strings.isEmpty(khuyenMai.danhMucApDung) and (tenDanhMucList == null or !#lists.contains(tenDanhMucList, khuyenMai.danhMucApDung))}"
+                                th:value="${khuyenMai.danhMucApDung}"
+                                th:text="${khuyenMai.danhMucApDung + ' (chưa khớp — chọn lại)'}"
+                        >Giá trị cũ</option>
+                        <option th:each="dm : ${danhMucList}" th:value="${dm.tenDanhMuc}" th:text="${dm.tenDanhMuc}">Danh mục</option>
+                    </select>
+                    <small style="color: #666; font-size: 0.85rem;">Chọn “Tất cả” để áp dụng mọi danh mục. Chọn một danh mục để giới hạn theo tên đã khai báo trong hệ thống.</small>
                 </div>
             </div>
             <div class="form__actions">
@@ -93,6 +103,10 @@
     <!-- Danh sách bên dưới -->
     <section class="card card--full" id="listKhuyenMai">
         <h2 class="card__title">Danh sách khuyến mãi</h2>
+        <p style="margin:0.35rem 0 0.75rem;font-size:0.88rem;color:#64748b;line-height:1.45;">
+            Chương trình: lọc theo danh mục hoặc gắn biến thể. Giảm riêng trên từng SKU: <strong>Quản lý sản phẩm</strong> → mục <em>Khuyến mãi gắn sản phẩm</em>.
+            Giá shop/giỏ/đơn lấy <strong>deal tốt nhất</strong> (chương trình + cấp sản phẩm).
+        </p>
 
         <form th:action="@{/admin/khuyen-mai}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
@@ -125,8 +139,24 @@
                     <td th:text="${item.id}"></td>
                     <td th:text="${item.maKhuyenMai}"></td>
                     <td th:text="${item.tenChuongTrinh}"></td>
-                    <td th:text="${item.loaiGiam != null ? item.loaiGiam : '—'}"></td>
-                    <td th:text="${item.giaTriGiam != null ? #numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 0, 'COMMA') : '—'}"></td>
+                    <td>
+                        <th:block th:if="${item.loaiGiam == 'PHAN_TRAM' || item.loaiGiam == 'PERCENT'}">Giảm %</th:block>
+                        <th:block th:if="${item.loaiGiam == 'TIEN' || item.loaiGiam == 'FIXED' || item.loaiGiam == 'TIEN_MAT'}">Giảm tiền</th:block>
+                        <th:block th:if="${item.loaiGiam != null && item.loaiGiam != 'PHAN_TRAM' && item.loaiGiam != 'PERCENT' && item.loaiGiam != 'TIEN' && item.loaiGiam != 'FIXED' && item.loaiGiam != 'TIEN_MAT'}" th:text="${item.loaiGiam}">Khác</th:block>
+                        <th:block th:if="${item.loaiGiam == null}">—</th:block>
+                    </td>
+                    <td>
+                        <th:block th:if="${item.giaTriGiam != null && (item.loaiGiam == 'PHAN_TRAM' || item.loaiGiam == 'PERCENT')}">
+                            <span th:text="${#numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 0, 'COMMA') + ' %'}">0 %</span>
+                        </th:block>
+                        <th:block th:if="${item.giaTriGiam != null && (item.loaiGiam == 'TIEN' || item.loaiGiam == 'FIXED' || item.loaiGiam == 'TIEN_MAT')}">
+                            <span th:text="${#numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 0, 'COMMA') + ' ₫'}">0 ₫</span>
+                        </th:block>
+                        <th:block th:if="${item.giaTriGiam != null && item.loaiGiam != null && item.loaiGiam != 'PHAN_TRAM' && item.loaiGiam != 'PERCENT' && item.loaiGiam != 'TIEN' && item.loaiGiam != 'FIXED' && item.loaiGiam != 'TIEN_MAT'}">
+                            <span th:text="${#numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 0, 'COMMA')}">0</span>
+                        </th:block>
+                        <th:block th:if="${item.giaTriGiam == null}">—</th:block>
+                    </td>
                     <td th:text="${item.ngayBatDau != null ? #temporals.format(item.ngayBatDau, 'dd/MM/yyyy HH:mm') : '—'}"></td>
                     <td th:text="${item.ngayKetThuc != null ? #temporals.format(item.ngayKetThuc, 'dd/MM/yyyy HH:mm') : '—'}"></td>
                     <td>
@@ -187,16 +217,46 @@
         (function() {
             var form = document.querySelector('.form--khuyenmai');
             if (!form) return;
+            var loai = document.getElementById('loaiGiamSelect');
+            var giamToiDaGroup = document.getElementById('giamToiDaGroup');
+            var giamToiDaInput = document.getElementById('giamToiDaInput');
+            var hintGiaTri = document.getElementById('hintGiaTriGiam');
+            var giaTriInput = document.getElementById('giaTriGiamInput');
+            function syncLoaiGiamUi() {
+                var v = loai ? loai.value : '';
+                if (v === 'PHAN_TRAM') {
+                    if (giamToiDaGroup) giamToiDaGroup.style.display = '';
+                    if (hintGiaTri) hintGiaTri.textContent = 'Nhập phần trăm (vd. 15 = giảm 15%). Tối đa 100%.';
+                    if (giaTriInput) giaTriInput.removeAttribute('max');
+                } else if (v === 'TIEN') {
+                    if (giamToiDaGroup) giamToiDaGroup.style.display = 'none';
+                    if (giamToiDaInput) giamToiDaInput.value = '';
+                    if (hintGiaTri) hintGiaTri.textContent = 'Nhập số tiền trừ trực tiếp khỏi giá niêm yết (VNĐ).';
+                } else {
+                    if (giamToiDaGroup) giamToiDaGroup.style.display = '';
+                    if (hintGiaTri) hintGiaTri.textContent = 'Chọn loại giảm để hiển thị đúng đơn vị.';
+                }
+            }
+            if (loai) {
+                loai.addEventListener('change', syncLoaiGiamUi);
+                syncLoaiGiamUi();
+            }
             var ngayBatDau = document.getElementById('ngayBatDau');
             var ngayKetThuc = document.getElementById('ngayKetThuc');
             if (!ngayBatDau || !ngayKetThuc) return;
+            var isNewKhuyenMai = /*[[${khuyenMai == null or khuyenMai.id == null}]]*/ true;
             var now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             var minStr = now.toISOString().slice(0, 16);
-            ngayBatDau.setAttribute('min', minStr);
+            /* Chỉ ép min = "bây giờ" khi thêm mới — tránh không sửa được KM đã có ngày bắt đầu trong quá khứ */
+            if (isNewKhuyenMai) {
+                ngayBatDau.setAttribute('min', minStr);
+            } else {
+                ngayBatDau.removeAttribute('min');
+            }
             function setNgayKetThucMin() {
                 var startVal = ngayBatDau.value;
-                ngayKetThuc.setAttribute('min', startVal || minStr);
+                ngayKetThuc.setAttribute('min', startVal || (isNewKhuyenMai ? minStr : ''));
             }
             setNgayKetThucMin();
             ngayBatDau.addEventListener('change', setNgayKetThucMin);

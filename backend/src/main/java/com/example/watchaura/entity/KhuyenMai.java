@@ -10,6 +10,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.FutureOrPresent;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -50,11 +51,14 @@ public class KhuyenMai {
     @Column(name = "giam_toi_da", precision = 18, scale = 2)
     private BigDecimal giamToiDa;
 
+    /** Khớp input HTML {@code datetime-local} (không có giây phần thập phân — tránh ô trống khi sửa từ SQL Server). */
     @Column(name = "ngay_bat_dau")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @FutureOrPresent(message = "Ngày bắt đầu không được ở quá khứ", groups = OnCreate.class)
     private LocalDateTime ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @FutureOrPresent(message = "Ngày kết thúc không được ở quá khứ", groups = OnCreate.class)
     private LocalDateTime ngayKetThuc;
 

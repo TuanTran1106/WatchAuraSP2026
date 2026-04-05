@@ -194,6 +194,24 @@
                 vertical-align: top;
             }
 
+            .section-hint {
+                margin: 0.35rem 0 0;
+                font-size: 0.85rem;
+                color: #64748b;
+                line-height: 1.45;
+                font-weight: 400;
+            }
+
+            .badge-km {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                background: #fef3c7;
+                color: #b45309;
+            }
+
             /* Hàng chính + hàng biến thể: căn trên để không lệch khi tên dài / giá khoảng */
             #productsTable tbody tr.product-main-row td {
                 vertical-align: top;
@@ -986,12 +1004,13 @@
                                 <th>GIÁ BÁN</th>
                                 <th>SỐ LƯỢNG</th>
                                 <th>TRẠNG THÁI</th>
+                                <th>KM</th>
                                 <th>THAO TÁC</th>
                             </tr>
                         </thead>
                         <tbody id="productTableBody">
                             <tr>
-                                <td colspan="8" class="loading">
+                                <td colspan="9" class="loading">
                                     <div class="spinner"></div>
                                     Đang tải dữ liệu...
                                 </td>
@@ -1097,6 +1116,40 @@
                         </div>
                     </div>
 
+                    <div class="section-divider" style="margin-top: 24px;">
+                        <h3><i class="fas fa-tags"></i> Khuyến mãi gắn sản phẩm</h3>
+                        <p class="section-hint">Giảm thêm trên giá niêm yết từng biến thể (nếu bật và trong khung thời gian).
+                            Hệ thống chọn deal tốt nhất giữa KM chương trình (admin → Khuyến mãi / gắn biến thể), KM theo danh mục, và KM cấp sản phẩm này.</p>
+                    </div>
+                    <div class="modal-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="modal-form-group" style="grid-column: 1 / -1;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="trangThaiKhuyenMaiSp">
+                                <span>Bật giảm giá cấp sản phẩm</span>
+                            </label>
+                        </div>
+                        <div class="modal-form-group">
+                            <label for="loaiKhuyenMaiSp">Loại giảm</label>
+                            <select id="loaiKhuyenMaiSp">
+                                <option value="">— Không chọn —</option>
+                                <option value="PHAN_TRAM">Giảm theo %</option>
+                                <option value="TIEN">Giảm số tiền (VNĐ)</option>
+                            </select>
+                        </div>
+                        <div class="modal-form-group">
+                            <label for="giaTriKhuyenMaiSp">Giá trị giảm</label>
+                            <input type="number" id="giaTriKhuyenMaiSp" step="0.01" min="0" placeholder="% hoặc VNĐ tùy loại">
+                        </div>
+                        <div class="modal-form-group">
+                            <label for="ngayBatDauKmSp">Ngày giờ bắt đầu</label>
+                            <input type="datetime-local" id="ngayBatDauKmSp">
+                        </div>
+                        <div class="modal-form-group">
+                            <label for="ngayKetThucKmSp">Ngày giờ kết thúc</label>
+                            <input type="datetime-local" id="ngayKetThucKmSp">
+                        </div>
+                    </div>
+
                     <!-- PHẦN 2: CHI TIẾT SẢN PHẨM (BIẾN THỂ) -->
                     <div class="section-divider" style="margin-top: 30px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1127,6 +1180,44 @@
         <script>
             const API_URL = '/api';
             const PAGE_SIZE = 5;
+
+            function toDatetimeLocal(v) {
+                if (v == null || v === '') return '';
+                if (typeof v === 'string') {
+                    return v.length >= 16 ? v.slice(0, 16) : v;
+                }
+                if (Array.isArray(v) && v.length >= 5) {
+                    const pad = n => String(n).padStart(2, '0');
+                    return v[0] + '-' + pad(v[1]) + '-' + pad(v[2]) + 'T' + pad(v[3]) + ':' + pad(v[4]);
+                }
+                return '';
+            }
+
+            function buildSanPhamKmPayload() {
+                const enabled = document.getElementById('trangThaiKhuyenMaiSp').checked;
+                const loai = (document.getElementById('loaiKhuyenMaiSp').value || '').trim();
+                const giaRaw = document.getElementById('giaTriKhuyenMaiSp').value;
+                const ngayBd = document.getElementById('ngayBatDauKmSp').value;
+                const ngayKt = document.getElementById('ngayKetThucKmSp').value;
+                if (!enabled || !loai) {
+                    return {
+                        loaiKhuyenMai: null,
+                        giaTriKhuyenMai: null,
+                        ngayBatDauKhuyenMai: null,
+                        ngayKetThucKhuyenMai: null,
+                        trangThaiKhuyenMai: false
+                    };
+                }
+                const giaTri = giaRaw !== '' && !isNaN(parseFloat(giaRaw)) ? parseFloat(giaRaw) : null;
+                return {
+                    loaiKhuyenMai: loai,
+                    giaTriKhuyenMai: giaTri,
+                    ngayBatDauKhuyenMai: ngayBd ? ngayBd : null,
+                    ngayKetThucKhuyenMai: ngayKt ? ngayKt : null,
+                    trangThaiKhuyenMai: true
+                };
+            }
+
             let isEditing = false;
             let currentPage = 0;
             let totalPages = 0;
@@ -1284,6 +1375,11 @@
                 document.querySelector('input[name="trangThai"][value="true"]').checked = true;
                 document.getElementById('variantContainer').innerHTML = '';
                 document.getElementById('maSanPhamError').style.display = 'none';
+                document.getElementById('trangThaiKhuyenMaiSp').checked = false;
+                document.getElementById('loaiKhuyenMaiSp').value = '';
+                document.getElementById('giaTriKhuyenMaiSp').value = '';
+                document.getElementById('ngayBatDauKmSp').value = '';
+                document.getElementById('ngayKetThucKmSp').value = '';
                 addVariantRow(); // Thêm 1 dòng biến thể mặc định
             }
 
@@ -1484,7 +1580,7 @@
                 params.set('size', PAGE_SIZE);
 
                 const tbody = document.getElementById('productTableBody');
-                tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div>Đang tải dữ liệu...</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="loading"><div class="spinner"></div>Đang tải dữ liệu...</td></tr>';
 
                 try {
                     const response = await fetch(`${API_URL}/san-pham/search?${params}`);
@@ -1495,7 +1591,7 @@
                     totalElements = data.totalElements ?? 0;
 
                     if (products.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="loading">Không có dữ liệu</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="9" class="loading">Không có dữ liệu</td></tr>';
                         renderPagination();
                         return;
                     }
@@ -1549,6 +1645,12 @@
                         const statusBadge = product.trangThai ?
                             '<span class="status-badge status-active"><i class="fas fa-check-circle"></i> Hoạt động</span>' :
                             '<span class="status-badge status-inactive"><i class="fas fa-times-circle"></i> Không hoạt động</span>';
+
+                        const kmCell = product.coKhuyenMaiHopLe
+                            ? '<span class="badge-km" title="Giá hiển thị shop đang gồm khuyến mãi">Shop</span>'
+                            : (product.trangThaiKhuyenMai
+                                ? '<span class="muted" title="KM cấp sản phẩm (kiểm tra ngày &amp; loại)">SP</span>'
+                                : '<span class="muted">—</span>');
 
                         // Tạo HTML cho các biến thể hiển thị dưới mỗi sản phẩm
                         let variantListHtml = '';
@@ -1640,6 +1742,7 @@
                             <td class="price-highlight">${giaBan}</td>
                             <td><strong>${soLuongTon}</strong></td>
                             <td>${statusBadge}</td>
+                            <td style="white-space:nowrap;">${kmCell}</td>
                             <td>
                                 <div class="actions">
                                     <button class="btn btn--secondary" onclick="editProduct(${product.id})">
@@ -1654,7 +1757,7 @@
                             </td>
                         </tr>
                         <tr class="variant-list-row">
-                            <td colspan="8">
+                            <td colspan="9">
                                 ${variantListHtml}
                             </td>
                         </tr>
@@ -1665,7 +1768,7 @@
                     renderPagination();
                 } catch (error) {
                     console.error('Lỗi khi tải danh sách:', error);
-                    tbody.innerHTML = '<tr><td colspan="8" class="loading" style="color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Lỗi khi tải dữ liệu</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" class="loading" style="color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Lỗi khi tải dữ liệu</td></tr>';
                     renderPagination();
                 }
             }
@@ -1817,7 +1920,8 @@
                     idDanhMuc: parseInt(document.getElementById('idDanhMuc').value),
                     idLoaiMay: parseInt(document.getElementById('idLoaiMay').value) || null,
                     phongCach: document.getElementById('phongCach').value,
-                    trangThai: document.querySelector('input[name="trangThai"]:checked').value === 'true'
+                    trangThai: document.querySelector('input[name="trangThai"]:checked').value === 'true',
+                    ...buildSanPhamKmPayload()
                 };
 
                 try {
@@ -1952,6 +2056,13 @@
                     radioButtons.forEach(radio => {
                         radio.checked = radio.value === product.trangThai.toString();
                     });
+
+                    document.getElementById('trangThaiKhuyenMaiSp').checked = !!product.trangThaiKhuyenMai;
+                    document.getElementById('loaiKhuyenMaiSp').value = product.loaiKhuyenMai || '';
+                    document.getElementById('giaTriKhuyenMaiSp').value =
+                        product.giaTriKhuyenMai != null && product.giaTriKhuyenMai !== '' ? product.giaTriKhuyenMai : '';
+                    document.getElementById('ngayBatDauKmSp').value = toDatetimeLocal(product.ngayBatDauKhuyenMai);
+                    document.getElementById('ngayKetThucKmSp').value = toDatetimeLocal(product.ngayKetThucKhuyenMai);
 
                     // Load các biến thể của sản phẩm
                     const variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/san-pham/${id}`);

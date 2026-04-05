@@ -1,13 +1,17 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.GioHangDTO;
+import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.HoaDonChiTiet;
+import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.repository.HoaDonChiTietRepository;
 import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.service.EmailService;
 import com.example.watchaura.service.GuestCartViewService;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import com.example.watchaura.util.ShippingFeeUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,8 @@ public class CheckoutController {
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final EmailService emailService;
     private final GuestCartViewService guestCartViewService;
+    private final KhuyenMaiService khuyenMaiService;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
 
     /**
      * Thanh toán khách (không đăng nhập): form nhập thông tin + COD.
@@ -86,16 +92,11 @@ public class CheckoutController {
             return "redirect:/gio-hang";
         }
 
-        BigDecimal tongTienTamTinh = BigDecimal.ZERO;
-        for (Map.Entry<Integer, Integer> item : cart.entrySet()) {
-            var spct = sanPhamChiTietRepository.findById(item.getKey()).orElse(null);
-            if (spct != null && spct.getGiaBan() != null) {
-                tongTienTamTinh = tongTienTamTinh.add(spct.getGiaBan().multiply(BigDecimal.valueOf(item.getValue())));
-            }
-        }
+        LocalDateTime thoiDiem = LocalDateTime.now();
+        List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(thoiDiem);
 
-        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tongTienTamTinh);
-        BigDecimal tongTienThanhToan = tongTienTamTinh.add(phiVanChuyen);
+        BigDecimal tongTienTamTinh = BigDecimal.ZERO;
+        List<HoaDonChiTiet> chiTietList = new ArrayList<>();
 
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaDonHang("WA" + System.currentTimeMillis());
@@ -104,30 +105,42 @@ public class CheckoutController {
         hoaDon.setSdtKhachHang(sdt);
         hoaDon.setDiaChi(diaChi);
         hoaDon.setGhiChu(ghiChu);
-        hoaDon.setTongTienTamTinh(tongTienTamTinh);
-        hoaDon.setTongTienThanhToan(tongTienThanhToan);
+        hoaDon.setTongTienTamTinh(BigDecimal.ZERO);
+        hoaDon.setTongTienThanhToan(BigDecimal.ZERO);
         hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
         hoaDon.setPhuongThucThanhToan("COD");
         hoaDon.setLoaiHoaDon("ONLINE");
-        hoaDon.setNgayDat(LocalDateTime.now());
+        hoaDon.setNgayDat(thoiDiem);
         hoaDon.setTrangThai(true);
 
         hoaDonRepository.save(hoaDon);
 
-        List<HoaDonChiTiet> chiTietList = new ArrayList<>();
         for (Map.Entry<Integer, Integer> item : cart.entrySet()) {
             var spctOpt = sanPhamChiTietRepository.findByIdWithDetails(item.getKey());
-            if (spctOpt.isEmpty()) continue;
+            if (spctOpt.isEmpty()) {
+                continue;
+            }
             var spct = spctOpt.get();
+            KhuyenMaiPriceResult pr = sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(
+                    spct, thoiDiem, khuyenMaiDangChay);
+            BigDecimal donGia = pr.giaSauGiam() != null ? pr.giaSauGiam() : BigDecimal.ZERO;
+            tongTienTamTinh = tongTienTamTinh.add(donGia.multiply(BigDecimal.valueOf(item.getValue())));
 
             HoaDonChiTiet ct = new HoaDonChiTiet();
             ct.setHoaDon(hoaDon);
             ct.setSanPhamChiTiet(spct);
             ct.setSoLuong(item.getValue());
-            ct.setDonGia(spct.getGiaBan() != null ? spct.getGiaBan() : BigDecimal.ZERO);
+            ct.setDonGia(donGia);
             hoaDonChiTietRepository.save(ct);
             chiTietList.add(ct);
         }
+
+        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tongTienTamTinh);
+        BigDecimal tongTienThanhToan = tongTienTamTinh.add(phiVanChuyen);
+        hoaDon.setTongTienTamTinh(tongTienTamTinh);
+        hoaDon.setTongTienThanhToan(tongTienThanhToan);
+        hoaDonRepository.save(hoaDon);
+
         hoaDon.setChiTietList(chiTietList);
 
         try {

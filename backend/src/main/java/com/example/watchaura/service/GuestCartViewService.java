@@ -2,13 +2,16 @@ package com.example.watchaura.service;
 
 import com.example.watchaura.dto.GioHangChiTietDTO;
 import com.example.watchaura.dto.GioHangDTO;
+import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
+import com.example.watchaura.util.GioHangChiTietPromoUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,8 @@ import java.util.Optional;
 public class GuestCartViewService {
 
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+    private final KhuyenMaiService khuyenMaiService;
 
     public GioHangDTO buildCartDto(HttpSession session) {
         Map<Integer, Integer> cartSession = (Map<Integer, Integer>) session.getAttribute("cart");
@@ -31,6 +36,8 @@ public class GuestCartViewService {
         if (cartSession == null || cartSession.isEmpty()) {
             return dto;
         }
+        LocalDateTime promoNow = LocalDateTime.now();
+        List<KhuyenMai> activeKm = khuyenMaiService.getActivePromotions(promoNow);
         List<GioHangChiTietDTO> lines = new ArrayList<>();
         BigDecimal tongTien = BigDecimal.ZERO;
         for (Map.Entry<Integer, Integer> entry : cartSession.entrySet()) {
@@ -39,7 +46,7 @@ public class GuestCartViewService {
             if (spct == null) {
                 continue;
             }
-            GioHangChiTietDTO line = toGuestLineDto(spct, entry.getValue());
+            GioHangChiTietDTO line = toGuestLineDto(spct, entry.getValue(), promoNow, activeKm);
             lines.add(line);
             if (line.getThanhTien() != null) {
                 tongTien = tongTien.add(line.getThanhTien());
@@ -50,7 +57,11 @@ public class GuestCartViewService {
         return dto;
     }
 
-    private GioHangChiTietDTO toGuestLineDto(SanPhamChiTiet spct, int soLuong) {
+    private GioHangChiTietDTO toGuestLineDto(
+            SanPhamChiTiet spct,
+            int soLuong,
+            LocalDateTime promoNow,
+            List<KhuyenMai> chuongTrinhDangChay) {
         GioHangChiTietDTO dto = new GioHangChiTietDTO();
         dto.setId(spct.getId());
         dto.setSanPhamChiTietId(spct.getId());
@@ -70,7 +81,8 @@ public class GuestCartViewService {
             }
         }
         dto.setMoTaBienThe(buildMoTaBienTheGuest(spct));
-        dto.setThanhTien(gia.multiply(BigDecimal.valueOf(soLuong)));
+        GioHangChiTietPromoUtil.applySanPhamKhuyenMai(
+                sanPhamChiTietKhuyenMaiService, dto, spct, promoNow, chuongTrinhDangChay);
         return dto;
     }
 

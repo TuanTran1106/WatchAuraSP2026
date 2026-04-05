@@ -3,6 +3,7 @@ package com.example.watchaura.service.impl;
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.repository.KhuyenMaiRepository;
 import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.util.KhuyenMaiPricing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,10 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
     @Override
     public KhuyenMai save(KhuyenMai khuyenMai) {
+        if (khuyenMai.getTrangThai() == null) {
+            khuyenMai.setTrangThai(Boolean.FALSE);
+        }
+        chuanHoaTruocKhiLuu(khuyenMai);
         khuyenMai.setNgayTao(LocalDateTime.now());
         khuyenMai.setNgayCapNhat(LocalDateTime.now());
         if (khuyenMai.getDanhMucApDung() == null) {
@@ -68,12 +73,37 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
         existing.setGiaTriGiam(khuyenMai.getGiaTriGiam());
         existing.setGiamToiDa(khuyenMai.getGiamToiDa());
-        existing.setNgayBatDau(khuyenMai.getNgayBatDau());
-        existing.setNgayKetThuc(khuyenMai.getNgayKetThuc());
+        // Form datetime-local đôi khi gửi rỗng / không bind → null; DB cột NOT NULL → không được xóa ngày cũ.
+        if (khuyenMai.getNgayBatDau() != null) {
+            existing.setNgayBatDau(khuyenMai.getNgayBatDau());
+        }
+        if (khuyenMai.getNgayKetThuc() != null) {
+            existing.setNgayKetThuc(khuyenMai.getNgayKetThuc());
+        }
         existing.setTrangThai(khuyenMai.getTrangThai());
+        if (existing.getTrangThai() == null) {
+            existing.setTrangThai(Boolean.FALSE);
+        }
+        chuanHoaTruocKhiLuu(existing);
         existing.setNgayCapNhat(LocalDateTime.now());
 
         return khuyenMaiRepository.save(existing);
+    }
+
+    /**
+     * Chuẩn hóa {@code PHAN_TRAM}/{@code TIEN}; tắt {@code giamToiDa} khi giảm tiền; mặc định trạng thái.
+     */
+    private static void chuanHoaTruocKhiLuu(KhuyenMai km) {
+        if (km == null) {
+            return;
+        }
+        String canon = KhuyenMaiPricing.chuanHoaMaLuu(km.getLoaiGiam());
+        if (canon != null) {
+            km.setLoaiGiam(canon);
+        }
+        if (KhuyenMaiPricing.phanLoai(km.getLoaiGiam()) == KhuyenMaiPricing.LoaiGiamTinh.TIEN) {
+            km.setGiamToiDa(null);
+        }
     }
 
     @Override
