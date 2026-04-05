@@ -4,6 +4,7 @@ import com.example.watchaura.entity.HoaDon;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -89,7 +90,23 @@ ORDER BY h.ngayDat DESC
             String trangThaiDonHang,
             Boolean trangThai
     );
+
+
+    /**
+     * Tìm tất cả đơn hàng online (khách không đăng nhập) theo email và chưa có khachHang
+     */
+    @Query("SELECT h FROM HoaDon h WHERE h.email = :email AND h.khachHang IS NULL AND h.loaiHoaDon = 'ONLINE'")
+    List<HoaDon> findOnlineOrdersByEmailWithoutAccount(@Param("email") String email);
+
+    /**
+     * Liên kết đơn hàng với khách hàng theo email
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE HoaDon h SET h.khachHang.id = :khachHangId WHERE h.email = :email AND h.khachHang IS NULL AND h.loaiHoaDon = 'ONLINE'")
+    int linkOrdersToCustomerByEmail(@Param("email") String email, @Param("khachHangId") Integer khachHangId);
+
     List<HoaDon> findByEmailIgnoreCaseAndKhachHangIsNull(String email);
+
 
 }
 

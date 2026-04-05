@@ -2,7 +2,6 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.ChangePasswordRequest;
 import com.example.watchaura.dto.RegisterRequest;
-import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.service.KhachHangService;
@@ -11,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -95,14 +94,23 @@ public class AuthController {
     }
 
     @GetMapping("/dang-ky")
-    public String dangKyPage(Model model) {
+    public String dangKyPage(
+            @RequestParam(value = "ten", required = false) String ten,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "sdt", required = false) String sdt,
+            Model model) {
+        RegisterRequest registerRequest = new RegisterRequest();
+        if (ten != null && !ten.isBlank()) registerRequest.setTenNguoiDung(ten);
+        if (email != null && !email.isBlank()) registerRequest.setEmail(email);
+        if (sdt != null && !sdt.isBlank()) registerRequest.setSdt(sdt);
+        model.addAttribute("registerRequest", registerRequest);
         model.addAttribute("title", "Đăng ký - WatchAura");
         model.addAttribute("content", "user/dang-ky :: content");
-        model.addAttribute("registerRequest", new RegisterRequest());
         return "layout/user-layout";
     }
 
     @PostMapping("/dang-ky")
+    @Transactional
     public String dangKy(
             @Valid @ModelAttribute("registerRequest") RegisterRequest request,
             BindingResult result,
@@ -119,7 +127,7 @@ public class AuthController {
             model.addAttribute("passwordMismatch", "Mật khẩu và xác nhận mật khẩu không khớp.");
             return "layout/user-layout";
         }
-        KhachHang khachHang;
+        KhachHang khachHang = null;
         try {
             khachHang = khachHangService.registerKhachHang(
                     request.getTenNguoiDung(),
@@ -136,15 +144,14 @@ public class AuthController {
             return "layout/user-layout";
         }
 
-// 🔥 GÁN HÓA ĐƠN VÀO TÀI KHOẢN
-        List<HoaDon> hoaDonList = hoaDonRepository
-                .findByEmailIgnoreCaseAndKhachHangIsNull(khachHang.getEmail());
-
-        for (HoaDon hd : hoaDonList) {
-            hd.setKhachHang(khachHang);
+        // Liên kết đơn hàng có cùng email với tài khoản mới
+        if (khachHang != null) {
+            int linked = hoaDonRepository.linkOrdersToCustomerByEmail(khachHang.getEmail(), khachHang.getId());
+            if (linked > 0) {
+                redirect.addFlashAttribute("infoMessage", "Đã liên kết " + linked + " đơn hàng với tài khoản của bạn.");
+            }
         }
 
-        hoaDonRepository.saveAll(hoaDonList);
         redirect.addFlashAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
         return "redirect:/dang-nhap";
     }

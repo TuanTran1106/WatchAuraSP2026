@@ -201,3 +201,83 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+/* Checkout success banner */
+.checkout-success-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid #28a745;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.checkout-success-banner__icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    background: #28a745;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.checkout-success-banner__content h2 {
+    margin: 0 0 0.5rem;
+    color: #155724;
+    font-size: 1.2rem;
+}
+
+.checkout-success-banner__content p {
+    margin: 0;
+    color: #155724;
+    font-size: 0.9rem;
+}
+
+.checkout-success-banner__order {
+    font-weight: 600;
+    font-size: 1rem !important;
+}
+
+/* Register prompt banner */
+.register-prompt-banner {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    border: 1px solid #ffc107;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.register-prompt-banner__title {
+    margin: 0 0 0.75rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #856404;
+}
+
+.register-prompt-banner__list {
+    margin: 0 0 0.75rem 1.25rem;
+    padding: 0;
+    color: #856404;
+    font-size: 0.9rem;
+}
+
+.register-prompt-banner__list li {
+    margin-bottom: 0.35rem;
+}
+
+.register-prompt-banner__info {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #856404;
+    font-weight: 500;
+}
