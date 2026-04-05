@@ -555,6 +555,42 @@
             color: var(--primary-red);
         }
 
+        .product-card__badge-sale {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 5px 9px;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+            box-shadow: 0 2px 6px rgba(192, 57, 43, 0.35);
+        }
+
+        .product-price-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .product-price--original {
+            font-size: 13px;
+            font-weight: 500;
+            color: #999;
+            text-decoration: line-through;
+            text-decoration-line: line-through;
+        }
+
+        .product-price--sale {
+            font-size: 18px;
+            font-weight: 800;
+            color: #c0392b;
+        }
+
         .no-products {
             text-align: center;
             grid-column: 1 / -1;
@@ -1299,14 +1335,23 @@
             <!-- Products Grid -->
             <div class="products-grid">
                 <!-- Hiển thị thông báo khi không có sản phẩm -->
-                <div th:if="${#lists.isEmpty(listSP)}" class="no-products">
+                <div th:if="${sanPhamTrangChu == null or #lists.isEmpty(sanPhamTrangChu)}" class="no-products">
                     Chưa có sản phẩm nào!
                 </div>
-                <div class="product-card" th:each="sp : ${listSP}">
+                <div class="product-card" th:each="sp : ${sanPhamTrangChu}">
                     <div class="product-image-container">
-                        <!-- Hiển thị ảnh -->
-                        <img th:if="${sp.hinhAnh != null and !#strings.isEmpty(sp.hinhAnh)}" th:src="${sp.hinhAnh}"
-                            alt="Product Image" class="product-image"
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'PHAN_TRAM' and sp.phanTramGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'TIEN' and sp.soTienGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.soTienGiamHienThi, 0, 'COMMA', 0, 'POINT') + '₫'}">-50.000₫</span>
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and (sp.loaiGiamHienThi == null or sp.loaiGiamHienThi == '') and sp.phanTramGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                        <img th:if="${sp.hinhAnh != null and !#strings.isEmpty(sp.hinhAnh)}"
+                            th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}"
+                            th:alt="${sp.tenSanPham}" class="product-image"
                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
                         <img th:if="${sp.hinhAnh == null or #strings.isEmpty(sp.hinhAnh)}"
                             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E"
@@ -1316,15 +1361,21 @@
                         class="product-info-link">
                         <div class="product-info">
                             <div class="product-brand"
-                                th:text="${(sp.thuongHieu != null ? sp.thuongHieu.tenThuongHieu : 'N/A') + ' | ' + (sp.danhMuc != null ? sp.danhMuc.tenDanhMuc : 'N/A')}">
+                                th:text="${(sp.tenThuongHieu != null ? sp.tenThuongHieu : 'N/A') + ' | ' + (sp.tenDanhMuc != null ? sp.tenDanhMuc : 'N/A')}">
                             </div>
-                            <div class="product-code" th:text="${sp.maSanPham ?: 'N/A'}"></div>
-                            <div class="product-name" th:text="${sp.tenSanPham ?: 'Chưa có tên'}"></div>
+                            <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
+                            <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}"></div>
                             <div class="product-footer">
-                                <!-- Hiển thị giá bán thấp nhất theo chi tiết sản phẩm -->
-                                <div class="product-price"
-                                    th:text="${(giaBanByProductId != null and giaBanByProductId[sp.id] != null) ? #numbers.formatDecimal(giaBanByProductId[sp.id], 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">
-                                </div>
+                                <th:block th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}">
+                                    <div class="product-price-row">
+                                        <span class="product-price product-price--original"
+                                              th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                        <span class="product-price product-price--sale"
+                                              th:text="${sp.giaSauKhuyenMai != null ? #numbers.formatDecimal(sp.giaSauKhuyenMai, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                    </div>
+                                </th:block>
+                                <div th:unless="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}" class="product-price"
+                                     th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
                             </div>
                         </div>
                     </a>

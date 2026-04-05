@@ -102,7 +102,16 @@
                                     <p class="cart-table__variants" th:if="${item.moTaBienThe != null and !item.moTaBienThe.isEmpty()}" th:text="${item.moTaBienThe}">Màu · Kích thước</p>
                                 </div>
                             </td>
-                            <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</td>
+                            <td class="cart-table__price">
+                                <div class="cart-line-price">
+                                    <span th:if="${item.giaGoc != null and item.giaBan != null and item.giaGoc.compareTo(item.giaBan) > 0}"
+                                          class="cart-line-price__old"
+                                          th:text="|${#numbers.formatDecimal(item.giaGoc, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                                    <span class="cart-line-price__current"
+                                          th:classappend="${item.giaGoc != null and item.giaBan != null and item.giaGoc.compareTo(item.giaBan) > 0} ? ' cart-line-price__current--sale' : ''"
+                                          th:text="|${#numbers.formatDecimal(item.giaBan, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                                </div>
+                            </td>
                             <td class="cart-table__qty">
                                 <div class="qty-controls">
                                     <!-- Khách chưa đăng nhập: cập nhật session -->

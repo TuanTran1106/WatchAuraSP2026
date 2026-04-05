@@ -1,7 +1,9 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.KhuyenMai;
+import com.example.watchaura.service.DanhMucService;
 import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.util.KhuyenMaiPricing;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +20,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/khuyen-mai")
@@ -25,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 public class KhuyenMaiController {
 
     private final KhuyenMaiService khuyenMaiService;
+    private final DanhMucService danhMucService;
 
     private static final int PAGE_SIZE = 6;
 
@@ -45,10 +50,20 @@ public class KhuyenMaiController {
         model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
         model.addAttribute("khuyenMai", new KhuyenMai());
         model.addAttribute("formAction", "/admin/khuyen-mai");
+        attachDanhMucList(model);
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             return "admin/khuyenmai-list :: content";
         }
         return "layout/admin-layout";
+    }
+
+    private void attachDanhMucList(Model model) {
+        var list = danhMucService.getAll();
+        model.addAttribute("danhMucList", list);
+        model.addAttribute("tenDanhMucList", list.stream()
+                .map(dm -> dm.getTenDanhMuc())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
     }
 
     private Boolean parseTrangThai(String trangThai) {
@@ -56,6 +71,19 @@ public class KhuyenMaiController {
         if ("true".equalsIgnoreCase(trangThai)) return true;
         if ("false".equalsIgnoreCase(trangThai)) return false;
         return null;
+    }
+
+    private static void validateLoaiGiam(KhuyenMai khuyenMai, BindingResult result) {
+        if (khuyenMai == null) {
+            return;
+        }
+        if (khuyenMai.getLoaiGiam() == null || khuyenMai.getLoaiGiam().isBlank()) {
+            result.rejectValue("loaiGiam", "required", "Chọn loại giảm: theo % hoặc theo số tiền (VNĐ).");
+            return;
+        }
+        if (KhuyenMaiPricing.chuanHoaMaLuu(khuyenMai.getLoaiGiam()) == null) {
+            result.rejectValue("loaiGiam", "invalid", "Loại giảm không được nhận dạng. Chọn lại từ danh sách.");
+        }
     }
 
     @GetMapping("/them")
@@ -88,6 +116,7 @@ public class KhuyenMaiController {
         if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
         if (trangThai != null && !trangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(trangThai, StandardCharsets.UTF_8);
         model.addAttribute("formAction", formAction);
+        attachDanhMucList(model);
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             return "admin/khuyenmai-list :: content";
         }
@@ -105,6 +134,7 @@ public class KhuyenMaiController {
                 && khuyenMaiService.existsByMaKhuyenMai(khuyenMai.getMaKhuyenMai())) {
             result.rejectValue("maKhuyenMai", "duplicate", "Mã khuyến mãi đã tồn tại.");
         }
+        validateLoaiGiam(khuyenMai, result);
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
             Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by("id").descending());
@@ -116,6 +146,7 @@ public class KhuyenMaiController {
             model.addAttribute("searchKeyword", q != null ? q : "");
             model.addAttribute("filterTrangThai", filterTrangThai != null ? filterTrangThai : "");
             model.addAttribute("formAction", "/admin/khuyen-mai");
+            attachDanhMucList(model);
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 return "admin/khuyenmai-list :: content";
             }
@@ -135,6 +166,7 @@ public class KhuyenMaiController {
             model.addAttribute("khuyenMai", new KhuyenMai());
             model.addAttribute("formAction", "/admin/khuyen-mai");
             model.addAttribute("message", "Thêm khuyến mãi thành công.");
+            attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
         redirect.addFlashAttribute("message", "Thêm khuyến mãi thành công.");
@@ -154,6 +186,7 @@ public class KhuyenMaiController {
                 && khuyenMaiService.existsByMaKhuyenMaiAndIdNot(khuyenMai.getMaKhuyenMai(), id)) {
             result.rejectValue("maKhuyenMai", "duplicate", "Mã khuyến mãi đã tồn tại.");
         }
+        validateLoaiGiam(khuyenMai, result);
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
             Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
@@ -169,6 +202,7 @@ public class KhuyenMaiController {
             if (q != null && !q.isBlank()) formAction += "&q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
             if (filterTrangThai != null && !filterTrangThai.isBlank()) formAction += "&filterTrangThai=" + URLEncoder.encode(filterTrangThai, StandardCharsets.UTF_8);
             model.addAttribute("formAction", formAction);
+            attachDanhMucList(model);
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 return "admin/khuyenmai-list :: content";
             }
@@ -188,6 +222,7 @@ public class KhuyenMaiController {
             model.addAttribute("khuyenMai", new KhuyenMai());
             model.addAttribute("formAction", "/admin/khuyen-mai");
             model.addAttribute("message", "Cập nhật khuyến mãi thành công.");
+            attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
         redirect.addFlashAttribute("message", "Cập nhật khuyến mãi thành công.");
@@ -218,6 +253,7 @@ public class KhuyenMaiController {
             model.addAttribute("khuyenMai", new KhuyenMai());
             model.addAttribute("formAction", "/admin/khuyen-mai");
             model.addAttribute("message", "Xóa khuyến mãi thành công.");
+            attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
         redirect.addFlashAttribute("message", "Xóa khuyến mãi thành công.");
@@ -248,6 +284,7 @@ public class KhuyenMaiController {
             model.addAttribute("khuyenMai", new KhuyenMai());
             model.addAttribute("formAction", "/admin/khuyen-mai");
             model.addAttribute("message", "Đã cập nhật trạng thái.");
+            attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
         redirect.addFlashAttribute("message", "Đã cập nhật trạng thái.");

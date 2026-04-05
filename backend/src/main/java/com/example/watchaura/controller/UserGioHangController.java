@@ -3,10 +3,15 @@ package com.example.watchaura.controller;
 import com.example.watchaura.dto.CartAjaxResponse;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.GioHangChiTietRequest;
+import com.example.watchaura.dto.KhuyenMaiPriceResult;
+import com.example.watchaura.entity.KhuyenMai;
+import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.service.GioHangChiTietService;
 import com.example.watchaura.service.GioHangService;
 import com.example.watchaura.service.GuestCartViewService;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -29,6 +36,8 @@ public class UserGioHangController {
     private final GioHangChiTietService gioHangChiTietService;
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final GuestCartViewService guestCartViewService;
+    private final KhuyenMaiService khuyenMaiService;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
 
     @GetMapping("/so-luong")
     @ResponseBody
@@ -265,11 +274,21 @@ public class UserGioHangController {
         if (cart == null || cart.isEmpty()) {
             return BigDecimal.ZERO;
         }
+        LocalDateTime now = LocalDateTime.now();
+        List<KhuyenMai> activeKm = khuyenMaiService.getActivePromotions(now);
         BigDecimal t = BigDecimal.ZERO;
         for (Map.Entry<Integer, Integer> e : cart.entrySet()) {
-            var sp = sanPhamChiTietRepository.findById(e.getKey()).orElse(null);
-            if (sp != null && sp.getGiaBan() != null && e.getValue() != null) {
-                t = t.add(sp.getGiaBan().multiply(BigDecimal.valueOf(e.getValue())));
+            if (e.getValue() == null) {
+                continue;
+            }
+            var opt = sanPhamChiTietRepository.findByIdWithDetails(e.getKey());
+            if (opt.isEmpty()) {
+                continue;
+            }
+            SanPhamChiTiet spct = opt.get();
+            KhuyenMaiPriceResult r = sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(spct, now, activeKm);
+            if (r.giaSauGiam() != null) {
+                t = t.add(r.giaSauGiam().multiply(BigDecimal.valueOf(e.getValue())));
             }
         }
         return t;
@@ -296,11 +315,17 @@ public class UserGioHangController {
         int count = guestCartTotalSoLuong(cart);
         BigDecimal tongTien = guestCartTongTien(cart);
 
-        var spOpt = sanPhamChiTietRepository.findById(sanPhamChiTietId);
+        var spOpt = sanPhamChiTietRepository.findByIdWithDetails(sanPhamChiTietId);
         Integer lineSoLuong = cart.get(sanPhamChiTietId);
         BigDecimal thanhTien = null;
-        if (spOpt.isPresent() && lineSoLuong != null && spOpt.get().getGiaBan() != null) {
-            thanhTien = spOpt.get().getGiaBan().multiply(BigDecimal.valueOf(lineSoLuong));
+        if (spOpt.isPresent() && lineSoLuong != null) {
+            SanPhamChiTiet spct = spOpt.get();
+            LocalDateTime now = LocalDateTime.now();
+            List<KhuyenMai> activeKm = khuyenMaiService.getActivePromotions(now);
+            KhuyenMaiPriceResult r = sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(spct, now, activeKm);
+            if (r.giaSauGiam() != null) {
+                thanhTien = r.giaSauGiam().multiply(BigDecimal.valueOf(lineSoLuong));
+            }
         }
         return ResponseEntity.ok(new CartAjaxResponse(true, null, tongTien, count, sanPhamChiTietId, lineSoLuong, thanhTien));
     }

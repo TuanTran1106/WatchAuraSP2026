@@ -50,6 +50,15 @@
             <div class="products-grid products__grid" id="productsGrid" th:if="${list != null and !list.isEmpty()}">
                 <div th:each="sp : ${list}" class="product-card" th:attr="data-id=${sp.id}">
                     <div class="product-image-container">
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'PHAN_TRAM' and sp.phanTramGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'TIEN' and sp.soTienGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.soTienGiamHienThi, 0, 'COMMA', 0, 'POINT') + '₫'}">-50.000₫</span>
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and (sp.loaiGiamHienThi == null or sp.loaiGiamHienThi == '') and sp.phanTramGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
                         <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}"
                             th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}"
                             th:alt="${sp.tenSanPham}" class="product-image"
@@ -64,7 +73,16 @@
                             <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
                             <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm</div>
                             <div class="product-footer">
-                                <div class="product-price" th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
+                                <th:block th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}">
+                                    <div class="product-price-row">
+                                        <span class="product-price product-price--original"
+                                              th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                        <span class="product-price product-price--sale"
+                                              th:text="${sp.giaSauKhuyenMai != null ? #numbers.formatDecimal(sp.giaSauKhuyenMai, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                    </div>
+                                </th:block>
+                                <div th:unless="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}" class="product-price"
+                                     th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
                             </div>
                         </div>
                     </a>

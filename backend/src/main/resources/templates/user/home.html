@@ -85,6 +85,15 @@
                 <div th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="no-products">Chưa có sản phẩm nào!</div>
                 <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
                     <div class="product-image-container">
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'PHAN_TRAM' and sp.phanTramGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'TIEN' and sp.soTienGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.soTienGiamHienThi, 0, 'COMMA', 0, 'POINT') + '₫'}">-50.000₫</span>
+                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and (sp.loaiGiamHienThi == null or sp.loaiGiamHienThi == '') and sp.phanTramGiamHienThi != null}"
+                              class="product-card__badge-sale"
+                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
                         <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}" th:alt="${sp.tenSanPham}" class="product-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
                         <img th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E" alt="No Image" class="product-image">
                     </div>
@@ -94,7 +103,16 @@
                             <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
                             <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm</div>
                             <div class="product-footer">
-                                <div class="product-price" th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
+                                <th:block th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}">
+                                    <div class="product-price-row">
+                                        <span class="product-price product-price--original"
+                                              th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                        <span class="product-price product-price--sale"
+                                              th:text="${sp.giaSauKhuyenMai != null ? #numbers.formatDecimal(sp.giaSauKhuyenMai, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                    </div>
+                                </th:block>
+                                <div th:unless="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}" class="product-price"
+                                     th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
                             </div>
                         </div>
                     </a>
@@ -113,8 +131,8 @@
                         <h3 class="promo-card__title" th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
                         <p class="promo-card__desc" th:text="${km.moTa}">Mô tả</p>
                         <p class="promo-card__value">
-                            <span th:if="${km.loaiGiam == 'PHAN_TRAM'}" th:text="'Giảm ' + ${km.giaTriGiam} + '%'">Giảm %</span>
-                            <span th:if="${km.loaiGiam == 'TIEN'}" th:text="'Giảm ' + ${#numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giảm tiền</span>
+                            <span th:if="${km.loaiGiam == 'PHAN_TRAM' or km.loaiGiam == 'PERCENT'}" th:text="'Giảm ' + ${km.giaTriGiam} + '%'">Giảm %</span>
+                            <span th:if="${km.loaiGiam == 'TIEN' or km.loaiGiam == 'FIXED'}" th:text="'Giảm ' + ${#numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giảm tiền</span>
                         </p>
                         <p class="promo-card__date" th:if="${km.ngayKetThuc != null}" th:text="|Đến hết ${#temporals.format(km.ngayKetThuc, 'dd/MM/yyyy')}|">Hết hạn</p>
                     </div>

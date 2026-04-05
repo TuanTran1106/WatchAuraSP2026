@@ -8,12 +8,17 @@ import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.GioHangChiTietRepository;
 import com.example.watchaura.repository.GioHangRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
+import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.service.GioHangChiTietService;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
+import com.example.watchaura.util.GioHangChiTietPromoUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +30,8 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
     private final GioHangChiTietRepository gioHangChiTietRepository;
     private final GioHangRepository gioHangRepository;
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+    private final KhuyenMaiService khuyenMaiService;
 
     @Override
     public List<GioHangChiTietDTO> getAll() {
@@ -42,8 +49,10 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
 
     @Override
     public List<GioHangChiTietDTO> getByGioHangId(Integer gioHangId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<KhuyenMai> active = khuyenMaiService.getActivePromotions(now);
         return gioHangChiTietRepository.findByGioHangIdWithSanPhamDetails(gioHangId).stream()
-                .map(this::convertToDTO)
+                .map(line -> convertToDTO(line, now, active))
                 .collect(Collectors.toList());
     }
 
@@ -81,7 +90,7 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
             }
 
             existing.setSoLuong(soLuongMoi);
-            return convertToDTO(gioHangChiTietRepository.save(existing));
+            return convertToDTO(gioHangChiTietRepository.save(existing), null, null);
         } else {
             // Tạo mới
             GioHangChiTiet chiTiet = new GioHangChiTiet();
@@ -89,7 +98,7 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
             chiTiet.setSanPhamChiTiet(sanPhamChiTiet);
             chiTiet.setSoLuong(request.getSoLuong());
             
-            return convertToDTO(gioHangChiTietRepository.save(chiTiet));
+            return convertToDTO(gioHangChiTietRepository.save(chiTiet), null, null);
         }
     }
 
@@ -107,7 +116,7 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
 
         chiTiet.setSoLuong(request.getSoLuong());
         
-        return convertToDTO(gioHangChiTietRepository.save(chiTiet));
+        return convertToDTO(gioHangChiTietRepository.save(chiTiet), null, null);
     }
 
     @Override
@@ -126,33 +135,46 @@ public class GioHangChiTietServiceImpl implements GioHangChiTietService {
     }
 
     private GioHangChiTietDTO convertToDTO(GioHangChiTiet chiTiet) {
+        return convertToDTO(chiTiet, null, null);
+    }
+
+    private GioHangChiTietDTO convertToDTO(
+            GioHangChiTiet chiTiet,
+            LocalDateTime promoNow,
+            List<KhuyenMai> chuongTrinhDangChay) {
         GioHangChiTietDTO dto = new GioHangChiTietDTO();
         dto.setId(chiTiet.getId());
         dto.setGioHangId(chiTiet.getGioHang().getId());
 
-        if (chiTiet.getSanPhamChiTiet() != null) {
-            dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
-            dto.setGiaBan(chiTiet.getSanPhamChiTiet().getGiaBan());
+        SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
+        if (spct != null) {
+            dto.setSanPhamChiTietId(spct.getId());
+            dto.setGiaBan(spct.getGiaBan());
 
-            Integer soLuongTon = chiTiet.getSanPhamChiTiet().getSoLuongTon() != null
-                    ? chiTiet.getSanPhamChiTiet().getSoLuongTon() : 0;
-            Integer soLuongDaDat = chiTiet.getSanPhamChiTiet().getSoLuongDaDat() != null
-                    ? chiTiet.getSanPhamChiTiet().getSoLuongDaDat() : 0;
+            Integer soLuongTon = spct.getSoLuongTon() != null ? spct.getSoLuongTon() : 0;
+            Integer soLuongDaDat = spct.getSoLuongDaDat() != null ? spct.getSoLuongDaDat() : 0;
             dto.setSoLuongTon(soLuongTon);
             dto.setSoLuongKhaDung(soLuongTon - soLuongDaDat);
 
-            if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
-                dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
-                dto.setMaSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getMaSanPham());
-                dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
-                dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
+            if (spct.getSanPham() != null) {
+                dto.setIdSanPham(spct.getSanPham().getId());
+                dto.setMaSanPham(spct.getSanPham().getMaSanPham());
+                dto.setTenSanPham(spct.getSanPham().getTenSanPham());
+                dto.setHinhAnh(spct.getSanPham().getHinhAnh());
             }
-            dto.setMoTaBienThe(buildMoTaBienThe(chiTiet.getSanPhamChiTiet()));
+            dto.setMoTaBienThe(buildMoTaBienThe(spct));
         }
 
         dto.setSoLuong(chiTiet.getSoLuong());
 
-        if (dto.getGiaBan() != null && dto.getSoLuong() != null) {
+        LocalDateTime now = promoNow != null ? promoNow : LocalDateTime.now();
+        List<KhuyenMai> active = chuongTrinhDangChay != null
+                ? chuongTrinhDangChay
+                : khuyenMaiService.getActivePromotions(now);
+        if (spct != null) {
+            GioHangChiTietPromoUtil.applySanPhamKhuyenMai(
+                    sanPhamChiTietKhuyenMaiService, dto, spct, now, active);
+        } else if (dto.getGiaBan() != null && dto.getSoLuong() != null) {
             dto.setThanhTien(dto.getGiaBan().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         } else {
             dto.setThanhTien(BigDecimal.ZERO);

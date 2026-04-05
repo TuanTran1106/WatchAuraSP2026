@@ -1022,35 +1022,38 @@
                                     <span class="ms-2 text-muted">(Đánh giá của khách hàng)</span>
                                 </div>
 
-                                <!-- Price Section -->
+                                <!-- Price Section: luôn có cả 2 khối để JS đổi biến thể cập nhật đúng KM -->
                                 <div class="price-container">
-                                    <!-- If there's a promotion -->
-                                    <div th:if="${coKhuyenMai}">
+                                    <div id="priceBlockPromo" th:attr="style=${coKhuyenMai} ? '' : 'display:none'">
                                         <div class="d-flex align-items-center flex-wrap">
-                                            <span class="original-price"
+                                            <span class="original-price" id="priceLblGoc"
                                                 th:text="${#numbers.formatDecimal(giaGoc, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
-                                            <span class="promotion-price"
+                                            <span class="promotion-price" id="priceLblSau"
                                                 th:text="${#numbers.formatDecimal(giaKhuyenMai, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
-                                            <span class="discount-badge">
-                                                -<span
-                                                    th:text="${#numbers.formatDecimal(phanTramGiam, 0, 'COMMA', 0, 'POINT')}"></span>%
+                                            <span id="discountBadgeEl" class="discount-badge"
+                                                  th:attr="style=${coKhuyenMai} ? '' : 'display:none'">
+                                                <th:block th:if="${coKhuyenMai and loaiGiamHienThi == 'TIEN'}">-<span
+                                                        th:text="${#numbers.formatDecimal(soTienGiam, 0, 'COMMA', 0, 'POINT')}"></span> ₫</th:block>
+                                                <th:block th:if="${coKhuyenMai and loaiGiamHienThi == 'PHAN_TRAM'}">-<span
+                                                        th:text="${#numbers.formatDecimal(phanTramGiam, 0, 'COMMA', 0, 'POINT')}"></span>%</th:block>
+                                                <th:block th:if="${coKhuyenMai and (loaiGiamHienThi == null or loaiGiamHienThi == '')}">-<span
+                                                        th:text="${#numbers.formatDecimal(phanTramGiam, 0, 'COMMA', 0, 'POINT')}"></span>%</th:block>
                                             </span>
                                         </div>
-                                        <div class="promotion-name" th:text="${tenKhuyenMai}">
+                                        <div class="promotion-name" id="priceTenKmLbl" th:text="${tenKhuyenMai}">
                                         </div>
-                                        <div class="savings-info">
+                                        <div class="savings-info" id="priceSavingsRow">
                                             <i class="fas fa-tags me-2"></i>
                                             <span class="savings-amount">
-                                                Tiết kiệm: <span
+                                                Tiết kiệm: <span id="priceSavingsAmt"
                                                     th:text="${#numbers.formatDecimal(soTienGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
                                             </span>
                                         </div>
                                     </div>
 
-                                    <!-- If no promotion -->
-                                    <div th:unless="${coKhuyenMai}">
+                                    <div id="priceBlockRegular" th:attr="style=${coKhuyenMai} ? 'display:none' : ''">
                                         <div class="price1">
-                                            <span
+                                            <span id="priceRegularLbl"
                                                 th:text="${chiTiet != null ? #numbers.formatDecimal(chiTiet.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}"></span>
                                         </div>
                                     </div>
@@ -1118,6 +1121,7 @@
                                     </h5>
                                     <div class="variants-list">
                                         <div th:each="variant, iterStat : ${danhSachBienThe}" class="variant-item"
+                                            th:with="vp=${variant.id != null and variantPriceBySpctId != null ? variantPriceBySpctId.get(variant.id) : null}"
                                             th:classappend="${iterStat.first ? 'active' : ''}"
                                             th:data-variant-id="${variant.id}"
                                             th:data-mau-sac="${variant.mauSac != null ? variant.mauSac.tenMauSac : ''}"
@@ -1128,7 +1132,13 @@
                                             th:data-do-chiu-nuoc="${variant.doChiuNuoc != null ? variant.doChiuNuoc : 0}"
                                             th:data-be-rong-day="${variant.beRongDay != null ? variant.beRongDay : 0}"
                                             th:data-trong-luong="${variant.trongLuong != null ? variant.trongLuong : 0}"
-                                            th:data-gia-ban="${variant.giaBan}"
+                                            th:data-gia-goc="${vp != null ? vp.giaGoc() : variant.giaBan}"
+                                            th:data-gia-sau="${vp != null ? vp.giaSau() : variant.giaBan}"
+                                            th:data-co-km="${vp != null and vp.coKhuyenMai()}"
+                                            th:data-loai-giam="${vp != null ? vp.loaiGiam() : ''}"
+                                            th:data-so-tien-giam="${vp != null ? vp.soTienGiam() : 0}"
+                                            th:data-phan-tram="${vp != null ? vp.phanTram() : 0}"
+                                            th:data-ten-km="${vp != null ? vp.tenChuongTrinh() : ''}"
                                             th:data-so-luong-ton="${variant.soLuongTon}"
                                             th:data-so-luong-kha-dung="${variant.soLuongKhaDung != null ? variant.soLuongKhaDung : 0}"
                                             th:id="'variant-' + ${variant.id}" onclick="selectVariant(this)">
@@ -1143,7 +1153,7 @@
                                                     th:text="${variant.kichThuoc.tenKichThuoc}"></span>
                                             </div>
                                             <div class="variant-price"
-                                                th:text="${#numbers.formatDecimal(variant.giaBan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                                th:text="${vp != null ? (#numbers.formatDecimal(vp.giaSau(), 0, 'COMMA', 0, 'POINT') + ' ₫') : (#numbers.formatDecimal(variant.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫')}">
                                             </div>
                                             <div class="variant-stock"
                                                 th:classappend="${variant.soLuongKhaDung > 10 ? 'stock-available' : (variant.soLuongKhaDung > 0 ? 'stock-low' : 'stock-unavailable')}">
@@ -1608,21 +1618,56 @@
                         const doChiuNuoc = element.getAttribute('data-do-chiu-nuoc') || '0';
                         const beRongDay = element.getAttribute('data-be-rong-day') || '0';
                         const trongLuong = element.getAttribute('data-trong-luong') || '0';
-                        const giaBan = parseFloat(element.getAttribute('data-gia-ban'));
+                        const giaGoc = parseFloat(element.getAttribute('data-gia-goc'));
+                        const giaSau = parseFloat(element.getAttribute('data-gia-sau'));
+                        const coKm = element.getAttribute('data-co-km') === 'true';
+                        const loaiGiam = element.getAttribute('data-loai-giam') || '';
+                        const soTienGiamV = parseFloat(element.getAttribute('data-so-tien-giam') || '0');
+                        const phanTramV = parseFloat(element.getAttribute('data-phan-tram') || '0');
+                        const tenKm = element.getAttribute('data-ten-km') || '';
                         const soLuongTon = parseInt(element.getAttribute('data-so-luong-ton'));
                         const soLuongKhaDung = parseInt(element.getAttribute('data-so-luong-kha-dung') || '0');
 
-                        console.log('Selected variant:', variantId, giaBan, soLuongKhaDung);
+                        console.log('Selected variant:', variantId, giaGoc, giaSau, coKm);
 
                         // Update hidden input with selected variant ID
                         document.getElementById('hiddenSpctId').value = variantId;
 
-                        // Update price (cả giá thường và giá khuyến mãi)
-                        var priceEl = document.querySelector('.price1 span');
-                        var promoEl = document.querySelector('.promotion-price');
-                        var formatted = formatCurrency(giaBan) + ' ₫';
-                        if (priceEl) priceEl.textContent = formatted;
-                        if (promoEl) promoEl.textContent = formatted;
+                        var promoBlock = document.getElementById('priceBlockPromo');
+                        var regBlock = document.getElementById('priceBlockRegular');
+                        if (promoBlock) promoBlock.style.display = coKm ? '' : 'none';
+                        if (regBlock) regBlock.style.display = coKm ? 'none' : '';
+
+                        var lblGoc = document.getElementById('priceLblGoc');
+                        var lblSau = document.getElementById('priceLblSau');
+                        if (lblGoc) lblGoc.textContent = formatCurrency(giaGoc) + ' ₫';
+                        if (lblSau) lblSau.textContent = formatCurrency(giaSau) + ' ₫';
+
+                        var regLbl = document.getElementById('priceRegularLbl');
+                        if (regLbl) regLbl.textContent = formatCurrency(giaSau) + ' ₫';
+
+                        var badge = document.getElementById('discountBadgeEl');
+                        if (badge) {
+                            badge.style.display = coKm ? '' : 'none';
+                            if (coKm) {
+                                if (loaiGiam === 'TIEN') {
+                                    badge.textContent = '-' + formatCurrency(soTienGiamV) + ' ₫';
+                                } else {
+                                    badge.textContent = '-' + formatPctDisplay(phanTramV) + '%';
+                                }
+                            } else {
+                                badge.textContent = '';
+                            }
+                        }
+
+                        var tenEl = document.getElementById('priceTenKmLbl');
+                        if (tenEl) tenEl.textContent = coKm ? tenKm : '';
+
+                        var savAmt = document.getElementById('priceSavingsAmt');
+                        if (savAmt) savAmt.textContent = coKm ? (formatCurrency(soTienGiamV) + ' ₫') : '';
+
+                        var savRow = document.getElementById('priceSavingsRow');
+                        if (savRow) savRow.style.display = coKm ? '' : 'none';
 
                         // Update stock - hiển thị số lượng khả dụng (đã trừ phần giữ hàng)
                         const remainingStock = document.getElementById('remainingStock');
@@ -1671,6 +1716,16 @@
                     function formatCurrency(value) {
                         if (isNaN(value)) return '0';
                         return new Intl.NumberFormat('vi-VN').format(Math.round(value));
+                    }
+
+                    function formatPctDisplay(value) {
+                        if (isNaN(value)) return '0';
+                        var t = Math.round(value * 100) / 100;
+                        var s = String(t);
+                        if (s.indexOf('.') >= 0) {
+                            s = s.replace('.', ',').replace(/,?0+$/, '');
+                        }
+                        return s;
                     }
 
                     function updateSpecsGrid(specs) {

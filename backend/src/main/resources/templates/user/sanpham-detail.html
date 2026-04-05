@@ -1,4 +1,15 @@
 <div th:fragment="content" class="product-detail-page" th:with="sp=${sp}">
+    <style>
+        .price-display { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+        .price-main--original { text-decoration: line-through; color: #999; font-size: 0.95rem; }
+        .price-main--sale { font-size: 1.35rem; font-weight: 700; }
+        .price-main--sale--promo { color: #e74c3c; }
+        .price-main--sale--regular { color: #333; font-weight: 600; }
+        .variant-box__price-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.2; }
+        .variant-box__price-goc { text-decoration: line-through; color: #94a3b8; font-size: 0.78rem; }
+        .variant-box__price-sau { font-weight: 600; color: #e74c3c; font-size: 0.9rem; }
+        .variant-box__price-sau.variant-box__price-sau--plain { color: #333; }
+    </style>
     <div class="container">
         <nav class="breadcrumb-wrap" aria-label="breadcrumb">
             <a th:href="@{/}">Trang chủ</a>
@@ -33,10 +44,18 @@
                         <i class="fas fa-star"></i>
                         <span class="ms-2 text-muted">(Đánh giá của khách hàng)</span>
                     </div>
-                    <div class="price-container">
+                    <div class="price-container"
+                         th:with="v0=${variants != null and !variants.isEmpty() ? variants[0] : null},
+                                  vp0=${v0 != null and variantPriceBySpctId != null and v0.id != null ? variantPriceBySpctId.get(v0.id) : null}">
                         <div class="price1">
-                            <span class="price-value" th:if="${variants != null and !variants.isEmpty() and variants[0].giaBan != null}" th:text="${#numbers.formatDecimal(variants[0].giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</span>
-                            <span class="price-value" th:if="${variants == null or variants.isEmpty() or variants[0].giaBan == null}">Liên hệ để biết giá</span>
+                            <div class="price-display" id="priceDisplayMain">
+                                <span class="price-main--original" id="priceMainGoc"
+                                      th:style="${(vp0 != null and vp0.coKhuyenMai()) ? '' : 'display:none'}"
+                                      th:text="${vp0 != null and vp0.coKhuyenMai() and vp0.giaGoc() != null ? #numbers.formatDecimal(vp0.giaGoc(), 0, 'COMMA', 0, 'POINT') + ' ₫' : ''}">0 ₫</span>
+                                <span class="price-main--sale" id="priceMainSau"
+                                      th:classappend="${(vp0 != null and vp0.coKhuyenMai()) ? ' price-main--sale--promo' : ' price-main--sale--regular'}"
+                                      th:text="${v0 == null ? 'Liên hệ để biết giá' : ((vp0 != null and vp0.giaSau() != null) ? (#numbers.formatDecimal(vp0.giaSau(), 0, 'COMMA', 0, 'POINT') + ' ₫') : ((v0.giaBan != null) ? (#numbers.formatDecimal(v0.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫') : 'Liên hệ để biết giá'))}">0 ₫</span>
+                            </div>
                         </div>
                     </div>
         <div class="mb-3" th:with="v0=${variants != null and !variants.isEmpty() ? variants[0] : null},
@@ -66,9 +85,13 @@
                         <div class="variants-grid" role="group" aria-label="Chọn phiên bản sản phẩm">
                             <div th:each="v, iterStat : ${variants}"
                                  class="variant-box"
-                                 th:classappend="${iterStat.first ? 'variant-box--active' : ''} + ${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? ' variant-box--disabled' : ''}"
+                                 th:with="vp=${variantPriceBySpctId != null and v.id != null ? variantPriceBySpctId.get(v.id) : null}"
+                                 th:classappend="${(iterStat.first ? 'variant-box--active' : '') + ((v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? ' variant-box--disabled' : '')}"
                                  th:attr="data-variant-id=${v.id},
                                           data-gia-ban=${v.giaBan != null ? v.giaBan : ''},
+                                          data-gia-goc=${vp != null and vp.giaGoc() != null ? vp.giaGoc() : (v.giaBan != null ? v.giaBan : '')},
+                                          data-gia-sau=${vp != null and vp.giaSau() != null ? vp.giaSau() : (v.giaBan != null ? v.giaBan : '')},
+                                          data-co-km=${vp != null and vp.coKhuyenMai()},
                                           data-so-luong-ton=${v.soLuongTon != null ? v.soLuongTon : 0},
                                           data-so-luong-kha-dung=${v.soLuongKhaDung != null ? v.soLuongKhaDung : 0},
                                           data-mau-sac=${v.tenMauSac},
@@ -86,12 +109,16 @@
                                     <span th:if="${v.tenMauSac != null}" th:text="${v.tenMauSac}">Màu</span>
                                     <span th:if="${v.tenMauSac != null and v.tenKichThuoc != null}"> / </span>
                                     <span th:if="${v.tenKichThuoc != null}" th:text="${v.tenKichThuoc}">Size</span>
-                                    <span th:if="${v.tenMauSac == null and v.tenKichThuoc == null}" th:text="'Phiên bản ' + ${iterStat.count}">Phiên bản</span>
+                                    <span th:if="${v.tenMauSac == null and v.tenKichThuoc == null}" th:text="|Phiên bản ${iterStat.count}|">Phiên bản</span>
                                 </span>
-                                <span class="variant-box__price" th:text="${v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Liên hệ'}">Giá</span>
+                                <span class="variant-box__price variant-box__price-row" th:if="${vp != null and vp.coKhuyenMai()}">
+                                    <span class="variant-box__price-goc" th:text="${vp.giaGoc() != null ? #numbers.formatDecimal(vp.giaGoc(), 0, 'COMMA', 0, 'POINT') + ' ₫' : ''}"></span>
+                                    <span class="variant-box__price-sau" th:text="${vp.giaSau() != null ? #numbers.formatDecimal(vp.giaSau(), 0, 'COMMA', 0, 'POINT') + ' ₫' : ''}">0 ₫</span>
+                                </span>
+                                <span class="variant-box__price variant-box__price-sau variant-box__price-sau--plain" th:if="${vp == null or vp.coKhuyenMai() == false}" th:text="${v.giaBan != null ? #numbers.formatDecimal(v.giaBan, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Liên hệ'}">Giá</span>
                                 <span class="variant-box__stock"
                                       th:classappend="${v.soLuongKhaDung != null and v.soLuongKhaDung > 10 ? 'stock-ok' : (v.soLuongKhaDung != null and v.soLuongKhaDung > 0 ? 'stock-low' : 'stock-none')}">
-                                    <span th:if="${v.soLuongKhaDung != null and v.soLuongKhaDung > 0}" th:text="'Còn ' + ${v.soLuongKhaDung}">Còn</span>
+                                    <span th:if="${v.soLuongKhaDung != null and v.soLuongKhaDung > 0}" th:text="|Còn ${v.soLuongKhaDung}|">Còn</span>
                                     <span th:if="${v.soLuongKhaDung == null or v.soLuongKhaDung == 0}">Hết hàng</span>
                                 </span>
                             </div>
@@ -289,20 +316,34 @@
             box.classList.add('variant-box--active');
 
             var hid = root.querySelector('.input-variant-id');
-            var pEl = root.querySelector('.price-value');
+            var gocEl = root.querySelector('#priceMainGoc');
+            var sauEl = root.querySelector('#priceMainSau');
             var sRem = root.querySelector('.stock-remaining');
             var qIn = root.querySelector('.quantity-input');
             var btn = root.querySelector('#btnAddToCart');
             var statusEl = root.querySelector('#mainStockStatus');
 
             var id = box.getAttribute('data-variant-id');
-            var giaBan = box.getAttribute('data-gia-ban');
+            var giaGoc = parseFloat(box.getAttribute('data-gia-goc') || '0') || 0;
+            var giaSau = parseFloat(box.getAttribute('data-gia-sau') || box.getAttribute('data-gia-ban') || '0') || 0;
+            var coKm = box.getAttribute('data-co-km') === 'true';
             var soLuong = box.getAttribute('data-so-luong-kha-dung') || '0';
 
             if (hid) hid.value = id || '';
 
-            if (pEl) {
-                pEl.textContent = (giaBan && parseFloat(giaBan) > 0) ? formatNumber(Math.round(parseFloat(giaBan))) + ' ₫' : 'Liên hệ để biết giá';
+            if (gocEl && sauEl) {
+                if (coKm && giaSau > 0 && giaGoc > giaSau) {
+                    gocEl.style.display = '';
+                    gocEl.textContent = formatNumber(Math.round(giaGoc)) + ' ₫';
+                    sauEl.textContent = formatNumber(Math.round(giaSau)) + ' ₫';
+                    sauEl.classList.add('price-main--sale--promo');
+                    sauEl.classList.remove('price-main--sale--regular');
+                } else {
+                    gocEl.style.display = 'none';
+                    sauEl.textContent = giaSau > 0 ? formatNumber(Math.round(giaSau)) + ' ₫' : 'Liên hệ để biết giá';
+                    sauEl.classList.remove('price-main--sale--promo');
+                    sauEl.classList.add('price-main--sale--regular');
+                }
             }
 
             var maxStock = parseInt(soLuong, 10) || 0;

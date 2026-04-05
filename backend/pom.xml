@@ -65,11 +65,6 @@
             <version>6.4.2</version>
         </dependency>
 
-        <!-- ===== JWT ===== -->
-        <!--
-            jjwt 0.9.1 yêu cầu javax.xml.bind (JAXB) — không có sẵn trên Java 17.
-            Thêm jaxb-api để tránh NoClassDefFoundError khi parse/generate token.
-        -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
@@ -110,28 +105,7 @@
         <!-- ===== Dev tools ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-
             <artifactId>spring-boot-devtools</artifactId>
-
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <!-- Jackson Hibernate6 module for handling lazy loading -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-hibernate6</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
-            <version>6.4.2</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>12.8.1.jre11</version>
-
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
@@ -141,12 +115,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- Spring Mail for sending emails -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
         <!-- Spring Mail for sending emails -->

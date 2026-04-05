@@ -1,10 +1,17 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.DanhGiaDTO;
+import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.dto.SanPhamChiTietDTO;
 import com.example.watchaura.dto.SanPhamDTO;
+import com.example.watchaura.dto.VariantPriceView;
+import com.example.watchaura.entity.KhuyenMai;
+import com.example.watchaura.entity.SanPhamChiTiet;
+import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.service.DanhGiaService;
 import com.example.watchaura.service.DanhMucService;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietService;
 import com.example.watchaura.service.SanPhamService;
 import com.example.watchaura.service.ThuongHieuService;
@@ -21,7 +28,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,6 +44,9 @@ public class UserSanPhamController {
 
     private final SanPhamService sanPhamService;
     private final SanPhamChiTietService sanPhamChiTietService;
+    private final SanPhamChiTietRepository sanPhamChiTietRepository;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+    private final KhuyenMaiService khuyenMaiService;
     private final DanhGiaService danhGiaService;
     private final DanhMucService danhMucService;
     private final ThuongHieuService thuongHieuService;
@@ -173,10 +185,23 @@ public class UserSanPhamController {
                     .orElse(0);
         }
 
+        LocalDateTime promoNow = LocalDateTime.now();
+        List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(promoNow);
+        Map<Integer, VariantPriceView> variantPriceBySpctId = new LinkedHashMap<>();
+        for (SanPhamChiTiet bt : sanPhamChiTietRepository.findBySanPhamId(id)) {
+            if (bt.getId() == null) {
+                continue;
+            }
+            KhuyenMaiPriceResult vr = sanPhamChiTietKhuyenMaiService
+                    .resolveBestForCartOrOrderLine(bt, promoNow, khuyenMaiDangChay);
+            variantPriceBySpctId.put(bt.getId(), VariantPriceView.from(vr));
+        }
+
         model.addAttribute("title", sp.getTenSanPham() + " - WatchAura");
         model.addAttribute("content", "user/sanpham-detail :: content");
         model.addAttribute("sp", sp);
         model.addAttribute("variants", variants);
+        model.addAttribute("variantPriceBySpctId", variantPriceBySpctId);
         model.addAttribute("tongSoLuong", tongSoLuong);
         model.addAttribute("danhMucList", danhMucService.getAll());
         model.addAttribute("thuongHieuList", thuongHieuService.getAll());

@@ -19,7 +19,11 @@ public class GioHangChiTietDTO {
     private String maSanPham;
     private String tenSanPham;
     private String hinhAnh;
+    /** Đơn giá sau KM (dùng tính thành tiền). */
     private BigDecimal giaBan;
+    /** Giá niêm yết trước KM (hiển thị gạch ngang khi có KM). */
+    private BigDecimal giaGoc;
+    private String tenKhuyenMai;
     private Integer soLuong;
     /** Số lượng tồn kho (để hiển thị giới hạn trên UI) */
     private Integer soLuongTon;

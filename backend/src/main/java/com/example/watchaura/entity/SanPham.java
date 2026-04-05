@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -61,4 +62,21 @@ public class SanPham {
 
     @Column(name = "ngay_tao")
     private LocalDateTime ngayTao;
+
+    /** PHAN_TRAM / PERCENT / % hoặc TIEN / TIEN_MAT / FIXED — cùng quy ước với {@link KhuyenMai}. */
+    @Column(name = "loai_khuyen_mai", length = 20)
+    private String loaiKhuyenMai;
+
+    @Column(name = "gia_tri_khuyen_mai", precision = 18, scale = 2)
+    private BigDecimal giaTriKhuyenMai;
+
+    @Column(name = "ngay_bat_dau_khuyen_mai")
+    private LocalDateTime ngayBatDauKhuyenMai;
+
+    @Column(name = "ngay_ket_thuc_khuyen_mai")
+    private LocalDateTime ngayKetThucKhuyenMai;
+
+    /** Bật/tắt khuyến mãi cấp sản phẩm (độc lập với trang_thai bán hàng). */
+    @Column(name = "trang_thai_khuyen_mai")
+    private Boolean trangThaiKhuyenMai;
 }

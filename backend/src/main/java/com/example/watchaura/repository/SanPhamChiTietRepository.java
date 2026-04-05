@@ -17,6 +17,7 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
 
     @Query("SELECT DISTINCT spct FROM SanPhamChiTiet spct " +
             "LEFT JOIN FETCH spct.sanPham sp " +
+            "LEFT JOIN FETCH sp.danhMuc " +
             "LEFT JOIN FETCH sp.loaiMay " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +

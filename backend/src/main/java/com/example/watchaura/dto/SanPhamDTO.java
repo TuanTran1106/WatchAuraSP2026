@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -24,8 +25,27 @@ public class SanPhamDTO {
     private String tenDanhMuc;
     private String phongCach;
     private Boolean trangThai;
-    /** Giá bán (thấp nhất trong các biến thể), null nếu chưa có chi tiết */
+    /** Giá bán (thấp nhất trong các biến thể — giá gốc hiển thị), null nếu chưa có chi tiết */
     private BigDecimal giaBan;
+    /** Giá sau khuyến mãi (cấp sản phẩm hoặc KM biến thể — giá tốt nhất trên mức giá gốc trên), null nếu không có KM hợp lệ */
+    private BigDecimal giaSauKhuyenMai;
+    /** Phần trăm giảm để hiển thị badge (0–100), null khi không có KM */
+    private BigDecimal phanTramGiamHienThi;
+    /**
+     * {@code PHAN_TRAM} hoặc {@code TIEN}: loại KM đang hiển thị trên card (tránh hiển thị % khi thực tế là giảm tiền).
+     */
+    private String loaiGiamHienThi;
+    /** Số tiền giảm mỗi đơn vị (VNĐ), dùng cho badge và tiện so khớp với chi tiết/giỏ. */
+    private BigDecimal soTienGiamHienThi;
+    private Boolean coKhuyenMaiHopLe;
+    /**
+     * Cấu hình KM gắn {@link com.example.watchaura.entity.SanPham} (admin / API; không phải giá sau giảm hiển thị).
+     */
+    private String loaiKhuyenMai;
+    private BigDecimal giaTriKhuyenMai;
+    private LocalDateTime ngayBatDauKhuyenMai;
+    private LocalDateTime ngayKetThucKhuyenMai;
+    private Boolean trangThaiKhuyenMai;
     /** Tổng số lượng tồn của tất cả biến thể */
     private Integer soLuongTon;
 

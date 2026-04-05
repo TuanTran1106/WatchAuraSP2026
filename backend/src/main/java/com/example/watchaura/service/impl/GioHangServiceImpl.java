@@ -10,7 +10,11 @@ import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.repository.GioHangChiTietRepository;
 import com.example.watchaura.repository.GioHangRepository;
 import com.example.watchaura.repository.KhachHangRepository;
+import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.service.GioHangService;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
+import com.example.watchaura.util.GioHangChiTietPromoUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,8 @@ public class GioHangServiceImpl implements GioHangService {
     private final GioHangRepository gioHangRepository;
     private final GioHangChiTietRepository gioHangChiTietRepository;
     private final KhachHangRepository khachHangRepository;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+    private final KhuyenMaiService khuyenMaiService;
 
     @Override
     public List<GioHangDTO> getAll() {
@@ -126,53 +132,58 @@ public class GioHangServiceImpl implements GioHangService {
         dto.setTrangThai(gioHang.getTrangThai());
         dto.setNgayTao(gioHang.getNgayTao());
 
-        // Lấy danh sách items
         List<GioHangChiTiet> items = gioHangChiTietRepository.findByGioHangIdWithSanPhamDetails(gioHang.getId());
+        LocalDateTime promoNow = LocalDateTime.now();
+        List<KhuyenMai> activeKhuyenMai = khuyenMaiService.getActivePromotions(promoNow);
         List<GioHangChiTietDTO> itemDTOs = items.stream()
-                .map(this::convertChiTietToDTO)
+                .map(line -> convertChiTietToDTO(line, promoNow, activeKhuyenMai))
                 .collect(Collectors.toList());
         dto.setItems(itemDTOs);
 
-        // Tính tổng tiền
-        BigDecimal tongTien = items.stream()
-                .map(item -> {
-                    if (item.getSanPhamChiTiet() != null && item.getSanPhamChiTiet().getGiaBan() != null && item.getSoLuong() != null) {
-                        return item.getSanPhamChiTiet().getGiaBan()
-                                .multiply(BigDecimal.valueOf(item.getSoLuong()));
-                    }
-                    return BigDecimal.ZERO;
-                })
+        BigDecimal tongTien = itemDTOs.stream()
+                .map(i -> i.getThanhTien() != null ? i.getThanhTien() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         dto.setTongTien(tongTien);
 
         return dto;
     }
 
-    private GioHangChiTietDTO convertChiTietToDTO(GioHangChiTiet chiTiet) {
+    private GioHangChiTietDTO convertChiTietToDTO(
+            GioHangChiTiet chiTiet,
+            LocalDateTime promoNow,
+            List<KhuyenMai> chuongTrinhDangChay) {
         GioHangChiTietDTO dto = new GioHangChiTietDTO();
         dto.setId(chiTiet.getId());
         dto.setGioHangId(chiTiet.getGioHang().getId());
-        
-        if (chiTiet.getSanPhamChiTiet() != null) {
-            dto.setSanPhamChiTietId(chiTiet.getSanPhamChiTiet().getId());
-            dto.setGiaBan(chiTiet.getSanPhamChiTiet().getGiaBan());
-            dto.setSoLuongTon(chiTiet.getSanPhamChiTiet().getSoLuongTon());
-            dto.setSoLuongKhaDung(chiTiet.getSanPhamChiTiet().getSoLuongKhaDung());
-            if (chiTiet.getSanPhamChiTiet().getSanPham() != null) {
-                dto.setIdSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getId());
-                dto.setMaSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getMaSanPham());
-                dto.setTenSanPham(chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham());
-                dto.setHinhAnh(chiTiet.getSanPhamChiTiet().getSanPham().getHinhAnh());
-                if (chiTiet.getSanPhamChiTiet().getSanPham().getDanhMuc() != null) {
-                    dto.setTenDanhMuc(chiTiet.getSanPhamChiTiet().getSanPham().getDanhMuc().getTenDanhMuc());
+
+        SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
+        if (spct != null) {
+            dto.setSanPhamChiTietId(spct.getId());
+            dto.setGiaBan(spct.getGiaBan());
+            dto.setSoLuongTon(spct.getSoLuongTon());
+            dto.setSoLuongKhaDung(spct.getSoLuongKhaDung());
+            if (spct.getSanPham() != null) {
+                dto.setIdSanPham(spct.getSanPham().getId());
+                dto.setMaSanPham(spct.getSanPham().getMaSanPham());
+                dto.setTenSanPham(spct.getSanPham().getTenSanPham());
+                dto.setHinhAnh(spct.getSanPham().getHinhAnh());
+                if (spct.getSanPham().getDanhMuc() != null) {
+                    dto.setTenDanhMuc(spct.getSanPham().getDanhMuc().getTenDanhMuc());
                 }
             }
-            dto.setMoTaBienThe(buildMoTaBienThe(chiTiet.getSanPhamChiTiet()));
+            dto.setMoTaBienThe(buildMoTaBienThe(spct));
         }
-        
+
         dto.setSoLuong(chiTiet.getSoLuong());
-        
-        if (dto.getGiaBan() != null && dto.getSoLuong() != null) {
+
+        LocalDateTime now = promoNow != null ? promoNow : LocalDateTime.now();
+        List<KhuyenMai> active = chuongTrinhDangChay != null
+                ? chuongTrinhDangChay
+                : khuyenMaiService.getActivePromotions(now);
+        if (spct != null) {
+            GioHangChiTietPromoUtil.applySanPhamKhuyenMai(
+                    sanPhamChiTietKhuyenMaiService, dto, spct, now, active);
+        } else if (dto.getGiaBan() != null && dto.getSoLuong() != null) {
             dto.setThanhTien(dto.getGiaBan().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         } else {
             dto.setThanhTien(BigDecimal.ZERO);

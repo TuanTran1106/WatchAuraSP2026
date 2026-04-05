@@ -12,6 +12,7 @@ import com.example.watchaura.repository.KhachHangRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.repository.SanPhamRepository;
 import com.example.watchaura.repository.ThuongHieuRepository;
+import com.example.watchaura.service.SanPhamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -52,6 +53,8 @@ public class TrangChuController {
     private KhachHangRepository khachHangRepository;
     @Autowired
     private SanPhamChiTietRepository sanPhamChiTietRepository;
+    @Autowired
+    private SanPhamService sanPhamService;
 
     // Thư mục lưu ảnh
     private final String UPLOAD_DIR = new File("uploads/images/").getAbsolutePath();
@@ -225,5 +228,6 @@ public class TrangChuController {
         model.addAttribute("giaBanByProductId", giaBanByProductId);
         model.addAttribute("mauSacByProductId", mauSacByProductId);
         model.addAttribute("firstVariantIdByProductId", firstVariantIdByProductId);
+        model.addAttribute("sanPhamTrangChu", sanPhamService.getSanPhamDtosForDisplay(listSP));
     }
 }

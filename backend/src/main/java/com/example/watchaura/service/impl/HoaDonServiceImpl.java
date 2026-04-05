@@ -7,10 +7,12 @@ import com.example.watchaura.dto.HoaDonChiTietDTO;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
 import com.example.watchaura.dto.HoaDonChiTietRequest;
+import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.DiaChiGiaoHang;
 import com.example.watchaura.entity.GioHangChiTiet;
 import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.HoaDonChiTiet;
+import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.entity.Voucher;
@@ -24,6 +26,8 @@ import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.repository.VoucherUserRepository;
 import com.example.watchaura.service.HoaDonService;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import com.example.watchaura.util.ShippingFeeUtil;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -61,6 +65,8 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final DiaChiGiaoHangRepository diaChiGiaoHangRepository;
     private final GioHangChiTietRepository gioHangChiTietRepository;
+    private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+    private final KhuyenMaiService khuyenMaiService;
 
     @Override
     @Transactional(readOnly = true)
@@ -166,7 +172,10 @@ public class HoaDonServiceImpl implements HoaDonService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy voucher"));
         }
 
-        // Tính tổng tiền (kiểm tra tồn kho = soLuongTon, không trừ giữ hàng nữa)
+        LocalDateTime thoiDiemDat = LocalDateTime.now();
+        List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(thoiDiemDat);
+
+        // Tính tổng tiền (kiểm tra tồn kho = soLuongTon, không trừ giữ hàng nữa); đơn giá theo KM như giỏ/card
         BigDecimal tongTienTamTinh = BigDecimal.ZERO;
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findByIdWithLock(itemRequest.getSanPhamChiTietId())
@@ -181,11 +190,12 @@ public class HoaDonServiceImpl implements HoaDonService {
                         + ". Vui lòng giảm số lượng hoặc chọn sản phẩm khác. (Còn " + soLuongTon + " sản phẩm)");
             }
 
-            if (sanPhamChiTiet.getGiaBan() != null) {
-                tongTienTamTinh = tongTienTamTinh.add(
-                        sanPhamChiTiet.getGiaBan().multiply(BigDecimal.valueOf(itemRequest.getSoLuong()))
-                );
-            }
+            SanPhamChiTiet forPrice = sanPhamChiTietRepository.findByIdWithDetails(itemRequest.getSanPhamChiTietId())
+                    .orElse(sanPhamChiTiet);
+            KhuyenMaiPriceResult dongGiaKm = sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(
+                    forPrice, thoiDiemDat, khuyenMaiDangChay);
+            tongTienTamTinh = tongTienTamTinh.add(
+                    dongGiaKm.giaSauGiam().multiply(BigDecimal.valueOf(itemRequest.getSoLuong())));
         }
 
         BigDecimal tienGiam = BigDecimal.ZERO;
@@ -214,7 +224,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         boolean isVnPay = request.getPhuongThucThanhToan() != null
                 && request.getPhuongThucThanhToan().toUpperCase().contains("VNPAY");
         hoaDon.setTrangThaiDonHang(isVnPay ? "CHO_THANH_TOAN" : "CHO_XAC_NHAN");
-        hoaDon.setNgayDat(LocalDateTime.now());
+        hoaDon.setNgayDat(thoiDiemDat);
         hoaDon.setDiaChi(request.getDiaChi());
         hoaDon.setTenKhachHang(request.getTenKhachHang());
         hoaDon.setSdtKhachHang(request.getSdtKhachHang());
@@ -227,11 +237,16 @@ public class HoaDonServiceImpl implements HoaDonService {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(itemRequest.getSanPhamChiTietId())
                     .orElseThrow();
 
+            SanPhamChiTiet forPrice = sanPhamChiTietRepository.findByIdWithDetails(itemRequest.getSanPhamChiTietId())
+                    .orElse(sanPhamChiTiet);
+            KhuyenMaiPriceResult dongGiaKm = sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(
+                    forPrice, thoiDiemDat, khuyenMaiDangChay);
+
             HoaDonChiTiet hoaDonChiTiet = new HoaDonChiTiet();
             hoaDonChiTiet.setHoaDon(savedHoaDon);
             hoaDonChiTiet.setSanPhamChiTiet(sanPhamChiTiet);
             hoaDonChiTiet.setSoLuong(itemRequest.getSoLuong());
-            hoaDonChiTiet.setDonGia(sanPhamChiTiet.getGiaBan());
+            hoaDonChiTiet.setDonGia(dongGiaKm.giaSauGiam());
             hoaDonChiTietRepository.save(hoaDonChiTiet);
         }
 
@@ -922,6 +937,9 @@ public class HoaDonServiceImpl implements HoaDonService {
                     "Một số sản phẩm không đủ hàng: Không đủ tồn kho: " + String.join("; ", loiTonKho));
         }
 
+        LocalDateTime thoiDiemSua = LocalDateTime.now();
+        List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(thoiDiemSua);
+
         BigDecimal tongTienTamTinh = BigDecimal.ZERO;
 
         for (HoaDonChiTiet chiTiet : currentItems) {
@@ -944,8 +962,10 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             chiTiet.setSoLuong(soLuongMoi);
 
-            // Cập nhật đơn giá (dùng giá hiện tại trong hệ thống)
-            chiTiet.setDonGia(spct.getGiaBan());
+            SanPhamChiTiet forPrice = sanPhamChiTietRepository.findByIdWithDetails(spctId).orElse(spct);
+            KhuyenMaiPriceResult dongGiaKm = sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(
+                    forPrice, thoiDiemSua, khuyenMaiDangChay);
+            chiTiet.setDonGia(dongGiaKm.giaSauGiam());
             hoaDonChiTietRepository.save(chiTiet);
 
             // Tính thành tiền
