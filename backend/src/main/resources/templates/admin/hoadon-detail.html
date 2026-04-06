@@ -38,7 +38,7 @@
                         <label for="invoiceDetailTrangThai" class="invoice-detail__status-field-label">Trạng thái đơn</label>
                         <select name="trangThai" id="invoiceDetailTrangThai"
                                 class="invoice-detail__status-select"
-                                onchange="(this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit())" title="Đổi trạng thái hóa đơn tại quầy"
+                                title="Đổi trạng thái hóa đơn tại quầy"
                                 th:with="raw=${hoaDon.trangThaiDonHang},
                                          cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_THANH_TOAN'},
                                          isCho=${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'},
@@ -79,7 +79,6 @@
                         <label for="invoiceDetailTrangThaiOnline" class="invoice-detail__status-field-label">Trạng thái đơn</label>
                         <select name="trangThai" id="invoiceDetailTrangThaiOnline"
                                 class="invoice-detail__status-select"
-                                onchange="(this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit())"
                                 th:with="cur=${hoaDon.trangThaiDonHang != null and !#strings.isEmpty(hoaDon.trangThaiDonHang) ? hoaDon.trangThaiDonHang : 'CHO_XAC_NHAN'}"
                                 th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'"
                                 th:disabled="${cur == 'DA_GIAO'}"
@@ -189,17 +188,111 @@
 
     <script>
     (function () {
+        function submitStatusFormViaAjax(form, select) {
+            var action = form.getAttribute('action');
+            var formData = new FormData(form);
+            var headers = {
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+
+            select.disabled = true;
+            select.classList.add('is-loading');
+
+            fetch(action, {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            })
+            .then(function (res) {
+                if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái');
+                return res.text();
+            })
+            .then(function (html) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(html, 'text/html');
+
+                var msgEl = doc.querySelector('.message');
+                var warnEl = doc.querySelector('.message--warning');
+                var errEl = doc.querySelector('.message--error');
+
+                var message = null;
+                var messageType = null;
+
+                if (errEl) {
+                    message = errEl.textContent;
+                    messageType = 'error';
+                } else if (warnEl) {
+                    message = warnEl.textContent;
+                    messageType = 'warning';
+                } else if (msgEl) {
+                    message = msgEl.textContent;
+                    messageType = 'success';
+                }
+
+                if (message) {
+                    showToastMessage(message, messageType);
+                }
+
+                // Update status select from response
+                var newSelect = doc.querySelector('.invoice-detail__status-select');
+                var currentSelect = document.querySelector('.invoice-detail__status-select');
+                if (newSelect && currentSelect) {
+                    var newValue = newSelect.value;
+                    var newClass = newSelect.className;
+                    currentSelect.value = newValue;
+                    currentSelect.className = newClass;
+                }
+            })
+            .catch(function (err) {
+                console.error('Lỗi AJAX:', err);
+                showToastMessage('Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại.', 'error');
+                var prev = select.getAttribute('data-prev-value');
+                if (prev) select.value = prev;
+            })
+            .finally(function () {
+                select.disabled = false;
+                select.classList.remove('is-loading');
+            });
+        }
+
+        function showToastMessage(message, type) {
+            var toast = document.createElement('div');
+            toast.className = 'toast toast--' + (type || 'success');
+            toast.textContent = message;
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:6px;font-size:14px;max-width:400px;animation:slideInRight 0.3s ease;';
+            if (type === 'error') {
+                toast.style.background = '#dc3545';
+                toast.style.color = '#fff';
+            } else if (type === 'warning') {
+                toast.style.background = '#ffc107';
+                toast.style.color = '#000';
+            } else {
+                toast.style.background = '#28a745';
+                toast.style.color = '#fff';
+            }
+            document.body.appendChild(toast);
+            setTimeout(function () {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(function () {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 300);
+            }, 4000);
+        }
+
         document.querySelectorAll('.invoice-detail__status-form').forEach(function (form) {
             var select = form.querySelector('select[name="trangThai"]');
             if (!select) return;
-            var originalOnChange = select.getAttribute('onchange');
 
             select.addEventListener('change', function () {
                 var newVal = select.value;
                 var needCheck = (newVal === 'DA_XAC_NHAN') ||
                     (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
+
+                var currentSelected = select.querySelector('option[selected]');
+                select.dataset.prevValue = currentSelected ? currentSelected.value : '';
+
                 if (!needCheck) {
-                    if (originalOnChange) select.setAttribute('onchange', originalOnChange);
+                    submitStatusFormViaAjax(form, select);
                     return;
                 }
 
@@ -212,48 +305,44 @@
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.du) {
-                            if (originalOnChange) select.setAttribute('onchange', originalOnChange);
-                            select.setAttribute('data-confirm-prev',
-                                select.querySelector('option[th\\:selected]') ?
-                                select.querySelector('option[th\\:selected]').value :
-                                (select.getAttribute('data-confirm-prev') || select.options[0].value));
-                            if (form.requestSubmit) {
-                                form.requestSubmit();
-                            } else {
-                                form.submit();
-                            }
+                            submitStatusFormViaAjax(form, select);
+                            return;
+                        }
+
+                        var missingItems = (data.items || []).filter(function (i) { return !i.du; })
+                            .map(function (i) {
+                                return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
+                            });
+
+                        var msg = 'Tồn kho không đủ:\n' + missingItems.join('\n') +
+                            '\n\nĐơn hàng sẽ chuyển sang trạng thái "Cần xử lý" và ghi chú cho khách. Tiếp tục?';
+
+                        if (typeof window.confirmModal === 'function') {
+                            window.confirmModal({
+                                title: 'Thiếu tồn kho',
+                                message: msg,
+                                confirmText: 'Tiếp tục',
+                                cancelText: 'Hủy',
+                                tone: 'danger'
+                            }).then(function (ok) {
+                                if (ok) {
+                                    submitStatusFormViaAjax(form, select);
+                                } else {
+                                    select.value = select.dataset.prevValue;
+                                }
+                            });
                         } else {
-                            var prev = select.getAttribute('data-confirm-prev') ||
-                                select.querySelector('option[th\\:selected]') ?
-                                select.querySelector('option[th\\:selected]').value :
-                                (select.options[0] ? select.options[0].value : '');
-                            if (prev) select.value = prev;
-
-                            var missingItems = data.items.filter(function (i) { return !i.du; })
-                                .map(function (i) {
-                                    return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
-                                });
-                            var msg = 'Số lượng không đủ! Vui lòng nhập thêm hàng để bán.\n\n' +
-                                missingItems.join('\n');
-
-                            if (window.confirmModal) {
-                                window.confirmModal({
-                                    title: 'Cảnh báo tồn kho',
-                                    message: msg,
-                                    confirmText: 'Đóng',
-                                    cancelText: null,
-                                    tone: 'danger'
-                                });
+                            if (window.confirm(msg)) {
+                                submitStatusFormViaAjax(form, select);
                             } else {
-                                alert(msg);
+                                select.value = select.dataset.prevValue;
                             }
                         }
                     })
                     .catch(function () {
-                        if (originalOnChange) select.setAttribute('onchange', originalOnChange);
+                        showToastMessage('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
+                        select.value = select.dataset.prevValue;
                     });
-
-                return false;
             });
         });
     })();
