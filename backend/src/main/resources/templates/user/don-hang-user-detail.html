@@ -99,9 +99,9 @@
                     <h2 class="detail-card__heading"><i class="fas fa-check-circle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
                     <p id="orderDetailNoteTextResolved" class="order-detail-note__text">Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</p>
                 </section>
-                <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi chưa Đã xác nhận -->
+                <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi chưa giao (ẩn khi Đang giao / Đã giao) -->
                 <section id="orderDetailNoteSection" class="order-detail-card order-detail-note order-detail-note--warning"
-                         th:style="${((hoaDon.trangThaiDonHang == 'CAN_XU_LY' and hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()) or (hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho') and hoaDon.trangThaiDonHang != 'DA_XAC_NHAN'))} ? 'display:block' : 'display:none'">
+                         th:style="${((hoaDon.trangThaiDonHang == 'CAN_XU_LY' and hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()) or (hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho') and hoaDon.trangThaiDonHang != 'DA_XAC_NHAN' and hoaDon.trangThaiDonHang != 'DANG_GIAO' and hoaDon.trangThaiDonHang != 'DA_GIAO'))} ? 'display:block' : 'display:none'">
                     <h2 class="detail-card__heading"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
                     <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
                 </section>
@@ -256,7 +256,8 @@
                     var noteSection = document.getElementById('orderDetailNoteSection');
                     var noteText = document.getElementById('orderDetailNoteText');
                     var stockResolved = data.ghiChu && data.trangThaiDonHang === 'DA_XAC_NHAN' && data.ghiChu.indexOf('Không đủ tồn kho') !== -1;
-                    var hasStockWarning = data.ghiChu && (data.trangThaiDonHang === 'CAN_XU_LY' || (data.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
+                    var hideStockNote = data.trangThaiDonHang === 'DANG_GIAO' || data.trangThaiDonHang === 'DA_GIAO';
+                    var hasStockWarning = data.ghiChu && !hideStockNote && (data.trangThaiDonHang === 'CAN_XU_LY' || (data.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
                     if (noteSectionResolved) {
                         noteSectionResolved.style.display = stockResolved ? 'block' : 'none';
                     }

@@ -98,8 +98,8 @@
                         <i class="fas fa-check-circle" aria-hidden="true"></i>
                         <span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span>
                     </div>
-                    <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi chưa chuyển sang Đã xác nhận -->
-                    <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho') and don.trangThaiDonHang != 'DA_XAC_NHAN')}" class="order-card__note order-card__note--warning">
+                    <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi đơn chưa xác nhận / chưa giao (ẩn khi Đang giao / Đã giao) -->
+                    <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho') and don.trangThaiDonHang != 'DA_XAC_NHAN' and don.trangThaiDonHang != 'DANG_GIAO' and don.trangThaiDonHang != 'DA_GIAO')}" class="order-card__note order-card__note--warning">
                         <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         <span th:text="${don.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</span>
                     </div>
@@ -269,7 +269,8 @@
                     }
 
                     var stockResolved = don.trangThaiDonHang === 'DA_XAC_NHAN' && don.ghiChu && don.ghiChu.indexOf('Không đủ tồn kho') !== -1;
-                    var hasStockWarning = don.ghiChu && (don.trangThaiDonHang === 'CAN_XU_LY' || (don.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
+                    var hideStockNote = don.trangThaiDonHang === 'DANG_GIAO' || don.trangThaiDonHang === 'DA_GIAO';
+                    var hasStockWarning = don.ghiChu && !hideStockNote && (don.trangThaiDonHang === 'CAN_XU_LY' || (don.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
                     var noteHtml = stockResolved ?
                         '<div class="order-card__note order-card__note--success">' +
                         '<i class="fas fa-check-circle" aria-hidden="true"></i><span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span></div>' :

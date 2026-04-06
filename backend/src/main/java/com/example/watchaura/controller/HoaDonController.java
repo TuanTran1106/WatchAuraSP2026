@@ -191,7 +191,9 @@ public class HoaDonController {
 
             // Kiểm tra nếu đơn bị chuyển sang "Cần xử lý" do không đủ tồn kho
             boolean chuyenCanXuLy = "CAN_XU_LY".equals(updated.getTrangThaiDonHang())
-                    && ("DA_XAC_NHAN".equals(trangThai) || "DA THANH TOAN".equals(trangThai));
+                    && ("DA_XAC_NHAN".equals(trangThai)
+                    || "DA THANH TOAN".equals(trangThai)
+                    || "DA_THANH_TOAN".equals(trangThai));
             String msg = chuyenCanXuLy
                     ? ("Không đủ tồn kho! Đơn hàng đã chuyển sang \"Cần xử lý\". Vui lòng liên hệ khách hàng để giảm số lượng hoặc hủy đơn.")
                     : "Đã cập nhật trạng thái đơn hàng.";
