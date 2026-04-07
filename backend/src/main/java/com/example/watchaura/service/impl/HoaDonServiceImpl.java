@@ -617,7 +617,9 @@ public class HoaDonServiceImpl implements HoaDonService {
         }
 
         BigDecimal tienGiam;
-        if ("PERCENT".equals(voucher.getLoaiVoucher())) {
+        String loai = voucher.getLoaiVoucher() != null ? voucher.getLoaiVoucher().trim().toUpperCase() : "";
+        boolean isPercent = loai.equals("PERCENT") || loai.equals("PERCENTAGE") || loai.equals("PHAN_TRAM") || loai.equals("PHẦN_TRĂM") || loai.equals("%") || loai.equals("PT");
+        if (isPercent) {
             tienGiam = tongTien.multiply(voucher.getGiaTri())
                     .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
             if (voucher.getGiaTriToiDa() != null && tienGiam.compareTo(voucher.getGiaTriToiDa()) > 0) {
