@@ -151,8 +151,12 @@ public final class KhuyenMaiPricing {
             return KhuyenMaiPriceResult.none(giaGoc);
         }
 
+        String loaiRawNorm = normalizeLoai(km.getLoaiGiam());
+        boolean loaiDaChuanHoaTuAdmin = "TIEN".equals(loaiRawNorm) || "PHAN_TRAM".equals(loaiRawNorm);
         LoaiGiamTinh kind = phanLoai(km.getLoaiGiam());
-        kind = dieuChinhLoaiNeuNhamTienVoiPhanTram(kind, km.getGiaTriGiam(), giaGoc);
+        if (!loaiDaChuanHoaTuAdmin) {
+            kind = dieuChinhLoaiNeuNhamTienVoiPhanTram(kind, km.getGiaTriGiam(), giaGoc);
+        }
 
         // Gán mặc định để thỏa definite assignment (mọi nhánh hợp lệ đều gán lại hoặc return sớm).
         BigDecimal soTienGiam = BigDecimal.ZERO;
@@ -178,7 +182,7 @@ public final class KhuyenMaiPricing {
                 if (soTienGiam.compareTo(BigDecimal.ZERO) <= 0) {
                     return KhuyenMaiPriceResult.none(giaGoc);
                 }
-                if (nenTinhLaiNhuPhanTramSauTien(km, giaGoc, soTienGiam)) {
+                if (!loaiDaChuanHoaTuAdmin && nenTinhLaiNhuPhanTramSauTien(km, giaGoc, soTienGiam)) {
                     BigDecimal[] st = {BigDecimal.ZERO};
                     BigDecimal[] pt = {BigDecimal.ZERO};
                     apPhanTramTuGiaTriGiam(km, giaGoc, st, pt);
@@ -223,6 +227,9 @@ public final class KhuyenMaiPricing {
                 ten.isBlank() ? "Khuyến mãi" : ten,
                 loaiOut
         );
+        if (loaiDaChuanHoaTuAdmin) {
+            return built;
+        }
         return postFixNeuConLaTienNhungGiaTriLaPhanTram(built, km);
     }
 

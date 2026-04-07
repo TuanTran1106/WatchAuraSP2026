@@ -3,8 +3,11 @@ package com.example.watchaura.controller;
 import com.example.watchaura.dto.CartResponse;
 import com.example.watchaura.dto.HoaDonChiTietDTO;
 import com.example.watchaura.dto.HoaDonDTO;
+import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.*;
 import com.example.watchaura.repository.*;
+import com.example.watchaura.service.KhuyenMaiService;
+import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,6 +50,11 @@ public class BanHangTaiQuayController {
     @Autowired
     private GioHangChiTietRepository gioHangChiTietRepository;
 
+    @Autowired
+    private SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+
+    @Autowired
+    private KhuyenMaiService khuyenMaiService;
 
 
 
@@ -67,13 +77,22 @@ public class BanHangTaiQuayController {
 
         // Bắt buộc đăng nhập
         if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
-            return "redirect:/dang-nhap?error=Vui lòng đăng nhập để sử dụng chức năng bán hàng.";
+            String msg = URLEncoder.encode("Vui lòng đăng nhập để sử dụng chức năng bán hàng.", StandardCharsets.UTF_8);
+            return "redirect:/dang-nhap?error=" + msg;
         }
 
         List<SanPhamChiTiet> sanPhamList =
                 sanPhamChiTietRepository.findActiveForSaleWithDetails();
 
         model.addAttribute("sanPhamList", sanPhamList);
+        LocalDateTime now = LocalDateTime.now();
+        List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(now);
+        Map<Integer, KhuyenMaiPriceResult> kmGiaMap = new HashMap<>();
+        for (SanPhamChiTiet spct : sanPhamList) {
+            if (spct == null || spct.getId() == null) continue;
+            kmGiaMap.put(spct.getId(), resolveGiaKhuyenMai(spct, now, khuyenMaiDangChay));
+        }
+        model.addAttribute("kmGiaMap", kmGiaMap);
 
         // Tìm đơn đang mở: ưu tiên CHO_THANH_TOAN, sau đó DRAFT_OFFLINE
         List<HoaDon> allOffline = hoaDonRepository.findByLoaiHoaDon("OFFLINE");
@@ -186,7 +205,8 @@ public class BanHangTaiQuayController {
             ct.setHoaDon(hoaDon);
             ct.setSanPhamChiTiet(sp);
             ct.setSoLuong(1);
-            ct.setDonGia(sp.getGiaBan());
+            KhuyenMaiPriceResult giaKm = resolveGiaKhuyenMai(sp, LocalDateTime.now(), null);
+            ct.setDonGia(giaKm.giaSauGiam());
 
             hoaDonChiTietRepository.save(ct);
 
@@ -303,8 +323,16 @@ public class BanHangTaiQuayController {
                 hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
 
         BigDecimal tong = BigDecimal.ZERO;
+        LocalDateTime now = LocalDateTime.now();
+        List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(now);
 
         for(HoaDonChiTiet ct:list){
+            SanPhamChiTiet spct = ct.getSanPhamChiTiet();
+            if (spct != null) {
+                KhuyenMaiPriceResult giaKm = resolveGiaKhuyenMai(spct, now, khuyenMaiDangChay);
+                ct.setDonGia(giaKm.giaSauGiam());
+                hoaDonChiTietRepository.save(ct);
+            }
 
             BigDecimal thanhTien =
                     ct.getDonGia().multiply(
@@ -641,7 +669,8 @@ public class BanHangTaiQuayController {
 
         // Bắt buộc đăng nhập
         if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
-            return "redirect:/dang-nhap?error=Vui lòng đăng nhập để xem đơn hàng.";
+            String msg = URLEncoder.encode("Vui lòng đăng nhập để xem đơn hàng.", StandardCharsets.UTF_8);
+            return "redirect:/dang-nhap?error=" + msg;
         }
 
         // Lấy danh sách hóa đơn bán OFFLINE cho nhân viên
@@ -872,6 +901,17 @@ public class BanHangTaiQuayController {
         }
         
         return "Đã xóa " + deletedCount + " hóa đơn trống";
+    }
+
+    private KhuyenMaiPriceResult resolveGiaKhuyenMai(
+            SanPhamChiTiet spct,
+            LocalDateTime now,
+            List<KhuyenMai> khuyenMaiDangChay) {
+        if (spct == null) {
+            return KhuyenMaiPriceResult.none(BigDecimal.ZERO);
+        }
+        LocalDateTime t = now != null ? now : LocalDateTime.now();
+        return sanPhamChiTietKhuyenMaiService.resolveBestForCartOrOrderLine(spct, t, khuyenMaiDangChay);
     }
 
 }

@@ -133,6 +133,11 @@
             background: var(--success) !important;
             color: #0f172a;
         }
+        .product-card .badge-discount {
+            background: #ef4444 !important;
+            color: #fff !important;
+            margin-left: 0.35rem;
+        }
         .product-card .brand {
             font-size: 0.75rem;
             color: var(--text-muted);
@@ -178,6 +183,13 @@
             color: var(--success);
             font-size: 1rem;
             margin-top: 0.5rem;
+        }
+        .product-card .price-old {
+            display: block;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            margin-top: 0.35rem;
         }
 
         /* Cart sidebar */
@@ -572,6 +584,12 @@
                         <div class="card-body">
                             <span class="badge bg-success"
                                   th:text="'Còn ' + ${sp.soLuongKhaDung}"></span>
+                            <span class="badge badge-discount"
+                                  th:if="${kmGiaMap[sp.id] != null and kmGiaMap[sp.id].coKhuyenMai and kmGiaMap[sp.id].loaiGiamApDung != null and kmGiaMap[sp.id].loaiGiamApDung.name() == 'PHAN_TRAM' and kmGiaMap[sp.id].phanTramHienThi > 0}"
+                                  th:text="${'-' + #numbers.formatDecimal(kmGiaMap[sp.id].phanTramHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                            <span class="badge badge-discount"
+                                  th:if="${kmGiaMap[sp.id] != null and kmGiaMap[sp.id].coKhuyenMai and kmGiaMap[sp.id].loaiGiamApDung != null and kmGiaMap[sp.id].loaiGiamApDung.name() == 'TIEN' and kmGiaMap[sp.id].soTienGiam > 0}"
+                                  th:text="${'-' + #numbers.formatDecimal(kmGiaMap[sp.id].soTienGiam, 0, 'COMMA', 0, 'POINT') + ' ₫'}">-50.000 ₫</span>
                             <p class="brand mb-0"
                                th:text="${sp.sanPham != null && sp.sanPham.thuongHieu != null ? sp.sanPham.thuongHieu.tenThuongHieu : 'N/A'}"></p>
                             <p class="name mb-0"
@@ -596,8 +614,11 @@
                                     <span th:text="${sp.sanPham.loaiMay.tenLoaiMay}">—</span>
                                 </div>
                             </div>
-                            <p class="price mb-0"
+                            <p class="price-old mb-0"
+                               th:if="${kmGiaMap[sp.id] != null and kmGiaMap[sp.id].coKhuyenMai}"
                                th:text="${#numbers.formatDecimal(sp.giaBan,0,'COMMA',0,'POINT') + ' ₫'}"></p>
+                            <p class="price mb-0"
+                               th:text="${#numbers.formatDecimal((kmGiaMap[sp.id] != null ? kmGiaMap[sp.id].giaSauGiam : sp.giaBan),0,'COMMA',0,'POINT') + ' ₫'}"></p>
                         </div>
                     </div>
                 </div>
@@ -899,6 +920,9 @@
                     var tenSanPham = (item.sanPhamChiTiet && item.sanPhamChiTiet.sanPham)
                         ? item.sanPhamChiTiet.sanPham.tenSanPham : "Sản phẩm";
                     var bienThe = posFormatVariant(item.sanPhamChiTiet);
+                    var giaGoc = (item.sanPhamChiTiet && item.sanPhamChiTiet.giaBan) ? Number(item.sanPhamChiTiet.giaBan) : Number(item.donGia || 0);
+                    var donGia = Number(item.donGia || 0);
+                    var coKhuyenMai = giaGoc > donGia;
                     var thanhTien = item.donGia * item.soLuong;
 
                     var div = document.createElement("div");
@@ -906,7 +930,9 @@
                     div.innerHTML =
                         '<div class="item-name">' + tenSanPham + '</div>' +
                         (bienThe ? '<div class="item-variant">' + bienThe + '</div>' : '') +
-                        '<div class="item-price">' + item.donGia.toLocaleString() + ' ₫</div>' +
+                        (coKhuyenMai
+                            ? '<div class="item-price"><span style="text-decoration:line-through;opacity:.8;">' + giaGoc.toLocaleString() + ' ₫</span> <span style="color:#10b981;font-weight:700;margin-left:6px;">' + donGia.toLocaleString() + ' ₫</span></div>'
+                            : '<div class="item-price">' + donGia.toLocaleString() + ' ₫</div>') +
                         '<div class="d-flex align-items-center justify-content-between mt-2">' +
                         '<div class="d-flex align-items-center gap-1 btn-group-cart">' +
                         '<button class="btn btn-sm btn-outline-secondary" onclick="giamSL(' + item.id + ')">−</button>' +
