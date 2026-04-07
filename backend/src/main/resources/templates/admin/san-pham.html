@@ -1118,8 +1118,10 @@
 
                     <div class="section-divider" style="margin-top: 24px;">
                         <h3><i class="fas fa-tags"></i> Khuyến mãi gắn sản phẩm</h3>
-                        <p class="section-hint">Giảm thêm trên giá niêm yết từng biến thể (nếu bật và trong khung thời gian).
-                            Hệ thống chọn deal tốt nhất giữa KM chương trình (admin → Khuyến mãi / gắn biến thể), KM theo danh mục, và KM cấp sản phẩm này.</p>
+                        <p class="section-hint">Giảm thêm trên giá niêm yết từng biến thể (nếu bật và trong khung thời
+                            gian).
+                            Hệ thống chọn deal tốt nhất giữa KM chương trình (admin → Khuyến mãi / gắn biến thể), KM
+                            theo danh mục, và KM cấp sản phẩm này.</p>
                     </div>
                     <div class="modal-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="modal-form-group" style="grid-column: 1 / -1;">
@@ -1138,7 +1140,8 @@
                         </div>
                         <div class="modal-form-group">
                             <label for="giaTriKhuyenMaiSp">Giá trị giảm</label>
-                            <input type="number" id="giaTriKhuyenMaiSp" step="0.01" min="0" placeholder="% hoặc VNĐ tùy loại">
+                            <input type="number" id="giaTriKhuyenMaiSp" step="0.01" min="0"
+                                placeholder="% hoặc VNĐ tùy loại">
                         </div>
                         <div class="modal-form-group">
                             <label for="ngayBatDauKmSp">Ngày giờ bắt đầu</label>
@@ -1254,13 +1257,13 @@
 
                 container.appendChild(toast);
 
-                // Auto remove after 5 seconds
+                // Auto remove after 2 seconds
                 const autoRemoveTimer = setTimeout(() => {
                     if (toast.parentElement) {
                         toast.classList.add('removing');
                         setTimeout(() => toast.remove(), 300);
                     }
-                }, 5000);
+                }, 2000);
 
                 // Clear timer if manually removed
                 toast.addEventListener('click', () => clearTimeout(autoRemoveTimer));

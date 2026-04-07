@@ -1,199 +1,239 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang chủ - WatchAura</title>
     <link rel="stylesheet" th:href="@{/css/home.css}">
 </head>
+
 <body>
 
-<div th:fragment="content" class="home-page">
-    <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
+    <div th:fragment="content" class="home-page">
+        <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
 
-    <!-- Carousel banner (2 ảnh) -->
-    <section class="banner-carousel" aria-label="Banner khuyến mãi">
-        <div class="banner-carousel__track-wrap">
-            <div class="banner-carousel__track">
-                <div class="banner-carousel__slide" data-slide="0">
-                    <a th:href="@{/san-pham}" class="banner-carousel__link">
-                        <img th:src="@{/uploads/banner.jpg}" alt="Banner 1" class="banner-carousel__img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <span class="banner-carousel__placeholder">⌚</span>
-                    </a>
-                </div>
-                <div class="banner-carousel__slide" data-slide="1">
-                    <a th:href="@{/san-pham}" class="banner-carousel__link">
-                        <img th:src="@{/uploads/banner2.jpg}" alt="Banner 2" class="banner-carousel__img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <span class="banner-carousel__placeholder">⌚</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <button type="button" class="banner-carousel__btn banner-carousel__btn--prev" aria-label="Banner trước" onclick="window.watchAuraBannerPrev();">‹</button>
-        <button type="button" class="banner-carousel__btn banner-carousel__btn--next" aria-label="Banner sau" onclick="window.watchAuraBannerNext();">›</button>
-        <div class="banner-carousel__dots">
-            <button type="button" class="banner-carousel__dot is-active" aria-label="Xem banner 1" aria-current="true" data-index="0" onclick="window.watchAuraBannerGo(0);"></button>
-            <button type="button" class="banner-carousel__dot" aria-label="Xem banner 2" data-index="1" onclick="window.watchAuraBannerGo(1);"></button>
-        </div>
-    </section>
-    <script>
-(function(){
- var total = 2, current = 0, interval;
- var track = document.querySelector('.banner-carousel__track');
- var dots = document.querySelectorAll('.banner-carousel__dot');
- function go(i) {
-   current = (i + total) % total;
-   if (track) track.style.transform = 'translateX(-' + current * 100 + '%)';
-   dots.forEach(function(d, j){ d.classList.toggle('is-active', j === current); d.setAttribute('aria-current', j === current ? 'true' : 'false'); });
- }
- function next(){ go(current + 1); }
- function prev(){ go(current - 1); }
- function start(){ interval = setInterval(next, 2000); }
- function stop(){ clearInterval(interval); }
- if (track && dots.length) {
-   window.watchAuraBannerGo = go;
-   window.watchAuraBannerNext = next;
-   window.watchAuraBannerPrev = prev;
-   document.querySelector('.banner-carousel').addEventListener('mouseenter', stop);
-   document.querySelector('.banner-carousel').addEventListener('mouseleave', start);
-   start();
- }
-})();
-    </script>
-
-    <!-- Thương hiệu đồng hành -->
-    <section class="section brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
-        <div class="container">
-            <h2 class="section__title">Thương hiệu đồng hành</h2>
-            <div class="brands__list">
-                <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}" class="brands__item">
-                    <span class="brands__item-img-wrap" th:if="${th.hinhAnh != null and !th.hinhAnh.isEmpty()}">
-                        <img th:src="@{${#strings.startsWith(th.hinhAnh, '/') ? th.hinhAnh : '/uploads/' + th.hinhAnh}}" th:alt="${th.tenThuongHieu}" class="brands__item-img">
-                    </span>
-                    <span class="brands__item-name" th:text="${th.tenThuongHieu}">Thương hiệu</span>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Sản phẩm nổi bật (card kiểu TrangChu) -->
-    <section class="section products">
-        <div class="container">
-            <h2 class="section__title">Sản phẩm nổi bật</h2>
-            <div class="products-grid">
-                <div th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="no-products">Chưa có sản phẩm nào!</div>
-                <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
-                    <div class="product-image-container">
-                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'PHAN_TRAM' and sp.phanTramGiamHienThi != null}"
-                              class="product-card__badge-sale"
-                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
-                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'TIEN' and sp.soTienGiamHienThi != null}"
-                              class="product-card__badge-sale"
-                              th:text="${'-' + #numbers.formatDecimal(sp.soTienGiamHienThi, 0, 'COMMA', 0, 'POINT') + '₫'}">-50.000₫</span>
-                        <span th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and (sp.loaiGiamHienThi == null or sp.loaiGiamHienThi == '') and sp.phanTramGiamHienThi != null}"
-                              class="product-card__badge-sale"
-                              th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
-                        <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}" th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}" th:alt="${sp.tenSanPham}" class="product-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
-                        <img th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E" alt="No Image" class="product-image">
+        <!-- Carousel banner -->
+        <section class="banner-carousel" aria-label="Banner khuyến mãi">
+            <div class="banner-carousel__track-wrap">
+                <div class="banner-carousel__track">
+                    <div class="banner-carousel__slide" data-slide="0">
+                        <a th:href="@{/san-pham}" class="banner-carousel__link">
+                            <img th:src="@{/uploads/Banner.png}" alt="Banner 1" class="banner-carousel__img"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <span class="banner-carousel__placeholder">⌚</span>
+                        </a>
                     </div>
-                    <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-info-link">
-                        <div class="product-info">
-                            <div class="product-brand" th:text="${(sp.tenThuongHieu != null ? sp.tenThuongHieu : 'N/A') + ' | ' + (sp.tenDanhMuc != null ? sp.tenDanhMuc : 'N/A')}">TH | Danh mục</div>
-                            <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}"></div>
-                            <div class="product-name" th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm</div>
-                            <div class="product-footer">
-                                <th:block th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}">
-                                    <div class="product-price-row">
-                                        <span class="product-price product-price--original"
-                                              th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
-                                        <span class="product-price product-price--sale"
-                                              th:text="${sp.giaSauKhuyenMai != null ? #numbers.formatDecimal(sp.giaSauKhuyenMai, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
-                                    </div>
-                                </th:block>
-                                <div th:unless="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}" class="product-price"
-                                     th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</div>
+                    <div class="banner-carousel__slide" data-slide="1">
+                        <a th:href="@{/san-pham}" class="banner-carousel__link">
+                            <img th:src="@{/uploads/banner.jpg}" alt="Banner 1" class="banner-carousel__img"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <span class="banner-carousel__placeholder">⌚</span>
+                        </a>
+                    </div>
+                    <div class="banner-carousel__slide" data-slide="2">
+                        <a th:href="@{/san-pham}" class="banner-carousel__link">
+                            <img th:src="@{/uploads/banner2.jpg}" alt="Banner 3" class="banner-carousel__img"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <span class="banner-carousel__placeholder">⌚</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="banner-carousel__btn banner-carousel__btn--prev" aria-label="Banner trước"
+                onclick="window.watchAuraBannerPrev();">‹</button>
+            <button type="button" class="banner-carousel__btn banner-carousel__btn--next" aria-label="Banner sau"
+                onclick="window.watchAuraBannerNext();">›</button>
+            <div class="banner-carousel__dots">
+                <button type="button" class="banner-carousel__dot is-active" aria-label="Xem banner 1"
+                    aria-current="true" data-index="0" onclick="window.watchAuraBannerGo(0);"></button>
+                <button type="button" class="banner-carousel__dot" aria-label="Xem banner 2" data-index="1"
+                    onclick="window.watchAuraBannerGo(1);"></button>
+                <button type="button" class="banner-carousel__dot" aria-label="Xem banner 3" data-index="2"
+                    onclick="window.watchAuraBannerGo(2);"></button>
+            </div>
+        </section>
+        <script>
+            (function () {
+                var total = 3, current = 0, interval;
+                var AUTO_MS = 2000;
+                var track = document.querySelector('.banner-carousel__track');
+                var dots = document.querySelectorAll('.banner-carousel__dot');
+                function go(i) {
+                    current = (i + total) % total;
+                    if (track) track.style.transform = 'translateX(-' + current * 100 + '%)';
+                    dots.forEach(function (d, j) { d.classList.toggle('is-active', j === current); d.setAttribute('aria-current', j === current ? 'true' : 'false'); });
+                }
+                function next() { go(current + 1); }
+                function prev() { go(current - 1); }
+                function start() { interval = setInterval(next, AUTO_MS); }
+                function stop() { clearInterval(interval); }
+                if (track && dots.length) {
+                    window.watchAuraBannerGo = go;
+                    window.watchAuraBannerNext = next;
+                    window.watchAuraBannerPrev = prev;
+                    document.querySelector('.banner-carousel').addEventListener('mouseenter', stop);
+                    document.querySelector('.banner-carousel').addEventListener('mouseleave', start);
+                    start();
+                }
+            })();
+        </script>
+
+        <!-- Thương hiệu đồng hành -->
+        <section class="section brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
+            <div class="container">
+                <h2 class="section__title">Thương hiệu đồng hành</h2>
+                <div class="brands__list">
+                    <a th:each="th : ${thuongHieuList}" th:href="@{/san-pham(thuongHieuId=${th.id})}"
+                        class="brands__item">
+                        <span class="brands__item-img-wrap" th:if="${th.hinhAnh != null and !th.hinhAnh.isEmpty()}">
+                            <img th:src="@{${#strings.startsWith(th.hinhAnh, '/') ? th.hinhAnh : '/uploads/' + th.hinhAnh}}"
+                                th:alt="${th.tenThuongHieu}" class="brands__item-img">
+                        </span>
+                        <span class="brands__item-name" th:text="${th.tenThuongHieu}">Thương hiệu</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sản phẩm nổi bật (card kiểu TrangChu) -->
+        <section class="section products">
+            <div class="container">
+                <h2 class="section__title">Sản phẩm nổi bật</h2>
+                <div class="products-grid">
+                    <div th:if="${sanPhamTrangChu == null or sanPhamTrangChu.isEmpty()}" class="no-products">Chưa có sản
+                        phẩm nào!</div>
+                    <div th:each="sp : ${sanPhamTrangChu}" class="product-card">
+                        <div class="product-image-container">
+                            <span
+                                th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'PHAN_TRAM' and sp.phanTramGiamHienThi != null}"
+                                class="product-card__badge-sale"
+                                th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                            <span
+                                th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and sp.loaiGiamHienThi == 'TIEN' and sp.soTienGiamHienThi != null}"
+                                class="product-card__badge-sale"
+                                th:text="${'-' + #numbers.formatDecimal(sp.soTienGiamHienThi, 0, 'COMMA', 0, 'POINT') + '₫'}">-50.000₫</span>
+                            <span
+                                th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe and (sp.loaiGiamHienThi == null or sp.loaiGiamHienThi == '') and sp.phanTramGiamHienThi != null}"
+                                class="product-card__badge-sale"
+                                th:text="${'-' + #numbers.formatDecimal(sp.phanTramGiamHienThi, 1, 'COMMA', 0, 'POINT') + '%'}">-20%</span>
+                            <img th:if="${sp.hinhAnh != null and !sp.hinhAnh.isEmpty()}"
+                                th:src="${#strings.startsWith(sp.hinhAnh, '/') ? sp.hinhAnh : '/uploads/' + sp.hinhAnh}"
+                                th:alt="${sp.tenSanPham}" class="product-image"
+                                onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\' viewBox=\'0 0 200 200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23f8f9fa\'/%3E%3Ctext x=\'100\' y=\'100\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23666\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                            <img th:if="${sp.hinhAnh == null or sp.hinhAnh.isEmpty()}"
+                                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f8f9fa'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%23ddd' stroke='%23ccc' stroke-width='2'/%3E%3Crect x='85' y='110' width='30' height='60' fill='%23ccc'/%3E%3Ctext x='100' y='185' text-anchor='middle' font-family='Arial' font-size='12' fill='%23666'%3ENo Image%3C/text%3E%3C/svg%3E"
+                                alt="No Image" class="product-image">
+                        </div>
+                        <a th:href="@{/san-pham/{id}(id=${sp.id})}" class="product-info-link">
+                            <div class="product-info">
+                                <div class="product-brand"
+                                    th:text="${(sp.tenThuongHieu != null ? sp.tenThuongHieu : 'N/A') + ' | ' + (sp.tenDanhMuc != null ? sp.tenDanhMuc : 'N/A')}">
+                                    TH | Danh mục</div>
+                                <div class="product-code" th:text="${sp.maSanPham != null ? sp.maSanPham : 'N/A'}">
+                                </div>
+                                <div class="product-name"
+                                    th:text="${sp.tenSanPham != null ? sp.tenSanPham : 'Chưa có tên'}">Tên sản phẩm
+                                </div>
+                                <div class="product-footer">
+                                    <th:block th:if="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}">
+                                        <div class="product-price-row">
+                                            <span class="product-price product-price--original"
+                                                th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                            <span class="product-price product-price--sale"
+                                                th:text="${sp.giaSauKhuyenMai != null ? #numbers.formatDecimal(sp.giaSauKhuyenMai, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">0₫</span>
+                                        </div>
+                                    </th:block>
+                                    <div th:unless="${sp.coKhuyenMaiHopLe != null and sp.coKhuyenMaiHopLe}"
+                                        class="product-price"
+                                        th:text="${sp.giaBan != null ? #numbers.formatDecimal(sp.giaBan, 0, 'COMMA', 0, 'POINT') + '₫' : '0₫'}">
+                                        0₫</div>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Khuyến mãi -->
-    <section class="section promotions" th:if="${khuyenMaiDangChay != null and !khuyenMaiDangChay.isEmpty()}">
-        <div class="container">
-            <h2 class="section__title">Khuyến mãi đang diễn ra</h2>
-            <div class="promo-list">
-                <div th:each="km : ${khuyenMaiDangChay}" class="promo-card">
-                    <div class="promo-card__content">
-                        <h3 class="promo-card__title" th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
-                        <p class="promo-card__desc" th:text="${km.moTa}">Mô tả</p>
-                        <p class="promo-card__value">
-                            <span th:if="${km.loaiGiam == 'PHAN_TRAM' or km.loaiGiam == 'PERCENT'}" th:text="'Giảm ' + ${km.giaTriGiam} + '%'">Giảm %</span>
-                            <span th:if="${km.loaiGiam == 'TIEN' or km.loaiGiam == 'FIXED'}" th:text="'Giảm ' + ${#numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giảm tiền</span>
-                        </p>
-                        <p class="promo-card__date" th:if="${km.ngayKetThuc != null}" th:text="|Đến hết ${#temporals.format(km.ngayKetThuc, 'dd/MM/yyyy')}|">Hết hạn</p>
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Tin tức / Blog -->
-    <section class="section blog">
-        <div class="container">
-            <h2 class="section__title">Tin tức &amp; Blog</h2>
-            <div class="blog__grid" th:if="${blogMoi != null and !blogMoi.isEmpty()}">
-                <article th:each="blog : ${blogMoi}" class="blog-card">
-                    <a th:href="@{/tin-tuc/{id}(id=${blog.id})}" class="blog-card__link">
-                        <div class="blog-card__img-wrap" th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
-                            <img th:src="${blog.hinhAnh}" th:alt="${blog.tieuDe}" class="blog-card__img">
+        <!-- Khuyến mãi -->
+        <section class="section promotions" th:if="${khuyenMaiDangChay != null and !khuyenMaiDangChay.isEmpty()}">
+            <div class="container">
+                <h2 class="section__title">Khuyến mãi đang diễn ra</h2>
+                <div class="promo-list">
+                    <div th:each="km : ${khuyenMaiDangChay}" class="promo-card">
+                        <div class="promo-card__content">
+                            <h3 class="promo-card__title" th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
+                            <p class="promo-card__desc" th:text="${km.moTa}">Mô tả</p>
+                            <p class="promo-card__value">
+                                <span th:if="${km.loaiGiam == 'PHAN_TRAM' or km.loaiGiam == 'PERCENT'}"
+                                    th:text="'Giảm ' + ${km.giaTriGiam} + '%'">Giảm %</span>
+                                <span th:if="${km.loaiGiam == 'TIEN' or km.loaiGiam == 'FIXED'}"
+                                    th:text="'Giảm ' + ${#numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giảm
+                                    tiền</span>
+                            </p>
+                            <p class="promo-card__date" th:if="${km.ngayKetThuc != null}"
+                                th:text="|Đến hết ${#temporals.format(km.ngayKetThuc, 'dd/MM/yyyy')}|">Hết hạn</p>
                         </div>
-                        <div class="blog-card__img-wrap blog-card__img-wrap--placeholder" th:if="${blog.hinhAnh == null or blog.hinhAnh.isEmpty()}">
-                            <span>📰</span>
-                        </div>
-                        <div class="blog-card__body">
-                            <h3 class="blog-card__title" th:text="${blog.tieuDe}">Tiêu đề</h3>
-                            <time class="blog-card__date" th:if="${blog.ngayDang != null}" th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}">Ngày</time>
-                        </div>
-                    </a>
-                </article>
-            </div>
-            <p th:if="${blogMoi == null or blogMoi.isEmpty()}" class="section__empty">Chưa có bài viết.</p>
-        </div>
-    </section>
-
-    <!-- Ưu đãi / Hỗ trợ -->
-    <section class="section features">
-        <div class="container">
-            <div class="features__grid">
-                <div class="feature-item">
-                    <span class="feature-item__icon">🚚</span>
-                    <h3 class="feature-item__title">Giao hàng toàn quốc</h3>
-                    <p class="feature-item__text">Miễn phí đơn từ 3 triệu</p>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-item__icon">🛡️</span>
-                    <h3 class="feature-item__title">Bảo hành chính hãng</h3>
-                    <p class="feature-item__text">Bảo hành 1–2 năm tùy thương hiệu</p>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-item__icon">↩️</span>
-                    <h3 class="feature-item__title">Đổi trả 30 ngày</h3>
-                    <p class="feature-item__text">Đổi trả nếu lỗi nhà sản xuất</p>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-item__icon">📞</span>
-                    <h3 class="feature-item__title">Hỗ trợ 24/7</h3>
-                    <p class="feature-item__text">Hotline: 1900 xxxx</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-</div>
+        <!-- Tin tức / Blog -->
+        <section class="section blog">
+            <div class="container">
+                <h2 class="section__title">Tin tức &amp; Blog</h2>
+                <div class="blog__grid" th:if="${blogMoi != null and !blogMoi.isEmpty()}">
+                    <article th:each="blog : ${blogMoi}" class="blog-card">
+                        <a th:href="@{/tin-tuc/{id}(id=${blog.id})}" class="blog-card__link">
+                            <div class="blog-card__img-wrap"
+                                th:if="${blog.hinhAnh != null and !blog.hinhAnh.isEmpty()}">
+                                <img th:src="${blog.hinhAnh}" th:alt="${blog.tieuDe}" class="blog-card__img">
+                            </div>
+                            <div class="blog-card__img-wrap blog-card__img-wrap--placeholder"
+                                th:if="${blog.hinhAnh == null or blog.hinhAnh.isEmpty()}">
+                                <span>📰</span>
+                            </div>
+                            <div class="blog-card__body">
+                                <h3 class="blog-card__title" th:text="${blog.tieuDe}">Tiêu đề</h3>
+                                <time class="blog-card__date" th:if="${blog.ngayDang != null}"
+                                    th:text="${#temporals.format(blog.ngayDang, 'dd/MM/yyyy')}">Ngày</time>
+                            </div>
+                        </a>
+                    </article>
+                </div>
+                <p th:if="${blogMoi == null or blogMoi.isEmpty()}" class="section__empty">Chưa có bài viết.</p>
+            </div>
+        </section>
+
+        <!-- Feature section (giống TrangChu) -->
+        <section class="top-features">
+            <div class="container">
+                <div class="features__grid">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-certificate"></i></div>
+                        <div class="feature-text">100% HÀNG CHÍNH HÃNG</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-shipping-fast"></i></div>
+                        <div class="feature-text">MIỄN PHÍ VẬN CHUYỂN</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="feature-text">BẢO HÀNH CHÍNH HÃNG</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-exchange-alt"></i></div>
+                        <div class="feature-text">ĐỔI HÀNG TRONG 7 NGÀY</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
 
 </body>
+
 </html>
