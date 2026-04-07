@@ -31,4 +31,11 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
             "(v.ngayKetThuc IS NULL OR v.ngayKetThuc >= CURRENT_TIMESTAMP) AND " +
             "(v.danhMucApDung IS NULL OR v.danhMucApDung = '')")
     java.util.List<Voucher> findAllValidVouchers();
+
+    @Query("SELECT v FROM Voucher v WHERE " +
+            "v.trangThai = true AND " +
+            "(v.soLuongTong IS NULL OR v.soLuongDaDung < v.soLuongTong) AND " +
+            "(v.ngayBatDau IS NULL OR v.ngayBatDau <= CURRENT_TIMESTAMP) AND " +
+            "(v.ngayKetThuc IS NULL OR v.ngayKetThuc >= CURRENT_TIMESTAMP)")
+    java.util.List<Voucher> findAllValidVouchersForPos();
 }

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/ban-hang")
@@ -55,6 +56,20 @@ public class BanHangTaiQuayController {
 
     @Autowired
     private KhuyenMaiService khuyenMaiService;
+
+    private static String normalizeVoucherType(String raw) {
+        if (raw == null) return null;
+        String s = raw.trim().toUpperCase();
+        if (s.isBlank()) return null;
+        if (s.equals("%")) return "PERCENT";
+        if (s.equals("PERCENT") || s.equals("PERCENTAGE") || s.equals("PHAN_TRAM") || s.equals("PHẦN_TRĂM") || s.equals("PT")) {
+            return "PERCENT";
+        }
+        if (s.equals("FIXED") || s.equals("TIEN") || s.equals("TIỀN") || s.equals("MONEY") || s.equals("VND")) {
+            return "FIXED";
+        }
+        return null;
+    }
 
 
 
@@ -370,11 +385,12 @@ public class BanHangTaiQuayController {
         // FIFO: Chỉ kiểm tra soLuongTon
         Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
 
-        if (soLuongTon < 1) {
-            return "Sản phẩm '" + sp.getSanPham().getTenSanPham() + "' đã hết hàng.";
+        int newQty = (ct.getSoLuong() != null ? ct.getSoLuong() : 0) + 1;
+        if (soLuongTon < newQty) {
+            return "Sản phẩm '" + sp.getSanPham().getTenSanPham() + "' chỉ còn " + soLuongTon + " sản phẩm.";
         }
 
-        ct.setSoLuong(ct.getSoLuong() + 1);
+        ct.setSoLuong(newQty);
 
         hoaDonChiTietRepository.save(ct);
 
@@ -524,8 +540,13 @@ public class BanHangTaiQuayController {
     @ResponseBody
     public String apDungVoucher(String maVoucher, Integer hoaDonId){
 
+        if (maVoucher == null || maVoucher.isBlank()) {
+            return "Vui lòng nhập mã voucher";
+        }
+        String code = maVoucher.trim();
+
         Voucher voucher = voucherRepository
-                .findByMaVoucherIgnoreCase(maVoucher)
+                .findByMaVoucherIgnoreCase(code)
                 .orElse(null);
 
         if(voucher == null){
@@ -537,7 +558,24 @@ public class BanHangTaiQuayController {
             return "Không thể áp dụng voucher: hóa đơn đã chốt.";
         }
 
-        BigDecimal tongTien = hoaDon.getTongTienTamTinh();
+        // Validate voucher: trạng thái / thời gian / số lượng
+        if (!Boolean.TRUE.equals(voucher.getTrangThai())) {
+            return "Voucher không hợp lệ hoặc đã bị khóa";
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (voucher.getNgayBatDau() != null && now.isBefore(voucher.getNgayBatDau())) {
+            return "Voucher chưa đến thời gian sử dụng";
+        }
+        if (voucher.getNgayKetThuc() != null && now.isAfter(voucher.getNgayKetThuc())) {
+            return "Voucher đã hết hạn";
+        }
+        Integer tongSo = voucher.getSoLuongTong();
+        Integer daDung = voucher.getSoLuongDaDung() != null ? voucher.getSoLuongDaDung() : 0;
+        if (tongSo != null && daDung >= tongSo) {
+            return "Voucher đã hết lượt sử dụng";
+        }
+
+        BigDecimal tongTien = hoaDon.getTongTienTamTinh() != null ? hoaDon.getTongTienTamTinh() : BigDecimal.ZERO;
 
         // kiểm tra đơn tối thiểu
         if(voucher.getDonHangToiThieu() != null &&
@@ -548,8 +586,10 @@ public class BanHangTaiQuayController {
 
         BigDecimal giam = BigDecimal.ZERO;
 
-// giảm theo %
-        if(voucher.getLoaiVoucher().equalsIgnoreCase("PERCENT")){
+        String loai = normalizeVoucherType(voucher.getLoaiVoucher());
+
+        // giảm theo %
+        if ("PERCENT".equals(loai)) {
 
             giam = tongTien
                     .multiply(voucher.getGiaTri())
@@ -562,11 +602,21 @@ public class BanHangTaiQuayController {
             }
         }
 
-// giảm tiền trực tiếp
-        else if(voucher.getLoaiVoucher().equalsIgnoreCase("FIXED")){
+        // giảm tiền trực tiếp
+        else if ("FIXED".equals(loai)) {
 
             giam = voucher.getGiaTri();
 
+        }
+        else {
+            return "Loại voucher không hợp lệ (" + (voucher.getLoaiVoucher() != null ? voucher.getLoaiVoucher() : "null") + ")";
+        }
+
+        if (giam == null || giam.compareTo(BigDecimal.ZERO) < 0) {
+            giam = BigDecimal.ZERO;
+        }
+        if (giam.compareTo(tongTien) > 0) {
+            giam = tongTien;
         }
 
 
@@ -579,6 +629,26 @@ public class BanHangTaiQuayController {
         hoaDonRepository.save(hoaDon);
 
         return "Áp dụng voucher thành công";
+    }
+
+    @GetMapping("/api/voucher-kha-dung")
+    @ResponseBody
+    public List<Map<String, Object>> getVoucherKhaDung() {
+        // Danh sách voucher hợp lệ (trạng thái, số lượng, thời gian) — dành cho POS.
+        return voucherRepository.findAllValidVouchersForPos().stream()
+                .map(v -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", v.getId());
+                    m.put("maVoucher", v.getMaVoucher());
+                    m.put("tenVoucher", v.getTenVoucher());
+                    m.put("loaiVoucher", v.getLoaiVoucher());
+                    m.put("giaTri", v.getGiaTri());
+                    m.put("giaTriToiDa", v.getGiaTriToiDa());
+                    m.put("donHangToiThieu", v.getDonHangToiThieu());
+                    m.put("ngayKetThuc", v.getNgayKetThuc());
+                    return m;
+                })
+                .collect(Collectors.toList());
     }
 
     // =============================

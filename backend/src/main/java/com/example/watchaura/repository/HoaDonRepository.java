@@ -24,23 +24,23 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     List<HoaDon> findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCase(String maDonHang, String tenKhachHang);
 
-    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true")
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE'")
     Page<HoaDon> findByTrangThaiDonHangAndTrangThai(@Param("trangThai") String trangThaiDonHang, Pageable pageable);
 
-    @Query("SELECT h FROM HoaDon h WHERE h.trangThai IS NULL OR h.trangThai = true")
+    @Query("SELECT h FROM HoaDon h WHERE (h.trangThai IS NULL OR h.trangThai = true) AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE')")
     Page<HoaDon> findActiveOrders(Pageable pageable);
 
-    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :maDonHang, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :tenKhachHang, '%')))")
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :maDonHang, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :tenKhachHang, '%')))")
     Page<HoaDon> findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCaseAndTrangThai(@Param("maDonHang") String maDonHang, @Param("tenKhachHang") String tenKhachHang, Pageable pageable);
 
-    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
     Page<HoaDon> findByTrangThaiAndKeyword(@Param("trangThai") String trangThai, @Param("q") String q, Pageable pageable);
 
     /** Lọc theo một trong nhiều mã trạng thái (ví dụ Đã thanh toán: DA_THANH_TOAN và DA THANH TOAN). */
-    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true")
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE'")
     Page<HoaDon> findByTrangThaiDonHangInAndTrangThai(@Param("trangThaiList") Collection<String> trangThaiList, Pageable pageable);
 
-    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
     Page<HoaDon> findByTrangThaiInAndKeyword(@Param("trangThaiList") Collection<String> trangThaiList, @Param("q") String q, Pageable pageable);
 
     Page<HoaDon> findByKhachHangIdOrderByNgayDatDesc(Integer khachHangId, Pageable pageable);
