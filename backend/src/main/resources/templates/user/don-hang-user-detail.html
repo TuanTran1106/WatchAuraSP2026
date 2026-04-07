@@ -30,15 +30,30 @@
                     <div class="detail-card__grid info-grid">
                         <div>
                             <span class="detail-card__label">Họ tên</span>
-                            <p class="detail-card__value" th:text="${hoaDon.tenKhachHang}"></p>
+                            <p class="detail-card__value" id="detailTenKhach" th:text="${hoaDon.tenKhachHang}"></p>
                         </div>
                         <div>
                             <span class="detail-card__label">Số điện thoại</span>
-                            <p class="detail-card__value" th:text="${hoaDon.sdtKhachHang}"></p>
+                            <p class="detail-card__value" id="detailSdt" th:text="${hoaDon.sdtKhachHang}"></p>
+                        </div>
+                        <div>
+                            <span class="detail-card__label">Email</span>
+                            <p class="detail-card__value" id="detailEmail"
+                               th:text="${hoaDon.email != null and !#strings.isEmpty(hoaDon.email)} ? ${hoaDon.email} : '—'">—</p>
+                        </div>
+                        <div>
+                            <span class="detail-card__label">Giới tính</span>
+                            <p class="detail-card__value" id="detailGioiTinh"
+                               th:text="${hoaDon.gioiTinh != null and !#strings.isEmpty(hoaDon.gioiTinh)} ? ${hoaDon.gioiTinh} : 'Chưa cập nhật'">Chưa cập nhật</p>
+                        </div>
+                        <div>
+                            <span class="detail-card__label">Ngày sinh</span>
+                            <p class="detail-card__value" id="detailNgaySinh"
+                               th:text="${hoaDon.ngaySinh != null} ? ${#temporals.format(hoaDon.ngaySinh, 'dd/MM/yyyy')} : 'Chưa cập nhật'">Chưa cập nhật</p>
                         </div>
                         <div class="info-grid__full">
                             <span class="detail-card__label">Địa chỉ</span>
-                            <p class="detail-card__value" th:text="${hoaDon.diaChi}"></p>
+                            <p class="detail-card__value" id="detailDiaChi" th:text="${hoaDon.diaChi}"></p>
                         </div>
                     </div>
                 </section>
@@ -52,7 +67,8 @@
                                 <tr>
                                     <th>Sản phẩm</th>
                                     <th>Số lượng</th>
-                                    <th>Đơn giá</th>
+                                    <th>Giá gốc</th>
+                                    <th>Đơn giá (KM)</th>
                                     <th>Thành tiền</th>
                                 </tr>
                             </thead>
@@ -63,7 +79,10 @@
                                         <span class="order-detail__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
                                     </td>
                                     <td th:text="${item.soLuong}"></td>
-                                    <td class="cart-table__price" th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
+                                    <td class="cart-table__price"
+                                        th:text="|${#numbers.formatDecimal(item.giaGoc != null ? item.giaGoc : item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
+                                    <td class="cart-table__price"
+                                        th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
                                     <td class="cart-table__total" th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|"></td>
                                 </tr>
                             </tbody>
@@ -75,16 +94,23 @@
                 <section class="order-detail-card order-detail-summary cart-summary__box">
                     <h2 class="detail-card__heading visually-hidden">Tổng thanh toán</h2>
                     <div class="order-detail-summary__row cart-summary__row">
-                        <span class="order-detail-summary__label">Tạm tính</span>
-                        <span class="order-detail-summary__value" id="tempTotal" th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT')} đ|"></span>
+                        <span class="order-detail-summary__label">Tạm tính (đơn giá KM)</span>
+                        <span class="order-detail-summary__value order-detail-summary__value--money" id="tempTotal"
+                              th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT')} đ|"></span>
                     </div>
-                    <div class="order-detail-summary__row cart-summary__row">
-                        <span class="order-detail-summary__label">Giảm giá</span>
-                        <span class="order-detail-summary__value">- <span id="discount" th:text="|${#numbers.formatDecimal(hoaDon.tienGiam,0,'COMMA',0,'POINT')} đ|"></span></span>
+                    <div class="order-detail-summary__row cart-summary__row order-detail-summary__row--stack">
+                        <span class="order-detail-summary__label-wrap">
+                            <span class="order-detail-summary__label">Voucher</span>
+                            <span class="order-detail-summary__sublabel">Số tiền đã trừ</span>
+                        </span>
+                        <span class="order-detail-summary__value order-detail-summary__value--money order-detail-summary__value--discount">− <span id="discount" th:text="|${#numbers.formatDecimal(hoaDon.tienGiam != null ? hoaDon.tienGiam : 0,0,'COMMA',0,'POINT')} đ|"></span></span>
                     </div>
-                    <div class="order-detail-summary__row cart-summary__row">
-                        <span class="order-detail-summary__label">Phí vận chuyển</span>
-                        <span class="order-detail-summary__value" id="shippingFee"
+                    <div class="order-detail-summary__row cart-summary__row order-detail-summary__row--stack">
+                        <span class="order-detail-summary__label-wrap">
+                            <span class="order-detail-summary__label">Phí giao hàng (ship)</span>
+                            <span class="order-detail-summary__sublabel">Phí vận chuyển áp dụng cho đơn này</span>
+                        </span>
+                        <span class="order-detail-summary__value order-detail-summary__value--money" id="shippingFee"
                               th:text="|${#numbers.formatDecimal(hoaDon.phiVanChuyen != null ? hoaDon.phiVanChuyen : 0, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</span>
                     </div>
                     <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
@@ -148,6 +174,13 @@
         function formatCurrencyVnd(value) {
             if (value == null) return '0 đ';
             return Number(value).toLocaleString('vi-VN') + ' đ';
+        }
+
+        function formatNgaySinhApi(iso) {
+            if (!iso) return 'Chưa cập nhật';
+            var p = String(iso).split('-');
+            if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
+            return iso;
         }
 
         function normalizeTrangThai(raw) {
@@ -217,14 +250,31 @@
                         orderCodeDisplay.innerHTML = 'Mã đơn: <strong>' + (data.maDonHang || '') + '</strong>';
                     }
 
+                    var detailTen = document.getElementById('detailTenKhach');
+                    if (detailTen) detailTen.textContent = data.tenKhachHang || '';
+                    var detailSdtEl = document.getElementById('detailSdt');
+                    if (detailSdtEl) detailSdtEl.textContent = data.sdtKhachHang || '';
+                    var detailDiaChiEl = document.getElementById('detailDiaChi');
+                    if (detailDiaChiEl) detailDiaChiEl.textContent = data.diaChi || '';
+                    var detailEmailEl = document.getElementById('detailEmail');
+                    if (detailEmailEl) detailEmailEl.textContent = (data.email && String(data.email).trim()) ? data.email : '—';
+                    var detailGioiTinhEl = document.getElementById('detailGioiTinh');
+                    if (detailGioiTinhEl) {
+                        detailGioiTinhEl.textContent = (data.gioiTinh && String(data.gioiTinh).trim()) ? data.gioiTinh : 'Chưa cập nhật';
+                    }
+                    var detailNgaySinhEl = document.getElementById('detailNgaySinh');
+                    if (detailNgaySinhEl) detailNgaySinhEl.textContent = formatNgaySinhApi(data.ngaySinh);
+
                     var itemsBody = document.getElementById('orderItemsBody');
                     if (itemsBody && data.items) {
                         itemsBody.innerHTML = '';
                         data.items.forEach(function(item) {
                             var row = document.createElement('tr');
                             var nameCell = (item.tenSanPham || '') + (item.tenBienThe ? '<span class="order-detail__variant"> — ' + item.tenBienThe + '</span>' : '');
+                            var giaGoc = item.giaGoc != null ? item.giaGoc : item.donGia;
                             row.innerHTML = '<td class="cart-table__name">' + nameCell + '</td>' +
                                 '<td>' + (item.soLuong || 0) + '</td>' +
+                                '<td class="cart-table__price">' + formatCurrencyVnd(giaGoc) + '</td>' +
                                 '<td class="cart-table__price">' + formatCurrencyVnd(item.donGia) + '</td>' +
                                 '<td class="cart-table__total">' + formatCurrencyVnd(item.thanhTien) + '</td>';
                             itemsBody.appendChild(row);

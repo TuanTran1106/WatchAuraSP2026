@@ -377,7 +377,11 @@ public class DonHangUserController {
         result.put("tenKhachHang", hoaDon.getTenKhachHang());
         result.put("sdtKhachHang", hoaDon.getSdtKhachHang());
         result.put("diaChi", hoaDon.getDiaChi());
+        result.put("email", hoaDon.getEmail());
+        result.put("gioiTinh", hoaDon.getGioiTinh());
+        result.put("ngaySinh", hoaDon.getNgaySinh() != null ? hoaDon.getNgaySinh().toString() : "");
         result.put("tongTienTamTinh", hoaDon.getTongTienTamTinh());
+        result.put("tongTienChuaGiam", hoaDon.getTongTienChuaGiam());
         result.put("tienGiam", hoaDon.getTienGiam());
         result.put("phiVanChuyen", hoaDon.getPhiVanChuyen());
         result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
@@ -395,6 +399,7 @@ public class DonHangUserController {
                         itemMap.put("tenBienThe", item.getTenBienThe());
                         itemMap.put("soLuong", item.getSoLuong());
                         itemMap.put("donGia", item.getDonGia());
+                        itemMap.put("giaGoc", item.getGiaGoc());
                         itemMap.put("thanhTien", item.getThanhTien());
                         return itemMap;
                     })

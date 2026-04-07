@@ -132,10 +132,10 @@ public class KhachHangController {
             model.addAttribute("khachHang", new KhachHang());
             model.addAttribute("chucVuList", chucVuService.getAll());
             model.addAttribute("formAction", "/admin/khach-hang");
-            model.addAttribute("message", "Thêm khách hàng thành công.");
+            model.addAttribute("message", "Thêm khách hàng mới thành công!");
             return "admin/khachhang-list :: content";
         }
-        redirect.addFlashAttribute("message", "Thêm khách hàng thành công.");
+        redirect.addFlashAttribute("message", "Thêm khách hàng mới thành công!");
         redirect.addAttribute("page", 0);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (filterTrangThai != null && !filterTrangThai.isBlank()) redirect.addAttribute("trangThai", filterTrangThai);

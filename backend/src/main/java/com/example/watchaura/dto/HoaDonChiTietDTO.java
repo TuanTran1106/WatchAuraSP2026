@@ -18,6 +18,8 @@ public class HoaDonChiTietDTO {
     private String tenSanPham;
     private Integer soLuong;
     private BigDecimal donGia;
+    /** Giá gốc chưa khuyến mãi (lấy từ SanPhamChiTiet.giaBan tại thời điểm đặt). */
+    private BigDecimal giaGoc;
     private BigDecimal thanhTien;
     private String hinhAnh;
     private String tenBienThe;

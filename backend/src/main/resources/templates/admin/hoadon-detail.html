@@ -3,9 +3,9 @@
 <body>
 <div th:fragment="content">
     <div class="invoice-detail">
-        <p th:if="${message}" class="message" th:text="${message}"></p>
-        <p th:if="${warning}" class="message message--warning" th:text="${warning}"></p>
-        <p th:if="${error}" class="message message--error" th:text="${error}"></p>
+        <div th:if="${message}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
+        <div th:if="${warning}" class="admin-toast-payload" th:attr="data-admin-toast-message=${warning}, data-admin-toast-type='warning'" aria-hidden="true"></div>
+        <div th:if="${error}" class="admin-toast-payload" th:attr="data-admin-toast-message=${error}, data-admin-toast-type='error'" aria-hidden="true"></div>
 
         <!-- Breadcrumb / Back -->
         <div class="invoice-detail__top">
@@ -20,10 +20,12 @@
             <!-- Header: Mã HĐ + Trạng thái + Actions -->
             <header class="invoice-detail__header">
                 <div class="invoice-detail__header-left">
-                    <h1 class="invoice-detail__title">
-                        Hóa đơn
-                        <span class="invoice-detail__code" th:text="${hoaDon.maDonHang}">#Mã</span>
-                    </h1>
+                    <div class="invoice-detail__title-block">
+                        <h1 class="invoice-detail__title">Chi tiết hóa đơn</h1>
+                        <p class="invoice-detail__subtitle">
+                            Mã đơn: <strong class="invoice-detail__code" th:text="${hoaDon.maDonHang}">—</strong>
+                        </p>
+                    </div>
                     <form th:if="${hoaDon.loaiHoaDon == 'OFFLINE'}"
                           th:action="@{/admin/hoa-don/{id}/trang-thai(id=${hoaDon.id})}"
                           method="post"
@@ -38,13 +40,14 @@
                         <label for="invoiceDetailTrangThai" class="invoice-detail__status-field-label">Trạng thái đơn</label>
                         <select name="trangThai" id="invoiceDetailTrangThai"
                                 class="invoice-detail__status-select"
-                                title="Đổi trạng thái hóa đơn tại quầy"
                                 th:with="raw=${hoaDon.trangThaiDonHang},
                                          cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_THANH_TOAN'},
                                          isCho=${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'},
                                          isPaid=${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'},
                                          isHuy=${cur == 'DA_HUY'},
                                          isCanXuLy=${cur == 'CAN_XU_LY'}"
+                                th:disabled="${isHuy or isPaid}"
+                                th:title="${isHuy} ? 'Đơn đã hủy, không đổi trạng thái' : (${isPaid} ? 'Đơn đã thanh toán, không đổi trạng thái' : 'Đổi trạng thái hóa đơn tại quầy')"
                                 th:classappend="${isCanXuLy ? 'status--can-xu-ly' : (isHuy ? 'status--da-huy' : (isPaid ? 'status--da-giao' : 'status--cho-xac-nhan'))}">
                             <th:block th:if="${isCho}">
                                 <option value="CHO_THANH_TOAN" th:selected="${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'}" th:text="'Chờ thanh toán'">Chờ thanh toán</option>
@@ -80,16 +83,18 @@
                         <select name="trangThai" id="invoiceDetailTrangThaiOnline"
                                 class="invoice-detail__status-select"
                                 th:with="cur=${hoaDon.trangThaiDonHang != null and !#strings.isEmpty(hoaDon.trangThaiDonHang) ? hoaDon.trangThaiDonHang : 'CHO_XAC_NHAN'}"
-                                th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'"
-                                th:disabled="${cur == 'DA_GIAO'}"
+                                th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : (${cur == 'DA_HUY'} ? 'Đơn đã hủy, không đổi trạng thái' : (${(cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN')} ? 'Đơn đã thanh toán, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'))"
+                                th:disabled="${cur == 'DA_GIAO' or cur == 'DA_HUY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}"
                                 th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : ((cur == 'DA_GIAO' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN') ? 'status--da-giao' : (cur == 'DA_HUY' ? 'status--da-huy' : 'status--cho-xac-nhan')))))}">
+                            <option th:if="${cur == 'DA_HUY'}" th:value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
                             <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
                             <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
                             <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
-                            <option th:if="${cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="${cur == 'DANG_GIAO'}" th:text="'Đang giao'">Đang giao</option>
+                            <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
+                            <option th:if="${cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="true" hidden="hidden">Đang giao</option>
                             <option th:if="${cur == 'DANG_GIAO' or cur == 'DA_GIAO'}" th:value="DA_GIAO" th:selected="${cur == 'DA_GIAO'}" th:text="'Đã giao'">Đã giao</option>
                             <option th:if="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA THANH TOAN" th:selected="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'">Đã thanh toán</option>
-                            <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'DANG_GIAO' or cur == 'DA_HUY' or cur == 'CAN_XU_LY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
+                            <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
                         </select>
                         </div>
                     </form>
@@ -102,25 +107,62 @@
                 </div>
             </header>
 
-            <!-- Thông tin đơn hàng - 2 cột -->
+            <!-- Thông tin giao hàng -->
+            <section class="invoice-detail__section">
+                <h2 class="invoice-detail__section-title">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    Thông tin giao hàng
+                </h2>
+                <div class="invoice-detail__grid invoice-detail__grid--shipping">
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label invoice-detail__label--caps">Họ tên</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.tenKhachHang != null and !hoaDon.tenKhachHang.isEmpty()} ? ${hoaDon.tenKhachHang} : '—'">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label invoice-detail__label--caps">Số điện thoại</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.sdtKhachHang != null and !hoaDon.sdtKhachHang.isEmpty()} ? ${hoaDon.sdtKhachHang} : '—'">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label invoice-detail__label--caps">Email</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.email != null and !#strings.isEmpty(hoaDon.email)} ? ${hoaDon.email} : '—'">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label invoice-detail__label--caps">Giới tính</span>
+                        <span class="invoice-detail__value"
+                              th:text="${hoaDon.gioiTinh != null and !#strings.isEmpty(hoaDon.gioiTinh)} ? ${#strings.toUpperCase(hoaDon.gioiTinh)} : '—'">—</span>
+                    </div>
+                    <div class="invoice-detail__item">
+                        <span class="invoice-detail__label invoice-detail__label--caps">Ngày sinh</span>
+                        <span class="invoice-detail__value"
+                              th:text="${hoaDon.ngaySinh != null} ? ${#temporals.format(hoaDon.ngaySinh, 'dd/MM/yyyy')} : '—'">—</span>
+                    </div>
+                    <div class="invoice-detail__item invoice-detail__item--full">
+                        <span class="invoice-detail__label invoice-detail__label--caps">Địa chỉ</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.diaChi != null and !hoaDon.diaChi.isEmpty()} ? ${hoaDon.diaChi} : '—'">—</span>
+                    </div>
+                    <th:block th:if="${hoaDon.diaChiGiaoHang != null}"
+                              th:with="dc=${hoaDon.diaChiGiaoHang},
+                                       _p1=${dc.diaChiCuThe != null ? dc.diaChiCuThe : ''},
+                                       _p2=${dc.phuongXa != null and !dc.phuongXa.isEmpty() ? ', ' + dc.phuongXa : ''},
+                                       _p3=${dc.quanHuyen != null and !dc.quanHuyen.isEmpty() ? ', ' + dc.quanHuyen : ''},
+                                       _p4=${dc.tinhThanh != null and !dc.tinhThanh.isEmpty() ? ', ' + dc.tinhThanh : ''},
+                                       _addr=${#strings.trim(_p1 + _p2 + _p3 + _p4)}">
+                        <div class="invoice-detail__item invoice-detail__item--full invoice-detail__item--muted"
+                             th:if="${_addr != null and !_addr.isEmpty()}">
+                            <span class="invoice-detail__label invoice-detail__label--caps">Địa chỉ giao hàng (chi tiết)</span>
+                            <span class="invoice-detail__value" th:text="${_addr}">—</span>
+                        </div>
+                    </th:block>
+                </div>
+            </section>
+
+            <!-- Thông tin đơn hàng -->
             <section class="invoice-detail__section">
                 <h2 class="invoice-detail__section-title">
                     <i class="fa-solid fa-circle-info"></i>
                     Thông tin đơn hàng
                 </h2>
                 <div class="invoice-detail__grid">
-                    <div class="invoice-detail__item">
-                        <span class="invoice-detail__label">Khách hàng</span>
-                        <span class="invoice-detail__value" th:text="${hoaDon.tenKhachHang}">—</span>
-                    </div>
-                    <div class="invoice-detail__item">
-                        <span class="invoice-detail__label">Số điện thoại</span>
-                        <span class="invoice-detail__value" th:text="${hoaDon.sdtKhachHang}">—</span>
-                    </div>
-                    <div class="invoice-detail__item invoice-detail__item--full">
-                        <span class="invoice-detail__label">Địa chỉ</span>
-                        <span class="invoice-detail__value" th:text="${hoaDon.diaChi}">—</span>
-                    </div>
                     <div class="invoice-detail__item">
                         <span class="invoice-detail__label">Ngày đặt</span>
                         <span class="invoice-detail__value" th:text="${hoaDon.ngayDat != null ? #temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm') : '—'}">—</span>
@@ -133,6 +175,10 @@
                         <span class="invoice-detail__label">Loại hóa đơn</span>
                         <span class="invoice-detail__value" th:text="${hoaDon.loaiHoaDon != null ? hoaDon.loaiHoaDon : '—'}">—</span>
                     </div>
+                    <div class="invoice-detail__item" th:if="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}">
+                        <span class="invoice-detail__label">Mã voucher</span>
+                        <span class="invoice-detail__value" th:text="${hoaDon.maVoucher}">—</span>
+                    </div>
                     <div class="invoice-detail__item invoice-detail__item--full" th:if="${hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()}">
                         <span class="invoice-detail__label">Ghi chú</span>
                         <span class="invoice-detail__value" th:text="${hoaDon.ghiChu}">—</span>
@@ -140,48 +186,84 @@
                 </div>
             </section>
 
-            <!-- Tổng tiền -->
-            <section class="invoice-detail__summary">
-                <div class="invoice-detail__summary-row">
-                    <span class="invoice-detail__label">Tổng tạm tính</span>
-                    <span class="invoice-detail__money" th:text="${hoaDon.tongTienTamTinh != null ? #numbers.formatDecimal(hoaDon.tongTienTamTinh, 1, 'POINT', 0, 'COMMA') : '0'}">0</span>
-                </div>
-                <div class="invoice-detail__summary-row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
-                    <span class="invoice-detail__label">Tiền giảm</span>
-                    <span class="invoice-detail__money invoice-detail__money--discount" th:text="${'-' + #numbers.formatDecimal(hoaDon.tienGiam, 1, 'POINT', 0, 'COMMA')}">0</span>
-                </div>
-                <div class="invoice-detail__summary-row invoice-detail__summary-row--total">
-                    <span class="invoice-detail__label">Tổng thanh toán</span>
-                    <span class="invoice-detail__money invoice-detail__money--total" th:text="${hoaDon.tongTienThanhToan != null ? #numbers.formatDecimal(hoaDon.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : '0'}">0</span>
-                </div>
-            </section>
-
-            <!-- Bảng sản phẩm -->
+            <!-- Danh sách sản phẩm -->
             <section class="invoice-detail__section" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
                 <h2 class="invoice-detail__section-title">
                     <i class="fa-solid fa-list"></i>
-                    Chi tiết sản phẩm
+                    Sản phẩm đã đặt
                 </h2>
-                <div class="invoice-detail__table-wrap">
+                <div class="invoice-detail__table-wrap invoice-detail__table-wrap--wide">
                     <table class="invoice-detail__table">
                         <thead>
                             <tr>
                                 <th>Sản phẩm</th>
                                 <th class="invoice-detail__th--num">Số lượng</th>
-                                <th class="invoice-detail__th--num">Đơn giá</th>
+                                <th class="invoice-detail__th--num">Giá gốc</th>
+                                <th class="invoice-detail__th--num">Đơn giá (KM)</th>
                                 <th class="invoice-detail__th--num">Thành tiền</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:each="ct : ${hoaDon.items}">
-                                <td class="invoice-detail__product-name" th:text="${ct.tenSanPham}">—</td>
+                                <td class="invoice-detail__product-name">
+                                    <span th:text="${ct.tenSanPham}">—</span>
+                                    <span class="invoice-detail__variant"
+                                          th:if="${ct.tenBienThe != null and !ct.tenBienThe.isEmpty()}"
+                                          th:text="| — ${ct.tenBienThe}|"></span>
+                                </td>
                                 <td class="invoice-detail__td--num" th:text="${ct.soLuong}">0</td>
-                                <td class="invoice-detail__td--num" th:text="${ct.donGia != null ? #numbers.formatDecimal(ct.donGia, 1, 'POINT', 0, 'COMMA') : '0'}">0</td>
-                                <td class="invoice-detail__td--num" th:text="${ct.thanhTien != null ? #numbers.formatDecimal(ct.thanhTien, 1, 'POINT', 0, 'COMMA') : '0'}">0</td>
+                                <td class="invoice-detail__td--num"
+                                    th:text="|${#numbers.formatDecimal(ct.giaGoc != null ? ct.giaGoc : ct.donGia, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</td>
+                                <td class="invoice-detail__td--num"
+                                    th:text="|${ct.donGia != null ? #numbers.formatDecimal(ct.donGia, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0 đ</td>
+                                <td class="invoice-detail__td--num invoice-detail__td--line-total"
+                                    th:text="|${ct.thanhTien != null ? #numbers.formatDecimal(ct.thanhTien, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0 đ</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            <!-- Tổng thanh toán -->
+            <section class="invoice-detail__summary" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
+                <div class="invoice-detail__summary-row">
+                    <span class="invoice-detail__summary-label">Tạm tính (đơn giá KM)</span>
+                    <span class="invoice-detail__summary-value"
+                          th:text="|${hoaDon.tongTienTamTinh != null ? #numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0 đ</span>
+                </div>
+                <div class="invoice-detail__summary-row invoice-detail__summary-row--stack" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
+                    <span class="invoice-detail__summary-label-wrap">
+                        <span class="invoice-detail__summary-label">Voucher</span>
+                        <span class="invoice-detail__summary-sublabel">Số tiền đã trừ</span>
+                        <span class="invoice-detail__summary-voucher-code"
+                              th:if="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}"
+                              th:text="|Mã: ${hoaDon.maVoucher}|"></span>
+                    </span>
+                    <span class="invoice-detail__summary-value invoice-detail__summary-value--discount">
+                        − <span th:text="|${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</span>
+                    </span>
+                </div>
+                <div class="invoice-detail__summary-row invoice-detail__summary-row--stack" th:if="${hoaDon.phiVanChuyen != null and hoaDon.phiVanChuyen > 0}">
+                    <span class="invoice-detail__summary-label-wrap">
+                        <span class="invoice-detail__summary-label">Phí giao hàng (ship)</span>
+                        <span class="invoice-detail__summary-sublabel">Phí vận chuyển áp dụng cho đơn này</span>
+                    </span>
+                    <span class="invoice-detail__summary-value"
+                          th:text="|${#numbers.formatDecimal(hoaDon.phiVanChuyen, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</span>
+                </div>
+                <div class="invoice-detail__summary-row invoice-detail__summary-row--total">
+                    <span class="invoice-detail__summary-label invoice-detail__summary-label--grand">Tổng thanh toán</span>
+                    <span class="invoice-detail__summary-grand"
+                          th:text="|${hoaDon.tongTienThanhToan != null ? #numbers.formatDecimal(hoaDon.tongTienThanhToan, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0 đ</span>
+                </div>
+            </section>
+
+            <section class="invoice-detail__section" th:if="${hoaDon.items == null or hoaDon.items.isEmpty()}">
+                <h2 class="invoice-detail__section-title">
+                    <i class="fa-solid fa-list"></i>
+                    Sản phẩm đã đặt
+                </h2>
+                <p class="invoice-detail__empty-items">Chưa có dòng sản phẩm trên hóa đơn này.</p>
             </section>
         </article>
     </div>
@@ -211,9 +293,9 @@
                 var parser = new DOMParser();
                 var doc = parser.parseFromString(html, 'text/html');
 
-                var msgEl = doc.querySelector('.message');
-                var warnEl = doc.querySelector('.message--warning');
-                var errEl = doc.querySelector('.message--error');
+                var msgEl = doc.querySelector('[data-admin-toast-message]');
+                var warnEl = doc.querySelector('[data-admin-toast-type="warning"]');
+                var errEl = doc.querySelector('[data-admin-toast-type="error"]');
 
                 var message = null;
                 var messageType = null;
@@ -259,20 +341,9 @@
             var toast = document.createElement('div');
             toast.className = 'toast toast--' + (type || 'success');
             toast.textContent = message;
-            toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:6px;font-size:14px;max-width:400px;animation:slideInRight 0.3s ease;';
-            if (type === 'error') {
-                toast.style.background = '#dc3545';
-                toast.style.color = '#fff';
-            } else if (type === 'warning') {
-                toast.style.background = '#ffc107';
-                toast.style.color = '#000';
-            } else {
-                toast.style.background = '#28a745';
-                toast.style.color = '#fff';
-            }
             document.body.appendChild(toast);
             setTimeout(function () {
-                toast.style.animation = 'slideOutRight 0.3s ease';
+                toast.classList.add('toast--leaving');
                 setTimeout(function () {
                     if (toast.parentNode) toast.parentNode.removeChild(toast);
                 }, 300);

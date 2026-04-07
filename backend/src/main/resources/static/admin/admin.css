@@ -1965,6 +1965,13 @@ body.dash-modal-open {
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
+/* Khóa trạng thái (Đã giao / Đã hủy): giữ màu như bình thường, không xám mặc định của trình duyệt */
+.form__select--sm.table-status-select:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  -webkit-text-fill-color: currentColor;
+}
+
 /* ----- Trạng thái hóa đơn: màu theo từng trạng thái ----- */
 .table-status-select.status--cho-xac-nhan {
   background-color: #fffbeb;
@@ -2307,7 +2314,7 @@ body.dash-modal-open {
 
 /* ===== Invoice Detail (Chi tiết hóa đơn) ===== */
 .invoice-detail {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -2419,6 +2426,16 @@ body.dash-modal-open {
     transform 0.15s ease;
 }
 
+.invoice-detail .invoice-detail__status-select:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  -webkit-text-fill-color: currentColor;
+}
+
+.invoice-detail .invoice-detail__status-select:disabled:hover {
+  transform: none;
+}
+
 .invoice-detail .invoice-detail__status-select:hover {
   box-shadow:
     0 2px 4px rgba(15, 23, 42, 0.07),
@@ -2493,6 +2510,13 @@ body.dash-modal-open {
   background-size: 14px, 100% 100%;
 }
 
+.invoice-detail__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .invoice-detail__title {
   margin: 0;
   font-size: 1.5rem;
@@ -2501,10 +2525,18 @@ body.dash-modal-open {
   letter-spacing: -0.02em;
 }
 
+.invoice-detail__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
 .invoice-detail__code {
   color: #1e3a5f;
-  font-weight: 800;
-  margin-left: 0.25rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
 }
 
 .invoice-detail__status {
@@ -2572,7 +2604,8 @@ body.dash-modal-open {
   border-bottom: 1px solid #e2e8f0;
 }
 
-.invoice-detail__section:last-of-type {
+/* Chỉ bỏ viền khi section là con cuối của thẻ (không tính div bảng/tổng) */
+.invoice-detail__card > .invoice-detail__section:last-child {
   border-bottom: none;
 }
 
@@ -2597,6 +2630,10 @@ body.dash-modal-open {
   gap: 0.75rem 2rem;
 }
 
+.invoice-detail__grid--shipping {
+  gap: 1rem 2rem;
+}
+
 .invoice-detail__item {
   display: flex;
   flex-direction: column;
@@ -2613,6 +2650,18 @@ body.dash-modal-open {
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.invoice-detail__label--caps {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+}
+
+.invoice-detail__item--muted .invoice-detail__value {
+  color: #475569;
+  font-size: 0.9rem;
 }
 
 .invoice-detail__value {
@@ -2713,6 +2762,36 @@ body.dash-modal-open {
   background: #f8fafc;
 }
 
+.invoice-detail__section--flush {
+  padding-bottom: 0;
+}
+
+.invoice-detail__products-layout > .invoice-detail__section {
+  padding: 0;
+  border-bottom: none;
+}
+
+.invoice-detail__products-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 300px);
+  gap: 1.5rem 1.75rem;
+  align-items: start;
+  padding: 0 2rem 1.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.invoice-detail__table-wrap--wide {
+  min-width: 0;
+}
+
+.invoice-detail__variant {
+  font-weight: 400;
+  color: #64748b;
+  font-size: 0.875rem;
+  display: block;
+  margin-top: 0.15rem;
+}
+
 .invoice-detail__product-name {
   font-weight: 500;
   color: #0f172a;
@@ -2722,6 +2801,116 @@ body.dash-modal-open {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
+}
+
+.invoice-detail__td--line-total {
+  font-weight: 600;
+  color: #9f1239;
+}
+
+.invoice-detail__summary {
+  padding: 1.35rem 2rem 1.5rem;
+  background: linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.invoice-detail__summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.6rem 0;
+  gap: 1.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.invoice-detail__summary-row:last-child {
+  border-bottom: none;
+}
+
+.invoice-detail__summary-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.invoice-detail__summary-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.invoice-detail__summary-label--grand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.invoice-detail__summary-sublabel {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.invoice-detail__summary-voucher-code {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.invoice-detail__summary-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #0f172a;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.invoice-detail__summary-value--discount {
+  color: #059669;
+}
+
+.invoice-detail__summary-row--stack {
+  align-items: flex-start;
+}
+
+.invoice-detail__summary-row--total {
+  margin-top: 0.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(30, 58, 95, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  font-size: 1.05rem;
+  font-weight: 700;
+  align-items: center;
+}
+
+.invoice-detail__summary-grand {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #9f1239;
+  letter-spacing: -0.02em;
+}
+
+.invoice-detail__empty-items {
+  margin: 0;
+  padding: 0.5rem 0 0.25rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.invoice-detail__summary-card {
+  display: none; /* kept for compatibility, unused */
+}
+
+.invoice-detail__products-layout {
+  display: none;
 }
 
 @media (max-width: 640px) {
@@ -2974,6 +3163,74 @@ body:has(.admin-layout.theme-dark) {
   color: #f1f5f9;
 }
 
+.admin-layout.theme-dark .invoice-detail__subtitle {
+  color: #94a3b8;
+}
+
+.admin-layout.theme-dark .invoice-detail__code {
+  color: #7dd3fc;
+}
+
+.admin-layout.theme-dark .invoice-detail__label--caps {
+  color: #64748b;
+}
+
+.admin-layout.theme-dark .invoice-detail__item--muted .invoice-detail__value {
+  color: #cbd5e1;
+}
+
+.admin-layout.theme-dark .invoice-detail__variant {
+  color: #94a3b8;
+}
+
+.admin-layout.theme-dark .invoice-detail__td--line-total {
+  color: #fda4af;
+}
+
+.admin-layout.theme-dark .invoice-detail__products-layout {
+  border-bottom-color: #334155;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-card {
+  background: #0f172a;
+  border-color: #334155;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-card .invoice-detail__summary-row {
+  border-bottom-color: rgba(148, 163, 184, 0.22);
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-label,
+.admin-layout.theme-dark .invoice-detail__summary-label--grand {
+  color: #e2e8f0;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-sublabel,
+.admin-layout.theme-dark .invoice-detail__summary-voucher-code {
+  color: #94a3b8;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-value {
+  color: #f1f5f9;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-value--discount {
+  color: #6ee7b7;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-row--grand {
+  border-top-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-grand {
+  color: #fda4af;
+}
+
+.admin-layout.theme-dark .invoice-detail__empty-items {
+  color: #94a3b8;
+}
+
 .admin-layout.theme-dark .invoice-detail__status-field-label {
   color: #94a3b8;
 }
@@ -3061,6 +3318,39 @@ body:has(.admin-layout.theme-dark) {
 .admin-layout.theme-dark .invoice-detail__summary-row--total {
   background: rgba(30, 58, 95, 0.35);
   border-color: rgba(125, 211, 252, 0.2);
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-label {
+  color: #e2e8f0;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-label--grand {
+  color: #f1f5f9;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-sublabel,
+.admin-layout.theme-dark .invoice-detail__summary-voucher-code {
+  color: #94a3b8;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-value {
+  color: #f1f5f9;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-grand {
+  color: #fda4af;
+}
+
+.admin-layout.theme-dark .invoice-detail__products-layout {
+  display: none;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-card {
+  display: none;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-grand {
+  color: #fda4af;
 }
 
 .admin-layout.theme-dark .invoice-detail__table-wrap {
@@ -3154,4 +3444,110 @@ body:has(.admin-layout.theme-dark) {
 .admin-layout.theme-dark .message.warning::before,
 .admin-layout.theme-dark .message--warning::before {
   background: #f59e0b;
+}
+
+/* ----- Toast AJAX đổi trạng thái hóa đơn (chi tiết + danh sách) ----- */
+@keyframes invoiceStatusToastIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes invoiceStatusToastOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+body > .toast.toast--success,
+body > .toast.toast--warning,
+body > .toast.toast--error {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(400px, calc(100vw - 40px));
+  padding: 14px 16px;
+  margin: 0;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-family: inherit;
+  box-sizing: border-box;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: invoiceStatusToastIn 0.3s ease;
+}
+
+body > .toast.toast--leaving {
+  animation: invoiceStatusToastOut 0.3s ease forwards;
+}
+
+body > .toast.toast--success::before,
+body > .toast.toast--warning::before,
+body > .toast.toast--error::before {
+  content: "";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+body > .toast.toast--success {
+  background-color: #e8f5e9;
+  border: 1px solid #c3e6cb;
+  border-left: 5px solid #28a745;
+  color: #155724;
+}
+
+body > .toast.toast--success::before {
+  content: "\2713";
+  background: #28a745;
+  color: #fff;
+}
+
+body > .toast.toast--warning {
+  background-color: #fff8e1;
+  border: 1px solid #ffe082;
+  border-left: 5px solid #f59e0b;
+  color: #856404;
+}
+
+body > .toast.toast--warning::before {
+  content: "!";
+  background: #f59e0b;
+  color: #fff;
+  font-size: 16px;
+}
+
+body > .toast.toast--error {
+  background-color: #fdecea;
+  border: 1px solid #f5c2c7;
+  border-left: 5px solid #dc3545;
+  color: #721c24;
+}
+
+body > .toast.toast--error::before {
+  content: "\2715";
+  background: #dc3545;
+  color: #fff;
+  font-size: 13px;
 }
