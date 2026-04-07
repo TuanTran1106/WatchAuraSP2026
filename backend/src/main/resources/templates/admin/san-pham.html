@@ -2010,8 +2010,13 @@
 
                     showToast(isEditing ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!', 'success');
                     closeModal();
-                    // Sau khi thêm mới, luôn load trang đầu tiên để hiển thị bản ghi mới nhất
-                    loadProducts(isEditing ? undefined : 0);
+                    // Sau khi thêm mới, reset filter trạng thái về tất cả và load trang 1
+                    if (!isEditing) {
+                        document.getElementById('filterTrangThai').value = '';
+                        loadProducts(0);
+                    } else {
+                        loadProducts(undefined);
+                    }
                 } catch (error) {
                     console.error('Lỗi:', error);
                     showToast('Có lỗi xảy ra!', 'error');
@@ -2393,13 +2398,15 @@
                 try {
                     const response = await fetch(`${API_URL}/mau-sac`);
                     const data = await response.json();
-                    const select = document.getElementById('idMauSac');
-                    select.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
-                    data.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.tenMauSac;
-                        select.appendChild(option);
+                    const selects = document.querySelectorAll('.variant-mauSac');
+                    selects.forEach(select => {
+                        select.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = item.tenMauSac;
+                            select.appendChild(option);
+                        });
                     });
                 } catch (error) {
                     console.error('Lỗi load màu sắc:', error);
@@ -2411,13 +2418,15 @@
                 try {
                     const response = await fetch(`${API_URL}/kich-thuoc`);
                     const data = await response.json();
-                    const select = document.getElementById('idKichThuoc');
-                    select.innerHTML = '<option value="">-- Chọn kích thước --</option>';
-                    data.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.tenKichThuoc;
-                        select.appendChild(option);
+                    const selects = document.querySelectorAll('.variant-kichThuoc');
+                    selects.forEach(select => {
+                        select.innerHTML = '<option value="">-- Chọn kích thước --</option>';
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = item.tenKichThuoc;
+                            select.appendChild(option);
+                        });
                     });
                 } catch (error) {
                     console.error('Lỗi load kích thước:', error);
@@ -2429,13 +2438,15 @@
                 try {
                     const response = await fetch(`${API_URL}/chat-lieu-day`);
                     const data = await response.json();
-                    const select = document.getElementById('idChatLieuDay');
-                    select.innerHTML = '<option value="">-- Chọn chất liệu dây --</option>';
-                    data.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.tenChatLieu;
-                        select.appendChild(option);
+                    const selects = document.querySelectorAll('.variant-chatLieuDay');
+                    selects.forEach(select => {
+                        select.innerHTML = '<option value="">-- Chọn chất liệu dây --</option>';
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = item.tenChatLieu;
+                            select.appendChild(option);
+                        });
                     });
                 } catch (error) {
                     console.error('Lỗi load chất liệu dây:', error);

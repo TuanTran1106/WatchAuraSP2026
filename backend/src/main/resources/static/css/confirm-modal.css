@@ -114,9 +114,23 @@ body.confirm-modal-open {
 .confirm-modal__actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
   padding: 1rem 1.1rem 1.1rem;
   border-top: 1px solid #e2e8f0;
+}
+
+/* Reset admin .btn--primary { margin-bottom: 1rem } — modal is on body, outside .form__actions */
+.confirm-modal__actions .btn {
+  margin: 0;
+  min-height: 2.5rem;
+  padding: 0.5rem 1.125rem;
+  line-height: 1.25;
+}
+
+.confirm-modal__actions .btn--primary {
+  margin-bottom: 0;
 }
 
 /* Dark theme compatibility for admin (admin adds .admin-layout.theme-dark) */

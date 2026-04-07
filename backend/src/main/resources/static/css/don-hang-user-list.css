@@ -457,6 +457,40 @@
     font-size: 1rem;
 }
 
+.order-detail-summary__row--stack {
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.order-detail-summary__label-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-width: 65%;
+}
+
+.order-detail-summary__label-wrap .order-detail-summary__label {
+    font-weight: 600;
+    color: #333;
+}
+
+.order-detail-summary__sublabel {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #888;
+    line-height: 1.35;
+}
+
+.order-detail-summary__value--money {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.order-detail-summary__value--discount {
+    color: #2e7d32;
+}
+
 .order-detail-summary__row--total {
     margin-top: 0.75rem;
     padding-top: 0.75rem;

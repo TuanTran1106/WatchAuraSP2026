@@ -338,6 +338,14 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Đơn đã giao, không thể đổi sang trạng thái khác.");
         }
 
+        if ("DA_HUY".equals(effectiveCurrent) && !"DA_HUY".equals(newStatus)) {
+            throw new RuntimeException("Đơn đã hủy, không thể đổi sang trạng thái khác.");
+        }
+
+        if (isDaThanhToanCode(effectiveCurrent) && !isDaThanhToanCode(newStatus)) {
+            throw new RuntimeException("Đơn đã thanh toán, không thể đổi sang trạng thái khác.");
+        }
+
         // Không cho chuyển từ "Đang giao" sang "Đã hủy"
         if ("DANG_GIAO".equals(effectiveCurrent) && "DA_HUY".equals(newStatus)) {
             throw new RuntimeException("Đơn đang giao, không thể hủy. Vui lòng chờ đơn được giao thành công hoặc liên hệ khách hàng.");
@@ -676,9 +684,17 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setId(hoaDon.getId());
         dto.setMaDonHang(hoaDon.getMaDonHang());
 
+        String emailOnOrder = hoaDon.getEmail();
+        if (emailOnOrder != null && !emailOnOrder.isBlank()) {
+            dto.setEmail(emailOnOrder.trim());
+        }
         if (hoaDon.getKhachHang() != null) {
             dto.setKhachHangId(hoaDon.getKhachHang().getId());
-            dto.setEmail(hoaDon.getKhachHang().getEmail());
+            if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+                dto.setEmail(hoaDon.getKhachHang().getEmail());
+            }
+            dto.setGioiTinh(hoaDon.getKhachHang().getGioiTinh());
+            dto.setNgaySinh(hoaDon.getKhachHang().getNgaySinh());
         }
 
         dto.setTenKhachHang(hoaDon.getTenKhachHang());
@@ -686,6 +702,10 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setVoucherId(hoaDon.getVoucher() != null ? hoaDon.getVoucher().getId() : null);
         dto.setMaVoucher(hoaDon.getVoucher() != null ? hoaDon.getVoucher().getMaVoucher() : null);
         dto.setTongTienTamTinh(hoaDon.getTongTienTamTinh());
+        // Tổng tiền gốc (chưa trừ khuyến mãi) = tạm tính + tienGiam
+        BigDecimal tienGiamVal = hoaDon.getTienGiam() != null ? hoaDon.getTienGiam() : BigDecimal.ZERO;
+        BigDecimal tamTinh = hoaDon.getTongTienTamTinh() != null ? hoaDon.getTongTienTamTinh() : BigDecimal.ZERO;
+        dto.setTongTienChuaGiam(tamTinh.add(tienGiamVal));
         dto.setTienGiam(hoaDon.getTienGiam());
         dto.setTongTienThanhToan(hoaDon.getTongTienThanhToan());
         dto.setPhiVanChuyen(derivePhiVanChuyen(
@@ -764,7 +784,9 @@ public class HoaDonServiceImpl implements HoaDonService {
         // Lấy tồn kho khả dụng hiện tại của sản phẩm chi tiết
         SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
         dto.setSoLuongKhaDung(spct.getSoLuongKhaDung());
+        dto.setGiaGoc(spct.getGiaBan() != null ? spct.getGiaBan() : chiTiet.getDonGia());
 
+        // Thành tiền dựa trên giá đã giảm (đúng như đã lưu)
         if (dto.getDonGia() != null && dto.getSoLuong() != null) {
             dto.setThanhTien(dto.getDonGia().multiply(BigDecimal.valueOf(dto.getSoLuong())));
         } else {

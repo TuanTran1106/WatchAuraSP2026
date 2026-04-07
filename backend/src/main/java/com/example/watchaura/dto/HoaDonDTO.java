@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class HoaDonDTO {
     private String maVoucher;
     private BigDecimal tongTienTamTinh;
     private BigDecimal tienGiam;
+    private BigDecimal tongTienChuaGiam;
     /** Phí ship suy ra: tổng thanh toán − tạm tính + giảm giá (đồng bộ logic checkout). */
     private BigDecimal phiVanChuyen;
     private BigDecimal tongTienThanhToan;
@@ -35,6 +37,9 @@ public class HoaDonDTO {
     private String diaChi;
     private String sdtKhachHang;
     private String email;
+    /** Theo hồ sơ khách (tài khoản đặt hàng). */
+    private String gioiTinh;
+    private LocalDate ngaySinh;
     private String ghiChu;
     private DiaChiGiaoHangDTO diaChiGiaoHang;
     private List<HoaDonChiTietDTO> items;

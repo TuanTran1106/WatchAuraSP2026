@@ -95,9 +95,38 @@
     adminContent.insertBefore(box, adminContent.firstChild || null);
   }
 
+  function showAdminToast(message, type) {
+    var t = type || 'success';
+    var toast = document.createElement('div');
+    toast.className = 'toast toast--' + t;
+    toast.setAttribute('role', 'status');
+    toast.textContent = message || '';
+    document.body.appendChild(toast);
+    setTimeout(function () {
+      toast.classList.add('toast--leaving');
+      setTimeout(function () {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 300);
+    }, 4000);
+  }
+
+  // Expose to window for use in other scripts
+  window.showAdminToast = showAdminToast;
+
+  function drainAdminToastPayload(container) {
+    if (!container) return;
+    var payload = container.querySelector('[data-admin-toast-message]');
+    if (!payload) return;
+    var msg = payload.getAttribute('data-admin-toast-message');
+    var toastType = payload.getAttribute('data-admin-toast-type') || 'success';
+    if (msg) showAdminToast(msg, toastType);
+    payload.remove();
+  }
+
   function replaceAdminContent(html) {
     if (!adminContent) return;
     adminContent.innerHTML = html;
+    drainAdminToastPayload(adminContent);
   }
 
   function loadAdminContent(url, options) {
@@ -152,137 +181,161 @@
     );
   }
 
-  document.addEventListener('submit', function (e) {
+  /* -------- Confirm helper (integrates confirm-modal) -------- */
+  function getConfirmOpts(form) {
+    if (!form || !form.getAttribute) return null;
+    var msg = form.getAttribute('data-confirm');
+    if (!msg) return null;
+    return {
+      title: form.getAttribute('data-confirm-title') || 'Xác nhận',
+      message: msg,
+      confirmText: form.getAttribute('data-confirm-ok') || 'Xác nhận',
+      cancelText: form.getAttribute('data-confirm-cancel') || 'Hủy',
+      tone: form.getAttribute('data-confirm-tone') || 'info'
+    };
+  }
+
+  /* -------- Submit handler (AJAX + confirm) -------- */
+  function handleAdminSubmit(e) {
     var form = e.target;
-    if (!isAjaxForm(form)) {
-      return;
-    }
-
-    // A global confirm modal may be awaiting user decision.
-    // In that phase, do not process AJAX submit yet.
-    if (form.__confirmPending) {
-      return;
-    }
-
-    if (!adminContent) {
-      return;
-    }
+    if (!isAjaxForm(form)) return;
+    if (!adminContent) return;
 
     e.preventDefault();
 
+    // Confirm modal flow
+    if (form.__confirmPending) return;
+    var confirmOpts = getConfirmOpts(form);
+    if (confirmOpts) {
+      if (!window.confirmModal) {
+        console.warn('[admin.js] confirm-modal.js not loaded');
+        return;
+      }
+      form.__confirmPending = true;
+      window.confirmModal(confirmOpts).then(function (ok) {
+        form.__confirmPending = false;
+        if (!ok) return;
+        doAdminSubmit(form);
+      });
+    } else {
+      doAdminSubmit(form);
+    }
+  }
+
+  function doAdminSubmit(form) {
     var method = (form.getAttribute('method') || 'GET').toUpperCase();
     var action = form.getAttribute('action') || window.location.pathname;
-
     if (method === 'GET') {
       var params = new URLSearchParams(new FormData(form)).toString();
       var url = action + (action.indexOf('?') === -1 ? '?' : '&') + params;
       loadAdminContent(url, { method: 'GET' });
     } else {
-      var formData = new FormData(form);
-      loadAdminContent(action, {
-        method: method,
-        body: formData
-      });
+      loadAdminContent(action, { method: method, body: new FormData(form) });
     }
-  });
+  }
 
-  document.addEventListener('click', function (e) {
+  document.addEventListener('submit', handleAdminSubmit);
+
+  /* -------- Click handler for AJAX links (with confirm) -------- */
+  function handleAdminClick(e) {
     var target = e.target;
     while (target && target !== document) {
-      if (isAjaxLink(target)) {
-        break;
-      }
+      if (isAjaxLink(target)) break;
       target = target.parentElement;
     }
+    if (!target || target === document) return;
+    if (!adminContent) return;
 
-    if (!target || target === document) {
+    var confirmOpts = getConfirmOpts(target);
+    if (confirmOpts) {
+      e.preventDefault();
+      if (!window.confirmModal) {
+        console.warn('[admin.js] confirm-modal.js not loaded');
+        return;
+      }
+      var href = target.getAttribute('href');
+      window.confirmModal(confirmOpts).then(function (ok) {
+        if (!ok) return;
+        loadAdminContent(href, { method: 'GET' });
+      });
+    } else {
+      e.preventDefault();
+      var href = target.getAttribute('href');
+      if (!href) return;
+      loadAdminContent(href, { method: 'GET' });
+    }
+  }
+
+  document.addEventListener('click', handleAdminClick);
+
+  /* -------- Form card đóng/mở: delegation (DOM thay sau AJAX vẫn hoạt động) -------- */
+  document.addEventListener('click', function (e) {
+    if (!adminContent || !adminContent.contains(e.target)) return;
+    var t = e.target;
+    if (!t.closest) return;
+
+    if (t.closest('#formKhachHangToggle')) {
+      var khW = adminContent.querySelector('#formKhachHangWrapper');
+      var khBar = adminContent.querySelector('#formKhachHangOpenBar');
+      if (khW) khW.classList.add('is-collapsed');
+      if (khBar) khBar.setAttribute('aria-hidden', 'false');
+      return;
+    }
+    if (t.closest('#formKhachHangOpenBtn')) {
+      var khW2 = adminContent.querySelector('#formKhachHangWrapper');
+      var khBar2 = adminContent.querySelector('#formKhachHangOpenBar');
+      if (khW2) khW2.classList.remove('is-collapsed');
+      if (khBar2) khBar2.setAttribute('aria-hidden', 'true');
       return;
     }
 
-    if (!adminContent) {
+    if (t.closest('#formKhuyenMaiToggle')) {
+      var kmW = adminContent.querySelector('#formKhuyenMaiWrapper');
+      var kmBar = adminContent.querySelector('#formKhuyenMaiOpenBar');
+      if (kmW) kmW.classList.add('is-collapsed');
+      if (kmBar) kmBar.setAttribute('aria-hidden', 'false');
+      return;
+    }
+    if (t.closest('#formKhuyenMaiOpenBtn')) {
+      var kmW2 = adminContent.querySelector('#formKhuyenMaiWrapper');
+      var kmBar2 = adminContent.querySelector('#formKhuyenMaiOpenBar');
+      if (kmW2) kmW2.classList.remove('is-collapsed');
+      if (kmBar2) kmBar2.setAttribute('aria-hidden', 'true');
       return;
     }
 
-    e.preventDefault();
-
-    var href = target.getAttribute('href');
-    if (!href) {
+    if (t.closest('#formVoucherToggle')) {
+      var vW = adminContent.querySelector('#formVoucherWrapper');
+      var vBar = adminContent.querySelector('#formVoucherOpenBar');
+      if (vW) vW.classList.add('is-collapsed');
+      if (vBar) vBar.setAttribute('aria-hidden', 'false');
+      return;
+    }
+    if (t.closest('#formVoucherOpenBtn')) {
+      var vW2 = adminContent.querySelector('#formVoucherWrapper');
+      var vBar2 = adminContent.querySelector('#formVoucherOpenBar');
+      if (vW2) vW2.classList.remove('is-collapsed');
+      if (vBar2) vBar2.setAttribute('aria-hidden', 'true');
       return;
     }
 
-    loadAdminContent(href, { method: 'GET' });
+    if (t.closest('#formBlogToggle')) {
+      var bW = adminContent.querySelector('#formBlogWrapper');
+      var bBar = adminContent.querySelector('#formBlogOpenBar');
+      if (bW) bW.classList.add('is-collapsed');
+      if (bBar) bBar.setAttribute('aria-hidden', 'false');
+      return;
+    }
+    if (t.closest('#formBlogOpenBtn')) {
+      var bW2 = adminContent.querySelector('#formBlogWrapper');
+      var bBar2 = adminContent.querySelector('#formBlogOpenBar');
+      if (bW2) bW2.classList.remove('is-collapsed');
+      if (bBar2) bBar2.setAttribute('aria-hidden', 'true');
+      return;
+    }
   });
 
-  /* -------- Toggler form hiện có (giữ logic cũ) -------- */
-  var formWrapper = document.getElementById('formKhachHangWrapper');
-  var formCloseBtn = document.getElementById('formKhachHangToggle');
-  var formOpenBtn = document.getElementById('formKhachHangOpenBtn');
-  if (formWrapper && formCloseBtn) {
-    formCloseBtn.addEventListener('click', function () {
-      formWrapper.classList.add('is-collapsed');
-      var bar = document.getElementById('formKhachHangOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'false');
-    });
-  }
-  if (formWrapper && formOpenBtn) {
-    formOpenBtn.addEventListener('click', function () {
-      formWrapper.classList.remove('is-collapsed');
-      var bar = document.getElementById('formKhachHangOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'true');
-    });
-  }
-
-  var formKmWrapper = document.getElementById('formKhuyenMaiWrapper');
-  var formKmCloseBtn = document.getElementById('formKhuyenMaiToggle');
-  var formKmOpenBtn = document.getElementById('formKhuyenMaiOpenBtn');
-  if (formKmWrapper && formKmCloseBtn) {
-    formKmCloseBtn.addEventListener('click', function () {
-      formKmWrapper.classList.add('is-collapsed');
-      var bar = document.getElementById('formKhuyenMaiOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'false');
-    });
-  }
-  if (formKmWrapper && formKmOpenBtn) {
-    formKmOpenBtn.addEventListener('click', function () {
-      formKmWrapper.classList.remove('is-collapsed');
-      var bar = document.getElementById('formKhuyenMaiOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'true');
-    });
-  }
-
-  var formVoucherWrapper = document.getElementById('formVoucherWrapper');
-  var formVoucherCloseBtn = document.getElementById('formVoucherToggle');
-  var formVoucherOpenBtn = document.getElementById('formVoucherOpenBtn');
-  if (formVoucherWrapper && formVoucherCloseBtn) {
-    formVoucherCloseBtn.addEventListener('click', function () {
-      formVoucherWrapper.classList.add('is-collapsed');
-      var bar = document.getElementById('formVoucherOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'false');
-    });
-  }
-  if (formVoucherWrapper && formVoucherOpenBtn) {
-    formVoucherOpenBtn.addEventListener('click', function () {
-      formVoucherWrapper.classList.remove('is-collapsed');
-      var bar = document.getElementById('formVoucherOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'true');
-    });
-  }
-
-  var formBlogWrapper = document.getElementById('formBlogWrapper');
-  var formBlogCloseBtn = document.getElementById('formBlogToggle');
-  var formBlogOpenBtn = document.getElementById('formBlogOpenBtn');
-  if (formBlogWrapper && formBlogCloseBtn) {
-    formBlogCloseBtn.addEventListener('click', function () {
-      formBlogWrapper.classList.add('is-collapsed');
-      var bar = document.getElementById('formBlogOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'false');
-    });
-  }
-  if (formBlogWrapper && formBlogOpenBtn) {
-    formBlogOpenBtn.addEventListener('click', function () {
-      formBlogWrapper.classList.remove('is-collapsed');
-      var bar = document.getElementById('formBlogOpenBar');
-      if (bar) bar.setAttribute('aria-hidden', 'true');
-    });
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    drainAdminToastPayload(adminContent);
+  });
 })();

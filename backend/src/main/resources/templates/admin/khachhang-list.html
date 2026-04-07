@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content">
-    <p th:if="${message}" class="message" th:text="${message}"></p>
+    <div th:if="${message}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
 
     <div class="form-card-wrapper" id="formKhachHangWrapper" th:classappend="${khachHang == null or khachHang.id == null} ? 'is-collapsed'">
     <!-- Form luôn hiển thị phía trên, có nút đóng/mở -->
