@@ -18,9 +18,9 @@ import java.util.Map;
 public class ChatService {
 
 
-    @Value("")
-
-//    @Value("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")
+//    @Value("")
+//
+////    @Value("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")
 
 
 
