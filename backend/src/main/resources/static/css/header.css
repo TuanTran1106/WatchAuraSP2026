@@ -265,6 +265,10 @@
     justify-content: center;
 }
 
+.nav-cart__count--empty {
+    display: none;
+}
+
 .nav-icon-btn {
     padding: 0.4rem 0.65rem;
     display: inline-flex;

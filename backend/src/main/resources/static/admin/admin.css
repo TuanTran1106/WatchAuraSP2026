@@ -1638,6 +1638,12 @@ body.dash-modal-open {
   margin-bottom: 1rem;
 }
 
+/* Trong thanh toolbar/search: bỏ margin-bottom để flex căn giữa đúng (tránh nút bị lệch lên) */
+.toolbar .btn--primary,
+.search-bar .btn--primary {
+  margin-bottom: 0;
+}
+
 .btn--primary:hover {
   background: #163352;
   color: #fff;

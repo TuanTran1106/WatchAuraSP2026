@@ -115,22 +115,23 @@
     visibility: visible;
 }
 
-/* ----- Product grid (card kiểu TrangChu) ----- */
+/* ----- Product grid (mock: #777 meta, #333 tên, #b85c4b giá, shadow mềm) ----- */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-top: 20px;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .products-grid .product-card {
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
-    border: 1px solid #e0e0e0;
+    border: none;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -138,7 +139,7 @@
 
 .products-grid .product-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .products-grid .product-card__badge-sale {
@@ -179,25 +180,29 @@
 }
 
 .products-grid .product-brand {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 2px;
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 3px;
     text-transform: uppercase;
-    font-weight: 500;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    line-height: 1.35;
 }
 
 .products-grid .product-code {
-    font-size: 11px;
-    color: #888;
-    margin-bottom: 2px;
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 10px;
+    font-weight: 400;
+    line-height: 1.3;
 }
 
 .products-grid .product-name {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 6px;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 0;
     color: #333;
-    line-height: 1.3;
+    line-height: 1.35;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -207,8 +212,9 @@
 .products-grid .product-footer {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     margin-top: auto;
+    padding-top: 14px;
 }
 
 .products-grid .product-price-row {
@@ -219,23 +225,46 @@
 }
 
 .products-grid .product-price {
-    font-size: 14px;
-    font-weight: bold;
-    color: #e74c3c;
+    font-size: 15px;
+    font-weight: 700;
+    color: #dc3545;
+    line-height: 1.25;
 }
 
 .products-grid .product-price--original {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: #999;
     text-decoration: line-through;
     text-decoration-line: line-through;
+    line-height: 1.3;
 }
 
 .products-grid .product-price--sale {
-    font-size: 18px;
-    font-weight: 800;
-    color: #c0392b;
+    font-size: 16px;
+    font-weight: 700;
+    color: #dc3545;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+}
+
+/* Ký hiệu ₫ nhỏ, kiểu superscript (dùng chung grid + badge giảm tiền) */
+.product-price__dong {
+    font-size: 0.68em;
+    font-weight: 600;
+    vertical-align: super;
+    line-height: 0;
+    margin-left: 0.08em;
+    position: relative;
+    top: -0.06em;
+}
+
+.product-price--original .product-price__dong {
+    font-weight: 500;
+}
+
+.product-card__badge-sale .product-price__dong {
+    font-weight: 700;
 }
 
 .products-grid .no-products {
@@ -247,7 +276,7 @@
 }
 
 .products-grid .product-info {
-    padding: 12px;
+    padding: 16px 18px 18px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -574,12 +603,14 @@
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid #eee;
-    transition: box-shadow 0.2s;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .product-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .product-card__link {
@@ -609,14 +640,16 @@
 }
 
 .product-card__info {
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.125rem 1.125rem;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .product-card__name {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.0625rem;
+    font-weight: 700;
     margin-bottom: 0.25rem;
-    color: #1a1a1a;
+    color: #333;
+    line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -624,15 +657,19 @@
 }
 
 .product-card__brand {
-    font-size: 0.85rem;
-    color: #666;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #777;
     margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .product-card__price {
-    font-size: 1.1rem;
+    font-size: 0.9375rem;
     font-weight: 700;
     color: #dc3545;
+    line-height: 1.25;
 }
 
 .product-card__price--na {
