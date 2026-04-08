@@ -139,7 +139,7 @@
                                     <button type="button" class="qty-btn-plus" aria-label="Tăng" data-qty-action="plus">+</button>
                                 </div>
                                 <small class="text-muted product-detail__stock-hint" style="margin-left: 0.5rem;">
-                                    <span class="product-detail__stock-line product-detail__stock-line--total">Còn lại : <span class="fw-bold stock-total-variants" th:text="${tongSoLuong != null ? tongSoLuong : 0}">0</span></span>
+                                    Tổng số lượng: <span class="fw-bold stock-total-variants" th:text="${tongSoLuong != null ? tongSoLuong : 0}">0</span>
                                 </small>
                             </div>
                             <button type="submit" class="btn-add-cart" id="btnAddToCart"
@@ -304,6 +304,19 @@
             return el.closest ? el.closest('.product-detail-page') : null;
         }
 
+        function setAddToCartButtonState(btn, maxStock) {
+            if (!btn) return;
+            if (maxStock <= 0) {
+                btn.disabled = true;
+                btn.innerHTML = 'Hết hàng';
+                btn.style.background = '#ccc';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng';
+                btn.style.background = '';
+            }
+        }
+
         window.selectVariantBox = function(box) {
             if (!box) return;
             var root = getPage(box) || document.body;
@@ -355,11 +368,7 @@
                 qIn.value = (cv > maxStock || maxStock <= 0) ? (maxStock > 0 ? maxStock : 1) : cv;
             }
 
-            if (btn) {
-                btn.disabled = maxStock <= 0;
-                btn.textContent = maxStock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-                btn.style.background = maxStock <= 0 ? '#ccc' : '';
-            }
+            setAddToCartButtonState(btn, maxStock);
 
             if (statusEl) {
                 statusEl.textContent = maxStock > 0 ? 'Còn hàng' : 'Hết hàng';
@@ -450,11 +459,7 @@
                                 var cv = parseInt(qIn.value, 10) || 1;
                                 qIn.value = (cv > stock || stock <= 0) ? (stock > 0 ? stock : 1) : cv;
                             }
-                            if (btn) {
-                                btn.disabled = stock <= 0;
-                                btn.textContent = stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-                                btn.style.background = stock <= 0 ? '#ccc' : '';
-                            }
+                            setAddToCartButtonState(btn, stock);
                         }
 
                         if (prev !== undefined && prev !== stock) {
@@ -485,13 +490,18 @@
                     else alert('Sản phẩm này đã hết hàng.');
                     return;
                 }
+                if (qty < 1) {
+                    if (typeof window.showToast === 'function') window.showToast('Số lượng phải ít nhất là 1.', 'error');
+                    else alert('Số lượng phải ít nhất là 1.');
+                    return;
+                }
                 if (qty > max) {
-                    input.value = max;
-                    if (typeof window.showToast === 'function') window.showToast('Số lượng vượt quá tồn kho. Hiện chỉ còn ' + max + '.', 'error');
+                    if (typeof window.showToast === 'function') window.showToast('Số lượng vượt quá số lượng hàng trong kho. Không đủ hàng hoặc quá số lượng!', 'error');
+                    else alert('Số lượng vượt quá số lượng hàng trong kho. Không đủ hàng hoặc quá số lượng!');
                     return;
                 }
                 var formData = new FormData(form);
-                if (btn) { btn.disabled = true; btn.textContent = 'Đang thêm...'; }
+                if (btn) { btn.disabled = true; btn.innerHTML = 'Đang thêm...'; }
                 fetch(form.action, {
                     method: 'POST', body: formData,
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -508,11 +518,13 @@
                           if (typeof window.showToast === 'function') window.showToast(data.error || 'Có lỗi xảy ra!', 'error');
                           else alert(data.error || 'Có lỗi xảy ra!');
                       }
-                      if (btn) { btn.disabled = false; btn.textContent = 'Thêm vào giỏ hàng'; }
+                      var maxAfter = parseInt(input.getAttribute('max'), 10) || 0;
+                      setAddToCartButtonState(btn, maxAfter);
                   })
                   .catch(function() {
                       if (typeof window.showToast === 'function') window.showToast('Có lỗi xảy ra!', 'error');
-                      if (btn) { btn.disabled = false; btn.textContent = 'Thêm vào giỏ hàng'; }
+                      var maxAfter = parseInt(input.getAttribute('max'), 10) || 0;
+                      setAddToCartButtonState(btn, maxAfter);
                   });
             });
         }

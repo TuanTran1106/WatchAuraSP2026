@@ -105,10 +105,58 @@ public class UserGioHangController {
                 cart = new java.util.HashMap<>();
             }
 
-            cart.put(
-                    sanPhamChiTietId,
-                    cart.getOrDefault(sanPhamChiTietId, 0) + soLuong
-            );
+            if (sanPhamChiTietId == null) {
+                if (isAjax(request)) {
+                    return ResponseEntity.ok(new CartAjaxResponse(false, "Thiếu mã biến thể sản phẩm.", null, guestCartTotalSoLuong(cart), null, null, null));
+                }
+                redirect.addFlashAttribute("error", "Thiếu mã biến thể sản phẩm.");
+                if (redirectUrl != null && !redirectUrl.isBlank() && redirectUrl.startsWith("/")) {
+                    return "redirect:" + redirectUrl;
+                }
+                return "redirect:/gio-hang";
+            }
+
+            var spOpt = sanPhamChiTietRepository.findById(sanPhamChiTietId);
+            if (spOpt.isEmpty()) {
+                if (isAjax(request)) {
+                    return ResponseEntity.ok(new CartAjaxResponse(false, "Không tìm thấy sản phẩm.", null, guestCartTotalSoLuong(cart), null, null, null));
+                }
+                redirect.addFlashAttribute("error", "Không tìm thấy sản phẩm.");
+                if (redirectUrl != null && !redirectUrl.isBlank() && redirectUrl.startsWith("/")) {
+                    return "redirect:" + redirectUrl;
+                }
+                return "redirect:/gio-hang";
+            }
+            SanPhamChiTiet spct = spOpt.get();
+            int khaDung = spct.getSoLuongKhaDung() != null ? spct.getSoLuongKhaDung() : 0;
+            if (khaDung < 1) {
+                String msg = "Sản phẩm không còn hàng.";
+                if (isAjax(request)) {
+                    return ResponseEntity.ok(new CartAjaxResponse(false, msg, null, guestCartTotalSoLuong(cart), null, null, null));
+                }
+                redirect.addFlashAttribute("error", msg);
+                if (redirectUrl != null && !redirectUrl.isBlank() && redirectUrl.startsWith("/")) {
+                    return "redirect:" + redirectUrl;
+                }
+                return "redirect:/gio-hang";
+            }
+            int soLuongHienTai = cart.getOrDefault(sanPhamChiTietId, 0);
+            int soLuongMoi = soLuongHienTai + soLuong;
+            if (soLuongMoi > khaDung) {
+                String msg = soLuongHienTai > 0
+                        ? ("Thêm sản phẩm thất bại: đã có " + soLuongHienTai + " trong giỏ, thêm " + soLuong + " -> tổng " + soLuongMoi + " vượt quá số lượng khả dụng (" + khaDung + ").")
+                        : ("Thêm sản phẩm thất bại: muốn thêm " + soLuong + " nhưng chỉ còn " + khaDung + " có thể bán.");
+                if (isAjax(request)) {
+                    return ResponseEntity.ok(new CartAjaxResponse(false, msg, null, guestCartTotalSoLuong(cart), null, null, null));
+                }
+                redirect.addFlashAttribute("error", msg);
+                if (redirectUrl != null && !redirectUrl.isBlank() && redirectUrl.startsWith("/")) {
+                    return "redirect:" + redirectUrl;
+                }
+                return "redirect:/gio-hang";
+            }
+
+            cart.put(sanPhamChiTietId, soLuongMoi);
 
             session.setAttribute("cart", cart);
             

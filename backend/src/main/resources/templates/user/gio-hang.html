@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content" class="user-page cart-page">
-    <div class="container cart-container">
+    <div class="container cart-container" id="cart-page-root"
+         th:attr="data-url-san-pham=@{/san-pham}, data-url-home=@{/}">
         <nav class="breadcrumb cart-breadcrumb">
             <a th:href="@{/}">Trang chủ</a>
             <span class="breadcrumb__sep">/</span>
@@ -77,6 +78,7 @@
         </th:block>
 
         <th:block th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}">
+            <div id="cart-filled-content">
             <div class="cart-table-wrap">
                 <table class="cart-table">
                     <thead>
@@ -195,6 +197,7 @@
                     </div>
                 </div>
             </div>
+            </div>
         </th:block>
     </div>
     <script th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}">
@@ -266,13 +269,45 @@
             setTimeout(function() { alert.remove(); }, 5000);
         }
     }
+
+    function showCartEmptyAfterAjax() {
+        var filled = document.getElementById('cart-filled-content');
+        if (filled) filled.remove();
+        var subtitle = document.querySelector('.cart-header .cart-page__subtitle');
+        if (subtitle) subtitle.remove();
+        var root = document.getElementById('cart-page-root');
+        var sanPham = (root && root.getAttribute('data-url-san-pham')) || '/san-pham';
+        var home = (root && root.getAttribute('data-url-home')) || '/';
+        var empty = document.createElement('div');
+        empty.className = 'cart-empty';
+        empty.innerHTML =
+            '<div class="cart-empty__icon">🛒</div>' +
+            '<h2 class="cart-empty__title">Giỏ hàng trống</h2>' +
+            '<p class="cart-empty__text">Bạn chưa thêm sản phẩm nào. Khám phá bộ sưu tập đồng hồ và thêm vào giỏ nhé!</p>' +
+            '<div class="cart-empty__actions">' +
+            '<a href="' + sanPham + '" class="btn btn--primary">Xem sản phẩm</a>' +
+            '<a href="' + home + '" class="btn btn--outline">Về trang chủ</a>' +
+            '</div>';
+        var header = document.querySelector('.cart-page .cart-header');
+        if (header) header.insertAdjacentElement('afterend', empty);
+        else if (root) root.appendChild(empty);
+    }
     document.querySelectorAll('.cart-form-update, .cart-form-delete').forEach(function(form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            // Đồng bộ với /js/confirm-modal.js: lần submit đầu (data-confirm) chỉ mở modal, không gọi AJAX
+            if (form.getAttribute('data-confirm') && form.__confirmPending) {
+                return;
+            }
             var btn = form.querySelector('button[type="submit"]');
             if (btn) btn.disabled = true;
             var fd = new FormData(form);
-            var req = new Request(form.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            var req = new Request(form.action, {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
             fetch(req).then(function(r) { return r.json(); }).then(function(data) {
                 if (btn) btn.disabled = false;
                 if (!data.success) {
@@ -285,7 +320,8 @@
                     if (row) row.remove();
                     var tbody = document.querySelector('.cart-table tbody');
                     if (tbody && tbody.querySelectorAll('.cart-row').length === 0) {
-                        window.location.reload();
+                        showCartEmptyAfterAjax();
+                        updateHeaderCount(data.soLuongGioHang);
                         return;
                     }
                 } else {
