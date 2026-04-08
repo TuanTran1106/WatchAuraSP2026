@@ -100,7 +100,6 @@
         <form th:action="@{/admin/voucher}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
             <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-            <a th:href="@{/admin/voucher}" class="btn btn--secondary toolbar__btn" title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</a>
             <label class="toolbar__label">Trạng thái:</label>
             <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
                 <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>

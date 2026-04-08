@@ -59,7 +59,9 @@
     flex: 1;
     min-width: 0;
     position: relative;
-    z-index: 1;
+    /* Cao hơn cột ảnh sticky — tránh vùng ảnh che phủ phần chọn biến thể (click không ăn). */
+    z-index: 5;
+    isolation: isolate;
 }
 
 .product-image1 {
@@ -287,6 +289,8 @@
     margin-bottom: 1.25rem;
     padding: 1rem 0;
     border-top: 1px solid #e8e8e8;
+    position: relative;
+    z-index: 2;
 }
 
 .variants-section h5 {
