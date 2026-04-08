@@ -243,9 +243,13 @@ public class SanPhamServiceImpl implements SanPhamService {
             dto.setTenLoaiMay(sanPham.getLoaiMay().getTenLoaiMay());
         }
 
-        // Giá bán: lấy giá thấp nhất trong các biến thể đang bán
+        // Giá bán & khoảng giá: chỉ các biến thể khách có thể mua (khớp UserSanPhamController.detail —
+        // không gộp biến thể ngừng bán hoặc hết tồn, tránh card hiện 7–14tr trong khi chi tiết chỉ 7–8tr).
         if (sanPham.getId() != null) {
-            List<SanPhamChiTiet> variants = sanPhamChiTietRepository.findBySanPhamId(sanPham.getId());
+            List<SanPhamChiTiet> variants = sanPhamChiTietRepository.findBySanPhamId(sanPham.getId()).stream()
+                    .filter(v -> Boolean.TRUE.equals(v.getTrangThai())
+                            && v.getSoLuongTon() != null && v.getSoLuongTon() > 0)
+                    .collect(Collectors.toList());
             BigDecimal minGia = variants.stream()
                     .map(SanPhamChiTiet::getGiaBan)
                     .filter(Objects::nonNull)
@@ -291,6 +295,11 @@ public class SanPhamServiceImpl implements SanPhamService {
         dto.setPhanTramGiamHienThi(null);
         dto.setLoaiGiamHienThi(null);
         dto.setSoTienGiamHienThi(null);
+        dto.setCoHienThiKhoangGia(false);
+        dto.setGiaNiemyetThapNhat(null);
+        dto.setGiaNiemyetCaoNhat(null);
+        dto.setGiaHienThiThapNhat(null);
+        dto.setGiaHienThiCaoNhat(null);
         if (dto.getGiaBan() == null || variants == null || variants.isEmpty()) {
             return;
         }
@@ -298,15 +307,26 @@ public class SanPhamServiceImpl implements SanPhamService {
         List<KhuyenMai> chuongTrinhDangChay = khuyenMaiService.getActivePromotions(now);
         String tenDm = sanPham.getDanhMuc() != null ? sanPham.getDanhMuc().getTenDanhMuc() : null;
         KhuyenMaiPriceResult bestOverall = null;
+        BigDecimal minNiemYet = null;
+        BigDecimal maxNiemYet = null;
+        BigDecimal minHienThi = null;
+        BigDecimal maxHienThi = null;
+        int demCoGia = 0;
         for (SanPhamChiTiet v : variants) {
             if (v.getGiaBan() == null) {
                 continue;
             }
+            demCoGia++;
             BigDecimal base = v.getGiaBan();
+            minNiemYet = minNiemYet == null ? base : minNiemYet.min(base);
+            maxNiemYet = maxNiemYet == null ? base : maxNiemYet.max(base);
             KhuyenMaiPriceResult fromVariant = sanPhamChiTietKhuyenMaiService.resolveForSanPhamChiTiet(
                     v.getId(), base, chuongTrinhDangChay, tenDm);
             KhuyenMaiPriceResult fromProduct = SanPhamKhuyenMaiPricing.compute(sanPham, base, now);
             KhuyenMaiPriceResult bestV = KhuyenMaiPricePick.pickBetter(fromVariant, fromProduct, base);
+            BigDecimal sau = bestV.giaSauGiam();
+            minHienThi = minHienThi == null ? sau : minHienThi.min(sau);
+            maxHienThi = maxHienThi == null ? sau : maxHienThi.max(sau);
             if (bestOverall == null) {
                 bestOverall = bestV;
                 continue;
@@ -316,6 +336,17 @@ public class SanPhamServiceImpl implements SanPhamService {
                 bestOverall = bestV;
             } else if (cmp == 0 && bestV.coKhuyenMai() && !bestOverall.coKhuyenMai()) {
                 bestOverall = bestV;
+            }
+        }
+        if (demCoGia >= 2 && minNiemYet != null && maxNiemYet != null && minHienThi != null && maxHienThi != null) {
+            boolean khacNiemYet = minNiemYet.compareTo(maxNiemYet) != 0;
+            boolean khacHienThi = minHienThi.compareTo(maxHienThi) != 0;
+            if (khacNiemYet || khacHienThi) {
+                dto.setCoHienThiKhoangGia(true);
+                dto.setGiaNiemyetThapNhat(minNiemYet);
+                dto.setGiaNiemyetCaoNhat(maxNiemYet);
+                dto.setGiaHienThiThapNhat(minHienThi);
+                dto.setGiaHienThiCaoNhat(maxHienThi);
             }
         }
         if (bestOverall == null || !bestOverall.coKhuyenMai()) {

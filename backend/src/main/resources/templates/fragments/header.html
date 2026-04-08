@@ -45,7 +45,9 @@
                     <circle cx="20" cy="21" r="1"></circle>
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                 </svg>
-                <span th:if="${soLuongGioHang != null and soLuongGioHang > 0}" class="nav-cart__count" th:text="${soLuongGioHang}">0</span>
+                <span class="nav-cart__count"
+                      th:classappend="${soLuongGioHang == null or soLuongGioHang == 0} ? ' nav-cart__count--empty' : ''"
+                      th:text="${soLuongGioHang != null ? soLuongGioHang : 0}">0</span>
             </a>
             <th:block th:if="${currentUser != null}">
                 <span class="nav-user" th:text="'Xin chào, ' + ${currentUser.tenNguoiDung}">Xin chào</span>
@@ -58,6 +60,23 @@
     </div>
     <script th:inline="javascript">
     (function() {
+        /** Cập nhật badge số lượng trên icon giỏ (dùng sau AJAX thêm/sửa/xóa, không cần reload). */
+        window.updateNavCartBadge = function(count) {
+            var n = parseInt(count, 10);
+            if (isNaN(n)) n = 0;
+            var link = document.querySelector('a.nav-cart');
+            if (!link) return;
+            var el = link.querySelector('.nav-cart__count');
+            if (!el) {
+                el = document.createElement('span');
+                el.className = 'nav-cart__count';
+                link.appendChild(el);
+            }
+            el.textContent = n;
+            if (n > 0) el.classList.remove('nav-cart__count--empty');
+            else el.classList.add('nav-cart__count--empty');
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             var wrap = document.getElementById('nav-dropdown-danhmuc-wrap');
             var btn = document.getElementById('nav-dropdown-danhmuc-btn');

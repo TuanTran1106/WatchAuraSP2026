@@ -980,8 +980,6 @@
                             class="search-bar__input" />
                         <button type="button" class="btn btn--primary search-bar__btn" id="btnSearch"><i
                                 class="fa-solid fa-search"></i> Tìm kiếm</button>
-                        <button type="button" class="btn btn--secondary search-bar__btn" id="btnClearSearch"
-                            title="Xóa bộ lọc"><i class="fa-solid fa-times"></i> Clear</button>
                     </div>
                     <div class="filter-bar">
                         <label class="filter-bar__label">Trạng thái:</label>
@@ -2382,10 +2380,6 @@
                 document.getElementById('btnSearch').addEventListener('click', function (e) {
                     e.preventDefault();
                     applySearch();
-                });
-                document.getElementById('btnClearSearch').addEventListener('click', function (e) {
-                    e.preventDefault();
-                    resetSearch();
                 });
                 document.getElementById('filterTrangThai').addEventListener('change', function (e) {
                     e.preventDefault();

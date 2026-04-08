@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <title th:text="${title}">WatchAura</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" th:href="@{/css/user-layout.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
@@ -138,79 +142,8 @@
         })();
     </script>
 
-    <!-- Variant box click handler — needs to run before fragment scripts -->
-    <script>
-    window.selectVariantBox = function(box) {
-        if (!box) return;
-        var root = box.closest ? box.closest('.product-detail-page') : null;
-        if (!root) return;
-
-        if (box.classList.contains('variant-box--disabled')) {
-            if (typeof window.showToast === 'function') window.showToast('Biến thể này đã hết hàng!', 'warning');
-            return;
-        }
-
-        root.querySelectorAll('.variant-box').forEach(function(b) { b.classList.remove('variant-box--active'); });
-        box.classList.add('variant-box--active');
-
-        var hid = root.querySelector('.input-variant-id');
-        var pEl = root.querySelector('.price-value');
-        var sRem = root.querySelector('.stock-remaining');
-        var qIn = root.querySelector('.quantity-input');
-        var btn = root.querySelector('#btnAddToCart');
-        var statusEl = root.querySelector('#mainStockStatus');
-
-        var id = box.getAttribute('data-variant-id');
-        var giaBan = box.getAttribute('data-gia-ban');
-        var soLuong = box.getAttribute('data-so-luong-kha-dung') || '0';
-
-        if (hid) hid.value = id || '';
-        if (pEl) {
-            pEl.textContent = (giaBan && parseFloat(giaBan) > 0)
-                ? Math.round(parseFloat(giaBan)).toLocaleString('vi-VN') + ' ₫'
-                : 'Liên hệ để biết giá';
-        }
-
-        var maxStock = parseInt(soLuong, 10) || 0;
-        if (sRem) sRem.textContent = soLuong;
-        if (qIn) {
-            qIn.setAttribute('max', maxStock);
-            var cv = parseInt(qIn.value, 10) || 1;
-            qIn.value = (cv > maxStock || maxStock <= 0) ? (maxStock > 0 ? maxStock : 1) : cv;
-        }
-        if (btn) {
-            btn.disabled = maxStock <= 0;
-            btn.textContent = maxStock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-            btn.style.background = maxStock <= 0 ? '#ccc' : '';
-        }
-        if (statusEl) {
-            statusEl.textContent = maxStock > 0 ? 'Còn hàng' : 'Hết hàng';
-            statusEl.className = 'stock-status ' + (maxStock > 0 ? 'in-stock' : 'out-of-stock');
-        }
-
-        var row = root.querySelector('.specs-features-row');
-        var specContainer = root.querySelector('.product-specs');
-        if (specContainer && row) {
-            var spDDK = row.getAttribute('data-sp-duong-kinh');
-            var spDCN = row.getAttribute('data-sp-do-chiu-nuoc');
-            var g = function(a) { return box.getAttribute(a) || ''; };
-            var sm = {
-                mauSac: g('data-mau-sac') || 'Chưa cập nhật',
-                kichThuoc: g('data-kich-thuoc') || 'Chưa cập nhật',
-                chatLieuDay: g('data-chat-lieu-day') || 'Chưa cập nhật',
-                loaiMay: g('data-loai-may') || 'Chưa cập nhật',
-                duongKinh: (g('data-duong-kinh') || spDDK) ? (g('data-duong-kinh') || spDDK) + ' mm' : 'Chưa cập nhật',
-                doChiuNuoc: (g('data-do-chiu-nuoc') || spDCN) ? (g('data-do-chiu-nuoc') || spDCN) + ' m' : 'Chưa cập nhật',
-                beRongDay: g('data-be-rong-day') ? g('data-be-rong-day') + ' mm' : 'Chưa cập nhật',
-                trongLuong: g('data-trong-luong') ? g('data-trong-luong') + ' g' : 'Chưa cập nhật'
-            };
-            specContainer.querySelectorAll('[data-spec]').forEach(function(el) {
-                var key = el.getAttribute('data-spec');
-                if (sm[key] !== undefined) el.textContent = sm[key];
-            });
-        }
-    };
-    </script>
+    <!-- selectVariantBox: định nghĩa trong user/sanpham-detail.html (cập nhật #priceMainGoc / #priceMainSau).
+         Không ghi đè ở đây — script layout chạy sau fragment và sẽ làm mất cập nhật giá khi đổi biến thể. -->
 
 </body>
 

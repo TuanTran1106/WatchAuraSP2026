@@ -249,10 +249,8 @@
     }
 
     function updateHeaderCount(count) {
-        var el = document.querySelector('.nav-cart__count');
-        if (el) {
-            el.textContent = count;
-            el.style.display = count > 0 ? '' : 'none';
+        if (typeof window.updateNavCartBadge === 'function') {
+            window.updateNavCartBadge(count);
         }
     }
     function showCartError(msg) {

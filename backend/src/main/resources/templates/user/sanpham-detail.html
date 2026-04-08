@@ -4,11 +4,11 @@
         .price-main--original { text-decoration: line-through; color: #999; font-size: 0.95rem; }
         .price-main--sale { font-size: 1.35rem; font-weight: 700; }
         .price-main--sale--promo { color: #e74c3c; }
-        .price-main--sale--regular { color: #333; font-weight: 600; }
+        .price-main--sale--regular { color: #e74c3c; font-weight: 600; }
         .variant-box__price-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.2; }
         .variant-box__price-goc { text-decoration: line-through; color: #94a3b8; font-size: 0.78rem; }
         .variant-box__price-sau { font-weight: 600; color: #e74c3c; font-size: 0.9rem; }
-        .variant-box__price-sau.variant-box__price-sau--plain { color: #333; }
+        .variant-box__price-sau.variant-box__price-sau--plain { color: #e74c3c; }
     </style>
     <div class="container">
         <nav class="breadcrumb-wrap" aria-label="breadcrumb">
@@ -103,8 +103,9 @@
                                           data-be-rong-day=${v.beRongDay},
                                           data-trong-luong=${v.trongLuong},
                                           data-disabled=${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? 'true' : 'false'}"
-                                 th:onclick="'window.selectVariantBox(this)'"
-                                 th:style="${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? 'cursor:not-allowed;opacity:0.6;' : 'cursor:pointer'}">
+                                 th:style="${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? 'cursor:not-allowed;opacity:0.6;' : 'cursor:pointer'}"
+                                 role="button"
+                                 th:tabindex="${(v.soLuongKhaDung == null or v.soLuongKhaDung == 0) ? -1 : 0}">
                                 <span class="variant-box__label">
                                     <span th:if="${v.tenMauSac != null}" th:text="${v.tenMauSac}">Màu</span>
                                     <span th:if="${v.tenMauSac != null and v.tenKichThuoc != null}"> / </span>
@@ -288,7 +289,7 @@
                         </div>
                     </div>
                 </section>
-    </div>
+    <!-- JS phải nằm trong div có th:fragment — đóng div trước script thì :: content không đưa script ra HTML -->
     <script th:inline="javascript">
     (function() {
         var productId = /*[[${sp.id}]]*/ null;
@@ -497,9 +498,11 @@
                 }).then(function(r) { return r.json(); })
                   .then(function(data) {
                       if (data.success) {
-                          if (typeof window.showToast === 'function') window.showToast(data.message || 'Đã thêm vào giỏ!', 'success');
-                          var el = document.querySelector('.nav-cart__count');
-                          if (el && data.soLuongGioHang !== undefined) { el.textContent = data.soLuongGioHang; el.style.display = data.soLuongGioHang > 0 ? '' : 'none'; }
+                          var okMsg = data.error || data.message || 'Đã thêm vào giỏ!';
+                          if (typeof window.showToast === 'function') window.showToast(okMsg, 'success');
+                          if (typeof window.updateNavCartBadge === 'function' && data.soLuongGioHang !== undefined) {
+                              window.updateNavCartBadge(data.soLuongGioHang);
+                          }
                           checkStock();
                       } else {
                           if (typeof window.showToast === 'function') window.showToast(data.error || 'Có lỗi xảy ra!', 'error');
@@ -514,11 +517,29 @@
             });
         }
 
+        function bindVariantBoxClicks(page) {
+            if (!page) return;
+            page.querySelectorAll('.variant-box').forEach(function(box) {
+                box.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.selectVariantBox(box);
+                });
+                box.addEventListener('keydown', function(e) {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    window.selectVariantBox(box);
+                });
+            });
+        }
+
         function init() {
             var page = document.querySelector('.product-detail-page');
             if (!page) return;
             var boxes = page.querySelectorAll('.variant-box');
             var hid = page.querySelector('.input-variant-id');
+
+            bindVariantBoxClicks(page);
 
             var target = null;
             if (hid && hid.value) {

@@ -18,9 +18,8 @@ import java.util.Map;
 public class ChatService {
 
 
-//    @Value("")
-//
-////    @Value("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")
+    // API Key 已删除，如需使用 AI 功能请在环境变量中配置
+    // private String groqApiKey;
 
 
 
