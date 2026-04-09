@@ -23,11 +23,14 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Email</label>
-                    <input class="form__input" type="email" th:field="*{email}" placeholder="example@email.com" />
+                    <input class="form__input" type="email" th:field="*{email}" placeholder="example@email.com" autocomplete="email" />
+                    <span class="form__error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Số điện thoại</label>
-                    <input class="form__input" type="text" th:field="*{sdt}" placeholder="0912 345 678" />
+                    <input class="form__input" type="tel" th:field="*{sdt}" placeholder="0912345678 hoặc 0912 345 678" inputmode="numeric" autocomplete="tel" />
+                    <span class="form__hint">10 số di động Việt Nam (đầu 03, 05, 07, 08, 09).</span>
+                    <span class="form__error" th:if="${#fields.hasErrors('sdt')}" th:errors="*{sdt}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Mật khẩu</label>

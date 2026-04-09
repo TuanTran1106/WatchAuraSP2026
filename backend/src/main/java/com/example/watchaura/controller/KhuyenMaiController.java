@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.service.DanhMucService;
 import com.example.watchaura.service.KhuyenMaiService;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/admin/khuyen-mai")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class KhuyenMaiController {
 
     private final KhuyenMaiService khuyenMaiService;

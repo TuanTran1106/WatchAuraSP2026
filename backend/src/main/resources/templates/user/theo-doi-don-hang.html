@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo dõi đơn hàng - WatchAura</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .tracking-container {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 700px;
+            padding: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tracking-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .tracking-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .tracking-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-box button:active {
+            transform: translateY(0);
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .order-result {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .order-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .order-code {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .order-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-CAN_XU_LY {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-CHO_THANH_TOAN {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-CHO_XAC_NHAN {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-DA_THANH_TOAN,
+        .status-DA THANH TOAN {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-DA_XAC_NHAN {
+            background: #c3e6cb;
+            color: #155724;
+        }
+
+        .status-DANG_GIAO {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .status-DA_GIAO {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .status-DA_HUY {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .info-item span {
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .order-items {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .order-items h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            color: #333;
+        }
+
+        .item-variant {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: #fff;
+            margin-top: 15px;
+        }
+
+        .total-label {
+            font-size: 16px;
+        }
+
+        .total-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .order-note {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .order-note.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+
+        .order-note.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #28a745;
+        }
+
+        .payment-method {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payment-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .tracking-container {
+                padding: 20px;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+
+            .order-result-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="tracking-container">
+        <div class="tracking-header">
+            <h1><i class="fas fa-search"></i> Theo dõi đơn hàng</h1>
+            <p>Nhập mã đơn hàng của bạn để xem thông tin vận chuyển</p>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="orderCode" placeholder="Ví dụ: WA-00001" maxlength="50">
+            <button type="button" id="btnSearch">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        </div>
+
+        <div id="resultContainer" class="result-container">
+            <!-- Kết quả sẽ được render ở đây -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h3>Không tìm thấy đơn hàng</h3>
+            <p>Vui lòng kiểm tra lại mã đơn hàng và thử lại.</p>
+        </div>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Quay về trang chủ
+        </a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const orderCodeInput = document.getElementById('orderCode');
+            const btnSearch = document.getElementById('btnSearch');
+            const resultContainer = document.getElementById('resultContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            function formatCurrency(value) {
+                if (value == null) return '0 đ';
+                return Number(value).toLocaleString('vi-VN') + ' đ';
+            }
+
+            function getStatusClass(status) {
+                const statusMap = {
+                    'CAN_XU_LY': 'status-CAN_XU_LY',
+                    'CHO_THANH_TOAN': 'status-CHO_THANH_TOAN',
+                    'CHO_XAC_NHAN': 'status-CHO_XAC_NHAN',
+                    'DA_THANH_TOAN': 'status-DA_THANH_TOAN',
+                    'DA THANH TOAN': 'status-DA THANH TOAN',
+                    'DA_XAC_NHAN': 'status-DA_XAC_NHAN',
+                    'DANG_GIAO': 'status-DANG_GIAO',
+                    'DA_GIAO': 'status-DA_GIAO',
+                    'DA_HUY': 'status-DA_HUY'
+                };
+                return statusMap[status] || '';
+            }
+
+            function getStatusText(status) {
+                const statusMap = {
+                    'CAN_XU_LY': 'Cần xử lý',
+                    'CHO_THANH_TOAN': 'Chờ thanh toán',
+                    'CHO_XAC_NHAN': 'Chờ xác nhận',
+                    'DA_THANH_TOAN': 'Đã thanh toán',
+                    'DA THANH TOAN': 'Đã thanh toán',
+                    'DA_XAC_NHAN': 'Đã xác nhận',
+                    'DANG_GIAO': 'Đang giao',
+                    'DA_GIAO': 'Đã giao',
+                    'DA_HUY': 'Đã hủy'
+                };
+                return statusMap[status] || status || '';
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                try {
+                    const date = new Date(dateStr);
+                    return date.toLocaleString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            function renderOrder(data) {
+                if (!data.success) {
+                    resultContainer.classList.remove('show');
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                resultContainer.classList.add('show');
+
+                const itemsHtml = data.items && data.items.length > 0
+                    ? data.items.map(item => `
+                        <div class="item-row">
+                            <div>
+                                <div class="item-name">${item.tenSanPham || ''}</div>
+                                <div class="item-variant">${item.tenBienThe || ''}</div>
+                            </div>
+                            <div class="item-price">${formatCurrency(item.donGia)}</div>
+                        </div>
+                    `).join('')
+                    : '<p style="color: #888; text-align: center;">Không có thông tin sản phẩm</p>';
+
+                let noteHtml = '';
+                if (data.ghiChu && data.ghiChu.includes('Không đủ tồn kho')) {
+                    if (data.trangThaiDonHang === 'DA_XAC_NHAN') {
+                        noteHtml = `
+                            <div class="order-note success">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span>
+                            </div>
+                        `;
+                    } else if (data.trangThaiDonHang !== 'DANG_GIAO' && data.trangThaiDonHang !== 'DA_GIAO') {
+                        noteHtml = `
+                            <div class="order-note warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>${data.ghiChu}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                const paymentMethod = data.phuongThucThanhToan === 'COD'
+                    ? '<i class="fas fa-money-bill-wave"></i> COD'
+                    : '<i class="fab fa-cc-visa"></i> VNPay';
+
+                resultContainer.innerHTML = `
+                    <div class="order-result">
+                        <div class="order-result-header">
+                            <div>
+                                <div class="order-code">Mã đơn: ${data.maDonHang || ''}</div>
+                                <div class="order-date">Ngày đặt: ${formatDate(data.ngayDat)}</div>
+                            </div>
+                            <span class="status-badge ${getStatusClass(data.trangThaiDonHang)}">
+                                ${getStatusText(data.trangThaiDonHang)}
+                            </span>
+                        </div>
+
+                        <div class="order-info">
+                            <div class="info-item">
+                                <label>Khách hàng</label>
+                                <span>${data.tenKhachHang || 'Không có thông tin'}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Số điện thoại</label>
+                                <span>${data.sdtKhachHang || 'Không có thông tin'}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Địa chỉ</label>
+                                <span>${data.diaChi || 'Không có thông tin'}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Thanh toán</label>
+                                <div class="payment-method">
+                                    ${paymentMethod}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${noteHtml}
+
+                        <div class="order-items">
+                            <h4><i class="fas fa-box"></i> Sản phẩm</h4>
+                            ${itemsHtml}
+                        </div>
+
+                        <div class="order-total">
+                            <span class="total-label">Tổng thanh toán</span>
+                            <span class="total-value">${formatCurrency(data.tongTienThanhToan)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function searchOrder() {
+                const maDon = orderCodeInput.value.trim();
+
+                if (!maDon) {
+                    alert('Vui lòng nhập mã đơn hàng!');
+                    return;
+                }
+
+                resultContainer.classList.remove('show');
+                emptyState.style.display = 'none';
+
+                btnSearch.disabled = true;
+                btnSearch.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tìm...';
+
+                fetch('/theo-doi-don-hang/api?maDon=' + encodeURIComponent(maDon))
+                    .then(function(res) {
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        renderOrder(data);
+                    })
+                    .catch(function() {
+                        resultContainer.classList.remove('show');
+                        emptyState.style.display = 'block';
+                        emptyState.querySelector('p').textContent = 'Có lỗi xảy ra. Vui lòng thử lại!';
+                    })
+                    .finally(function() {
+                        btnSearch.disabled = false;
+                        btnSearch.innerHTML = '<i class="fas fa-search"></i> Tìm kiếm';
+                    });
+            }
+
+            btnSearch.addEventListener('click', searchOrder);
+
+            orderCodeInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchOrder();
+                }
+            });
+
+            // Auto focus on input
+            orderCodeInput.focus();
+        });
+    </script>
+</body>
+</html>

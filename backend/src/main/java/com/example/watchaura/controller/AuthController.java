@@ -36,9 +36,20 @@ public class AuthController {
             @RequestParam(value = "error", required = false) String error,
             Model model) {
         model.addAttribute("title", "Đăng nhập - WatchAura");
-        model.addAttribute("content", "user/dang-nhap :: content");
         if (error != null) model.addAttribute("errorMessage", error);
-        return "layout/user-layout";
+        return "user/dang-nhap";
+    }
+
+    /** Trang đăng nhập riêng cho Admin - không dùng layout chung vì chưa đăng nhập */
+    @GetMapping("/admin/dang-nhap")
+    public String adminDangNhapPage(
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "success", required = false) String success,
+            Model model) {
+        model.addAttribute("title", "Đăng nhập Admin - WatchAura");
+        if (error != null) model.addAttribute("errorMessage", error);
+        if (success != null) model.addAttribute("successMessage", success);
+        return "admin/dang-nhap";
     }
 
     @PostMapping("/dang-nhap")
@@ -77,7 +88,7 @@ public class AuthController {
                     redirectUrl = "/ban-hang";
                 } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý") 
                         || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
-                    redirectUrl = "/admin/san-pham";
+                    redirectUrl = "/admin";
                 }
             }
         }
@@ -86,11 +97,69 @@ public class AuthController {
         return "redirect:" + redirectUrl;
     }
 
+    /** Xử lý đăng nhập Admin - chỉ cho phép tài khoản có chức vụ Admin hoặc Quản lý */
+    @PostMapping("/admin/dang-nhap")
+    public String adminDangNhap(
+            @RequestParam("email") String email,
+            @RequestParam("matKhau") String matKhau,
+            HttpSession session,
+            RedirectAttributes redirect) {
+        if (email == null || email.isBlank()) {
+            redirect.addAttribute("error", "Vui lòng nhập email.");
+            return "redirect:/admin/dang-nhap";
+        }
+        Optional<KhachHang> opt = khachHangService.findByEmail(email.trim());
+        if (opt.isEmpty()) {
+            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/admin/dang-nhap";
+        }
+        KhachHang kh = opt.get();
+        if (Boolean.FALSE.equals(kh.getTrangThai())) {
+            redirect.addAttribute("error", "Tài khoản đã bị khóa.");
+            return "redirect:/admin/dang-nhap";
+        }
+        if (matKhau == null || !passwordEncoder.matches(matKhau, kh.getMatKhau())) {
+            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/admin/dang-nhap";
+        }
+
+        // Kiểm tra chức vụ - chỉ Admin/Quản lý mới được đăng nhập admin
+        boolean isAdmin = false;
+        if (kh.getChucVu() != null) {
+            String tenChucVu = kh.getChucVu().getTenChucVu();
+            if (tenChucVu != null) {
+                if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
+                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
+                    isAdmin = true;
+                }
+            }
+        }
+
+        // Nếu không phải Admin/Quản lý thì không cho đăng nhập
+        if (!isAdmin) {
+            redirect.addAttribute("error", "Bạn không có quyền truy cập trang quản trị.");
+            return "redirect:/admin/dang-nhap";
+        }
+
+        // Đăng nhập thành công - lưu session và chuyển đến Dashboard
+        session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
+        redirect.addFlashAttribute("successMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
+        return "redirect:/admin";
+    }
+
     @GetMapping("/dang-xuat")
     public String dangXuat(HttpSession session, RedirectAttributes redirect) {
         session.invalidate();
         redirect.addFlashAttribute("infoMessage", "Bạn đã đăng xuất.");
         return "redirect:/home";
+    }
+
+    /** Đăng xuất Admin - chuyển về trang đăng nhập admin */
+    @GetMapping("/admin/dang-xuat")
+    public String adminDangXuat(HttpSession session, RedirectAttributes redirect) {
+        session.invalidate();
+        redirect.addFlashAttribute("successMessage", "Bạn đã đăng xuất.");
+        return "redirect:/admin/dang-nhap";
     }
 
     @GetMapping("/dang-ky")
@@ -104,9 +173,7 @@ public class AuthController {
         if (email != null && !email.isBlank()) registerRequest.setEmail(email);
         if (sdt != null && !sdt.isBlank()) registerRequest.setSdt(sdt);
         model.addAttribute("registerRequest", registerRequest);
-        model.addAttribute("title", "Đăng ký - WatchAura");
-        model.addAttribute("content", "user/dang-ky :: content");
-        return "layout/user-layout";
+        return "user/dang-ky";
     }
 
     @PostMapping("/dang-ky")
@@ -117,15 +184,11 @@ public class AuthController {
             Model model,
             RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            model.addAttribute("title", "Đăng ký - WatchAura");
-            model.addAttribute("content", "user/dang-ky :: content");
-            return "layout/user-layout";
+            return "user/dang-ky";
         }
         if (!request.getMatKhau().equals(request.getXacNhanMatKhau())) {
-            model.addAttribute("title", "Đăng ký - WatchAura");
-            model.addAttribute("content", "user/dang-ky :: content");
             model.addAttribute("passwordMismatch", "Mật khẩu và xác nhận mật khẩu không khớp.");
-            return "layout/user-layout";
+            return "user/dang-ky";
         }
         KhachHang khachHang = null;
         try {
@@ -138,10 +201,8 @@ public class AuthController {
                     request.getGioiTinh()
             );
         } catch (RuntimeException e) {
-            model.addAttribute("title", "Đăng ký - WatchAura");
-            model.addAttribute("content", "user/dang-ky :: content");
             model.addAttribute("registerError", e.getMessage());
-            return "layout/user-layout";
+            return "user/dang-ky";
         }
 
         // Liên kết đơn hàng có cùng email với tài khoản mới

@@ -6,6 +6,7 @@ import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.repository.ChucVuRepository;
 import com.example.watchaura.repository.KhachHangRepository;
 import com.example.watchaura.service.KhachHangService;
+import com.example.watchaura.util.PhoneUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +47,13 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Override
     public KhachHang create(KhachHang khachHang) {
+        if (khachHang.getEmail() != null) {
+            khachHang.setEmail(khachHang.getEmail().trim());
+        }
+        if (khachHang.getSdt() != null) {
+            khachHang.setSdt(PhoneUtils.normalizeVnMobile(khachHang.getSdt()));
+        }
+
         // Gán ChucVu từ form (chucVu.id được bind, cần load entity)
         Integer chucVuId = khachHang.getChucVu() != null ? khachHang.getChucVu().getId() : null;
         if (chucVuId != null) {
@@ -84,9 +92,12 @@ public class KhachHangServiceImpl implements KhachHangService {
     public KhachHang update(Integer id, KhachHang khachHang) {
         KhachHang kh = getById(id);
 
+        String email = khachHang.getEmail() != null ? khachHang.getEmail().trim() : null;
+        String sdt = PhoneUtils.normalizeVnMobile(khachHang.getSdt());
+
         kh.setTenNguoiDung(khachHang.getTenNguoiDung());
-        kh.setEmail(khachHang.getEmail());
-        kh.setSdt(khachHang.getSdt());
+        kh.setEmail(email);
+        kh.setSdt(sdt);
         // Chỉ đổi mật khẩu khi người dùng nhập mới; mã hóa BCrypt rồi mới lưu
         if (khachHang.getMatKhau() != null && !khachHang.getMatKhau().isBlank()) {
             kh.setMatKhau(passwordEncoder.encode(khachHang.getMatKhau()));
@@ -155,8 +166,19 @@ public class KhachHangServiceImpl implements KhachHangService {
             LocalDate ngaySinh,
             String gioiTinh
     ) {
-        if (khachHangRepository.existsByEmail(email)) {
+        String emailTrim = email != null ? email.trim() : "";
+        if (emailTrim.isEmpty()) {
+            throw new RuntimeException("Vui lòng nhập email.");
+        }
+        if (khachHangRepository.existsByEmailIgnoreCase(emailTrim)) {
             throw new RuntimeException("Email này đã được sử dụng. Vui lòng dùng email khác hoặc đăng nhập.");
+        }
+        String normSdt = PhoneUtils.normalizeVnMobile(sdt);
+        if (!PhoneUtils.isValidVnMobile(normSdt)) {
+            throw new RuntimeException("Số điện thoại không đúng định dạng (10 số di động Việt Nam).");
+        }
+        if (khachHangRepository.countByNormalizedSdt(normSdt) > 0) {
+            throw new RuntimeException("Số điện thoại này đã được sử dụng. Vui lòng dùng số khác.");
         }
         ChucVu chucVuKhachHang = chucVuRepository.findById(3)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chức vụ Khách hàng."));
@@ -164,8 +186,8 @@ public class KhachHangServiceImpl implements KhachHangService {
         KhachHang kh = new KhachHang();
         kh.setMaNguoiDung(maNguoiDung);
         kh.setTenNguoiDung(tenNguoiDung);
-        kh.setEmail(email);
-        kh.setSdt(sdt != null ? sdt.trim() : null);
+        kh.setEmail(emailTrim);
+        kh.setSdt(normSdt);
         kh.setMatKhau(passwordEncoder.encode(matKhau));
         kh.setNgaySinh(ngaySinh);
         kh.setGioiTinh(gioiTinh);
@@ -177,7 +199,30 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Override
     public boolean existsByEmail(String email) {
-        return khachHangRepository.existsByEmail(email);
+        return email != null && !email.isBlank() && khachHangRepository.existsByEmailIgnoreCase(email.trim());
+    }
+
+    @Override
+    public boolean existsEmailTakenByOther(String email, Integer excludeId) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        String e = email.trim();
+        if (excludeId == null) {
+            return khachHangRepository.existsByEmailIgnoreCase(e);
+        }
+        return khachHangRepository.existsByEmailIgnoreCaseAndIdNot(e, excludeId);
+    }
+
+    @Override
+    public boolean existsSdtTakenByOther(String normalizedSdt, Integer excludeId) {
+        if (normalizedSdt == null || normalizedSdt.isBlank()) {
+            return false;
+        }
+        if (excludeId == null) {
+            return khachHangRepository.countByNormalizedSdt(normalizedSdt) > 0;
+        }
+        return khachHangRepository.countByNormalizedSdtExcludingId(normalizedSdt, excludeId) > 0;
     }
 
     @Override

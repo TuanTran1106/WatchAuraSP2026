@@ -126,7 +126,30 @@
   function replaceAdminContent(html) {
     if (!adminContent) return;
     adminContent.innerHTML = html;
+    var toastPayload = adminContent.querySelector('[data-admin-toast-message]');
+    var hadSuccessToast =
+      toastPayload &&
+      (toastPayload.getAttribute('data-admin-toast-type') || 'success') === 'success';
     drainAdminToastPayload(adminContent);
+
+    // Form "them" bi thu (is-collapsed) khi id null — neu co loi validation, can mo de thay .form__error.
+    // Sau luu thanh cong (toast success), mo de tiep tuc nhap. Khong mo khi chi tim kiem GET (khong toast, khong loi).
+    var formConfigs = [
+      { wrapper: '#formKhachHangWrapper', openBar: '#formKhachHangOpenBar' },
+      { wrapper: '#formBlogWrapper', openBar: '#formBlogOpenBar' },
+      { wrapper: '#formKhuyenMaiWrapper', openBar: '#formKhuyenMaiOpenBar' },
+      { wrapper: '#formVoucherWrapper', openBar: '#formVoucherOpenBar' }
+    ];
+
+    formConfigs.forEach(function(cfg) {
+      var formWrapper = adminContent.querySelector(cfg.wrapper);
+      if (!formWrapper || !formWrapper.classList.contains('is-collapsed')) return;
+      var hasErrors = formWrapper.querySelector('.form__error') !== null;
+      if (!hasErrors && !hadSuccessToast) return;
+      formWrapper.classList.remove('is-collapsed');
+      var openBar = adminContent.querySelector(cfg.openBar);
+      if (openBar) openBar.setAttribute('aria-hidden', 'true');
+    });
   }
 
   function loadAdminContent(url, options) {

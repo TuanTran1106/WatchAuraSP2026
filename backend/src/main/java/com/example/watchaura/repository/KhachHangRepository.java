@@ -19,7 +19,17 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, Integer id);
+
     Optional<KhachHang> findByEmail(String email);
+
+    @Query(value = "SELECT COUNT(*) FROM KhachHang WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(ISNULL(sdt,''))), ' ', ''), '-', ''), '.', ''), '(', ''), ')', '') = :digits", nativeQuery = true)
+    long countByNormalizedSdt(@Param("digits") String digits);
+
+    @Query(value = "SELECT COUNT(*) FROM KhachHang WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(ISNULL(sdt,''))), ' ', ''), '-', ''), '.', ''), '(', ''), ')', '') = :digits AND id <> :id", nativeQuery = true)
+    long countByNormalizedSdtExcludingId(@Param("digits") String digits, @Param("id") Integer id);
 
     Optional<KhachHang> findByMaNguoiDung(String maNguoiDung);
 

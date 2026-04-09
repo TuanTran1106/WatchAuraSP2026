@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.ChangePasswordRequest;
 import com.example.watchaura.dto.DiaChiRequest;
 import com.example.watchaura.entity.DiaChi;
@@ -22,6 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/nguoidung")
 @RequiredArgsConstructor
+@RequiresRole(value = {}, requireAuth = true)
 public class UserAccountController {
 
     private final KhachHangService khachHangService;

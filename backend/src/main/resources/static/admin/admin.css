@@ -1672,6 +1672,62 @@ body.dash-modal-open {
   color: #fff;
 }
 
+/* ===== Logout Button (Settings Page) ===== */
+.btn--logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 2px solid #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  min-width: 160px;
+}
+
+.btn--logout i {
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.btn--logout:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  border-color: #991b1b;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.btn--logout:hover i {
+  transform: translateX(-3px);
+}
+
+.btn--logout:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+/* Dark theme support for logout button */
+.admin-layout.theme-dark .btn--logout {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border-color: #f87171;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.admin-layout.theme-dark .btn--logout:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #fca5a5;
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.4);
+  color: #fff;
+}
+
 /* ===== Forms ===== */
 .content .card form>div,
 .form-group {

@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
 import com.example.watchaura.util.PaginationWindow;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/admin/hoa-don")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class HoaDonController {
 
     private final HoaDonService hoaDonService;

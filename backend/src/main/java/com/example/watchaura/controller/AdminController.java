@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.SanPhamService;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Controller
 @RequestMapping("/admin")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class AdminController {
 
     private final KhachHangService khachHangService;

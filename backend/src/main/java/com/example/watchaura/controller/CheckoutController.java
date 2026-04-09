@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.HoaDon;
@@ -33,6 +34,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
+@RequiresRole(value = {}, requireAuth = true)
 public class CheckoutController {
 
     private static final Logger log = LoggerFactory.getLogger(CheckoutController.class);

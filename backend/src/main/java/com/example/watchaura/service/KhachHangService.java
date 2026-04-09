@@ -17,6 +17,12 @@ public interface KhachHangService {
 
     boolean existsByEmail(String email);
 
+    /** true nếu email (so sánh không phân biệt hoa thường) đã thuộc user khác; excludeId null = thêm mới. */
+    boolean existsEmailTakenByOther(String email, Integer excludeId);
+
+    /** true nếu SĐT (chuẩn hóa chỉ số) đã thuộc user khác; excludeId null = thêm mới. */
+    boolean existsSdtTakenByOther(String normalizedSdt, Integer excludeId);
+
     /** Đăng ký tài khoản khách hàng: mã đăng nhập tự sinh KH001, KH002... */
     KhachHang registerKhachHang(String tenNguoiDung, String email, String sdt, String matKhau, LocalDate ngaySinh, String gioiTinh);
 

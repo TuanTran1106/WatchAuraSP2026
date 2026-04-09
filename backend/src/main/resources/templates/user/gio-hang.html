@@ -118,7 +118,7 @@
                                 <div class="qty-controls">
                                     <!-- Khách chưa đăng nhập: cập nhật session -->
                                     <th:block th:if="${guestCart}">
-                                        <form th:action="@{/gio-hang/guest/update}" method="post" class="qty-controls__form cart-form-update">
+                                        <form th:action="@{/gio-hang/guest/update}" method="post" class="qty-controls__form cart-form-update cart-form-minus">
                                             <input type="hidden" name="sanPhamChiTietId" th:value="${item.sanPhamChiTietId}">
                                             <input type="hidden" name="soLuong" th:value="${item.soLuong - 1}">
                                             <button type="submit" class="qty-btn qty-btn--minus" aria-label="Giảm">−</button>
@@ -132,7 +132,7 @@
                                     </th:block>
                                     <!-- Đã đăng nhập: DB giỏ hàng -->
                                     <th:block th:unless="${guestCart}">
-                                        <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update">
+                                        <form th:action="@{/gio-hang/cap-nhat/{id}(id=${item.id})}" method="post" class="qty-controls__form cart-form-update cart-form-minus">
                                             <input type="hidden" name="soLuong" th:value="${item.soLuong - 1}">
                                             <button type="submit" class="qty-btn qty-btn--minus" aria-label="Giảm">−</button>
                                         </form>
@@ -295,6 +295,40 @@
     document.querySelectorAll('.cart-form-update, .cart-form-delete').forEach(function(form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+
+            // Chỉ khi đang ở số lượng 1 (hidden gửi soLuong = 0): hỏi có muốn xóa khỏi giỏ — không hỏi khi giảm 5→4, 2→1, v.v.
+            if (form.classList.contains('cart-form-minus')) {
+                var soIn = form.querySelector('input[name="soLuong"]');
+                var nextQty = soIn ? parseInt(soIn.value, 10) : NaN;
+                if (!isNaN(nextQty) && nextQty <= 0) {
+                    if (!form.__minusDeleteOk) {
+                        var afterConfirm = function(ok) {
+                            if (!ok) return;
+                            form.__minusDeleteOk = true;
+                            var sub = form.querySelector('button[type="submit"]');
+                            if (form.requestSubmit) {
+                                form.requestSubmit(sub);
+                            } else {
+                                form.submit();
+                            }
+                        };
+                        if (typeof window.confirmModal === 'function') {
+                            window.confirmModal({
+                                title: 'Xóa sản phẩm',
+                                message: 'Bạn có muốn xóa sản phẩm này khỏi giỏ hàng không?',
+                                confirmText: 'Xóa',
+                                cancelText: 'Hủy',
+                                tone: 'danger'
+                            }).then(afterConfirm);
+                        } else {
+                            afterConfirm(window.confirm('Bạn có muốn xóa sản phẩm này khỏi giỏ hàng không?'));
+                        }
+                        return;
+                    }
+                    form.__minusDeleteOk = false;
+                }
+            }
+
             // Đồng bộ với /js/confirm-modal.js: lần submit đầu (data-confirm) chỉ mở modal, không gọi AJAX
             if (form.getAttribute('data-confirm') && form.__confirmPending) {
                 return;

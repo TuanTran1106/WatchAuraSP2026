@@ -9,9 +9,25 @@
                 <h1 class="order-page__title cart-page__title">Đơn hàng của tôi</h1>
             </header>
 
+            <!-- Thông báo đăng nhập (chỉ hiện khi chưa đăng nhập) -->
+            <div th:if="${!isLoggedIn}" class="order-login-notice" style="background: #e7f3ff; border: 1px solid #b3d7ff; border-radius: 10px; padding: 15px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-info-circle" style="color: #0066cc; font-size: 20px;"></i>
+                <div>
+                    <strong style="color: #333;">Bạn chưa đăng nhập!</strong>
+                    <p style="margin: 5px 0 0; color: #666; font-size: 14px;">
+                        Vui lòng <a href="/dang-nhap" style="color: #0066cc; font-weight: 600;">đăng nhập</a> để xem tất cả đơn hàng của bạn.
+                        Hoặc nhập <strong>mã đơn hàng</strong> bên dưới để tra cứu nhanh.
+                    </p>
+                </div>
+            </div>
+
             <!-- Tìm kiếm đơn hàng: Trạng thái, Ngày, Thanh toán -->
             <form method="get" th:action="@{/don-hang}" class="order-filter ajax-order-filter" id="orderFilterForm">
                 <input type="hidden" name="page" value="0">
+                <div class="order-filter__group">
+                    <label class="order-filter__label">Mã đơn</label>
+                    <input type="text" name="maDon" th:value="${maDon}" class="order-filter__input" placeholder="Nhập mã đơn hàng..." aria-label="Tìm theo mã đơn hàng" id="filterMaDon">
+                </div>
                 <div class="order-filter__group">
                     <label class="order-filter__label">Trạng thái</label>
                     <select name="trangThai" class="order-filter__select" aria-label="Trạng thái đơn hàng" id="filterTrangThai">
@@ -38,133 +54,182 @@
                 </div>
                 <div class="order-filter__actions">
                     <button type="submit" class="order-filter__btn btn btn-header" id="btnSearchOrder">Tìm kiếm</button>
-                    <a th:if="${trangThai != null or thanhToan != null or ngay != null}" th:href="@{/don-hang}" class="order-filter__reset btn btnClearFilter" id="btnClearFilter">Clear</a>
+                    <a th:if="${trangThai != null or thanhToan != null or ngay != null or maDon != null}" th:href="@{/don-hang}" class="order-filter__reset btn btnClearFilter" id="btnClearFilter">Clear</a>
                 </div>
             </form>
 
             <!-- Chưa có đơn -->
-            <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty order-empty--ajax" id="orderEmpty" style="display: none;">
-                <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
-                <h2 class="order-empty__title cart-empty__title">Không tìm thấy đơn hàng</h2>
-                <p class="order-empty__text cart-empty__text">Không có đơn hàng nào phù hợp với bộ lọc.</p>
-                <div class="order-empty__actions cart-empty__actions">
-                    <button type="button" class="btn btn-header btnClearFilter">Xóa bộ lọc</button>
+            <th:block th:if="${pageHoaDon != null}">
+                <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty order-empty--ajax" id="orderEmpty" style="display: none;">
+                    <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
+                    <h2 class="order-empty__title cart-empty__title">Không tìm thấy đơn hàng</h2>
+                    <p class="order-empty__text cart-empty__text">Không có đơn hàng nào phù hợp với bộ lọc.</p>
+                    <div class="order-empty__actions cart-empty__actions">
+                        <button type="button" class="btn btn-header btnClearFilter">Xóa bộ lọc</button>
+                    </div>
                 </div>
-            </div>
 
-            <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty order-empty--static" id="orderEmptyStatic">
-                <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
-                <h2 class="order-empty__title cart-empty__title">Chưa có đơn hàng</h2>
-                <p class="order-empty__text cart-empty__text">Bạn chưa có đơn hàng nào. Hãy mua sắm và quay lại xem đơn tại đây.</p>
-                <div class="order-empty__actions cart-empty__actions">
-                    <a th:href="@{/san-pham}" class="btn btn-header">Xem sản phẩm</a>
+                <div th:if="${#lists.isEmpty(pageHoaDon.content)}" class="order-empty cart-empty order-empty--static" id="orderEmptyStatic">
+                    <th:block th:if="${!isLoggedIn and guestLookupMessage != null}">
+                        <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
+                        <h2 class="order-empty__title cart-empty__title">Không tìm thấy đơn hàng</h2>
+                        <p class="order-empty__text cart-empty__text" th:text="${guestLookupMessage}">Không tìm thấy.</p>
+                        <div class="order-empty__actions cart-empty__actions">
+                            <a th:href="@{/don-hang}" class="btn btn-header">Nhập mã khác</a>
+                        </div>
+                    </th:block>
+                    <th:block th:if="${isLoggedIn}">
+                        <div class="order-empty__icon cart-empty__icon"><i class="fas fa-box-open"></i></div>
+                        <h2 class="order-empty__title cart-empty__title">Chưa có đơn hàng</h2>
+                        <p class="order-empty__text cart-empty__text">Bạn chưa có đơn hàng nào. Hãy mua sắm và quay lại xem đơn tại đây.</p>
+                        <div class="order-empty__actions cart-empty__actions">
+                            <a th:href="@{/san-pham}" class="btn btn-header">Xem sản phẩm</a>
+                        </div>
+                    </th:block>
                 </div>
-            </div>
+            </th:block>
+
+            <!-- Lỗi tải đơn (chỉ khi đã đăng nhập mà server lỗi) — không nhầm với khách chưa đăng nhập -->
+            <th:block th:if="${pageHoaDon == null and isLoggedIn and donHangLoadFailed}">
+                <div class="order-empty cart-empty" id="orderError">
+                    <div class="order-empty__icon cart-empty__icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <h2 class="order-empty__title cart-empty__title">Có lỗi xảy ra</h2>
+                    <p class="order-empty__text cart-empty__text">Không thể tải danh sách đơn hàng. Vui lòng thử lại sau.</p>
+                    <div class="order-empty__actions cart-empty__actions">
+                        <a th:href="@{/don-hang}" class="btn btn-header">Tải lại</a>
+                    </div>
+                </div>
+            </th:block>
+
+            <!-- Khách chưa đăng nhập, chưa tra cứu mã -->
+            <th:block th:if="${pageHoaDon == null and !isLoggedIn}">
+                <div class="order-empty cart-empty order-guest-hint" id="orderGuestHint">
+                    <div class="order-empty__icon cart-empty__icon"><i class="fas fa-search"></i></div>
+                    <h2 class="order-empty__title cart-empty__title">Tra cứu đơn hàng</h2>
+                    <p class="order-empty__text cart-empty__text">Nhập <strong>mã đơn hàng</strong> vào ô phía trên rồi bấm <strong>Tìm kiếm</strong> (hoặc nhấn Enter).</p>
+                </div>
+            </th:block>
 
             <!-- Danh sách đơn -->
-            <div th:if="${!#lists.isEmpty(pageHoaDon.content)}" class="order-list" id="orderList">
-                <div th:each="don : ${pageHoaDon.content}" class="order-card" th:attr="data-id=${don.id}">
-                    <div class="order-card__top">
-                        <div class="order-card__meta">
-                            <span class="order-card__code">Mã đơn: <strong th:text="${don.maDonHang}"></strong></span>
-                            <span class="order-card__date" th:text="${#temporals.format(don.ngayDat,'dd/MM/yyyy HH:mm')}"></span>
-                            <div th:if="${don.items != null and !don.items.isEmpty()}" class="order-card__products">
-                                <span class="order-card__products-label">Sản phẩm:</span>
-                                <span class="order-card__products-list">
-                                    <th:block th:each="item, iterStat : ${don.items}">
-                                        <span class="order-card__product-line">
-                                            <span th:text="${item.tenSanPham}"></span>
-                                            <span class="order-card__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
-                                        </span><th:block th:if="${!iterStat.last}">, </th:block>
-                                    </th:block>
-                                </span>
+            <th:block th:if="${pageHoaDon != null and !#lists.isEmpty(pageHoaDon.content)}">
+                <div class="order-list" id="orderList">
+                    <div th:each="don : ${pageHoaDon.content}" class="order-card" th:attr="data-id=${don.id}">
+                        <div class="order-card__top">
+                            <div class="order-card__meta">
+                                <span class="order-card__code">Mã đơn: <strong th:text="${don.maDonHang}"></strong></span>
+                                <span class="order-card__date" th:text="${#temporals.format(don.ngayDat,'dd/MM/yyyy HH:mm')}"></span>
+                                <div th:if="${don.items != null and !don.items.isEmpty()}" class="order-card__products">
+                                    <span class="order-card__products-label">Sản phẩm:</span>
+                                    <span class="order-card__products-list">
+                                        <th:block th:each="item, iterStat : ${don.items}">
+                                            <span class="order-card__product-line">
+                                                <span th:text="${item.tenSanPham}"></span>
+                                                <span class="order-card__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
+                                            </span><th:block th:if="${!iterStat.last}">, </th:block>
+                                        </th:block>
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                        <th:block th:switch="${don.trangThaiDonHang}">
-                            <span th:case="'CAN_XU_LY'" class="order-card__status order-status status-can-xu-ly">Cần xử lý</span>
-                            <span th:case="'CHO_THANH_TOAN'" class="order-card__status order-status status-cho-thanh-toan">Chờ thanh toán</span>
-                            <span th:case="'CHO_XAC_NHAN'" class="order-card__status order-status status-waiting">Chờ xác nhận</span>
-                            <span th:case="'DA_THANH_TOAN'" class="order-card__status order-status status-da-thanh-toan">Đã thanh toán</span>
-                            <span th:case="'DA THANH TOAN'" class="order-card__status order-status status-da-thanh-toan">Đã thanh toán</span>
-                            <span th:case="'DA_XAC_NHAN'" class="order-card__status order-status status-processing">Đã xác nhận</span>
-                            <span th:case="'DANG_GIAO'" class="order-card__status order-status status-shipping">Đang giao</span>
-                            <span th:case="'DA_GIAO'" class="order-card__status order-status status-done">Đã giao</span>
-                            <span th:case="'DA_HUY'" class="order-card__status order-status status-cancel">Đã hủy</span>
-                            <span th:case="*" class="order-card__status order-status" th:text="${don.trangThaiDonHang}">—</span>
-                        </th:block>
-                    </div>
-                    <!-- Đã xác nhận sau khi từng báo không đủ tồn kho -->
-                    <div th:if="${don.trangThaiDonHang == 'DA_XAC_NHAN' and don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho')}" class="order-card__note order-card__note--success">
-                        <i class="fas fa-check-circle" aria-hidden="true"></i>
-                        <span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span>
-                    </div>
-                    <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi đơn chưa xác nhận / chưa giao (ẩn khi Đang giao / Đã giao) -->
-                    <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho') and don.trangThaiDonHang != 'DA_XAC_NHAN' and don.trangThaiDonHang != 'DANG_GIAO' and don.trangThaiDonHang != 'DA_GIAO')}" class="order-card__note order-card__note--warning">
-                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                        <span th:text="${don.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</span>
-                    </div>
-                    <div class="order-card__body">
-                        <div class="order-card__total">
-                            <span class="order-card__total-label">Tổng thanh toán:</span>
-                            <span class="order-card__total-value" th:text="|${#numbers.formatDecimal(don.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
-                        </div>
-                        <div class="order-card__actions order-actions">
-                            <a th:href="@{'/don-hang/chi-tiet/' + ${don.id}}" class="btn-order btn-order--primary btn-view-detail" th:data-id="${don.id}">Xem chi tiết</a>
-                            <a th:if="${don.trangThaiDonHang == 'CAN_XU_LY'}" th:href="@{'/don-hang/chinh-sua/' + ${don.id}}" class="btn-order btn-order--edit">Chỉnh sửa đơn hàng</a>
-                            <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false}">
-                                <a th:if="${don.trangThaiDonHang == 'DA_GIAO' and !daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--review">Đánh giá</a>
-                                <a th:if="${don.trangThaiDonHang == 'DA_GIAO' and daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--view-review">Xem đánh giá</a>
+                            <th:block th:switch="${don.trangThaiDonHang}">
+                                <span th:case="'CAN_XU_LY'" class="order-card__status order-status status-can-xu-ly">Cần xử lý</span>
+                                <span th:case="'CHO_THANH_TOAN'" class="order-card__status order-status status-cho-thanh-toan">Chờ thanh toán</span>
+                                <span th:case="'CHO_XAC_NHAN'" class="order-card__status order-status status-waiting">Chờ xác nhận</span>
+                                <span th:case="'DA_THANH_TOAN'" class="order-card__status order-status status-da-thanh-toan">Đã thanh toán</span>
+                                <span th:case="'DA THANH TOAN'" class="order-card__status order-status status-da-thanh-toan">Đã thanh toán</span>
+                                <span th:case="'DA_XAC_NHAN'" class="order-card__status order-status status-processing">Đã xác nhận</span>
+                                <span th:case="'DANG_GIAO'" class="order-card__status order-status status-shipping">Đang giao</span>
+                                <span th:case="'DA_GIAO'" class="order-card__status order-status status-done">Đã giao</span>
+                                <span th:case="'DA_HUY'" class="order-card__status order-status status-cancel">Đã hủy</span>
+                                <span th:case="*" class="order-card__status order-status" th:text="${don.trangThaiDonHang}">—</span>
                             </th:block>
-                            <a th:if="${don.trangThaiDonHang == 'DA_GIAO' || don.trangThaiDonHang == 'DA_HUY'}" th:href="@{'/mua-lai/' + ${don.id}}" class="btn-order btn-order--rebuy">Mua lại</a>
+                        </div>
+                        <!-- Đã xác nhận sau khi từng báo không đủ tồn kho -->
+                        <div th:if="${don.trangThaiDonHang == 'DA_XAC_NHAN' and don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho')}" class="order-card__note order-card__note--success">
+                            <i class="fas fa-check-circle" aria-hidden="true"></i>
+                            <span>Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</span>
+                        </div>
+                        <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi đơn chưa xác nhận / chưa giao (ẩn khi Đang giao / Đã giao) -->
+                        <div th:if="${(don.trangThaiDonHang == 'CAN_XU_LY' and don.ghiChu != null and !don.ghiChu.isEmpty()) or (don.ghiChu != null and #strings.contains(don.ghiChu, 'Không đủ tồn kho') and don.trangThaiDonHang != 'DA_XAC_NHAN' and don.trangThaiDonHang != 'DANG_GIAO' and don.trangThaiDonHang != 'DA_GIAO')}" class="order-card__note order-card__note--warning">
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            <span th:text="${don.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</span>
+                        </div>
+                        <div class="order-card__body">
+                            <div class="order-card__total">
+                                <span class="order-card__total-label">Tổng thanh toán:</span>
+                                <span class="order-card__total-value" th:text="|${#numbers.formatDecimal(don.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
+                            </div>
+                            <div class="order-card__actions order-actions">
+                                <a th:href="@{'/don-hang/chi-tiet/' + ${don.id}}" class="btn-order btn-order--primary btn-view-detail" th:data-id="${don.id}">Xem chi tiết</a>
+                                <a th:if="${don.trangThaiDonHang == 'CAN_XU_LY'}" th:href="@{'/don-hang/chinh-sua/' + ${don.id}}" class="btn-order btn-order--edit">Chỉnh sửa đơn hàng</a>
+                                <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false}">
+                                    <a th:if="${don.trangThaiDonHang == 'DA_GIAO' and !daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--review">Đánh giá</a>
+                                    <a th:if="${don.trangThaiDonHang == 'DA_GIAO' and daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--view-review">Xem đánh giá</a>
+                                </th:block>
+                                <a th:if="${don.trangThaiDonHang == 'DA_GIAO' || don.trangThaiDonHang == 'DA_HUY'}" th:href="@{'/mua-lai/' + ${don.id}}" class="btn-order btn-order--rebuy">Mua lại</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Phân trang -->
-            <nav class="pagination-wrap" th:if="${pageHoaDon != null and pageHoaDon.totalPages > 1}" aria-label="Phân trang" id="orderPagination">
-                <ul class="pagination-list">
-                    <li>
-                        <a th:if="${pageHoaDon.number > 0}"
-                           class="pagination-link pagination-link--first btn-pagination"
-                           th:attr="data-page=0" href="javascript:void(0)">&laquo;&laquo;</a>
-                        <span th:unless="${pageHoaDon.number > 0}" class="pagination-link pagination-link--disabled">&laquo;&laquo;</span>
-                    </li>
-                    <li>
-                        <a th:if="${pageHoaDon.hasPrevious()}"
-                           class="pagination-link pagination-link--prev btn-pagination"
-                           th:attr="data-page=${pageHoaDon.number - 1}" href="javascript:void(0)">&lsaquo;</a>
-                        <span th:unless="${pageHoaDon.hasPrevious()}" class="pagination-link pagination-link--disabled">&lsaquo;</span>
-                    </li>
-                    <li th:each="i : ${#numbers.sequence(0, pageHoaDon.totalPages - 1)}"
-                        th:if="${i >= pageHoaDon.number - 2 and i <= pageHoaDon.number + 2}">
-                        <a th:if="${i != pageHoaDon.number}"
-                           class="pagination-link btn-pagination"
-                           th:attr="data-page=${i}" href="javascript:void(0)"
-                           th:text="${i + 1}">1</a>
-                        <span th:if="${i == pageHoaDon.number}"
-                              class="pagination-link pagination-link--current"
-                              th:text="${i + 1}">1</span>
-                    </li>
-                    <li>
-                        <a th:if="${pageHoaDon.hasNext()}"
-                           class="pagination-link pagination-link--next btn-pagination"
-                           th:attr="data-page=${pageHoaDon.number + 1}" href="javascript:void(0)">&rsaquo;</a>
-                        <span th:unless="${pageHoaDon.hasNext()}" class="pagination-link pagination-link--disabled">&rsaquo;</span>
-                    </li>
-                    <li>
-                        <a th:if="${pageHoaDon.number < pageHoaDon.totalPages - 1}"
-                           class="pagination-link pagination-link--last btn-pagination"
-                           th:attr="data-page=${pageHoaDon.totalPages - 1}" href="javascript:void(0)">&raquo;&raquo;</a>
-                        <span th:unless="${pageHoaDon.number < pageHoaDon.totalPages - 1}" class="pagination-link pagination-link--disabled">&raquo;&raquo;</span>
-                    </li>
-                </ul>
-            </nav>
+                <!-- Phân trang -->
+                <nav class="pagination-wrap" th:if="${pageHoaDon.totalPages > 1}" aria-label="Phân trang" id="orderPagination">
+                    <ul class="pagination-list">
+                        <li>
+                            <a th:if="${pageHoaDon.number > 0}"
+                               class="pagination-link pagination-link--first btn-pagination"
+                               th:attr="data-page=0" href="javascript:void(0)">&laquo;&laquo;</a>
+                            <span th:unless="${pageHoaDon.number > 0}" class="pagination-link pagination-link--disabled">&laquo;&laquo;</span>
+                        </li>
+                        <li>
+                            <a th:if="${pageHoaDon.hasPrevious()}"
+                               class="pagination-link pagination-link--prev btn-pagination"
+                               th:attr="data-page=${pageHoaDon.number - 1}" href="javascript:void(0)">&lsaquo;</a>
+                            <span th:unless="${pageHoaDon.hasPrevious()}" class="pagination-link pagination-link--disabled">&lsaquo;</span>
+                        </li>
+                        <li th:each="i : ${#numbers.sequence(0, pageHoaDon.totalPages - 1)}"
+                            th:if="${i >= pageHoaDon.number - 2 and i <= pageHoaDon.number + 2}">
+                            <a th:if="${i != pageHoaDon.number}"
+                               class="pagination-link btn-pagination"
+                               th:attr="data-page=${i}" href="javascript:void(0)"
+                               th:text="${i + 1}">1</a>
+                            <span th:if="${i == pageHoaDon.number}"
+                                  class="pagination-link pagination-link--current"
+                                  th:text="${i + 1}">1</span>
+                        </li>
+                        <li>
+                            <a th:if="${pageHoaDon.hasNext()}"
+                               class="pagination-link pagination-link--next btn-pagination"
+                               th:attr="data-page=${pageHoaDon.number + 1}" href="javascript:void(0)">&rsaquo;</a>
+                            <span th:unless="${pageHoaDon.hasNext()}" class="pagination-link pagination-link--disabled">&rsaquo;</span>
+                        </li>
+                        <li>
+                            <a th:if="${pageHoaDon.number < pageHoaDon.totalPages - 1}"
+                               class="pagination-link pagination-link--last btn-pagination"
+                               th:attr="data-page=${pageHoaDon.totalPages - 1}" href="javascript:void(0)">&raquo;&raquo;</a>
+                            <span th:unless="${pageHoaDon.number < pageHoaDon.totalPages - 1}" class="pagination-link pagination-link--disabled">&raquo;&raquo;</span>
+                        </li>
+                    </ul>
+                </nav>
+            </th:block>
 
         </div>
     </div>
 
+    <!-- Hidden inputs for JavaScript -->
+    <th:block th:if="${pageHoaDon != null}">
+        <input type="hidden" id="jsCurrentPage" th:value="${pageHoaDon.number}" />
+        <input type="hidden" id="jsTotalPages" th:value="${pageHoaDon.totalPages}" />
+        <input type="hidden" id="jsHasOrders" th:value="${!#lists.isEmpty(pageHoaDon.content)}" />
+    </th:block>
+    <th:block th:if="${pageHoaDon == null}">
+        <input type="hidden" id="jsCurrentPage" value="0" />
+        <input type="hidden" id="jsTotalPages" value="0" />
+        <input type="hidden" id="jsHasOrders" value="false" />
+    </th:block>
+    <input type="hidden" id="jsIsLoggedIn" th:value="${isLoggedIn != null ? isLoggedIn : false}" />
+
     <script th:inline="javascript">
+    /*<![CDATA[*/
     (function() {
         var orderPage = document.getElementById('orderPage');
         if (!orderPage) return;
@@ -175,9 +240,22 @@
         var orderEmptyStatic = document.getElementById('orderEmptyStatic');
         var orderPagination = document.getElementById('orderPagination');
 
-        var currentPage = /*[[${pageHoaDon != null ? pageHoaDon.number : 0}]]*/ 0;
-        var totalPages = /*[[${pageHoaDon != null ? pageHoaDon.totalPages : 0}]]*/ 0;
-        var hasOrders = /*[[${!#lists.isEmpty(pageHoaDon.content)}]]*/ false;
+        // Default values - will be overridden by controller model attributes if available
+        var currentPage = 0;
+        var totalPages = 0;
+        var hasOrders = false;
+        var isLoggedIn = false;
+
+        // Read values from hidden inputs set by Thymeleaf
+        var pageInput = document.getElementById('jsCurrentPage');
+        var totalPagesInput = document.getElementById('jsTotalPages');
+        var hasOrdersInput = document.getElementById('jsHasOrders');
+        var isLoggedInInput = document.getElementById('jsIsLoggedIn');
+
+        if (pageInput) currentPage = parseInt(pageInput.value, 10) || 0;
+        if (totalPagesInput) totalPages = parseInt(totalPagesInput.value, 10) || 0;
+        if (hasOrdersInput) hasOrders = hasOrdersInput.value === 'true';
+        if (isLoggedInInput) isLoggedIn = isLoggedInInput.value === 'true';
 
         var apiUrl = /*[[@{/don-hang/api}]]*/ '/don-hang/api';
 
@@ -364,11 +442,13 @@
             var trangThai = document.getElementById('filterTrangThai') ? document.getElementById('filterTrangThai').value : '';
             var thanhToan = document.getElementById('filterThanhToan') ? document.getElementById('filterThanhToan').value : '';
             var ngay = document.getElementById('filterNgay') ? document.getElementById('filterNgay').value : '';
+            var maDon = document.getElementById('filterMaDon') ? document.getElementById('filterMaDon').value : '';
 
             var url = apiUrl + '?page=' + page;
             if (trangThai) url += '&trangThai=' + encodeURIComponent(trangThai);
             if (thanhToan) url += '&thanhToan=' + encodeURIComponent(thanhToan);
             if (ngay) url += '&ngay=' + encodeURIComponent(ngay);
+            if (maDon) url += '&maDon=' + encodeURIComponent(maDon);
 
             fetch(url)
                 .then(function(res) { return res.json(); })
@@ -381,20 +461,12 @@
         }
 
         function bindFilterEvents() {
-            if (!filterForm) return;
-            filterForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                fetchOrders(0);
-            });
-
+            // Form dùng GET gốc tới /don-hang — khách & user đều tra cứu được dù JS lỗi / fetch hỏng
             var clearBtns = orderPage.querySelectorAll('.btnClearFilter');
             clearBtns.forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    if (document.getElementById('filterTrangThai')) document.getElementById('filterTrangThai').value = '';
-                    if (document.getElementById('filterThanhToan')) document.getElementById('filterThanhToan').value = '';
-                    if (document.getElementById('filterNgay')) document.getElementById('filterNgay').value = '';
-                    fetchOrders(0);
+                    window.location.href = '/don-hang';
                 });
             });
         }

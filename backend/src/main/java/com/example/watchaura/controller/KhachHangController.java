@@ -1,9 +1,12 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.service.ChucVuService;
 import com.example.watchaura.service.KhachHangService;
+import com.example.watchaura.util.PhoneUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -11,22 +14,47 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import java.beans.PropertyEditorSupport;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Controller
 @RequestMapping("/admin/khach-hang")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class KhachHangController {
 
     private final KhachHangService khachHangService;
     private final ChucVuService chucVuService;
 
     private static final int PAGE_SIZE = 6;
+
+    @InitBinder("khachHang")
+    public void initKhachHangBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, "email", new StringTrimmerEditor(false));
+        binder.registerCustomEditor(String.class, "sdt", new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                setValue(text == null ? "" : PhoneUtils.normalizeVnMobile(text));
+            }
+        });
+    }
+
+    private void rejectDuplicateContact(KhachHang kh, BindingResult bindingResult) {
+        if (kh.getEmail() != null && !kh.getEmail().isBlank()
+                && khachHangService.existsEmailTakenByOther(kh.getEmail(), kh.getId())) {
+            bindingResult.rejectValue("email", "duplicate.email", "Email này đã được sử dụng.");
+        }
+        if (kh.getSdt() != null && !kh.getSdt().isBlank()
+                && khachHangService.existsSdtTakenByOther(kh.getSdt(), kh.getId())) {
+            bindingResult.rejectValue("sdt", "duplicate.sdt", "Số điện thoại này đã được sử dụng.");
+        }
+    }
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
@@ -101,6 +129,9 @@ public class KhachHangController {
                         Model model,
                         RedirectAttributes redirect,
                         @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+        if (!result.hasErrors()) {
+            rejectDuplicateContact(khachHang, result);
+        }
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
             Pageable pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
@@ -150,6 +181,9 @@ public class KhachHangController {
                          Model model,
                          RedirectAttributes redirect,
                          @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+        if (!result.hasErrors()) {
+            rejectDuplicateContact(khachHang, result);
+        }
         if (result.hasErrors()) {
             Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
             Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));

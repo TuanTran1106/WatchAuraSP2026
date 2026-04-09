@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.service.DiaChiService;
 import com.example.watchaura.service.KhachHangService;
@@ -15,6 +16,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/dia-chi")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class DiaChiController {
 
     private final DiaChiService diaChiService;

@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.entity.ChucVu;
 import com.example.watchaura.service.ChucVuService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/chuc-vu")
 @RequiredArgsConstructor
+@RequiresRole({"Admin"})
 public class ChucVuController {
 
     private final ChucVuService chucVuService;

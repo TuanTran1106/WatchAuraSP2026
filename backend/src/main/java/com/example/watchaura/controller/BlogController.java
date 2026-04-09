@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.entity.Blog;
 import com.example.watchaura.service.BlogService;
 import com.example.watchaura.service.FileUploadService;
@@ -22,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 @Controller
 @RequestMapping("/admin/blog")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class BlogController {
 
     private final BlogService blogService;

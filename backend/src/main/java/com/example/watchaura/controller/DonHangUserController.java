@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.GioHangChiTietRequest;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.service.DanhGiaService;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,9 +26,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.example.watchaura.controller.AuthController.SESSION_CURRENT_USER_ID;
@@ -40,6 +45,70 @@ public class DonHangUserController {
     private final GioHangChiTietService gioHangChiTietService;
     private final DanhGiaService danhGiaService;
 
+    /**
+     * Trang theo dõi đơn hàng - KHÔNG yêu cầu đăng nhập
+     * Người dùng nhập mã đơn hàng để xem thông tin
+     */
+    @GetMapping("/theo-doi-don-hang")
+    public String theoDoiDonHang() {
+        return "user/theo-doi-don-hang";
+    }
+
+    /**
+     * API tìm kiếm đơn hàng theo mã - KHÔNG yêu cầu đăng nhập
+     */
+    @GetMapping("/theo-doi-don-hang/api")
+    @ResponseBody
+    public Map<String, Object> theoDoiDonHangApi(@RequestParam String maDon) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(maDon.trim());
+
+            result.put("success", true);
+            result.put("id", hoaDon.getId());
+            result.put("maDonHang", hoaDon.getMaDonHang());
+            result.put("ngayDat", hoaDon.getNgayDat() != null ? hoaDon.getNgayDat().toString() : "");
+            result.put("tenKhachHang", hoaDon.getTenKhachHang());
+            result.put("sdtKhachHang", hoaDon.getSdtKhachHang());
+            result.put("diaChi", hoaDon.getDiaChi());
+            result.put("email", hoaDon.getEmail());
+            result.put("tongTienTamTinh", hoaDon.getTongTienTamTinh());
+            result.put("tongTienChuaGiam", hoaDon.getTongTienChuaGiam());
+            result.put("tienGiam", hoaDon.getTienGiam());
+            result.put("phiVanChuyen", hoaDon.getPhiVanChuyen());
+            result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
+            result.put("trangThaiDonHang", hoaDon.getTrangThaiDonHang());
+            result.put("ghiChu", hoaDon.getGhiChu());
+            result.put("phuongThucThanhToan", hoaDon.getPhuongThucThanhToan());
+
+            if (hoaDon.getItems() != null) {
+                result.put("items", hoaDon.getItems().stream()
+                        .map(item -> {
+                            Map<String, Object> itemMap = new HashMap<>();
+                            itemMap.put("tenSanPham", item.getTenSanPham());
+                            itemMap.put("tenBienThe", item.getTenBienThe());
+                            itemMap.put("soLuong", item.getSoLuong());
+                            itemMap.put("donGia", item.getDonGia());
+                            itemMap.put("giaGoc", item.getGiaGoc());
+                            itemMap.put("thanhTien", item.getThanhTien());
+                            return itemMap;
+                        })
+                        .collect(Collectors.toList()));
+            }
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "Không tìm thấy đơn hàng với mã: " + maDon);
+        }
+
+        return result;
+    }
+
+    /**
+     * Trang đơn hàng của tôi - Có thể truy cập không cần đăng nhập
+     * - Đã đăng nhập: Hiển thị danh sách đơn hàng của user + tìm kiếm theo mã
+     * - Chưa đăng nhập: Chỉ hiển thị tìm kiếm theo mã đơn
+     */
     @GetMapping("/don-hang")
     public String danhSachDonHang(
             @RequestParam(defaultValue = "0") int page,
@@ -47,47 +116,107 @@ public class DonHangUserController {
             @RequestParam(required = false) String thanhToan,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngay,
+            @RequestParam(required = false) String maDon,
             Model model,
             HttpSession session) {
 
         Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
 
+        // Nếu có mã đơn, tìm kiếm đơn hàng theo mã (không cần đăng nhập)
+        String maDonParam = (maDon != null && !maDon.isBlank()) ? maDon.trim() : null;
+
         if (userId == null) {
-            return "redirect:/dang-nhap";
+            // Chưa đăng nhập: tra cứu theo mã qua GET (form submit), không cần AJAX
+            model.addAttribute("isLoggedIn", false);
+            model.addAttribute("daDanhGiaMap", new HashMap<>());
+            model.addAttribute("trangThai", trangThai);
+            model.addAttribute("thanhToan", thanhToan);
+            model.addAttribute("ngay", ngay);
+            model.addAttribute("maDon", maDon);
+            model.addAttribute("donHangLoadFailed", false);
+
+            if (maDonParam != null) {
+                try {
+                    HoaDonDTO one = hoaDonService.getByMaDonHang(maDonParam);
+                    Page<HoaDonDTO> guestPage =
+                            new PageImpl<>(List.of(one), PageRequest.of(0, 6), 1);
+                    model.addAttribute("pageHoaDon", guestPage);
+                    model.addAttribute("guestLookupMessage", null);
+                } catch (Exception e) {
+                    model.addAttribute(
+                            "pageHoaDon",
+                            new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 6), 0));
+                    model.addAttribute(
+                            "guestLookupMessage",
+                            "Không tìm thấy đơn hàng với mã: " + maDonParam);
+                }
+            } else {
+                model.addAttribute("pageHoaDon", null);
+                model.addAttribute("guestLookupMessage", null);
+            }
+
+            model.addAttribute("title", "Đơn hàng của tôi");
+            model.addAttribute("content", "user/don-hang-user-list :: content");
+            return "layout/user-layout";
         }
 
-        String trangThaiParam = (trangThai != null && !trangThai.isBlank()) ? trangThai : null;
-        String thanhToanParam = (thanhToan != null && !thanhToan.isBlank()) ? thanhToan : null;
+        // Đã đăng nhập - load đơn hàng của user
+        try {
+            String trangThaiParam = (trangThai != null && !trangThai.isBlank()) ? trangThai : null;
+            String thanhToanParam = (thanhToan != null && !thanhToan.isBlank()) ? thanhToan : null;
 
-        Pageable pageable = PageRequest.of(page, 6);
+            Pageable pageable = PageRequest.of(page, 6);
 
-        Page<HoaDonDTO> pageHoaDon =
-                hoaDonService.filterDonHang(userId, trangThaiParam, thanhToanParam, ngay, pageable);
+            Page<HoaDonDTO> pageHoaDon =
+                    hoaDonService.filterDonHang(userId, trangThaiParam, thanhToanParam, ngay, maDonParam, pageable);
 
-        // Kiểm tra đánh giá cho từng đơn hàng
-        Map<Integer, Boolean> daDanhGiaMap = new HashMap<>();
-        if (pageHoaDon.hasContent()) {
-            for (HoaDonDTO hoaDon : pageHoaDon.getContent()) {
-                boolean daDanhGia = false;
-                if (hoaDon.getItems() != null) {
-                    for (var item : hoaDon.getItems()) {
-                        if (item.getSanPhamChiTietId() != null) {
-                            if (danhGiaService.hasUserReviewed(item.getSanPhamChiTietId(), userId)) {
+            // Batch check đánh giá - chỉ 1 query thay vì N+1
+            Map<Integer, Boolean> daDanhGiaMap = new HashMap<>();
+            if (pageHoaDon.hasContent()) {
+                Set<Integer> allSpctIds = pageHoaDon.getContent().stream()
+                        .filter(hd -> hd.getItems() != null)
+                        .flatMap(hd -> hd.getItems().stream())
+                        .map(item -> item.getSanPhamChiTietId())
+                        .filter(id -> id != null)
+                        .collect(Collectors.toSet());
+
+                Set<Integer> reviewedIds = danhGiaService.getReviewedProductIds(allSpctIds, userId);
+
+                for (HoaDonDTO hoaDon : pageHoaDon.getContent()) {
+                    boolean daDanhGia = false;
+                    if (hoaDon.getItems() != null) {
+                        for (var item : hoaDon.getItems()) {
+                            if (item.getSanPhamChiTietId() != null && reviewedIds.contains(item.getSanPhamChiTietId())) {
                                 daDanhGia = true;
                                 break;
                             }
                         }
                     }
+                    daDanhGiaMap.put(hoaDon.getId(), daDanhGia);
                 }
-                daDanhGiaMap.put(hoaDon.getId(), daDanhGia);
             }
-        }
 
-        model.addAttribute("pageHoaDon", pageHoaDon);
-        model.addAttribute("daDanhGiaMap", daDanhGiaMap);
-        model.addAttribute("trangThai", trangThai);
-        model.addAttribute("thanhToan", thanhToan);
-        model.addAttribute("ngay", ngay);
+            model.addAttribute("pageHoaDon", pageHoaDon);
+            model.addAttribute("daDanhGiaMap", daDanhGiaMap);
+            model.addAttribute("trangThai", trangThai);
+            model.addAttribute("thanhToan", thanhToan);
+            model.addAttribute("ngay", ngay);
+            model.addAttribute("maDon", maDon);
+            model.addAttribute("isLoggedIn", true);
+            model.addAttribute("donHangLoadFailed", false);
+            model.addAttribute("guestLookupMessage", null);
+        } catch (Exception e) {
+            // Log lỗi nhưng vẫn hiển thị trang
+            model.addAttribute("pageHoaDon", null);
+            model.addAttribute("daDanhGiaMap", new HashMap<>());
+            model.addAttribute("trangThai", trangThai);
+            model.addAttribute("thanhToan", thanhToan);
+            model.addAttribute("ngay", ngay);
+            model.addAttribute("maDon", maDon);
+            model.addAttribute("isLoggedIn", true);
+            model.addAttribute("donHangLoadFailed", true);
+            model.addAttribute("guestLookupMessage", null);
+        }
 
         model.addAttribute("title", "Đơn hàng của tôi");
         model.addAttribute("content", "user/don-hang-user-list :: content");
@@ -95,6 +224,9 @@ public class DonHangUserController {
         return "layout/user-layout";
     }
 
+    /**
+     * API lấy danh sách đơn hàng - Có thể truy cập không cần đăng nhập khi có mã đơn
+     */
     @GetMapping("/don-hang/api")
     @ResponseBody
     public Map<String, Object> danhSachDonHangAjax(
@@ -102,53 +234,119 @@ public class DonHangUserController {
             @RequestParam(required = false) String trangThai,
             @RequestParam(required = false) String thanhToan,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngay,
+            @RequestParam(required = false) String maDon,
             HttpSession session) {
 
         Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
         Map<String, Object> result = new HashMap<>();
 
-        if (userId == null) {
-            result.put("success", false);
-            result.put("message", "Vui lòng đăng nhập.");
-            return result;
-        }
+        try {
+            // Nếu có mã đơn, cho phép tra cứu không cần đăng nhập
+            String maDonParam = (maDon != null && !maDon.isBlank()) ? maDon.trim() : null;
 
-        String trangThaiParam = (trangThai != null && !trangThai.isBlank()) ? trangThai : null;
-        String thanhToanParam = (thanhToan != null && !thanhToan.isBlank()) ? thanhToan : null;
+            if (userId == null && maDonParam == null) {
+                result.put("success", false);
+                result.put("message", "Vui lòng đăng nhập hoặc nhập mã đơn hàng.");
+                return result;
+            }
 
-        Pageable pageable = PageRequest.of(page, 6);
+            // Nếu không đăng nhập nhưng có mã đơn - tra cứu đơn hàng theo mã
+            if (userId == null && maDonParam != null) {
+                try {
+                    HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(maDonParam);
+                    List<Map<String, Object>> items = new java.util.ArrayList<>();
+                    if (hoaDon.getItems() != null) {
+                        items = hoaDon.getItems().stream()
+                                .map(item -> {
+                                    Map<String, Object> itemMap = new HashMap<>();
+                                    itemMap.put("tenSanPham", item.getTenSanPham());
+                                    itemMap.put("tenBienThe", item.getTenBienThe());
+                                    return itemMap;
+                                })
+                                .collect(Collectors.toList());
+                    }
 
-        Page<HoaDonDTO> pageHoaDon =
-                hoaDonService.filterDonHang(userId, trangThaiParam, thanhToanParam, ngay, pageable);
+                    List<Map<String, Object>> orders = new java.util.ArrayList<>();
+                    Map<String, Object> orderMap = new HashMap<>();
+                    orderMap.put("id", hoaDon.getId());
+                    orderMap.put("maDonHang", hoaDon.getMaDonHang());
+                    orderMap.put("ngayDat", hoaDon.getNgayDat() != null ? hoaDon.getNgayDat().toString() : "");
+                    orderMap.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
+                    orderMap.put("trangThaiDonHang", hoaDon.getTrangThaiDonHang());
+                    orderMap.put("ghiChu", hoaDon.getGhiChu());
+                    orderMap.put("phuongThucThanhToan", hoaDon.getPhuongThucThanhToan());
+                    orderMap.put("tenTrangThai", getTenTrangThai(hoaDon.getTrangThaiDonHang()));
+                    orderMap.put("daDanhGia", false);
+                    orderMap.put("items", items);
+                    orders.add(orderMap);
 
-        // Kiểm tra đánh giá cho từng đơn hàng (API)
-        Map<Integer, Boolean> daDanhGiaMapApi = new HashMap<>();
-        for (HoaDonDTO hoaDon : pageHoaDon.getContent()) {
-            boolean daDanhGia = false;
-            if (hoaDon.getItems() != null) {
-                for (var item : hoaDon.getItems()) {
-                    if (item.getSanPhamChiTietId() != null) {
-                        if (danhGiaService.hasUserReviewed(item.getSanPhamChiTietId(), userId)) {
-                            daDanhGia = true;
-                            break;
+                    result.put("success", true);
+                    result.put("items", orders);
+                    result.put("currentPage", 0);
+                    result.put("totalPages", 1);
+                    result.put("totalElements", 1);
+                    result.put("hasNext", false);
+                    result.put("hasPrevious", false);
+                } catch (Exception e) {
+                    result.put("success", false);
+                    result.put("message", "Không tìm thấy đơn hàng với mã: " + maDonParam);
+                    result.put("items", new java.util.ArrayList<>());
+                }
+                return result;
+            }
+
+            // Đã đăng nhập - lấy danh sách đơn hàng của user
+            String trangThaiParam = (trangThai != null && !trangThai.isBlank()) ? trangThai : null;
+            String thanhToanParam = (thanhToan != null && !thanhToan.isBlank()) ? thanhToan : null;
+
+            Pageable pageable = PageRequest.of(page, 6);
+
+            Page<HoaDonDTO> pageHoaDon =
+                    hoaDonService.filterDonHang(userId, trangThaiParam, thanhToanParam, ngay, maDonParam, pageable);
+
+            // Batch check đánh giá - chỉ 1 query thay vì N+1
+            Map<Integer, Boolean> daDanhGiaMapApi = new HashMap<>();
+            if (pageHoaDon.hasContent()) {
+                Set<Integer> allSpctIds = pageHoaDon.getContent().stream()
+                        .filter(hd -> hd.getItems() != null)
+                        .flatMap(hd -> hd.getItems().stream())
+                        .map(item -> item.getSanPhamChiTietId())
+                        .filter(id -> id != null)
+                        .collect(Collectors.toSet());
+
+                Set<Integer> reviewedIds = danhGiaService.getReviewedProductIds(allSpctIds, userId);
+
+                for (HoaDonDTO hoaDon : pageHoaDon.getContent()) {
+                    boolean daDanhGia = false;
+                    if (hoaDon.getItems() != null) {
+                        for (var item : hoaDon.getItems()) {
+                            if (item.getSanPhamChiTietId() != null && reviewedIds.contains(item.getSanPhamChiTietId())) {
+                                daDanhGia = true;
+                                break;
+                            }
                         }
                     }
+                    daDanhGiaMapApi.put(hoaDon.getId(), daDanhGia);
                 }
             }
-            daDanhGiaMapApi.put(hoaDon.getId(), daDanhGia);
+
+            List<Map<String, Object>> items = pageHoaDon.getContent().stream()
+                    .map(hoaDon -> convertHoaDonToMap(hoaDon, daDanhGiaMapApi.get(hoaDon.getId())))
+                    .collect(Collectors.toList());
+
+            result.put("success", true);
+            result.put("items", items);
+            result.put("currentPage", pageHoaDon.getNumber());
+            result.put("totalPages", pageHoaDon.getTotalPages());
+            result.put("totalElements", pageHoaDon.getTotalElements());
+            result.put("hasNext", pageHoaDon.hasNext());
+            result.put("hasPrevious", pageHoaDon.hasPrevious());
+
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "Có lỗi xảy ra: " + (e.getMessage() != null ? e.getMessage() : "Lỗi không xác định"));
+            result.put("items", new java.util.ArrayList<>());
         }
-
-        List<Map<String, Object>> items = pageHoaDon.getContent().stream()
-                .map(hoaDon -> convertHoaDonToMap(hoaDon, daDanhGiaMapApi.get(hoaDon.getId())))
-                .collect(Collectors.toList());
-
-        result.put("success", true);
-        result.put("items", items);
-        result.put("currentPage", pageHoaDon.getNumber());
-        result.put("totalPages", pageHoaDon.getTotalPages());
-        result.put("totalElements", pageHoaDon.getTotalElements());
-        result.put("hasNext", pageHoaDon.hasNext());
-        result.put("hasPrevious", pageHoaDon.hasPrevious());
 
         return result;
     }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
@@ -54,6 +55,17 @@ public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
 """)
     boolean existsBySanPhamChiTietIdAndKhachHangId(
             @Param("sanPhamChiTietId") Integer sanPhamChiTietId,
+            @Param("khachHangId") Integer khachHangId);
+
+    /** Batch query: lấy tất cả sanPhamChiTietId mà user đã đánh giá */
+    @Query("""
+    SELECT DISTINCT dg.idSanPhamChiTiet
+    FROM DanhGia dg
+    WHERE dg.idSanPhamChiTiet IN :sanPhamChiTietIds
+    AND dg.khachHang.id = :khachHangId
+""")
+    List<Integer> findReviewedProductIds(
+            @Param("sanPhamChiTietIds") Set<Integer> sanPhamChiTietIds,
             @Param("khachHangId") Integer khachHangId);
 
 }

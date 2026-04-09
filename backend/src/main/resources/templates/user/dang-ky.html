@@ -1,110 +1,164 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-<div th:fragment="content" class="user-page">
-    <div class="container container--narrow">
-        <div class="auth-page">
-            <h1 class="page-title">Đăng ký tài khoản</h1>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký - WatchAura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/auth-login-card.css">
+</head>
+<body class="wa-login-page">
+    <div class="admin-login-wrapper">
+        <div class="admin-login-card">
+            <div class="admin-login__brand">
+                <div class="admin-login__logo">WA</div>
+                <div class="admin-login__brand-text">
+                    <span class="admin-login__brand-name">WatchAura</span>
+                    <span class="admin-login__brand-role">Tài khoản khách hàng</span>
+                </div>
+            </div>
 
-            <p th:if="${registerError}" class="alert alert-error" th:text="${registerError}"></p>
-            <p th:if="${passwordMismatch}" class="alert alert-error" th:text="${passwordMismatch}"></p>
+            <h1 class="admin-login__title">Đăng ký tài khoản</h1>
+            <p class="admin-login__subtitle">Tạo tài khoản mới để trải nghiệm dịch vụ</p>
 
-            <form class="auth-form" th:action="@{/dang-ky}" th:object="${registerRequest}" method="post">
-                <div class="form-group">
-                    <label for="tenNguoiDung">Họ và tên <span class="required">*</span></label>
-                    <input type="text" id="tenNguoiDung" th:field="*{tenNguoiDung}"
-                           placeholder="Nguyễn Văn A" maxlength="100">
-                    <p th:if="${#fields.hasErrors('tenNguoiDung')}" class="field-error" th:errors="*{tenNguoiDung}"></p>
+            <div th:if="${registerError}" class="admin-login__alert admin-login__alert--error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${registerError}"></span>
+            </div>
+
+            <div th:if="${passwordMismatch}" class="admin-login__alert admin-login__alert--error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${passwordMismatch}"></span>
+            </div>
+
+            <form class="admin-login__form" th:action="@{/dang-ky}" th:object="${registerRequest}" method="post">
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="tenNguoiDung">
+                        <i class="fas fa-user"></i>
+                        Họ và tên <span class="required">*</span>
+                    </label>
+                    <div class="admin-login__input-wrap">
+                        <input type="text" class="admin-login__input" id="tenNguoiDung" th:field="*{tenNguoiDung}"
+                               placeholder="Nguyễn Văn A" maxlength="100">
+                    </div>
+                    <p th:if="${#fields.hasErrors('tenNguoiDung')}" class="admin-login__alert admin-login__alert--error" style="margin-top: 0.5rem; margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.8rem;" th:errors="*{tenNguoiDung}"></p>
                 </div>
-                <div class="form-group">
-                    <label for="email">Email (Gmail) <span class="required">*</span></label>
-                    <input type="email" id="email" th:field="*{email}"
-                           placeholder="example@gmail.com" maxlength="100" autocomplete="email">
-                    <p class="form-hint">Dùng email này để đăng nhập sau.</p>
-                    <p th:if="${#fields.hasErrors('email')}" class="field-error" th:errors="*{email}"></p>
+
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="email">
+                        <i class="fas fa-envelope"></i>
+                        Email (Gmail) <span class="required">*</span>
+                    </label>
+                    <div class="admin-login__input-wrap">
+                        <input type="email" class="admin-login__input" id="email" th:field="*{email}"
+                               placeholder="example@gmail.com" maxlength="100" autocomplete="email">
+                    </div>
+                    <p class="admin-login__subtitle" style="margin: 0.3rem 0 0; font-size: 0.8rem; color: #94a3b8;">Dùng email này để đăng nhập sau.</p>
+                    <p th:if="${#fields.hasErrors('email')}" class="admin-login__alert admin-login__alert--error" style="margin-top: 0.5rem; margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.8rem;" th:errors="*{email}"></p>
                 </div>
-                <div class="form-group">
-                    <label for="sdt">Số điện thoại</label>
-                    <input type="text" id="sdt" th:field="*{sdt}"
-                           placeholder="0912345678" maxlength="20">
+
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="sdt">
+                        <i class="fas fa-phone"></i>
+                        Số điện thoại
+                    </label>
+                    <div class="admin-login__input-wrap">
+                        <input type="text" class="admin-login__input" id="sdt" th:field="*{sdt}"
+                               placeholder="0912345678" maxlength="20">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="ngaySinh">Ngày sinh</label>
-                    <input type="date" id="ngaySinh" th:field="*{ngaySinh}">
-                    <p th:if="${#fields.hasErrors('ngaySinh')}" class="field-error" th:errors="*{ngaySinh}"></p>
+
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="ngaySinh">
+                        <i class="fas fa-calendar"></i>
+                        Ngày sinh
+                    </label>
+                    <div class="admin-login__input-wrap">
+                        <input type="date" class="admin-login__input" id="ngaySinh" th:field="*{ngaySinh}">
+                    </div>
+                    <p th:if="${#fields.hasErrors('ngaySinh')}" class="admin-login__alert admin-login__alert--error" style="margin-top: 0.5rem; margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.8rem;" th:errors="*{ngaySinh}"></p>
                 </div>
-                <div class="form-group">
-                    <label for="gioiTinh">Giới tính</label>
-                    <select id="gioiTinh" th:field="*{gioiTinh}">
-                        <option value="">-- Chọn --</option>
-                        <option value="Nam">Nam</option>
-                        <option value="Nữ">Nữ</option>
-                    </select>
+
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="gioiTinh">
+                        <i class="fas fa-venus-mars"></i>
+                        Giới tính
+                    </label>
+                    <div class="admin-login__input-wrap">
+                        <select class="admin-login__input" id="gioiTinh" th:field="*{gioiTinh}" style="appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M6%208.5L1.5%204h9z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;">
+                            <option value="">-- Chọn --</option>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="matKhau">Mật khẩu <span class="required">*</span></label>
-                    <div class="password-field">
-                        <input type="password" id="matKhau" th:field="*{matKhau}"
+
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="matKhau">
+                        <i class="fas fa-lock"></i>
+                        Mật khẩu <span class="required">*</span>
+                    </label>
+                    <div class="admin-login__input-wrap admin-login__password-wrap">
+                        <input type="password" class="admin-login__input" id="matKhau" th:field="*{matKhau}"
                                placeholder="Tối thiểu 6 ký tự" minlength="6" autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
-                            <span class="icon-eye" aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </span>
-                            <span class="icon-eye-off" aria-hidden="true" hidden>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            </span>
+                        <button type="button" class="admin-login__toggle-pass"
+                                onclick="togglePassword('matKhau', 'matKhauEye')" aria-label="Hiện hoặc ẩn mật khẩu">
+                            <i class="fas fa-eye" id="matKhauEye"></i>
                         </button>
                     </div>
-                    <p th:if="${#fields.hasErrors('matKhau')}" class="field-error" th:errors="*{matKhau}"></p>
+                    <p th:if="${#fields.hasErrors('matKhau')}" class="admin-login__alert admin-login__alert--error" style="margin-top: 0.5rem; margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.8rem;" th:errors="*{matKhau}"></p>
                 </div>
-                <div class="form-group">
-                    <label for="xacNhanMatKhau">Xác nhận mật khẩu <span class="required">*</span></label>
-                    <div class="password-field">
-                        <input type="password" id="xacNhanMatKhau" th:field="*{xacNhanMatKhau}"
+
+                <div class="admin-login__field">
+                    <label class="admin-login__label" for="xacNhanMatKhau">
+                        <i class="fas fa-lock"></i>
+                        Xác nhận mật khẩu <span class="required">*</span>
+                    </label>
+                    <div class="admin-login__input-wrap admin-login__password-wrap">
+                        <input type="password" class="admin-login__input" id="xacNhanMatKhau" th:field="*{xacNhanMatKhau}"
                                placeholder="Nhập lại mật khẩu" autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
-                            <span class="icon-eye" aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </span>
-                            <span class="icon-eye-off" aria-hidden="true" hidden>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            </span>
+                        <button type="button" class="admin-login__toggle-pass"
+                                onclick="togglePassword('xacNhanMatKhau', 'xacNhanMatKhauEye')" aria-label="Hiện hoặc ẩn mật khẩu">
+                            <i class="fas fa-eye" id="xacNhanMatKhauEye"></i>
                         </button>
                     </div>
-                    <p th:if="${#fields.hasErrors('xacNhanMatKhau')}" class="field-error" th:errors="*{xacNhanMatKhau}"></p>
+                    <p th:if="${#fields.hasErrors('xacNhanMatKhau')}" class="admin-login__alert admin-login__alert--error" style="margin-top: 0.5rem; margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.8rem;" th:errors="*{xacNhanMatKhau}"></p>
                 </div>
-                <button type="submit" class="btn-submit">Đăng ký</button>
+
+                <button type="submit" class="admin-login__submit">
+                    <i class="fas fa-user-plus"></i>
+                    Đăng ký
+                </button>
             </form>
 
-            <div class="auth-footer">
-                Đã có tài khoản? <a th:href="@{/dang-nhap}">Đăng nhập</a>
+            <div class="admin-login__footer">
+                <div class="admin-login__footer-row">
+                    Đã có tài khoản?
+                    <a th:href="@{/dang-nhap}">Đăng nhập</a>
+                </div>
+                <div class="admin-login__footer-row">
+                    <a th:href="@{/home}">
+                        <i class="fas fa-home"></i> Quay về trang chủ
+                    </a>
+                </div>
             </div>
         </div>
     </div>
+
     <script>
-    (function() {
-        document.querySelectorAll('.password-toggle').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var field = btn.closest('.password-field').querySelector('input');
-                var eye = btn.querySelector('.icon-eye');
-                var eyeOff = btn.querySelector('.icon-eye-off');
-                if (field.type === 'password') {
-                    field.type = 'text';
-                    eye.hidden = true;
-                    eyeOff.hidden = false;
-                    btn.setAttribute('aria-label', 'Ẩn mật khẩu');
-                    btn.setAttribute('title', 'Ẩn mật khẩu');
-                } else {
-                    field.type = 'password';
-                    eye.hidden = false;
-                    eyeOff.hidden = true;
-                    btn.setAttribute('aria-label', 'Hiện mật khẩu');
-                    btn.setAttribute('title', 'Hiện mật khẩu');
-                }
-            });
-        });
-    })();
+        function togglePassword(inputId, iconId) {
+            var passwordInput = document.getElementById(inputId);
+            var eyeIcon = document.getElementById(iconId);
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
     </script>
-</div>
 </body>
 </html>

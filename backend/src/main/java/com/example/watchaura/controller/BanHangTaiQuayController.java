@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.CartResponse;
 import com.example.watchaura.dto.HoaDonChiTietDTO;
 import com.example.watchaura.dto.HoaDonDTO;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/ban-hang")
+@RequiresRole({"Admin", "Quản lý", "Nhân viên"})
 public class BanHangTaiQuayController {
 
     /** Giỏ POS đang soạn — chưa chốt hóa đơn, chưa trừ kho */

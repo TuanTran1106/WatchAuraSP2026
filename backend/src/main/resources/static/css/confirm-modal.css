@@ -133,6 +133,31 @@ body.confirm-modal-open {
   margin-bottom: 0;
 }
 
+/* Danger tone: nút xác nhận dùng màu cảnh báo (đăng xuất, xóa, ...) */
+.confirm-modal--danger .confirm-modal__actions .confirm-modal__ok {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #fff;
+  border: 1px solid rgba(185, 28, 28, 0.85);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28);
+}
+
+.confirm-modal--danger .confirm-modal__actions .confirm-modal__ok:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.38);
+}
+
+.confirm-modal--danger .confirm-modal__actions .confirm-modal__cancel {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.confirm-modal--danger .confirm-modal__actions .confirm-modal__cancel:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 /* Dark theme compatibility for admin (admin adds .admin-layout.theme-dark) */
 .admin-layout.theme-dark .confirm-modal__panel {
   background: #1e293b;
@@ -156,5 +181,27 @@ body.confirm-modal-open {
 
 .admin-layout.theme-dark .confirm-modal__close:hover {
   background: #475569;
+}
+
+.admin-layout.theme-dark .confirm-modal--danger .confirm-modal__actions .confirm-modal__ok {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border-color: rgba(248, 113, 113, 0.45);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+.admin-layout.theme-dark .confirm-modal--danger .confirm-modal__actions .confirm-modal__ok:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 6px 22px rgba(220, 38, 38, 0.35);
+}
+
+.admin-layout.theme-dark .confirm-modal--danger .confirm-modal__actions .confirm-modal__cancel {
+  background: #334155;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.admin-layout.theme-dark .confirm-modal--danger .confirm-modal__actions .confirm-modal__cancel:hover {
+  background: #475569;
+  color: #f8fafc;
 }
 

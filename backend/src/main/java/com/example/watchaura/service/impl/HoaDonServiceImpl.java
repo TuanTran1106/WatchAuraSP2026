@@ -829,13 +829,19 @@ public class HoaDonServiceImpl implements HoaDonService {
             String trangThai,
             String thanhToan,
             LocalDate ngay,
+            String maDon,
             Pageable pageable) {
+
+        LocalDateTime ngayStart = (ngay != null) ? ngay.atStartOfDay() : null;
+        LocalDateTime ngayEnd = (ngay != null) ? ngay.plusDays(1).atStartOfDay() : null;
 
         Page<HoaDon> page = hoaDonRepository.filterDonHang(
                 userId,
                 trangThai,
                 thanhToan,
-                ngay,
+                ngayStart,
+                ngayEnd,
+                maDon,
                 pageable
         );
 

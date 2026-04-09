@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.config.VNPayProperties;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.CheckoutStockResponse;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/thanh-toan")
 @RequiredArgsConstructor
+@RequiresRole(value = {}, requireAuth = true)
 public class UserCheckoutController {
 
     private final GioHangService gioHangService;

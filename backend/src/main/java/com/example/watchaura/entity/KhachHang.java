@@ -2,7 +2,11 @@ package com.example.watchaura.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,9 +34,14 @@ public class KhachHang {
     @Column(name = "ten_nguoi_dung", nullable = false, length = 100)
     private String tenNguoiDung;
 
+    @NotBlank(message = "Vui lòng nhập email")
+    @Email(message = "Email không đúng định dạng")
+    @Size(max = 100, message = "Email tối đa 100 ký tự")
     @Column(length = 100, unique = true)
     private String email;
 
+    @NotBlank(message = "Vui lòng nhập số điện thoại")
+    @Pattern(regexp = "^0[35789]\\d{8}$", message = "Số điện thoại không đúng định dạng (10 số, ví dụ 0912345678)")
     @Column(length = 20)
     private String sdt;
 

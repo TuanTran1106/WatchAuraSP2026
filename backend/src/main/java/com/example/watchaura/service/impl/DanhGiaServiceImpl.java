@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,6 +59,15 @@ public class DanhGiaServiceImpl implements DanhGiaService {
         return danhGiaRepository.findBySanPhamChiTietIdAndKhachHangId(sanPhamChiTietId, khachHangId)
                 .map(this::convertToDTO)
                 .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<Integer> getReviewedProductIds(Set<Integer> sanPhamChiTietIds, Integer khachHangId) {
+        if (sanPhamChiTietIds == null || sanPhamChiTietIds.isEmpty() || khachHangId == null) {
+            return new HashSet<>();
+        }
+        return new HashSet<>(danhGiaRepository.findReviewedProductIds(sanPhamChiTietIds, khachHangId));
     }
 
     private DanhGiaDTO convertToDTO(DanhGia danhGia) {

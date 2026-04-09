@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.service.GioHangService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/gio-hang")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class GioHangController {
 
     private final GioHangService gioHangService;

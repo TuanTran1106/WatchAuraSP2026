@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.service.VoucherService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 @Controller
 @RequestMapping("/admin/voucher")
 @RequiredArgsConstructor
+@RequiresRole({"Admin", "Quản lý"})
 public class VoucherController {
 
     private final VoucherService voucherService;

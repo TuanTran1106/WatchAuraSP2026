@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,19 +47,26 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     Page<HoaDon> findByKhachHangIdOrderByNgayDatDesc(Integer khachHangId, Pageable pageable);
 
 
+    /**
+     * Lọc đơn theo ngày: so khớp cả ngày (LocalDate) bằng khoảng [ngayStart, ngayEnd).
+     * Tránh FUNCTION('FORMAT'...) — Hibernate + SQL Server dễ lỗi runtime.
+     */
     @Query("""
 SELECT h FROM HoaDon h
 WHERE h.khachHang.id = :userId
 AND (:trangThai IS NULL OR h.trangThaiDonHang = :trangThai)
 AND (:thanhToan IS NULL OR h.phuongThucThanhToan = :thanhToan)
-AND (:ngay IS NULL OR CAST(h.ngayDat AS date) = :ngay)
+AND (:ngayStart IS NULL OR (h.ngayDat >= :ngayStart AND h.ngayDat < :ngayEnd))
+AND (:maDon IS NULL OR LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :maDon, '%')))
 ORDER BY h.ngayDat DESC
 """)
     Page<HoaDon> filterDonHang(
             @Param("userId") Integer userId,
             @Param("trangThai") String trangThai,
             @Param("thanhToan") String thanhToan,
-            @Param("ngay") LocalDate ngay,
+            @Param("ngayStart") LocalDateTime ngayStart,
+            @Param("ngayEnd") LocalDateTime ngayEnd,
+            @Param("maDon") String maDon,
             Pageable pageable
     );
 

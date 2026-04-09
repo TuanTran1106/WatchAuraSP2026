@@ -139,6 +139,27 @@
             <p class="form__hint">Chế độ sáng/tối có thể chuyển bằng nút trên góc phải header. Tùy chọn lưu theme (nếu cần) sẽ được bổ sung sau.</p>
         </div>
     </section>
+
+    <!-- 6. Tài khoản -->
+    <section class="card card--full settings-section">
+        <div class="card__header">
+            <h2 class="card__title"><i class="fas fa-user-circle"></i> Tài khoản</h2>
+        </div>
+        <div class="card__body">
+            <p class="form__hint">Đăng xuất khỏi tài khoản quản trị.</p>
+            <div class="form__actions">
+                <a th:href="@{/admin/dang-xuat}"
+                   class="btn btn--logout"
+                   data-confirm="Bạn có chắc muốn đăng xuất khỏi tài khoản quản trị?"
+                   data-confirm-title="Xác nhận đăng xuất"
+                   data-confirm-ok="Đăng xuất"
+                   data-confirm-cancel="Hủy"
+                   data-confirm-tone="danger">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+    </section>
 </div>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.CartAjaxResponse;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.GioHangChiTietRequest;

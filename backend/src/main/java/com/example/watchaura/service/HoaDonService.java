@@ -32,6 +32,7 @@ public interface HoaDonService {
             String trangThai,
             String thanhToan,
             LocalDate ngay,
+            String maDon,
             Pageable pageable
     );
     BigDecimal tinhTienGiamVoucher(Integer khachHangId, Integer voucherId, BigDecimal tongTien);

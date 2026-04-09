@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.DanhGiaDTO;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.entity.DanhGia;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
+@RequiresRole(value = {}, requireAuth = true)
 public class DanhGiaController {
 
     private final DanhGiaRepository danhGiaRepository;
