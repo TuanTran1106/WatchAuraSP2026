@@ -1,6 +1,8 @@
 (function () {
   /* Theme sáng/tối - lưu vào localStorage */
   var THEME_KEY = 'adminTheme';
+  /** '1' = đóng panel, '0' = mở (desktop); mobile mặc định đóng nếu không có key */
+  var SIDEBAR_COLLAPSED_KEY = 'adminSidebarCollapsed';
   var layout = document.querySelector('.admin-layout');
   var themeToggle = document.getElementById('adminThemeToggle');
 
@@ -38,13 +40,110 @@
     }
   }
 
+  /* Sidebar: desktop mặc định mở; mobile mặc định đóng + overlay khi mở */
   var sidebar = document.querySelector('.sidebar');
   var toggle = document.getElementById('sidebarToggle');
+
+  function isMobileSidebar() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  function createSidebarOverlay() {
+    var overlay = document.createElement('div');
+    overlay.className = 'sidebar__overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  var sidebarOverlay = document.querySelector('.sidebar__overlay') || createSidebarOverlay();
+
+  function isSidebarVisible() {
+    if (!sidebar) return false;
+    if (isMobileSidebar()) {
+      return sidebar.classList.contains('is-open');
+    }
+    return !sidebar.classList.contains('is-collapsed');
+  }
+
+  function setCollapsedPersist(collapsed) {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch (e) {}
+  }
+
+  function openSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.remove('is-collapsed');
+    if (isMobileSidebar()) {
+      sidebar.classList.add('is-open');
+      sidebarOverlay.classList.add('is-active');
+    } else {
+      sidebar.classList.remove('is-open');
+      sidebarOverlay.classList.remove('is-active');
+    }
+    setCollapsedPersist(false);
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.add('is-collapsed');
+    sidebar.classList.remove('is-open');
+    sidebarOverlay.classList.remove('is-active');
+    setCollapsedPersist(true);
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleSidebar() {
+    if (isSidebarVisible()) {
+      closeSidebar();
+    } else {
+      openSidebar();
+    }
+  }
+
   if (toggle && sidebar) {
-    toggle.addEventListener('click', function () {
-      sidebar.classList.toggle('is-open');
+    toggle.setAttribute('aria-controls', 'adminSidebarNav');
+    toggle.setAttribute('aria-expanded', isSidebarVisible() ? 'true' : 'false');
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      toggleSidebar();
     });
   }
+
+  sidebarOverlay.addEventListener('click', function () {
+    if (isMobileSidebar()) closeSidebar();
+  });
+
+  (function restoreSidebarState() {
+    try {
+      var stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      /* migrate từ key cũ adminSidebarOpen */
+      if (stored === null) {
+        var legacy = localStorage.getItem('adminSidebarOpen');
+        if (legacy === 'false') stored = '1';
+        else if (legacy === 'true') stored = '0';
+      }
+      if (stored === '1') {
+        closeSidebar();
+      } else if (stored === '0') {
+        openSidebar();
+      }
+    } catch (e) {}
+  })();
+
+  window.addEventListener(
+    'resize',
+    function () {
+      if (!sidebar) return;
+      if (!isMobileSidebar()) {
+        sidebarOverlay.classList.remove('is-active');
+        sidebar.classList.remove('is-open');
+      }
+    },
+    { passive: true }
+  );
 
   /* Sidebar dropdown: Sản phẩm & Danh mục - giữ mở khi đang ở trang con */
   var productDropdown = document.getElementById('sidebarProductDropdown');

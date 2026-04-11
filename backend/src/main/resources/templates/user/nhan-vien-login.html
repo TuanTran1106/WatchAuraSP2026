@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">Đăng nhập - WatchAura</title>
+    <title th:text="${title}">Đăng nhập nhân viên - WatchAura</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/auth-login-card.css">
 </head>
@@ -14,12 +14,12 @@
                 <div class="admin-login__logo">WA</div>
                 <div class="admin-login__brand-text">
                     <span class="admin-login__brand-name">WatchAura</span>
-                    <span class="admin-login__brand-role">Tài khoản khách hàng</span>
+                    <span class="admin-login__brand-role">Tài khoản nhân viên</span>
                 </div>
             </div>
 
-            <h1 class="admin-login__title">Đăng nhập</h1>
-            <p class="admin-login__subtitle">Vui lòng nhập email và mật khẩu để tiếp tục</p>
+            <h1 class="admin-login__title">Đăng nhập nhân viên</h1>
+            <p class="admin-login__subtitle">Vui lòng nhập email (Gmail) và mật khẩu để tiếp tục</p>
 
             <div th:if="${errorMessage}" class="admin-login__alert admin-login__alert--error">
                 <i class="fas fa-exclamation-circle"></i>
@@ -31,7 +31,7 @@
                 <span th:text="${successMessage}">Đăng ký thành công.</span>
             </div>
 
-            <form class="admin-login__form" th:action="@{/dang-nhap}" method="post">
+            <form class="admin-login__form" th:action="@{/nhan-vien/login}" method="post">
                 <div class="admin-login__field">
                     <label class="admin-login__label" for="email">
                         <i class="fas fa-envelope"></i>
@@ -46,17 +46,17 @@
                 </div>
 
                 <div class="admin-login__field">
-                    <label class="admin-login__label" for="userMatKhau">
+                    <label class="admin-login__label" for="matKhau">
                         <i class="fas fa-lock"></i>
                         Mật khẩu <span class="required">*</span>
                     </label>
                     <div class="admin-login__input-wrap admin-login__password-wrap">
-                        <input type="password" class="admin-login__input" id="userMatKhau"
+                        <input type="password" class="admin-login__input" id="matKhau"
                                name="matKhau" required placeholder="Nhập mật khẩu"
                                autocomplete="current-password">
                         <button type="button" class="admin-login__toggle-pass"
-                                onclick="toggleUserPassword()" aria-label="Hiện hoặc ẩn mật khẩu">
-                            <i class="fas fa-eye" id="userEyeIcon"></i>
+                                onclick="togglePassword()" aria-label="Hiện hoặc ẩn mật khẩu">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
                         </button>
                     </div>
                 </div>
@@ -67,11 +67,14 @@
                 </button>
             </form>
 
+            <div class="admin-login__divider">hoặc</div>
+
+            <a th:href="@{/admin/dang-nhap}" class="admin-login__back-link">
+                <i class="fas fa-user-shield"></i>
+                Đăng nhập tài khoản quản trị
+            </a>
+
             <div class="admin-login__footer">
-                <div class="admin-login__footer-row">
-                    Chưa có tài khoản?
-                    <a th:href="@{/dang-ky}">Đăng ký ngay</a>
-                </div>
                 <div class="admin-login__footer-row">
                     <a th:href="@{/home}">
                         <i class="fas fa-home"></i> Quay về trang chủ
@@ -82,9 +85,9 @@
     </div>
 
     <script>
-        function toggleUserPassword() {
-            var passwordInput = document.getElementById('userMatKhau');
-            var eyeIcon = document.getElementById('userEyeIcon');
+        function togglePassword() {
+            var passwordInput = document.getElementById('matKhau');
+            var eyeIcon = document.getElementById('eyeIcon');
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 eyeIcon.classList.remove('fa-eye');

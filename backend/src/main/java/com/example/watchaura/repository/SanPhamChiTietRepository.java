@@ -52,15 +52,17 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
     List<SanPhamChiTiet> findAllWithDetails();
 
     /**
-     * Biến thể đủ điều kiện bán (POS / tại quầy): sản phẩm cha và biến thể đều hoạt động.
+     * Biến thể đủ điều kiện bán (POS / tại quầy): sản phẩm cha và biến thể đều hoạt động, còn hàng trong kho.
      */
     @Query("SELECT DISTINCT spct FROM SanPhamChiTiet spct " +
             "LEFT JOIN FETCH spct.sanPham sp " +
+            "LEFT JOIN FETCH sp.danhMuc " +
+            "LEFT JOIN FETCH sp.thuongHieu " +
             "LEFT JOIN FETCH sp.loaiMay " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
             "LEFT JOIN FETCH spct.chatLieuDay " +
-            "WHERE sp.trangThai = true AND spct.trangThai = true")
+            "WHERE sp.trangThai = true AND spct.trangThai = true AND spct.soLuongTon > 0")
     List<SanPhamChiTiet> findActiveForSaleWithDetails();
 
     /**

@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Controller
@@ -40,18 +42,169 @@ public class AuthController {
         return "user/dang-nhap";
     }
 
-    /** Trang đăng nhập riêng cho Admin - không dùng layout chung vì chưa đăng nhập */
-    @GetMapping("/admin/dang-nhap")
-    public String adminDangNhapPage(
+    /** Trang đăng nhập dành cho Admin / Nhân viên (cùng form, không chọn vai trò) */
+    @GetMapping("/admin/login")
+    public String adminLoginPage(
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "success", required = false) String success,
             Model model) {
-        model.addAttribute("title", "Đăng nhập Admin - WatchAura");
+        model.addAttribute("title", "Đăng nhập - WatchAura");
         if (error != null) model.addAttribute("errorMessage", error);
         if (success != null) model.addAttribute("successMessage", success);
-        return "admin/dang-nhap";
+        return "admin/login";
     }
 
+    /** Đăng nhập khu vực quản trị — tự nhận chức vụ: Admin/Quản lý → /admin, Nhân viên → /ban-hang */
+    @PostMapping("/admin/login")
+    public String adminLogin(
+            @RequestParam("email") String email,
+            @RequestParam("matKhau") String matKhau,
+            HttpSession session,
+            RedirectAttributes redirect) {
+        if (email == null || email.isBlank()) {
+            redirect.addAttribute("error", "Vui lòng nhập email.");
+            return "redirect:/admin/login";
+        }
+        Optional<KhachHang> opt = khachHangService.findByEmail(email.trim());
+        if (opt.isEmpty()) {
+            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/admin/login";
+        }
+        KhachHang kh = opt.get();
+        if (Boolean.FALSE.equals(kh.getTrangThai())) {
+            redirect.addAttribute("error", "Tài khoản đã bị khóa.");
+            return "redirect:/admin/login";
+        }
+        if (matKhau == null || !passwordEncoder.matches(matKhau, kh.getMatKhau())) {
+            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/admin/login";
+        }
+
+        String redirectUrl = null;
+        if (kh.getChucVu() != null) {
+            String tenChucVu = kh.getChucVu().getTenChucVu();
+            if (tenChucVu != null) {
+                if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
+                    redirectUrl = "/ban-hang";
+                } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
+                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
+                    redirectUrl = "/admin";
+                }
+            }
+        }
+
+        if (redirectUrl == null) {
+            redirect.addAttribute("error", "Bạn không có quyền truy cập khu vực quản trị.");
+            return "redirect:/admin/login";
+        }
+
+        session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
+        redirect.addFlashAttribute("successMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
+        return "redirect:" + redirectUrl;
+    }
+
+    /** Trang đăng nhập nhân viên (user layout) */
+    @GetMapping("/nhan-vien/login")
+    public String nhanVienLoginPage(
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "success", required = false) String success,
+            Model model) {
+        model.addAttribute("title", "Đăng nhập nhân viên - WatchAura");
+        if (error != null) model.addAttribute("errorMessage", error);
+        if (success != null) model.addAttribute("successMessage", success);
+        return "user/nhan-vien-login";
+    }
+
+    /** Xử lý đăng nhập nhân viên - chỉ nhân viên được đăng nhập, chuyển hướng đến /ban-hang */
+    @PostMapping("/nhan-vien/login")
+    public String nhanVienLogin(
+            @RequestParam("email") String email,
+            @RequestParam("matKhau") String matKhau,
+            HttpSession session,
+            RedirectAttributes redirect) {
+        if (email == null || email.isBlank()) {
+            redirect.addAttribute("error", "Vui lòng nhập email.");
+            return "redirect:/nhan-vien/login";
+        }
+        Optional<KhachHang> opt = khachHangService.findByEmail(email.trim());
+        if (opt.isEmpty()) {
+            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/nhan-vien/login";
+        }
+        KhachHang kh = opt.get();
+        if (Boolean.FALSE.equals(kh.getTrangThai())) {
+            redirect.addAttribute("error", "Tài khoản đã bị khóa.");
+            return "redirect:/nhan-vien/login";
+        }
+        if (matKhau == null || !passwordEncoder.matches(matKhau, kh.getMatKhau())) {
+            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "redirect:/nhan-vien/login";
+        }
+
+        // Kiểm tra có phải là nhân viên không
+        boolean laNhanVien = false;
+        if (kh.getChucVu() != null) {
+            String tenChucVu = kh.getChucVu().getTenChucVu();
+            if (tenChucVu != null) {
+                String t = tenChucVu.trim();
+                if (t.equalsIgnoreCase("Nhân viên") || t.equalsIgnoreCase("nhanvien")) {
+                    laNhanVien = true;
+                }
+            }
+        }
+
+        if (!laNhanVien) {
+            redirect.addFlashAttribute("errorMessage",
+                    "Tài khoản này không phải là tài khoản nhân viên.");
+            return "redirect:/nhan-vien/login";
+        }
+
+        session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
+        redirect.addFlashAttribute("successMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
+        return "redirect:/ban-hang";
+    }
+
+    /** Đăng xuất nhân viên - chuyển về trang đăng nhập nhân viên */
+    @GetMapping("/nhan-vien/dang-xuat")
+    public String nhanVienDangXuat(HttpSession session, RedirectAttributes redirect) {
+        session.invalidate();
+        redirect.addFlashAttribute("successMessage", "Bạn đã đăng xuất.");
+        return "redirect:/nhan-vien/login";
+    }
+
+    /** Trang đăng nhập riêng cho Admin (cũ) - chuyển hướng về /admin/login */
+    @GetMapping("/admin/dang-nhap")
+    public String adminDangNhapPage(
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "success", required = false) String success) {
+        StringBuilder url = new StringBuilder("redirect:/admin/login");
+        String sep = "?";
+        if (error != null && !error.isBlank()) {
+            url.append(sep).append("error=").append(URLEncoder.encode(error, StandardCharsets.UTF_8));
+            sep = "&";
+        }
+        if (success != null && !success.isBlank()) {
+            url.append(sep).append("success=").append(URLEncoder.encode(success, StandardCharsets.UTF_8));
+        }
+        return url.toString();
+    }
+
+    /** Admin / Quản lý / Nhân viên — chỉ đăng nhập qua /admin/login, không dùng form khách hàng */
+    private static boolean isTaiKhoanNoiBo(KhachHang kh) {
+        if (kh.getChucVu() == null) {
+            return false;
+        }
+        String ten = kh.getChucVu().getTenChucVu();
+        if (ten == null || ten.isBlank()) {
+            return false;
+        }
+        String t = ten.trim();
+        return t.equalsIgnoreCase("Nhân viên") || t.equalsIgnoreCase("nhanvien")
+                || t.equalsIgnoreCase("Admin") || t.equalsIgnoreCase("Quản lý")
+                || t.equalsIgnoreCase("admin") || t.equalsIgnoreCase("quanly");
+    }
+
+    /** Đăng nhập khách hàng — chỉ tài khoản khách hàng; nhân viên/admin phải dùng /admin/login */
     @PostMapping("/dang-nhap")
     public String dangNhap(
             @RequestParam("email") String email,
@@ -76,75 +229,21 @@ public class AuthController {
             redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
             return "redirect:/dang-nhap";
         }
-        session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
-
-        
-        // Kiểm tra chức vụ để chuyển hướng
-        String redirectUrl = "/";
-        if (kh.getChucVu() != null) {
-            String tenChucVu = kh.getChucVu().getTenChucVu();
-            if (tenChucVu != null) {
-                if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
-                    redirectUrl = "/ban-hang";
-                } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý") 
-                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
-                    redirectUrl = "/admin";
-                }
-            }
+        if (isTaiKhoanNoiBo(kh)) {
+            redirect.addFlashAttribute("errorMessage",
+                    "Tài khoản nhân viên hoặc quản trị vui lòng đăng nhập tại trang dành cho nhân viên.");
+            return "redirect:/admin/login";
         }
-        
+
+        session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
         redirect.addFlashAttribute("welcomeMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
-        return "redirect:" + redirectUrl;
+        return "redirect:/home";
     }
 
-    /** Xử lý đăng nhập Admin - chỉ cho phép tài khoản có chức vụ Admin hoặc Quản lý */
+    /** Xử lý đăng nhập Admin (cũ) - chuyển hướng về /admin/login */
     @PostMapping("/admin/dang-nhap")
-    public String adminDangNhap(
-            @RequestParam("email") String email,
-            @RequestParam("matKhau") String matKhau,
-            HttpSession session,
-            RedirectAttributes redirect) {
-        if (email == null || email.isBlank()) {
-            redirect.addAttribute("error", "Vui lòng nhập email.");
-            return "redirect:/admin/dang-nhap";
-        }
-        Optional<KhachHang> opt = khachHangService.findByEmail(email.trim());
-        if (opt.isEmpty()) {
-            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
-            return "redirect:/admin/dang-nhap";
-        }
-        KhachHang kh = opt.get();
-        if (Boolean.FALSE.equals(kh.getTrangThai())) {
-            redirect.addAttribute("error", "Tài khoản đã bị khóa.");
-            return "redirect:/admin/dang-nhap";
-        }
-        if (matKhau == null || !passwordEncoder.matches(matKhau, kh.getMatKhau())) {
-            redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
-            return "redirect:/admin/dang-nhap";
-        }
-
-        // Kiểm tra chức vụ - chỉ Admin/Quản lý mới được đăng nhập admin
-        boolean isAdmin = false;
-        if (kh.getChucVu() != null) {
-            String tenChucVu = kh.getChucVu().getTenChucVu();
-            if (tenChucVu != null) {
-                if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
-                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
-                    isAdmin = true;
-                }
-            }
-        }
-
-        // Nếu không phải Admin/Quản lý thì không cho đăng nhập
-        if (!isAdmin) {
-            redirect.addAttribute("error", "Bạn không có quyền truy cập trang quản trị.");
-            return "redirect:/admin/dang-nhap";
-        }
-
-        // Đăng nhập thành công - lưu session và chuyển đến Dashboard
-        session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
-        redirect.addFlashAttribute("successMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
-        return "redirect:/admin";
+    public String adminDangNhapOld() {
+        return "redirect:/admin/login";
     }
 
     @GetMapping("/dang-xuat")
@@ -159,7 +258,7 @@ public class AuthController {
     public String adminDangXuat(HttpSession session, RedirectAttributes redirect) {
         session.invalidate();
         redirect.addFlashAttribute("successMessage", "Bạn đã đăng xuất.");
-        return "redirect:/admin/dang-nhap";
+        return "redirect:/admin/login";
     }
 
     @GetMapping("/dang-ky")

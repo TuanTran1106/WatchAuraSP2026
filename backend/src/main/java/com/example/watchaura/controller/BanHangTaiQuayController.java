@@ -95,7 +95,7 @@ public class BanHangTaiQuayController {
         // Bắt buộc đăng nhập
         if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
             String msg = URLEncoder.encode("Vui lòng đăng nhập để sử dụng chức năng bán hàng.", StandardCharsets.UTF_8);
-            return "redirect:/dang-nhap?error=" + msg;
+            return "redirect:/admin/login?error=" + msg;
         }
 
         List<SanPhamChiTiet> sanPhamList =
@@ -135,7 +135,9 @@ public class BanHangTaiQuayController {
         }
 
         addTenNhanVienToModel(session, model);
-        return "admin/banhang/ban-hang";
+        model.addAttribute("title", "Bán hàng tại quầy");
+        model.addAttribute("content", "admin/banhang/ban-hang");
+        return "layout/admin-layout";
     }
 
 
@@ -311,13 +313,38 @@ public class BanHangTaiQuayController {
             res.setTamTinh(BigDecimal.ZERO);
             res.setGiamGia(BigDecimal.ZERO);
             res.setTongThanhToan(BigDecimal.ZERO);
+            res.setTenKhachHang("");
+            res.setSdtKhachHang("");
+            return res;
+        }
+
+        Optional<HoaDon> hoaDonOpt = hoaDonRepository.findById(hoaDonId);
+        if (hoaDonOpt.isEmpty()) {
+            CartResponse res = new CartResponse();
+            res.setItems(List.of());
+            res.setTamTinh(BigDecimal.ZERO);
+            res.setGiamGia(BigDecimal.ZERO);
+            res.setTongThanhToan(BigDecimal.ZERO);
+            res.setTenKhachHang("");
+            res.setSdtKhachHang("");
+            return res;
+        }
+        HoaDon hoaDon = hoaDonOpt.get();
+        // Đơn đã thanh toán / không còn ở trạng thái giỏ POS → không coi là giỏ hàng (tránh UI vẫn hiện sau thanh toán)
+        String ts = hoaDon.getTrangThaiDonHang();
+        if (!TRANG_THAI_GIO_QUAY.equals(ts) && !"CHO_THANH_TOAN".equals(ts)) {
+            CartResponse res = new CartResponse();
+            res.setItems(List.of());
+            res.setTamTinh(BigDecimal.ZERO);
+            res.setGiamGia(BigDecimal.ZERO);
+            res.setTongThanhToan(BigDecimal.ZERO);
+            res.setTenKhachHang("");
+            res.setSdtKhachHang("");
             return res;
         }
 
         List<HoaDonChiTiet> list =
                 hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDonId);
-
-        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId).get();
 
         CartResponse res = new CartResponse();
 
@@ -325,8 +352,43 @@ public class BanHangTaiQuayController {
         res.setTamTinh(hoaDon.getTongTienTamTinh());
         res.setGiamGia(hoaDon.getTienGiam());
         res.setTongThanhToan(hoaDon.getTongTienThanhToan());
+        res.setTenKhachHang(hoaDon.getTenKhachHang() != null ? hoaDon.getTenKhachHang() : "");
+        res.setSdtKhachHang(hoaDon.getSdtKhachHang() != null ? hoaDon.getSdtKhachHang() : "");
 
         return res;
+    }
+
+    @PostMapping("/cap-nhat-khach")
+    @ResponseBody
+    @Transactional
+    public String capNhatKhach(Integer hoaDonId, String tenKhachHang, String sdtKhachHang, String emailKhachHang) {
+        if (hoaDonId == null || hoaDonId <= 0) {
+            return "Chưa có hóa đơn — hãy thêm sản phẩm trước.";
+        }
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId).orElse(null);
+        if (hoaDon == null) {
+            return "Không tìm thấy hóa đơn.";
+        }
+        if (!"OFFLINE".equals(hoaDon.getLoaiHoaDon())) {
+            return "Không phải hóa đơn tại quầy.";
+        }
+        String ts = hoaDon.getTrangThaiDonHang();
+        if (!TRANG_THAI_GIO_QUAY.equals(ts) && !"CHO_THANH_TOAN".equals(ts)) {
+            return "Không thể cập nhật khách ở trạng thái hiện tại.";
+        }
+        if (tenKhachHang != null && !tenKhachHang.isBlank()) {
+            hoaDon.setTenKhachHang(tenKhachHang.trim());
+        }
+        if (sdtKhachHang != null && !sdtKhachHang.isBlank()) {
+            hoaDon.setSdtKhachHang(sdtKhachHang.trim().replaceAll("\\s+", ""));
+        }
+        if (emailKhachHang != null && !emailKhachHang.isBlank()) {
+            hoaDon.setEmail(emailKhachHang.trim().toLowerCase());
+        } else {
+            hoaDon.setEmail(null);
+        }
+        hoaDonRepository.save(hoaDon);
+        return "OK";
     }
 
 
@@ -657,6 +719,21 @@ public class BanHangTaiQuayController {
     // TABS - LẤY DANH SÁCH ĐƠN ĐANG MỞ
     // =============================
 
+    /** Tồn kho hiện tại các biến thể đang bán tại quầy — dùng làm mới UI sau khi trừ kho */
+    @GetMapping("/api/ton-kho-pos")
+    @ResponseBody
+    public List<Map<String, Object>> getTonKhoPos() {
+        return sanPhamChiTietRepository.findActiveForSaleWithDetails().stream()
+                .filter(sp -> sp != null && sp.getId() != null)
+                .map(sp -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", sp.getId());
+                    m.put("soLuongTon", sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0);
+                    return m;
+                })
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("/api/don-dang-mo")
     @ResponseBody
     public List<Map<String, Object>> getDonDangMo(HttpSession session) {
@@ -729,224 +806,29 @@ public class BanHangTaiQuayController {
     }
 
     // =============================
-    // QUẢN LÝ ĐƠN HÀNG CHO NHÂN VIÊN
+    // QUẢN LÝ ĐƠN HÀNG CHO NHÂN VIÊN - ĐÃ TẮT
     // =============================
 
-    @GetMapping("/don-hang")
-    public String quanLyDonHang(Model model,
-                                  HttpSession session,
-                                  @RequestParam(required = false) String q,
-                                  @RequestParam(required = false) String trangThai,
-                                  @RequestParam(defaultValue = "0") int page) {
+    // @GetMapping("/don-hang")
+    // public String quanLyDonHang(Model model, ...) { ... }
 
-        // Bắt buộc đăng nhập
-        if (session.getAttribute(AuthController.SESSION_CURRENT_USER_ID) == null) {
-            String msg = URLEncoder.encode("Vui lòng đăng nhập để xem đơn hàng.", StandardCharsets.UTF_8);
-            return "redirect:/dang-nhap?error=" + msg;
-        }
+    // @PostMapping("/don-hang/cap-nhat-trang-thai")
+    // @ResponseBody ... { ... }
 
-        // Lấy danh sách hóa đơn bán OFFLINE cho nhân viên
-        List<HoaDon> hoaDonList = hoaDonRepository.findByLoaiHoaDon("OFFLINE");
+    // @GetMapping("/don-hang/{id}")
+    // @ResponseBody ... { ... }
 
-        // Không hiển thị giỏ đang soạn (DRAFT) và hóa đơn 0đ
-        hoaDonList = hoaDonList.stream()
-                .filter(hd -> !TRANG_THAI_GIO_QUAY.equals(hd.getTrangThaiDonHang()))
-                .filter(hd -> hd.getTongTienThanhToan() != null && hd.getTongTienThanhToan().compareTo(BigDecimal.ZERO) > 0)
-                .toList();
-
-        // Lọc theo từ khóa nếu có
-        if (q != null && !q.isBlank()) {
-            final String searchKey = q.toLowerCase();
-            hoaDonList = hoaDonList.stream()
-                    .filter(hd -> (hd.getMaDonHang() != null && hd.getMaDonHang().toLowerCase().contains(searchKey)) ||
-                            (hd.getTenKhachHang() != null && hd.getTenKhachHang().toLowerCase().contains(searchKey)) ||
-                            (hd.getSdtKhachHang() != null && hd.getSdtKhachHang().contains(q)))
-                    .toList();
-        }
-
-        // Lọc theo trạng thái nếu có (hỗ trợ cả giá trị cũ trong DB)
-        if (trangThai != null && !trangThai.isBlank()) {
-            final String fTrangThai = trangThai;
-            hoaDonList = hoaDonList.stream()
-                    .filter(hd -> {
-                        String ts = hd.getTrangThaiDonHang();
-                        if (ts == null) return false;
-                        if (ts.equals(fTrangThai)) return true;
-                        if ("CHO_THANH_TOAN".equals(fTrangThai)) {
-                            return "CHỜ THANH TOAN".equals(ts) || "CHO_XAC_NHAN".equals(ts) || "CHO XAC NHAN".equals(ts);
-                        }
-                        if ("DA_THANH_TOAN".equals(fTrangThai)) {
-                            return "DA THANH TOAN".equals(ts) || isPaidOfflineStatus(ts);
-                        }
-                        return false;
-                    })
-                    .toList();
-        }
-
-        // Mới nhất trước: theo ngày (null xuống cuối), cùng giây thì theo ID
-        hoaDonList = hoaDonList.stream()
-                .sorted(Comparator
-                        .comparing(HoaDon::getNgayDat, Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparing(HoaDon::getId, Comparator.nullsLast(Comparator.reverseOrder())))
-                .toList();
-
-        model.addAttribute("hoaDonList", hoaDonList);
-        model.addAttribute("searchKeyword", q != null ? q : "");
-        model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
-
-        addTenNhanVienToModel(session, model);
-        return "admin/banhang/don-hang";
-    }
-
-    // Cập nhật trạng thái đơn hàng
-    @PostMapping("/don-hang/cap-nhat-trang-thai")
-    @ResponseBody
-    @Transactional
-    public String capNhatTrangThai(@RequestParam Integer id, @RequestParam String trangThai) {
-        HoaDon hoaDon = hoaDonRepository.findById(id).orElse(null);
-        if (hoaDon == null) {
-            return "Không tìm thấy đơn hàng";
-        }
-
-        String trangThaiHienTai = hoaDon.getTrangThaiDonHang();
-        String trangThaiMoi = normalizeOfflineStatusParam(trangThai);
-
-        // Đã thanh toán: không đổi sang trạng thái khác (kể cả về chờ thanh toán)
-        if (isPaidOfflineStatus(trangThaiHienTai)) {
-            if (!"DA THANH TOAN".equals(trangThaiMoi)) {
-                return "Không thể đổi trạng thái sau khi đã thanh toán";
-            }
-            return "OK";
-        }
-
-        // Đã hủy: không đổi sang trạng thái khác
-        if ("DA_HUY".equals(trangThaiHienTai)) {
-            if (!"DA_HUY".equals(trangThaiMoi)) {
-                return "Đơn hàng đã hủy không thể thay đổi";
-            }
-            return "OK";
-        }
-
-        // Chờ thanh toán (hoặc tương đương): chỉ sang Thanh toán hoặc Đã hủy; giữ chờ chỉ để đồng bộ/no-op
-        if (!"DA THANH TOAN".equals(trangThaiMoi) && !"DA_HUY".equals(trangThaiMoi)) {
-            if ("CHO_THANH_TOAN".equals(trangThaiMoi) || "CHO_XAC_NHAN".equals(trangThaiMoi)) {
-                hoaDon.setTrangThaiDonHang("CHO_THANH_TOAN");
-                hoaDonRepository.save(hoaDon);
-                return "OK";
-            }
-            return "Chỉ có thể chuyển từ chờ thanh toán sang Thanh toán hoặc Đã hủy";
-        }
-
-        List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
-
-        // Chuyển sang đã thanh toán: chỉ trừ kho khi trước đó chưa thanh toán (tránh trừ 2 lần)
-        if ("DA THANH TOAN".equals(trangThaiMoi)) {
-            StringBuilder loiTonKho = new StringBuilder();
-            for (HoaDonChiTiet ct : chiTiets) {
-                if (ct.getSanPhamChiTiet() != null) {
-                    SanPhamChiTiet sp = sanPhamChiTietRepository.findByIdWithLock(ct.getSanPhamChiTiet().getId())
-                            .orElse(null);
-                    if (sp != null) {
-                        Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
-                        if (soLuongTon < ct.getSoLuong()) {
-                            String tenSp = sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + ct.getSanPhamChiTiet().getId();
-                            loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ",
-                                    tenSp, ct.getSoLuong(), soLuongTon));
-                        }
-                    }
-                }
-            }
-
-            if (loiTonKho.length() > 0) {
-                String lyDoHetHang = loiTonKho.toString();
-                hoaDon.setGhiChu("Không đủ tồn kho: " + lyDoHetHang + " (Chờ xử lý)");
-                hoaDonRepository.save(hoaDon);
-                return "KHONG_DU_TON_KHO:" + lyDoHetHang;
-            }
-
-            for (HoaDonChiTiet ct : chiTiets) {
-                if (ct.getSanPhamChiTiet() != null) {
-                    sanPhamChiTietRepository.deductStock(ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
-                }
-            }
-            hoaDon.setNgayDat(LocalDateTime.now());
-            hoaDon.setTrangThaiDonHang("DA THANH TOAN");
-        } else if ("DA_HUY".equals(trangThaiMoi)) {
-            hoaDon.setTrangThaiDonHang("DA_HUY");
-        }
-
-        hoaDonRepository.save(hoaDon);
-        return "OK";
-    }
-
-    /** DB có thể lưu "DA THANH TOAN" hoặc "DA_THANH_TOAN" */
+    /** DB có thể lưu "DA THANH TOAN" hoặc "DA_THANH_TOAN" - Vẫn dùng trong thanhToan */
     private static boolean isPaidOfflineStatus(String s) {
         if (s == null || s.isBlank()) return false;
         return "DA THANH TOAN".equals(s) || "DA_THANH_TOAN".equals(s);
     }
 
-    /** Frontend gửi DA_THANH_TOAN; lưu thống nhất "DA THANH TOAN" */
+    /** Frontend gửi DA_THANH_TOAN; lưu thống nhất "DA THANH TOAN" - Vẫn dùng trong thanhToan */
     private static String normalizeOfflineStatusParam(String trangThai) {
         if (trangThai == null) return null;
         if ("DA_THANH_TOAN".equals(trangThai)) return "DA THANH TOAN";
         return trangThai;
-    }
-
-    // Xem chi tiết đơn hàng
-    @GetMapping("/don-hang/{id}")
-    @ResponseBody
-    public ResponseEntity<?> getDonHangChiTiet(@PathVariable Integer id) {
-        return hoaDonRepository.findById(id)
-                .map(hoaDon -> {
-                    HoaDonDTO dto = new HoaDonDTO();
-                    dto.setId(hoaDon.getId());
-                    dto.setMaDonHang(hoaDon.getMaDonHang());
-                    dto.setTenKhachHang(hoaDon.getTenKhachHang());
-                    dto.setSdtKhachHang(hoaDon.getSdtKhachHang());
-                    dto.setDiaChi(hoaDon.getDiaChi());
-                    dto.setNgayDat(hoaDon.getNgayDat());
-                    dto.setPhuongThucThanhToan(hoaDon.getPhuongThucThanhToan());
-                    dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
-                    dto.setTrangThaiDonHang(hoaDon.getTrangThaiDonHang());
-                    dto.setTongTienTamTinh(hoaDon.getTongTienTamTinh());
-                    dto.setTienGiam(hoaDon.getTienGiam());
-                    dto.setTongTienThanhToan(hoaDon.getTongTienThanhToan());
-                    dto.setGhiChu(hoaDon.getGhiChu());
-                    
-                    if (hoaDon.getChiTietList() != null) {
-                        List<HoaDonChiTietDTO> items = hoaDon.getChiTietList().stream()
-                                .map(ct -> {
-                                    HoaDonChiTietDTO item = new HoaDonChiTietDTO();
-                                    item.setId(ct.getId());
-                                    item.setSoLuong(ct.getSoLuong());
-                                    item.setDonGia(ct.getDonGia());
-                                    item.setHoaDonId(hoaDon.getId());
-                                    
-                                    if (ct.getSanPhamChiTiet() != null) {
-                                        item.setSanPhamChiTietId(ct.getSanPhamChiTiet().getId());
-                                        if (ct.getSanPhamChiTiet().getSanPham() != null) {
-                                            item.setTenSanPham(ct.getSanPhamChiTiet().getSanPham().getTenSanPham());
-                                            item.setHinhAnh(ct.getSanPhamChiTiet().getSanPham().getHinhAnh());
-                                        }
-                                        // Build variant name
-                                        String bienThe = "";
-                                        if (ct.getSanPhamChiTiet().getMauSac() != null) {
-                                            bienThe += ct.getSanPhamChiTiet().getMauSac().getTenMauSac();
-                                        }
-                                        if (ct.getSanPhamChiTiet().getKichThuoc() != null) {
-                                            bienThe += (bienThe.isEmpty() ? "" : " - ") + ct.getSanPhamChiTiet().getKichThuoc().getTenKichThuoc();
-                                        }
-                                        item.setTenBienThe(bienThe);
-                                    }
-                                    return item;
-                                })
-                                .toList();
-                        dto.setItems(items);
-                    }
-                    
-                    return ResponseEntity.ok(dto);
-                })
-                .orElse(ResponseEntity.notFound().build());
     }
 
     /**

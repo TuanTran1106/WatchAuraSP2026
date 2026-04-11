@@ -19,4 +19,11 @@ public class CartResponse {
 
     private BigDecimal tongThanhToan;
 
+    /** Thông tin khách trên hóa đơn (POS). */
+    private String tenKhachHang;
+
+    private String sdtKhachHang;
+
+    private String emailKhachHang;
+
 }

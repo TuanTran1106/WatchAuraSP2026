@@ -42,6 +42,8 @@ public class WebConfig implements WebMvcConfigurer {
                         // 管理员登录页面（单独处理）
                         "/admin/dang-nhap",
                         "/admin/dang-nhap.html",
+                        "/admin/login",
+                        "/admin/login.html",
                         // 管理员公开页面
                         "/admin/403",
                         "/admin/403.html",

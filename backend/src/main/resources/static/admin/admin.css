@@ -37,6 +37,29 @@ body {
   transition: transform 0.25s ease, width 0.25s ease;
 }
 
+/* Sidebar collapsed state */
+.sidebar.is-collapsed {
+  transform: translateX(-100%);
+}
+
+.sidebar__overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar__overlay.is-active {
+  display: block;
+  opacity: 1;
+}
+
 .sidebar__brand {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -187,6 +210,12 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: margin-left 0.25s ease;
+}
+
+/* Desktop: thu gọn sidebar → nội dung full width */
+.sidebar.is-collapsed ~ .main {
+  margin-left: 0;
 }
 
 /* ===== Header ===== */
@@ -200,7 +229,8 @@ body {
 }
 
 .header__menu-btn {
-  display: none;
+  display: flex;
+  flex-shrink: 0;
   background: #f1f5f9;
   border: none;
   width: 40px;
@@ -210,10 +240,21 @@ body {
   cursor: pointer;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s, color 0.2s;
 }
 
 .header__menu-btn:hover {
   background: #e2e8f0;
+}
+
+.admin-layout.theme-dark .header__menu-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.admin-layout.theme-dark .header__menu-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
 }
 
 .header__title {
