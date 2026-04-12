@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/admin/hoa-don")
 @RequiredArgsConstructor
-@RequiresRole({"Admin", "Quản lý"})
+@RequiresRole({"Admin", "Quản lý", "Nhân viên"})
 public class HoaDonController {
 
     private final HoaDonService hoaDonService;

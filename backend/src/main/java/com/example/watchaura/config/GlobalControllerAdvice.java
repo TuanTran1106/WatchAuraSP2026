@@ -51,13 +51,28 @@ public class GlobalControllerAdvice {
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
                 model.addAttribute("currentUser", kh);
                 model.addAttribute("soLuongGioHang", gioHangService.getSoLuongGioHang((Integer) userId));
+                
+                // Thêm thông tin vai trò để phân quyền menu
+                String tenChucVu = "";
+                if (kh.getChucVu() != null && kh.getChucVu().getTenChucVu() != null) {
+                    tenChucVu = kh.getChucVu().getTenChucVu();
+                }
+                model.addAttribute("vaiTro", tenChucVu);
+                model.addAttribute("laQuanLy", tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý"));
+                model.addAttribute("laNhanVien", tenChucVu.equalsIgnoreCase("Nhân viên"));
             } catch (Exception ignored) {
                 session.removeAttribute(AuthController.SESSION_CURRENT_USER_ID);
                 model.addAttribute("currentUser", null);
                 model.addAttribute("soLuongGioHang", 0);
+                model.addAttribute("vaiTro", "");
+                model.addAttribute("laQuanLy", false);
+                model.addAttribute("laNhanVien", false);
             }
         } else {
             model.addAttribute("currentUser", null);
+            model.addAttribute("vaiTro", "");
+            model.addAttribute("laQuanLy", false);
+            model.addAttribute("laNhanVien", false);
             int guestCount = 0;
             Object cartAttr = session.getAttribute("cart");
             if (cartAttr instanceof java.util.Map) {

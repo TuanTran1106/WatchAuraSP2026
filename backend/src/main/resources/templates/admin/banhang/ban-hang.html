@@ -1568,7 +1568,7 @@
             showPosConfirm({
                 title: 'Xác nhận thanh toán QR',
                 message: 'Xác nhận khách đã thanh toán? Hệ thống sẽ trừ tồn kho và chốt đơn.',
-                okText: 'Đã thanh toán',
+                okText: 'Hoàn thành',
                 onConfirm: function() {
                     var hoaDonId = document.getElementById('hoaDonId').value;
                     fetch('/ban-hang/thanh-toan', {

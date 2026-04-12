@@ -15,20 +15,19 @@
 
 <body>
 <div class="admin-layout">
-    <aside class="sidebar">
+    <aside class="sidebar" th:if="${laQuanLy || laNhanVien}">
         <div class="sidebar__brand">
             <span class="sidebar__logo">WA</span>
-            <span class="sidebar__title">WatchAura Admin</span>
+            <span class="sidebar__title" th:text="${laQuanLy} ? 'WatchAura Admin' : 'WatchAura Staff'">WatchAura Admin</span>
         </div>
         <nav class="sidebar__nav" id="adminSidebarNav">
-            <a th:href="@{/admin}" class="sidebar__link"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a th:href="@{/admin}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
             <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i
                     class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
-            <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách
+            <a th:href="@{/admin/khach-hang}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-users"></i><span>Khách
                         hàng</span></a>
-            <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa
-                        đơn</span></a>
-            <div class="sidebar__dropdown" id="sidebarProductDropdown">
+            <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
+            <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
                         aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
                     <i class="fas fa-box-open"></i>
@@ -52,14 +51,18 @@
                             class="fas fa-link"></i><span>Chất liệu dây</span></a>
                 </div>
             </div>
-            <a th:href="@{/admin/khuyen-mai}" class="sidebar__link"><i class="fas fa-percent"></i><span>Khuyến
+            <a th:href="@{/admin/khuyen-mai}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-percent"></i><span>Khuyến
                         mãi</span></a>
-            <a th:href="@{/admin/voucher}" class="sidebar__link"><i
+            <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i
                     class="fas fa-ticket"></i><span>Voucher</span></a>
-            <a th:href="@{/admin/blog}" class="sidebar__link"><i class="fas fa-newspaper"></i><span>Blog</span></a>
-            <a th:href="@{/admin/cai-dat}" class="sidebar__link">
+            <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
+            <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <i class="fa-solid fa-gear"></i>
                 <span>Cài đặt</span></a>
+            <a href="#" class="sidebar__link sidebar__link--logout" th:unless="${laQuanLy}"
+               onclick="event.preventDefault(); confirmLogout();">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Đăng xuất</span></a>
         </nav>
     </aside>
     <div class="main">
@@ -69,6 +72,13 @@
                 <i class="fas fa-bars" aria-hidden="true"></i>
             </button>
             <h1 class="header__title" th:text="${title}">Admin</h1>
+            <div class="header__user-info" th:if="${currentUser != null}">
+                <span class="header__user-badge" th:classappend="${laQuanLy} ? 'badge--admin' : 'badge--staff'">
+                    <i th:class="${laQuanLy} ? 'fas fa-crown' : 'fas fa-user-shield'"></i>
+                    <span th:text="${laQuanLy} ? 'Admin' : 'WatchAura Staff'">Vai trò</span>
+                </span>
+                <span class="header__user-name" th:text="${currentUser.tenNguoiDung}">Tên NV</span>
+            </div>
             <button class="header__theme-toggle" id="adminThemeToggle" type="button" aria-label="Chuyển giao diện sáng/tối" title="Chuyển giao diện sáng/tối">
                 <i class="fas fa-moon theme-icon theme-icon--dark" aria-hidden="true"></i>
                 <i class="fas fa-sun theme-icon theme-icon--light" aria-hidden="true"></i>
@@ -92,6 +102,24 @@
         if (link) link.classList.add('sidebar__link--current');
     }
 })();
+
+function confirmLogout() {
+    if (typeof window.confirmModal === 'function') {
+        window.confirmModal({
+            title: 'Đăng xuất',
+            message: 'Bạn có chắc chắn muốn đăng xuất không?',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Hủy',
+            tone: 'warning'
+        }).then(function(ok) {
+            if (ok) window.location.href = '/nhan-vien/login';
+        });
+    } else {
+        if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+            window.location.href = '/nhan-vien/login';
+        }
+    }
+}
 </script>
 </body>
 

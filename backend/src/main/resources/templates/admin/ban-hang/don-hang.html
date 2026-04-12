@@ -486,7 +486,7 @@
                                     th:onchange="'capNhatTrangThai(' + ${hd.id} + ')'"
                                     th:attr="data-status=${ts}">
                                 <option value="CHO_THANH_TOAN" th:selected="${ts == 'CHO_THANH_TOAN' or ts == 'CHỜ THANH TOAN' or ts == 'CHO_XAC_NHAN' or ts == 'CHO XAC NHAN'}">Chờ thanh toán</option>
-                                <option value="DA_THANH_TOAN" th:selected="${daThanhToan}">Đã thanh toán</option>
+                                <option value="DA_THANH_TOAN" th:selected="${daThanhToan}">Hoàn thành</option>
                                 <option value="DA_HUY" th:selected="${daHuy}">Đã hủy</option>
                             </select>
                             </th:block>
