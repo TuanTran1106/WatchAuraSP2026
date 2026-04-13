@@ -86,4 +86,10 @@ public class HoaDon {
 
     @Column(name = "email", length = 100)
     private String email;
+
+    @Column(name = "ly_do_hoan", length = 255)
+    private String lyDoHoan;
+
+    @Column(name = "ngay_yeu_cau_hoan")
+    private LocalDateTime ngayYeuCauHoan;
 }

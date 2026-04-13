@@ -685,6 +685,8 @@ public class HoaDonServiceImpl implements HoaDonService {
         HoaDonDTO dto = new HoaDonDTO();
         dto.setId(hoaDon.getId());
         dto.setMaDonHang(hoaDon.getMaDonHang());
+        dto.setLyDoHoan(hoaDon.getLyDoHoan());
+        dto.setNgayYeuCauHoan(hoaDon.getNgayYeuCauHoan());
 
         String emailOnOrder = hoaDon.getEmail();
         if (emailOnOrder != null && !emailOnOrder.isBlank()) {
@@ -1053,5 +1055,39 @@ public class HoaDonServiceImpl implements HoaDonService {
         hoaDonRepository.save(hoaDon);
 
         return convertToDTO(hoaDon);
+    }
+
+    @Override
+    public HoaDonDTO yeuCauHoanHang(Integer id, String lyDoHoan) {
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (!"DA_GIAO".equals(hoaDon.getTrangThaiDonHang())) {
+            throw new RuntimeException("Chỉ được hoàn khi đơn đã giao");
+        }
+
+        hoaDon.setTrangThaiDonHang("REQUEST_RETURN");
+        hoaDon.setLyDoHoan(lyDoHoan);
+        hoaDon.setNgayYeuCauHoan(java.time.LocalDateTime.now());
+
+        hoaDonRepository.save(hoaDon);
+
+        return getById(hoaDon.getId());
+    }
+
+    @Override
+    public void duyetHoan(Integer id) {
+        HoaDon hd = hoaDonRepository.findById(id).orElseThrow();
+
+        hd.setTrangThaiDonHang("DA_HOAN"); // hoặc trạng thái bạn quy định
+        hoaDonRepository.save(hd);
+    }
+
+    @Override
+    public void tuChoiHoan(Integer id) {
+        HoaDon hd = hoaDonRepository.findById(id).orElseThrow();
+
+        hd.setTrangThaiDonHang("TU_CHOI_HOAN");
+        hoaDonRepository.save(hd);
     }
 }

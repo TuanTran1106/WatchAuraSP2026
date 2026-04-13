@@ -3,6 +3,8 @@ package com.example.watchaura.controller;
 import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
+import com.example.watchaura.entity.HoaDon;
+import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.util.PaginationWindow;
 import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.service.HoaDonService;
@@ -36,6 +38,7 @@ public class HoaDonController {
     private final VoucherService voucherService;
 
     private static final int PAGE_SIZE = 10;
+    private final HoaDonRepository hoaDonRepository;
 
     @GetMapping
     public String list(@RequestParam(required = false) String q,
@@ -271,6 +274,20 @@ public class HoaDonController {
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);
         redirect.addAttribute("page", page);
+        return "redirect:/admin/hoa-don";
+    }
+
+    @PostMapping("/duyet-hoan/{id}")
+    public String duyetHoan(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        hoaDonService.duyetHoan(id);
+        redirectAttributes.addFlashAttribute("message", "Đã duyệt yêu cầu hoàn!");
+        return "redirect:/admin/hoa-don";
+    }
+
+    @PostMapping("/tu-choi-hoan/{id}")
+    public String tuChoiHoan(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        hoaDonService.tuChoiHoan(id);
+        redirectAttributes.addFlashAttribute("warning", "Đã từ chối yêu cầu hoàn!");
         return "redirect:/admin/hoa-don";
     }
 }

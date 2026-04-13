@@ -58,4 +58,9 @@ public interface HoaDonService {
      * @return CheckoutStockResponse chứa danh sách cảnh báo cho các sản phẩm bị điều chỉnh
      */
     CheckoutStockResponse checkAndAdjustStockBeforeCheckout(Integer gioHangId, Integer khachHangId);
+
+    HoaDonDTO yeuCauHoanHang(Integer id, String lyDoHoan);
+
+    void duyetHoan(Integer id);
+    void tuChoiHoan(Integer id);
 }

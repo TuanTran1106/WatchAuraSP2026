@@ -43,4 +43,7 @@ public class HoaDonDTO {
     private String ghiChu;
     private DiaChiGiaoHangDTO diaChiGiaoHang;
     private List<HoaDonChiTietDTO> items;
+
+    private String lyDoHoan;
+    private LocalDateTime ngayYeuCauHoan;
 }

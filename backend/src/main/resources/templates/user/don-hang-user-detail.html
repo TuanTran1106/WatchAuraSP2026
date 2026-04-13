@@ -132,6 +132,22 @@
                     <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
                 </section>
 
+                <th:block th:if="${hoaDon.lyDoHoan != null}">
+                    <div class="order-detail-card detail-card">
+                        <h2 class="detail-card__heading">Thông tin hoàn hàng</h2>
+
+                        <p>
+                            <b>Lý do hoàn:</b>
+                            <span th:text="${hoaDon.lyDoHoan}"></span>
+                        </p>
+
+                        <p th:if="${hoaDon.ngayYeuCauHoan != null}">
+                            <b>Ngày yêu cầu:</b>
+                            <span th:text="${#temporals.format(hoaDon.ngayYeuCauHoan, 'dd/MM/yyyy HH:mm')}"></span>
+                        </p>
+                    </div>
+                </th:block>
+
                 <!-- Trạng thái & thanh toán -->
                 <section class="order-detail-card order-detail-meta">
                     <div class="order-detail-meta__item">
@@ -146,6 +162,10 @@
                             <span th:case="'DANG_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
                             <span th:case="'DA_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-done">Đã giao</span>
                             <span th:case="'DA_HUY'" id="orderStatus" class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
+                            <span th:case="'REQUEST_RETURN'" class="order-detail-meta__badge order-status status-warning">Đang yêu cầu hoàn</span>
+                            <span th:case="'APPROVED_RETURN'" class="order-detail-meta__badge order-status status-processing">Đã duyệt hoàn</span>
+                            <span th:case="'REJECTED_RETURN'" class="order-detail-meta__badge order-status status-cancel">Từ chối hoàn</span>
+                            <span th:case="'RETURNED'" class="order-detail-meta__badge order-status status-done">Đã hoàn hàng</span>
                             <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status" th:text="${hoaDon.trangThaiDonHang}">—</span>
                         </th:block>
                     </div>
@@ -154,6 +174,22 @@
                         <span class="order-detail-meta__payment" id="paymentMethod" th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
                     </div>
                 </section>
+            </div>
+
+            <div style="margin: 20px 0;">
+
+                <th:block th:if="${hoaDon.trangThaiDonHang == 'DA_GIAO'}">
+                    <form th:action="@{'/don-hang/hoan/' + ${hoaDon.id}}" method="post">
+                        <input type="text" name="lyDoHoan" placeholder="Nhập lý do hoàn..." required
+                               style="padding:8px; width:300px;">
+                        <button class="btn btn-danger">Yêu cầu hoàn hàng</button>
+                    </form>
+                </th:block>
+
+                <th:block th:if="${hoaDon.trangThaiDonHang == 'REQUEST_RETURN'}">
+                    <button class="btn btn-secondary" disabled>Đã gửi yêu cầu hoàn</button>
+                </th:block>
+
             </div>
 
             <div class="order-detail-back">

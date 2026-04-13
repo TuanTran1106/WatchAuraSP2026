@@ -386,6 +386,10 @@ public class DonHangUserController {
             case "DANG_GIAO" -> "Đang giao";
             case "DA_GIAO" -> "Đã giao";
             case "DA_HUY" -> "Đã hủy";
+            case "REQUEST_RETURN" -> "Đang yêu cầu hoàn";
+            case "APPROVED_RETURN" -> "Đã duyệt hoàn";
+            case "REJECTED_RETURN" -> "Từ chối hoàn";
+            case "RETURNED" -> "Đã hoàn hàng";
             default -> trangThai;
         };
     }
@@ -605,5 +609,28 @@ public class DonHangUserController {
         }
 
         return result;
+    }
+
+    @PostMapping("/don-hang/hoan/{id}")
+    public String yeuCauHoanHang(
+            @PathVariable Integer id,
+            @RequestParam String lyDoHoan,
+            HttpSession session,
+            RedirectAttributes redirect) {
+
+        Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+
+        if (userId == null) {
+            return "redirect:/dang-nhap";
+        }
+
+        try {
+            hoaDonService.yeuCauHoanHang(id, lyDoHoan);
+            redirect.addFlashAttribute("success", "Đã gửi yêu cầu hoàn hàng");
+        } catch (Exception e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/don-hang/chi-tiet/" + id;
     }
 }

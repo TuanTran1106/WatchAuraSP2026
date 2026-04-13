@@ -1,17 +1,15 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.annotation.RequiresRole;
+import com.example.watchaura.entity.HoaDon;
+import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.SanPhamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
@@ -40,6 +38,7 @@ public class AdminController {
 
     private static final long DASHBOARD_CACHE_TTL_MS = 60_000L;
     private static final ConcurrentHashMap<String, CacheEntry> DASHBOARD_CACHE = new ConcurrentHashMap<>();
+    private final HoaDonRepository hoaDonRepository;
 
     private static final class CacheEntry {
         private final long createdAtMs;
@@ -693,6 +692,8 @@ public class AdminController {
         redirectAttributes.addAttribute("message", "Đã lưu cấu hình bảo mật.");
         return "redirect:/admin/cai-dat";
     }
+
+
 }
 
 
