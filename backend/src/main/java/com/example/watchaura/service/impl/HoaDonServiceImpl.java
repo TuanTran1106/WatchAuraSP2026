@@ -334,7 +334,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         String currentStatus = hoaDon.getTrangThaiDonHang();
         String effectiveCurrent = normalizeDaThanhToanCode(currentStatus);
 
-        if ("DA_GIAO".equals(effectiveCurrent) && !"DA_GIAO".equals(newStatus)) {
+        if ("DA_GIAO".equals(effectiveCurrent) && !"DA_GIAO".equals(newStatus) && !"HOAN_THANH".equals(newStatus)) {
             throw new RuntimeException("Đơn đã giao, không thể đổi sang trạng thái khác.");
         }
 

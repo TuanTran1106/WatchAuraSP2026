@@ -83,9 +83,9 @@
                         <select name="trangThai" id="invoiceDetailTrangThaiOnline"
                                 class="invoice-detail__status-select"
                                 th:with="cur=${hoaDon.trangThaiDonHang != null and !#strings.isEmpty(hoaDon.trangThaiDonHang) ? hoaDon.trangThaiDonHang : 'CHO_XAC_NHAN'}"
-                                th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : (${cur == 'DA_HUY'} ? 'Đơn đã hủy, không đổi trạng thái' : (${(cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN')} ? 'Đơn đã thanh toán, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'))"
-                                th:disabled="${cur == 'DA_GIAO' or cur == 'DA_HUY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}"
-                                th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : ((cur == 'DA_GIAO' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN') ? 'status--da-giao' : (cur == 'DA_HUY' ? 'status--da-huy' : 'status--cho-xac-nhan')))))}">
+                                th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : (${cur == 'DA_HUY'} ? 'Đơn đã hủy, không đổi trạng thái' : (${(cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN')} ? 'Đơn đã thanh toán, không đổi trạng thái' : (${cur == 'HOAN_THANH'} ? 'Đơn đã hoàn thành, không đổi trạng thái' : 'Đổi trạng thái đơn hàng')))"
+                                th:disabled="${cur == 'DA_HUY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN' or cur == 'HOAN_THANH'}"
+                                th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : ((cur == 'DA_GIAO' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN') ? 'status--da-giao' : ((cur == 'HOAN_THANH') ? 'status--hoan-thanh' : (cur == 'DA_HUY' ? 'status--da-huy' : 'status--cho-xac-nhan'))))))}">
                             <option th:if="${cur == 'DA_HUY'}" th:value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
                             <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
                             <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
@@ -93,7 +93,9 @@
                             <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
                             <option th:if="${cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="true" hidden="hidden">Đang giao</option>
                             <option th:if="${cur == 'DANG_GIAO' or cur == 'DA_GIAO'}" th:value="DA_GIAO" th:selected="${cur == 'DA_GIAO'}" th:text="'Đã giao'">Đã giao</option>
+                            <option th:if="${cur == 'DA_GIAO'}" th:value="HOAN_THANH" th:text="'Hoàn thành'">Hoàn thành</option>
                             <option th:if="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA THANH TOAN" th:selected="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:text="'Hoàn thành'">Hoàn thành</option>
+                            <option th:if="${cur == 'HOAN_THANH'}" th:value="HOAN_THANH" th:selected="true" disabled="disabled" th:text="'Hoàn thành'">Hoàn thành</option>
                             <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
                         </select>
                         </div>
