@@ -26,4 +26,9 @@ public class DiaChiRequest {
     @NotBlank(message = "Tỉnh/thành phố không được để trống")
     @Size(max = 100, message = "Tỉnh/thành phố tối đa 100 ký tự")
     private String tinhThanh;
+
+    /** Optional GHN codes for auto shipping fee */
+    private Integer ghnProvinceId;
+    private Integer ghnDistrictId;
+    private String ghnWardCode;
 }

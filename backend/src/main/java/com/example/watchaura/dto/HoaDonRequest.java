@@ -38,6 +38,10 @@ public class HoaDonRequest {
     private String email;
     
     private String ghiChu;
+
+    /** GHN shipping destination (for fee calculation) */
+    private Integer toDistrictId;
+    private String toWardCode;
     
     private DiaChiGiaoHangRequest diaChiGiaoHang;
 

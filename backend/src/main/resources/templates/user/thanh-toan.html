@@ -22,6 +22,71 @@
             <div class="checkout-layout">
                 <div class="checkout-form__section">
                     <h2 class="checkout-section__title">Thông tin giao hàng</h2>
+                    <div id="defaultAddressBlock" style="display:none; border:1px solid #e8e8e8; border-radius:12px; padding:12px 14px; background:#fafafa; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:700; color:#1a1a1a; margin-bottom:6px;">Giao đến</div>
+                                <div id="defaultAddressName" style="font-weight:600; color:#1a1a1a;">—</div>
+                                <div id="defaultAddressPhone" style="color:#444; margin-top:2px;">—</div>
+                                <div id="defaultAddressText" style="color:#444; margin-top:6px; line-height:1.35;">—</div>
+                            </div>
+                            <button type="button" class="btn btn--outline btn--sm" id="btnChangeAddress" style="white-space:nowrap;">Thay đổi địa chỉ</button>
+                        </div>
+                        <div style="margin-top:10px; font-size:0.85rem; color:#666;">
+                            Phí ship sẽ được tính tự động theo địa chỉ mặc định.
+                        </div>
+                    </div>
+
+                    <!-- Modal chọn địa chỉ -->
+                    <div id="addressModal" style="display:none; position:fixed; inset:0; z-index:9999;">
+                        <div id="addressModalBackdrop" style="position:absolute; inset:0; background:rgba(0,0,0,0.45);"></div>
+                        <div style="position:relative; margin:6vh auto 0; max-width:720px; width:92%; background:#fff; border-radius:14px; box-shadow:0 20px 80px rgba(0,0,0,0.25); overflow:hidden;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #eee;">
+                                <div style="font-weight:700;">Chọn địa chỉ giao hàng</div>
+                                <button type="button" id="btnCloseAddressModal" style="border:none; background:transparent; font-size:20px; line-height:1; cursor:pointer;">×</button>
+                            </div>
+                            <div style="padding:14px 16px; max-height:62vh; overflow:auto;">
+                                <div id="addressList" style="display:flex; flex-direction:column; gap:10px;">
+                                    <div style="color:#666;">Đang tải địa chỉ...</div>
+                                </div>
+
+                                <div style="margin-top:14px; padding-top:14px; border-top:1px dashed #e5e5e5;">
+                                    <button type="button" id="btnToggleAddAddress" class="btn btn--outline btn--sm">+ Thêm địa chỉ mới</button>
+                                    <div id="addAddressFormWrap" style="display:none; margin-top:12px; background:#fafafa; border:1px solid #eee; border-radius:12px; padding:12px;">
+                                        <div class="form-group">
+                                            <label for="addrDiaChiCuThe">Địa chỉ cụ thể (số nhà, đường) <span class="required">*</span></label>
+                                            <input type="text" id="addrDiaChiCuThe" class="form-control" placeholder="Ví dụ: 25 Lý Thường Kiệt">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="addrProvince">Tỉnh/Thành phố <span class="required">*</span></label>
+                                            <select id="addrProvince" class="form-control">
+                                                <option value="">— Chọn tỉnh/thành phố —</option>
+                                                <option th:each="p : ${provinces}" th:value="${p.provinceId}" th:text="${p.provinceName}"></option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="addrDistrict">Quận/Huyện <span class="required">*</span></label>
+                                            <select id="addrDistrict" class="form-control" disabled>
+                                                <option value="">Chọn tỉnh/thành phố trước</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="addrWard">Phường/Xã <span class="required">*</span></label>
+                                            <select id="addrWard" class="form-control" disabled>
+                                                <option value="">Chọn quận/huyện trước</option>
+                                            </select>
+                                        </div>
+                                        <div style="display:flex; gap:10px; justify-content:flex-end;">
+                                            <button type="button" id="btnCancelAddAddress" class="btn btn--outline btn--sm">Hủy</button>
+                                            <button type="button" id="btnSaveAddress" class="btn btn--primary btn--sm">Lưu địa chỉ</button>
+                                        </div>
+                                        <div id="addAddressMsg" style="margin-top:8px; font-size:0.9rem; color:#c9302c; display:none;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="tenKhachHang">Họ tên người nhận <span class="required">*</span></label>
                         <input type="text" id="tenKhachHang" th:field="*{tenKhachHang}" class="form-control" placeholder="Nguyễn Văn A" required maxlength="100">
@@ -39,8 +104,29 @@
                     </div>
                     <div class="form-group">
                         <label for="diaChi">Địa chỉ giao hàng <span class="required">*</span></label>
-                        <textarea id="diaChi" th:field="*{diaChi}" class="form-control form-control--textarea" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" required rows="3" maxlength="500"></textarea>
+                        <textarea id="diaChi" th:field="*{diaChi}" class="form-control form-control--textarea" placeholder="Số nhà, tên đường..." required rows="3" maxlength="500"></textarea>
                         <span th:if="${#fields.hasErrors('diaChi')}" th:errors="*{diaChi}" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="toProvinceId">Tỉnh / Thành phố <span class="required">*</span></label>
+                        <select id="toProvinceId" class="form-control" required>
+                            <option value="">— Chọn tỉnh/thành phố —</option>
+                            <option th:each="p : ${provinces}"
+                                    th:value="${p.provinceId}"
+                                    th:text="${p.provinceName}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="toDistrictId">Quận / Huyện <span class="required">*</span></label>
+                        <select id="toDistrictId" th:field="*{toDistrictId}" class="form-control" required>
+                            <option value="">— Chọn quận/huyện —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="toWardCode">Phường / Xã <span class="required">*</span></label>
+                        <select id="toWardCode" th:field="*{toWardCode}" class="form-control" required disabled>
+                            <option value="">— Chọn phường/xã —</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="ghiChu">Ghi chú</label>
@@ -104,7 +190,7 @@
                             <span class="cart-summary__label">Phí giao hàng</span>
                             <span class="cart-summary__value" id="checkout-shipping-fee" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
                         </div>
-                        <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 1.000.000₫ được miễn phí giao hàng</p>
+                        <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 2.000.000₫ được miễn phí giao hàng</p>
                         <div class="cart-summary__row cart-summary__row--total">
                             <span class="cart-summary__label">Tổng thanh toán</span>
                             <span class="cart-summary__value cart-summary__value--large" id="checkout-tong-tien" th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
@@ -215,9 +301,30 @@
             var shippingFeeEl = document.getElementById('checkout-shipping-fee');
             var shippingNoteEl = document.getElementById('shipping-note');
             var baseTotal = /*[[${cart.tongTien}]]*/ 0;
+            var currentSubtotal = Number(baseTotal || 0);
 
-            var SHIPPING_FEE = 40000;
-            var FREE_SHIPPING_THRESHOLD = 1000000;
+            var toDistrictEl = document.getElementById('toDistrictId');
+            var toWardEl = document.getElementById('toWardCode');
+            var toProvinceEl = document.getElementById('toProvinceId');
+            var lastShippingFee = 0;
+            var defaultAddressBlock = document.getElementById('defaultAddressBlock');
+            var btnChangeAddress = document.getElementById('btnChangeAddress');
+            var defaultAddressName = document.getElementById('defaultAddressName');
+            var defaultAddressPhone = document.getElementById('defaultAddressPhone');
+            var defaultAddressText = document.getElementById('defaultAddressText');
+            var addressModal = document.getElementById('addressModal');
+            var addressModalBackdrop = document.getElementById('addressModalBackdrop');
+            var btnCloseAddressModal = document.getElementById('btnCloseAddressModal');
+            var addressListEl = document.getElementById('addressList');
+            var btnToggleAddAddress = document.getElementById('btnToggleAddAddress');
+            var addAddressFormWrap = document.getElementById('addAddressFormWrap');
+            var btnCancelAddAddress = document.getElementById('btnCancelAddAddress');
+            var btnSaveAddress = document.getElementById('btnSaveAddress');
+            var addAddressMsg = document.getElementById('addAddressMsg');
+            var addrDiaChiCuThe = document.getElementById('addrDiaChiCuThe');
+            var addrProvince = document.getElementById('addrProvince');
+            var addrDistrict = document.getElementById('addrDistrict');
+            var addrWard = document.getElementById('addrWard');
 
             var getVouchersUrl = /*[[@{/thanh-toan/vouchers}]]*/ '/thanh-toan/vouchers';
             var applyVoucherUrl = /*[[@{/thanh-toan/apply-voucher-by-id}]]*/ '/thanh-toan/apply-voucher-by-id';
@@ -228,24 +335,114 @@
                 return num.toLocaleString('vi-VN') + ' ₫';
             }
 
-            function calculateShippingFee(subtotal) {
-                return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-            }
-
-            function updateShippingDisplay(subtotal) {
-                var shippingFee = calculateShippingFee(subtotal);
+            function setShippingFeeValue(fee, subtotal) {
+                lastShippingFee = Number(fee || 0);
                 if (shippingFeeEl) {
-                    shippingFeeEl.textContent = formatCurrencyVnd(shippingFee);
-                    if (shippingFee === 0 && subtotal > 0) {
+                    if (lastShippingFee === 0 && Number(subtotal || 0) >= 2000000) {
+                        shippingFeeEl.textContent = 'Miễn phí';
                         shippingFeeEl.classList.add('cart-summary__value--free-ship');
                     } else {
+                        shippingFeeEl.textContent = formatCurrencyVnd(lastShippingFee);
                         shippingFeeEl.classList.remove('cart-summary__value--free-ship');
                     }
                 }
                 if (shippingNoteEl) {
-                    shippingNoteEl.style.display = shippingFee === 0 && subtotal > 0 ? '' : 'none';
+                    shippingNoteEl.textContent = '✓ Đơn hàng trên 2.000.000₫ được miễn phí giao hàng';
+                    shippingNoteEl.style.display = (lastShippingFee === 0 && Number(subtotal || 0) >= 2000000) ? '' : 'none';
                 }
-                return shippingFee;
+                if (tongTienEl) {
+                    tongTienEl.textContent = formatCurrencyVnd(Number(subtotal || 0) + lastShippingFee);
+                }
+            }
+
+            function calcShippingFeeGhN(subtotal) {
+                if (!toDistrictEl || !toWardEl) return;
+                var districtId = toDistrictEl.value;
+                var wardCode = toWardEl.value;
+                if (!districtId || !wardCode) {
+                    if (shippingFeeEl) shippingFeeEl.textContent = '—';
+                    if (tongTienEl) tongTienEl.textContent = formatCurrencyVnd(Number(subtotal || 0));
+                    return;
+                }
+                var body = 'district_id=' + encodeURIComponent(districtId) + '&ward_code=' + encodeURIComponent(wardCode) + '&subtotal=' + encodeURIComponent(subtotal || 0);
+                fetch('/shipping-fee', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body
+                })
+                    .then(function(r){ return r.json(); })
+                    .then(function(resp){
+                        if (!resp || resp.success !== true) {
+                            if (shippingFeeEl) shippingFeeEl.textContent = 'Không tính được';
+                            if (tongTienEl) tongTienEl.textContent = formatCurrencyVnd(Number(subtotal || 0));
+                            return;
+                        }
+                        setShippingFeeValue(resp.fee, subtotal);
+                    })
+                    .catch(function(){
+                        if (shippingFeeEl) shippingFeeEl.textContent = 'Không tính được';
+                        if (tongTienEl) tongTienEl.textContent = formatCurrencyVnd(Number(subtotal || 0));
+                    });
+            }
+
+            function loadWardsForDistrict(districtId) {
+                if (!toWardEl) return;
+                var preselected = toWardEl.value; // giá trị đã bind từ server (nếu có)
+                toWardEl.disabled = true;
+                toWardEl.innerHTML = '<option value="">Đang tải phường/xã...</option>';
+                fetch('/wards?districtId=' + encodeURIComponent(districtId))
+                    .then(function(r){ return r.json(); })
+                    .then(function(items){
+                        toWardEl.innerHTML = '<option value="">— Chọn phường/xã —</option>';
+                        (items || []).forEach(function(w){
+                            var opt = document.createElement('option');
+                            opt.value = w.wardCode;
+                            opt.textContent = w.wardName;
+                            toWardEl.appendChild(opt);
+                        });
+                        if (preselected) {
+                            toWardEl.value = preselected;
+                        }
+                        toWardEl.disabled = false;
+                        // Nếu đã có ward sẵn (địa chỉ mặc định) thì auto tính phí ship luôn
+                        if (toWardEl.value) {
+                            calcShippingFeeGhN(currentSubtotal);
+                        }
+                    })
+                    .catch(function(){
+                        toWardEl.innerHTML = '<option value="">Không tải được phường/xã</option>';
+                        toWardEl.disabled = true;
+                    });
+            }
+
+            function loadDistrictsForProvince(provinceId) {
+                if (!toDistrictEl) return;
+                toDistrictEl.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
+                toDistrictEl.disabled = true;
+                if (toWardEl) {
+                    toWardEl.innerHTML = '<option value="">Chọn quận/huyện trước</option>';
+                    toWardEl.disabled = true;
+                    toWardEl.value = '';
+                }
+                if (shippingFeeEl) shippingFeeEl.textContent = '—';
+                if (tongTienEl) tongTienEl.textContent = formatCurrencyVnd(currentSubtotal);
+
+                fetch('/districts?provinceId=' + encodeURIComponent(provinceId))
+                    .then(function(r){ return r.json(); })
+                    .then(function(items){
+                        toDistrictEl.innerHTML = '<option value="">— Chọn quận/huyện —</option>';
+                        (items || []).forEach(function(d){
+                            var opt = document.createElement('option');
+                            opt.value = d.districtId;
+                            opt.textContent = d.districtName;
+                            toDistrictEl.appendChild(opt);
+                        });
+                        toDistrictEl.disabled = false;
+                    })
+                    .catch(function(){
+                        toDistrictEl.innerHTML = '<option value="">Không tải được quận/huyện</option>';
+                        toDistrictEl.disabled = true;
+                    });
             }
 
             function formatDiscount(voucher) {
@@ -374,11 +571,8 @@
                     if (radio) radio.checked = false;
                 });
 
-                var shippingFee = updateShippingDisplay(baseTotal);
-                var grandTotal = baseTotal + shippingFee;
-                if (tongTienEl) {
-                    tongTienEl.textContent = formatCurrencyVnd(grandTotal);
-                }
+                currentSubtotal = Number(baseTotal || 0);
+                calcShippingFeeGhN(currentSubtotal);
                 if (voucherRow) {
                     voucherRow.style.display = 'none';
                 }
@@ -405,11 +599,8 @@
                         voucherMsg.classList.add('voucher-message--success');
                         var discount = typeof data.discount !== 'undefined' && data.discount !== null ? data.discount : 0;
                         var finalTotal = typeof data.finalTotal !== 'undefined' && data.finalTotal !== null ? data.finalTotal : baseTotal;
-                        var shippingFee = updateShippingDisplay(finalTotal);
-                        var grandTotal = finalTotal + shippingFee;
-                        if (tongTienEl) {
-                            tongTienEl.textContent = formatCurrencyVnd(grandTotal);
-                        }
+                        currentSubtotal = Number(finalTotal || 0);
+                        calcShippingFeeGhN(currentSubtotal);
                         if (voucherRow && voucherDiscountEl) {
                             voucherRow.style.display = '';
                             voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(discount);
@@ -428,10 +619,352 @@
             loadVouchers();
 
             // Đồng bộ tổng thanh toán = tiền hàng + phí ship (mặc định chưa có voucher)
-            var shippingFeeInit = updateShippingDisplay(baseTotal);
-            if (tongTienEl) {
-                tongTienEl.textContent = formatCurrencyVnd(Number(baseTotal) + shippingFeeInit);
+            if (toProvinceEl) {
+                toProvinceEl.addEventListener('change', function() {
+                    if (toProvinceEl.value) {
+                        loadDistrictsForProvince(toProvinceEl.value);
+                    } else if (toDistrictEl) {
+                        toDistrictEl.innerHTML = '<option value="">— Chọn quận/huyện —</option>';
+                    }
+                });
             }
+            if (toDistrictEl) {
+                toDistrictEl.addEventListener('change', function() {
+                    if (toWardEl) {
+                        toWardEl.innerHTML = '<option value="">Chọn quận/huyện trước</option>';
+                        toWardEl.disabled = true;
+                        toWardEl.value = '';
+                    }
+                    if (shippingFeeEl) shippingFeeEl.textContent = '—';
+                    if (tongTienEl) tongTienEl.textContent = formatCurrencyVnd(currentSubtotal);
+                    if (toDistrictEl.value) {
+                        loadWardsForDistrict(toDistrictEl.value);
+                    }
+                });
+            }
+            if (toWardEl) {
+                toWardEl.addEventListener('change', function() {
+                    calcShippingFeeGhN(currentSubtotal);
+                });
+            }
+
+            if (toDistrictEl) {
+                toDistrictEl.innerHTML = '<option value="">Chọn tỉnh/thành phố trước</option>';
+                toDistrictEl.disabled = true;
+            }
+            if (toWardEl) {
+                toWardEl.innerHTML = '<option value="">Chọn quận/huyện trước</option>';
+                toWardEl.disabled = true;
+            }
+
+            calcShippingFeeGhN(currentSubtotal);
+
+            // ===== Auto-fill địa chỉ mặc định =====
+            function hideAddressFormGroups(hidden) {
+                // Ẩn các nhóm nhập địa chỉ dài dòng, nhưng vẫn giữ input trong DOM để submit
+                ['diaChi', 'toProvinceId', 'toDistrictId', 'toWardCode'].forEach(function(id){
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    var group = el.closest ? el.closest('.form-group') : null;
+                    if (group) group.style.display = hidden ? 'none' : '';
+                });
+            }
+
+            function fetchDefaultAddress() {
+                fetch('/api/addresses/default')
+                    .then(function(res){
+                        if (res.status === 204) return null;
+                        if (!res.ok) return null;
+                        return res.json();
+                    })
+                    .then(function(data){
+                        if (!data) return;
+
+                        // cần có districtId + wardCode để auto tính ship
+                        if (!data.ghnDistrictId || !data.ghnWardCode) return;
+
+                        if (defaultAddressName) defaultAddressName.textContent = data.tenNguoiNhan || '—';
+                        if (defaultAddressPhone) defaultAddressPhone.textContent = data.sdtNguoiNhan || '—';
+                        if (defaultAddressText) defaultAddressText.textContent = data.diaChiTomTat || '—';
+                        if (defaultAddressBlock) defaultAddressBlock.style.display = '';
+
+                        // set form values để submit + tính ship
+                        if (toProvinceEl && data.ghnProvinceId) {
+                            toProvinceEl.disabled = false;
+                            // add option if missing
+                            if (!Array.from(toProvinceEl.options || []).some(function(o){ return String(o.value) === String(data.ghnProvinceId); })) {
+                                var optP = document.createElement('option');
+                                optP.value = data.ghnProvinceId;
+                                optP.textContent = 'Địa chỉ mặc định';
+                                toProvinceEl.appendChild(optP);
+                            }
+                            toProvinceEl.value = String(data.ghnProvinceId);
+                        }
+                        if (toDistrictEl) {
+                            toDistrictEl.disabled = false;
+                            if (!Array.from(toDistrictEl.options || []).some(function(o){ return String(o.value) === String(data.ghnDistrictId); })) {
+                                var optD = document.createElement('option');
+                                optD.value = data.ghnDistrictId;
+                                optD.textContent = 'Địa chỉ mặc định';
+                                toDistrictEl.appendChild(optD);
+                            }
+                            toDistrictEl.value = String(data.ghnDistrictId);
+                        }
+                        if (toWardEl) {
+                            toWardEl.disabled = false;
+                            if (!Array.from(toWardEl.options || []).some(function(o){ return String(o.value) === String(data.ghnWardCode); })) {
+                                var optW = document.createElement('option');
+                                optW.value = data.ghnWardCode;
+                                optW.textContent = 'Địa chỉ mặc định';
+                                toWardEl.appendChild(optW);
+                            }
+                            toWardEl.value = String(data.ghnWardCode);
+                        }
+                        if (data.diaChiTomTat) {
+                            var diaChiEl = document.getElementById('diaChi');
+                            if (diaChiEl) diaChiEl.value = data.diaChiTomTat;
+                        }
+
+                        hideAddressFormGroups(true);
+                        calcShippingFeeGhN(currentSubtotal);
+                    })
+                    .catch(function(){});
+            }
+
+            function openAddressModal() {
+                if (!addressModal) return;
+                addressModal.style.display = '';
+                loadAddressList();
+            }
+
+            function closeAddressModal() {
+                if (!addressModal) return;
+                addressModal.style.display = 'none';
+                if (addAddressFormWrap) addAddressFormWrap.style.display = 'none';
+                if (addAddressMsg) addAddressMsg.style.display = 'none';
+            }
+
+            function formatDiaChi(dc) {
+                var parts = [];
+                if (dc.diaChiCuThe) parts.push(dc.diaChiCuThe);
+                if (dc.phuongXa) parts.push(dc.phuongXa);
+                if (dc.quanHuyen) parts.push(dc.quanHuyen);
+                if (dc.tinhThanh) parts.push(dc.tinhThanh);
+                return parts.join(', ');
+            }
+
+            function applySelectedAddress(payload, dc) {
+                if (!payload || !dc) return;
+                if (defaultAddressName) defaultAddressName.textContent = payload.tenNguoiNhan || '—';
+                if (defaultAddressPhone) defaultAddressPhone.textContent = payload.sdtNguoiNhan || '—';
+                if (defaultAddressText) defaultAddressText.textContent = formatDiaChi(dc) || '—';
+                if (defaultAddressBlock) defaultAddressBlock.style.display = '';
+
+                // set hidden/submit values
+                var diaChiEl = document.getElementById('diaChi');
+                if (diaChiEl) diaChiEl.value = formatDiaChi(dc);
+
+                if (toDistrictEl) {
+                    toDistrictEl.disabled = false;
+                    if (!Array.from(toDistrictEl.options || []).some(function(o){ return String(o.value) === String(dc.ghnDistrictId); })) {
+                        var optD = document.createElement('option');
+                        optD.value = dc.ghnDistrictId;
+                        optD.textContent = dc.quanHuyen || 'Địa chỉ đã chọn';
+                        toDistrictEl.appendChild(optD);
+                    }
+                    toDistrictEl.value = String(dc.ghnDistrictId);
+                }
+                if (toWardEl) {
+                    toWardEl.disabled = false;
+                    if (!Array.from(toWardEl.options || []).some(function(o){ return String(o.value) === String(dc.ghnWardCode); })) {
+                        var optW = document.createElement('option');
+                        optW.value = dc.ghnWardCode;
+                        optW.textContent = dc.phuongXa || 'Địa chỉ đã chọn';
+                        toWardEl.appendChild(optW);
+                    }
+                    toWardEl.value = String(dc.ghnWardCode);
+                }
+
+                hideAddressFormGroups(true);
+                calcShippingFeeGhN(currentSubtotal);
+            }
+
+            function loadAddressList() {
+                if (!addressListEl) return;
+                addressListEl.innerHTML = '<div style="color:#666;">Đang tải địa chỉ...</div>';
+                fetch('/api/addresses')
+                    .then(function(res){ return res.json(); })
+                    .then(function(payload){
+                        var list = payload && payload.addresses ? payload.addresses : [];
+                        if (!list || list.length === 0) {
+                            addressListEl.innerHTML = '<div style="color:#666;">Chưa có địa chỉ nào. Bấm “+ Thêm địa chỉ mới”.</div>';
+                            return;
+                        }
+                        var html = '';
+                        list.forEach(function(dc){
+                            var disabled = (!dc.ghnDistrictId || !dc.ghnWardCode) ? 'disabled' : '';
+                            var note = disabled ? '<div style="font-size:0.85rem;color:#c9302c;margin-top:4px;">Thiếu mã GHN (không tính được phí ship) — hãy sửa/lưu lại địa chỉ.</div>' : '';
+                            html += '' +
+                                '<label style="display:block;border:1px solid #eee;border-radius:12px;padding:12px;cursor:pointer;' + (dc.macDinh ? 'background:#f7fbff;border-color:#cfe6ff;' : '') + '">' +
+                                '<div style="display:flex;gap:10px;align-items:flex-start;">' +
+                                '<input type="radio" name="addrPick" ' + (dc.macDinh ? 'checked' : '') + ' ' + disabled + ' data-id="' + dc.id + '">' +
+                                '<div style="flex:1;min-width:0;">' +
+                                '<div style="font-weight:700;color:#1a1a1a;">' + (dc.macDinh ? 'Mặc định' : 'Địa chỉ') + '</div>' +
+                                '<div style="margin-top:4px;color:#444;line-height:1.35;">' + (formatDiaChi(dc) || '') + '</div>' +
+                                note +
+                                '</div>' +
+                                '</div>' +
+                                '</label>';
+                        });
+                        addressListEl.innerHTML = html;
+
+                        addressListEl.querySelectorAll('input[name="addrPick"]').forEach(function(r){
+                            r.addEventListener('change', function(){
+                                var id = r.getAttribute('data-id');
+                                var dc = list.find(function(x){ return String(x.id) === String(id); });
+                                applySelectedAddress(payload, dc);
+                                closeAddressModal();
+                            });
+                        });
+                    })
+                    .catch(function(){
+                        addressListEl.innerHTML = '<div style="color:#c9302c;">Không tải được danh sách địa chỉ.</div>';
+                    });
+            }
+
+            function resetAddAddressForm() {
+                if (addAddressMsg) addAddressMsg.style.display = 'none';
+                if (addrDiaChiCuThe) addrDiaChiCuThe.value = '';
+                if (addrProvince) addrProvince.value = '';
+                if (addrDistrict) { addrDistrict.innerHTML = '<option value="">Chọn tỉnh/thành phố trước</option>'; addrDistrict.disabled = true; }
+                if (addrWard) { addrWard.innerHTML = '<option value="">Chọn quận/huyện trước</option>'; addrWard.disabled = true; }
+            }
+
+            function loadDistrictsForAdd(provinceId) {
+                if (!addrDistrict) return;
+                addrDistrict.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
+                addrDistrict.disabled = true;
+                if (!provinceId) return;
+                fetch('/districts?provinceId=' + encodeURIComponent(provinceId))
+                    .then(function(r){ return r.json(); })
+                    .then(function(items){
+                        addrDistrict.innerHTML = '<option value="">— Chọn quận/huyện —</option>';
+                        (items || []).forEach(function(d){
+                            var opt = document.createElement('option');
+                            opt.value = d.districtId;
+                            opt.textContent = d.districtName;
+                            addrDistrict.appendChild(opt);
+                        });
+                        addrDistrict.disabled = !(items && items.length);
+                    })
+                    .catch(function(){
+                        addrDistrict.innerHTML = '<option value="">Không tải được quận/huyện</option>';
+                        addrDistrict.disabled = true;
+                    });
+            }
+
+            function loadWardsForAdd(districtId) {
+                if (!addrWard) return;
+                addrWard.innerHTML = '<option value="">Đang tải phường/xã...</option>';
+                addrWard.disabled = true;
+                if (!districtId) return;
+                fetch('/wards?districtId=' + encodeURIComponent(districtId))
+                    .then(function(r){ return r.json(); })
+                    .then(function(items){
+                        addrWard.innerHTML = '<option value="">— Chọn phường/xã —</option>';
+                        (items || []).forEach(function(w){
+                            var opt = document.createElement('option');
+                            opt.value = w.wardCode;
+                            opt.textContent = w.wardName;
+                            addrWard.appendChild(opt);
+                        });
+                        addrWard.disabled = !(items && items.length);
+                    })
+                    .catch(function(){
+                        addrWard.innerHTML = '<option value="">Không tải được phường/xã</option>';
+                        addrWard.disabled = true;
+                    });
+            }
+
+            function saveNewAddress() {
+                if (addAddressMsg) { addAddressMsg.style.display = 'none'; }
+                var dcct = addrDiaChiCuThe ? addrDiaChiCuThe.value.trim() : '';
+                var pid = addrProvince ? addrProvince.value : '';
+                var did = addrDistrict ? addrDistrict.value : '';
+                var wcode = addrWard ? addrWard.value : '';
+                if (!dcct || !pid || !did || !wcode) {
+                    if (addAddressMsg) {
+                        addAddressMsg.textContent = 'Vui lòng nhập đầy đủ địa chỉ cụ thể và chọn Tỉnh/Quận/Phường.';
+                        addAddressMsg.style.display = '';
+                    }
+                    return;
+                }
+                var tinhText = addrProvince && addrProvince.options[addrProvince.selectedIndex] ? addrProvince.options[addrProvince.selectedIndex].textContent : '';
+                var quanText = addrDistrict && addrDistrict.options[addrDistrict.selectedIndex] ? addrDistrict.options[addrDistrict.selectedIndex].textContent : '';
+                var phuongText = addrWard && addrWard.options[addrWard.selectedIndex] ? addrWard.options[addrWard.selectedIndex].textContent : '';
+
+                var body = new URLSearchParams({
+                    diaChiCuThe: dcct,
+                    tinhThanh: tinhText || '',
+                    quanHuyen: quanText || '',
+                    phuongXa: phuongText || '',
+                    ghnProvinceId: pid,
+                    ghnDistrictId: did,
+                    ghnWardCode: wcode
+                });
+
+                fetch('/api/addresses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                    body: body.toString()
+                })
+                    .then(function(r){ return r.json(); })
+                    .then(function(resp){
+                        if (!resp || resp.success !== true) {
+                            if (addAddressMsg) {
+                                addAddressMsg.textContent = 'Không lưu được địa chỉ.';
+                                addAddressMsg.style.display = '';
+                            }
+                            return;
+                        }
+                        resetAddAddressForm();
+                        if (addAddressFormWrap) addAddressFormWrap.style.display = 'none';
+                        loadAddressList();
+                    })
+                    .catch(function(){
+                        if (addAddressMsg) {
+                            addAddressMsg.textContent = 'Không lưu được địa chỉ.';
+                            addAddressMsg.style.display = '';
+                        }
+                    });
+            }
+
+            if (btnChangeAddress) {
+                btnChangeAddress.addEventListener('click', function(){
+                    openAddressModal();
+                });
+            }
+            if (addressModalBackdrop) addressModalBackdrop.addEventListener('click', closeAddressModal);
+            if (btnCloseAddressModal) btnCloseAddressModal.addEventListener('click', closeAddressModal);
+            if (btnToggleAddAddress) btnToggleAddAddress.addEventListener('click', function(){
+                if (!addAddressFormWrap) return;
+                var show = addAddressFormWrap.style.display === 'none' || addAddressFormWrap.style.display === '';
+                addAddressFormWrap.style.display = show ? '' : 'none';
+                if (show) resetAddAddressForm();
+            });
+            if (btnCancelAddAddress) btnCancelAddAddress.addEventListener('click', function(){
+                if (addAddressFormWrap) addAddressFormWrap.style.display = 'none';
+            });
+            if (btnSaveAddress) btnSaveAddress.addEventListener('click', saveNewAddress);
+            if (addrProvince) addrProvince.addEventListener('change', function(){
+                if (addrWard) { addrWard.innerHTML = '<option value="">Chọn quận/huyện trước</option>'; addrWard.disabled = true; }
+                loadDistrictsForAdd(addrProvince.value);
+            });
+            if (addrDistrict) addrDistrict.addEventListener('change', function(){
+                loadWardsForAdd(addrDistrict.value);
+            });
+
+            fetchDefaultAddress();
         })();
     </script>
 </div>

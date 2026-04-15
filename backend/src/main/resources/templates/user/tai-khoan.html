@@ -118,24 +118,34 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="account-address-form-table__label"><label for="phuongXaThem">Phường/Xã</label></td>
+                                    <td class="account-address-form-table__label"><label for="ghnProvinceIdThem">Tỉnh/Thành phố <span class="required">*</span></label></td>
                                     <td class="account-address-form-table__input">
-                                        <input type="text" id="phuongXaThem" th:field="*{phuongXa}" placeholder="Ví dụ: Phường Bến Nghé">
-                                        <p th:if="${#fields.hasErrors('phuongXa')}" class="field-error" th:errors="*{phuongXa}"></p>
+                                        <select id="ghnProvinceIdThem" th:field="*{ghnProvinceId}" class="form-control js-ghn-province" required>
+                                            <option value="">— Chọn tỉnh/thành phố —</option>
+                                            <option th:each="p : ${provinces}" th:value="${p.provinceId}" th:text="${p.provinceName}"></option>
+                                        </select>
+                                        <input type="hidden" th:field="*{tinhThanh}" class="js-text-province">
+                                        <p th:if="${#fields.hasErrors('tinhThanh')}" class="field-error" th:errors="*{tinhThanh}"></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="account-address-form-table__label"><label for="quanHuyenThem">Quận/Huyện</label></td>
+                                    <td class="account-address-form-table__label"><label for="ghnDistrictIdThem">Quận/Huyện <span class="required">*</span></label></td>
                                     <td class="account-address-form-table__input">
-                                        <input type="text" id="quanHuyenThem" th:field="*{quanHuyen}" placeholder="Ví dụ: Quận 1">
+                                        <select id="ghnDistrictIdThem" th:field="*{ghnDistrictId}" class="form-control js-ghn-district" required disabled>
+                                            <option value="">Chọn tỉnh/thành phố trước</option>
+                                        </select>
+                                        <input type="hidden" th:field="*{quanHuyen}" class="js-text-district">
                                         <p th:if="${#fields.hasErrors('quanHuyen')}" class="field-error" th:errors="*{quanHuyen}"></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="account-address-form-table__label"><label for="tinhThanhThem">Tỉnh/Thành phố <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__label"><label for="ghnWardCodeThem">Phường/Xã <span class="required">*</span></label></td>
                                     <td class="account-address-form-table__input">
-                                        <input type="text" id="tinhThanhThem" th:field="*{tinhThanh}" placeholder="Ví dụ: TP. Hồ Chí Minh">
-                                        <p th:if="${#fields.hasErrors('tinhThanh')}" class="field-error" th:errors="*{tinhThanh}"></p>
+                                        <select id="ghnWardCodeThem" th:field="*{ghnWardCode}" class="form-control js-ghn-ward" required disabled>
+                                            <option value="">Chọn quận/huyện trước</option>
+                                        </select>
+                                        <input type="hidden" th:field="*{phuongXa}" class="js-text-ward">
+                                        <p th:if="${#fields.hasErrors('phuongXa')}" class="field-error" th:errors="*{phuongXa}"></p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -156,16 +166,32 @@
                                 <td class="account-address-form-table__input"><input type="text" id="diaChiCuTheThem2" th:field="*{diaChiCuThe}" placeholder="Ví dụ: 123 Nguyễn Huệ"></td>
                             </tr>
                             <tr>
-                                <td class="account-address-form-table__label"><label for="phuongXaThem2">Phường/Xã</label></td>
-                                <td class="account-address-form-table__input"><input type="text" id="phuongXaThem2" th:field="*{phuongXa}" placeholder="Ví dụ: Phường Bến Nghé"></td>
+                                <td class="account-address-form-table__label"><label for="ghnProvinceIdThem2">Tỉnh/Thành phố <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <select id="ghnProvinceIdThem2" th:field="*{ghnProvinceId}" class="form-control js-ghn-province" required>
+                                        <option value="">— Chọn tỉnh/thành phố —</option>
+                                        <option th:each="p : ${provinces}" th:value="${p.provinceId}" th:text="${p.provinceName}"></option>
+                                    </select>
+                                    <input type="hidden" th:field="*{tinhThanh}" class="js-text-province">
+                                </td>
                             </tr>
                             <tr>
-                                <td class="account-address-form-table__label"><label for="quanHuyenThem2">Quận/Huyện</label></td>
-                                <td class="account-address-form-table__input"><input type="text" id="quanHuyenThem2" th:field="*{quanHuyen}" placeholder="Ví dụ: Quận 1"></td>
+                                <td class="account-address-form-table__label"><label for="ghnDistrictIdThem2">Quận/Huyện <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <select id="ghnDistrictIdThem2" th:field="*{ghnDistrictId}" class="form-control js-ghn-district" required disabled>
+                                        <option value="">Chọn tỉnh/thành phố trước</option>
+                                    </select>
+                                    <input type="hidden" th:field="*{quanHuyen}" class="js-text-district">
+                                </td>
                             </tr>
                             <tr>
-                                <td class="account-address-form-table__label"><label for="tinhThanhThem2">Tỉnh/Thành phố <span class="required">*</span></label></td>
-                                <td class="account-address-form-table__input"><input type="text" id="tinhThanhThem2" th:field="*{tinhThanh}" placeholder="Ví dụ: TP. Hồ Chí Minh"></td>
+                                <td class="account-address-form-table__label"><label for="ghnWardCodeThem2">Phường/Xã <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <select id="ghnWardCodeThem2" th:field="*{ghnWardCode}" class="form-control js-ghn-ward" required disabled>
+                                        <option value="">Chọn quận/huyện trước</option>
+                                    </select>
+                                    <input type="hidden" th:field="*{phuongXa}" class="js-text-ward">
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -173,6 +199,116 @@
                 </form>
             </div>
         </section>
+
+        <script>
+            (function () {
+                function wireAddressForm(form) {
+                    if (!form) return;
+                    var provinceSel = form.querySelector('.js-ghn-province');
+                    var districtSel = form.querySelector('.js-ghn-district');
+                    var wardSel = form.querySelector('.js-ghn-ward');
+                    var txtProvince = form.querySelector('.js-text-province');
+                    var txtDistrict = form.querySelector('.js-text-district');
+                    var txtWard = form.querySelector('.js-text-ward');
+                    if (!provinceSel || !districtSel || !wardSel) return;
+
+                    function resetDistrict() {
+                        districtSel.innerHTML = '<option value="">Chọn tỉnh/thành phố trước</option>';
+                        districtSel.disabled = true;
+                        districtSel.value = '';
+                        if (txtDistrict) txtDistrict.value = '';
+                        resetWard();
+                    }
+
+                    function resetWard() {
+                        wardSel.innerHTML = '<option value="">Chọn quận/huyện trước</option>';
+                        wardSel.disabled = true;
+                        wardSel.value = '';
+                        if (txtWard) txtWard.value = '';
+                    }
+
+                    function loadDistricts(provinceId) {
+                        resetDistrict();
+                        if (!provinceId) return;
+                        districtSel.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
+                        fetch('/districts?provinceId=' + encodeURIComponent(provinceId))
+                            .then(function (r) { return r.json(); })
+                            .then(function (items) {
+                                districtSel.innerHTML = '<option value="">— Chọn quận/huyện —</option>';
+                                (items || []).forEach(function (d) {
+                                    var opt = document.createElement('option');
+                                    opt.value = d.districtId;
+                                    opt.textContent = d.districtName;
+                                    districtSel.appendChild(opt);
+                                });
+                                districtSel.disabled = !(items && items.length);
+                            })
+                            .catch(function () {
+                                districtSel.innerHTML = '<option value="">Không tải được quận/huyện</option>';
+                                districtSel.disabled = true;
+                            });
+                    }
+
+                    function loadWards(districtId) {
+                        resetWard();
+                        if (!districtId) return;
+                        wardSel.innerHTML = '<option value="">Đang tải phường/xã...</option>';
+                        fetch('/wards?districtId=' + encodeURIComponent(districtId))
+                            .then(function (r) { return r.json(); })
+                            .then(function (items) {
+                                wardSel.innerHTML = '<option value="">— Chọn phường/xã —</option>';
+                                (items || []).forEach(function (w) {
+                                    var opt = document.createElement('option');
+                                    opt.value = w.wardCode;
+                                    opt.textContent = w.wardName;
+                                    wardSel.appendChild(opt);
+                                });
+                                wardSel.disabled = !(items && items.length);
+                            })
+                            .catch(function () {
+                                wardSel.innerHTML = '<option value="">Không tải được phường/xã</option>';
+                                wardSel.disabled = true;
+                            });
+                    }
+
+                    provinceSel.addEventListener('change', function () {
+                        var selectedText = provinceSel.options[provinceSel.selectedIndex] ? provinceSel.options[provinceSel.selectedIndex].textContent : '';
+                        if (txtProvince) txtProvince.value = selectedText || '';
+                        loadDistricts(provinceSel.value);
+                    });
+
+                    districtSel.addEventListener('change', function () {
+                        var selectedText = districtSel.options[districtSel.selectedIndex] ? districtSel.options[districtSel.selectedIndex].textContent : '';
+                        if (txtDistrict) txtDistrict.value = selectedText || '';
+                        loadWards(districtSel.value);
+                    });
+
+                    wardSel.addEventListener('change', function () {
+                        var selectedText = wardSel.options[wardSel.selectedIndex] ? wardSel.options[wardSel.selectedIndex].textContent : '';
+                        if (txtWard) txtWard.value = selectedText || '';
+                    });
+
+                    // init state
+                    if (provinceSel.value) {
+                        var selectedText = provinceSel.options[provinceSel.selectedIndex] ? provinceSel.options[provinceSel.selectedIndex].textContent : '';
+                        if (txtProvince) txtProvince.value = selectedText || '';
+                        loadDistricts(provinceSel.value);
+                    } else {
+                        resetDistrict();
+                    }
+                }
+
+                function boot() {
+                    document.querySelectorAll('form.account-form--address').forEach(wireAddressForm);
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', boot);
+                } else {
+                    boot();
+                }
+            })();
+        </script>
 
         <!-- Bảo mật tài khoản -->
         <section class="account-card" id="bao-mat" th:if="${currentUser != null}">
