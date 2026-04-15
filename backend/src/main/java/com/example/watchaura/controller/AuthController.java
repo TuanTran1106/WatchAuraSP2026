@@ -36,9 +36,33 @@ public class AuthController {
     @GetMapping("/dang-nhap")
     public String dangNhapPage(
             @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "success", required = false) String success,
+            HttpSession session,
             Model model) {
+        // Nếu đã đăng nhập rồi thì chuyển hướng đến trang phù hợp
+        Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+        if (userId != null) {
+            Optional<KhachHang> opt = khachHangService.getByIdForView(userId);
+            if (opt.isPresent()) {
+                KhachHang kh = opt.get();
+                if (isTaiKhoanNoiBo(kh)) {
+                    String tenChucVu = kh.getChucVu() != null ? kh.getChucVu().getTenChucVu() : null;
+                    if (tenChucVu != null) {
+                        if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
+                            return "redirect:/ban-hang";
+                        } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
+                                || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
+                            return "redirect:/admin";
+                        }
+                    }
+                }
+                return "redirect:/home";
+            }
+        }
+
         model.addAttribute("title", "Đăng nhập - WatchAura");
         if (error != null) model.addAttribute("errorMessage", error);
+        if (success != null) model.addAttribute("successMessage", success);
         return "user/dang-nhap";
     }
 
@@ -204,7 +228,7 @@ public class AuthController {
                 || t.equalsIgnoreCase("admin") || t.equalsIgnoreCase("quanly");
     }
 
-    /** Đăng nhập khách hàng — chỉ tài khoản khách hàng; nhân viên/admin phải dùng /admin/login */
+    /** Đăng nhập — Admin/Nhân viên → chuyển đến /admin hoặc /ban-hang; khách hàng → /home */
     @PostMapping("/dang-nhap")
     public String dangNhap(
             @RequestParam("email") String email,
@@ -228,11 +252,6 @@ public class AuthController {
         if (matKhau == null || !passwordEncoder.matches(matKhau, kh.getMatKhau())) {
             redirect.addAttribute("error", "Email hoặc mật khẩu không đúng.");
             return "redirect:/dang-nhap";
-        }
-        if (isTaiKhoanNoiBo(kh)) {
-            redirect.addFlashAttribute("errorMessage",
-                    "Tài khoản nhân viên hoặc quản trị vui lòng đăng nhập tại trang dành cho nhân viên.");
-            return "redirect:/admin/login";
         }
 
         session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
