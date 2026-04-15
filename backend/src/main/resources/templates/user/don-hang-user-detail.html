@@ -145,6 +145,7 @@
                             <span th:case="'DA_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-processing">Đã xác nhận</span>
                             <span th:case="'DANG_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
                             <span th:case="'DA_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-done">Đã giao</span>
+                            <span th:case="'HOAN_THANH'" id="orderStatus" class="order-detail-meta__badge order-status status-completed">Hoàn thành</span>
                             <span th:case="'DA_HUY'" id="orderStatus" class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
                             <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status" th:text="${hoaDon.trangThaiDonHang}">—</span>
                         </th:block>
@@ -199,9 +200,10 @@
                 'DA_XAC_NHAN': 'Đã xác nhận',
                 'DANG_GIAO': 'Đang giao',
                 'DA_GIAO': 'Đã giao',
+                'HOAN_THANH': 'Hoàn thành',
                 'DA_HUY': 'Đã hủy'
             };
-            return map[t] || trangThai;
+            return map[t] || 'Hoàn thành';
         }
 
         function getStatusClass(trangThai) {
@@ -214,6 +216,7 @@
                 'DA_XAC_NHAN': 'status-processing',
                 'DANG_GIAO': 'status-shipping',
                 'DA_GIAO': 'status-done',
+                'HOAN_THANH': 'status-completed',
                 'DA_HUY': 'status-cancel'
             };
             return map[t] || '';
@@ -298,7 +301,7 @@
 
                     var orderStatus = document.getElementById('orderStatus');
                     if (orderStatus) {
-                        orderStatus.textContent = data.tenTrangThai || getTenTrangThai(data.trangThaiDonHang) || '';
+                        orderStatus.textContent = getTenTrangThai(data.trangThaiDonHang) || '';
                         orderStatus.className = 'order-detail-meta__badge order-status ' + getStatusClass(data.trangThaiDonHang);
                     }
 

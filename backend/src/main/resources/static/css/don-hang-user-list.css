@@ -139,13 +139,21 @@
 }
 
 .status-shipping {
-    background: #e0e7ff;
-    color: #3730a3;
+    background: #f3e8ff;
+    color: #7c3aed;
+    border: 1px solid #a855f7;
 }
 
 .status-done {
-    background: #d1fae5;
-    color: #065f46;
+    background: #ccfbf1;
+    color: #0d9488;
+    border: 1px solid #14b8a6;
+}
+
+.status-completed {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #22c55e;
 }
 
 .status-cancel {
