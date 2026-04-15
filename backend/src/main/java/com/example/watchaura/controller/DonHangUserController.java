@@ -572,6 +572,7 @@ public class DonHangUserController {
         result.put("id", hoaDon.getId());
         result.put("maDonHang", hoaDon.getMaDonHang());
         result.put("ngayDat", hoaDon.getNgayDat() != null ? hoaDon.getNgayDat().toString() : "");
+        result.put("loaiHoaDon", hoaDon.getLoaiHoaDon());
         result.put("tenKhachHang", hoaDon.getTenKhachHang());
         result.put("sdtKhachHang", hoaDon.getSdtKhachHang());
         result.put("diaChi", hoaDon.getDiaChi());

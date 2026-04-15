@@ -24,10 +24,44 @@
 
             <!-- Nội dung chi tiết đơn hàng -->
             <div id="orderDetailContent">
+                <!-- Trạng thái & thanh toán -->
+                <section class="order-detail-card order-detail-meta">
+                    <div class="order-detail-meta__item">
+                        <span class="detail-card__label">Trạng thái đơn</span>
+                        <th:block th:switch="${hoaDon.trangThaiDonHang}">
+                            <span th:case="'CAN_XU_LY'" id="orderStatus" class="order-detail-meta__badge order-status status-can-xu-ly">Cần xử lý</span>
+                            <span th:case="'CHO_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-cho-thanh-toan">Chờ thanh toán</span>
+                            <span th:case="'CHO_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-waiting">Chờ xác nhận</span>
+                            <span th:case="'DA_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
+                            <span th:case="'DA THANH TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
+                            <span th:case="'DA_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-processing">Đã xác nhận</span>
+                            <span th:case="'DANG_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
+                            <span th:case="'DA_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-done">Đã giao</span>
+                            <span th:case="'HOAN_THANH'" id="orderStatus" class="order-detail-meta__badge order-status status-completed">Hoàn thành</span>
+                            <span th:case="'DA_HUY'" id="orderStatus" class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
+                            <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status" th:text="${hoaDon.trangThaiDonHang}">—</span>
+                        </th:block>
+                    </div>
+                    <div class="order-detail-meta__item">
+                        <span class="detail-card__label">Thanh toán</span>
+                        <span class="order-detail-meta__payment" id="paymentMethod" th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
+                    </div>
+                </section>
+
                 <!-- Thông tin giao hàng -->
                 <section class="order-detail-card detail-card">
                     <h2 class="detail-card__heading">Thông tin giao hàng</h2>
                     <div class="detail-card__grid info-grid">
+                        <div>
+                            <span class="detail-card__label">Ngày đặt</span>
+                            <p class="detail-card__value" id="detailNgayDat" 
+                               th:text="${hoaDon.ngayDat != null} ? ${#temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm')} : '—'">—</p>
+                        </div>
+                        <div>
+                            <span class="detail-card__label">Loại hóa đơn</span>
+                            <p class="detail-card__value" id="detailLoaiHoaDon" 
+                               th:text="${hoaDon.loaiHoaDon == 'ONLINE' ? 'Online' : (hoaDon.loaiHoaDon == 'OFFLINE' ? 'Tại quầy' : '—')}">—</p>
+                        </div>
                         <div>
                             <span class="detail-card__label">Họ tên</span>
                             <p class="detail-card__value" id="detailTenKhach" th:text="${hoaDon.tenKhachHang}"></p>
@@ -131,30 +165,6 @@
                     <h2 class="detail-card__heading"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
                     <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
                 </section>
-
-                <!-- Trạng thái & thanh toán -->
-                <section class="order-detail-card order-detail-meta">
-                    <div class="order-detail-meta__item">
-                        <span class="detail-card__label">Trạng thái đơn</span>
-                        <th:block th:switch="${hoaDon.trangThaiDonHang}">
-                            <span th:case="'CAN_XU_LY'" id="orderStatus" class="order-detail-meta__badge order-status status-can-xu-ly">Cần xử lý</span>
-                            <span th:case="'CHO_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-cho-thanh-toan">Chờ thanh toán</span>
-                            <span th:case="'CHO_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-waiting">Chờ xác nhận</span>
-                            <span th:case="'DA_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
-                            <span th:case="'DA THANH TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
-                            <span th:case="'DA_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-processing">Đã xác nhận</span>
-                            <span th:case="'DANG_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
-                            <span th:case="'DA_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-done">Đã giao</span>
-                            <span th:case="'HOAN_THANH'" id="orderStatus" class="order-detail-meta__badge order-status status-completed">Hoàn thành</span>
-                            <span th:case="'DA_HUY'" id="orderStatus" class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
-                            <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status" th:text="${hoaDon.trangThaiDonHang}">—</span>
-                        </th:block>
-                    </div>
-                    <div class="order-detail-meta__item">
-                        <span class="detail-card__label">Thanh toán</span>
-                        <span class="order-detail-meta__payment" id="paymentMethod" th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
-                    </div>
-                </section>
             </div>
 
             <div class="order-detail-back">
@@ -182,6 +192,25 @@
             var p = String(iso).split('-');
             if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
             return iso;
+        }
+
+        function formatNgayDatApi(iso) {
+            if (!iso) return '—';
+            var parts = String(iso).split('T');
+            if (parts.length > 0) {
+                var dateParts = parts[0].split('-');
+                if (dateParts.length === 3) {
+                    var time = parts.length > 1 ? parts[1].substring(0, 5) : '';
+                    return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] + (time ? ' ' + time : '');
+                }
+            }
+            return iso;
+        }
+
+        function getLoaiHoaDonText(loai) {
+            if (loai === 'ONLINE') return 'Online';
+            if (loai === 'OFFLINE') return 'Tại quầy';
+            return '—';
         }
 
         function normalizeTrangThai(raw) {
@@ -253,6 +282,10 @@
                         orderCodeDisplay.innerHTML = 'Mã đơn: <strong>' + (data.maDonHang || '') + '</strong>';
                     }
 
+                    var detailNgayDat = document.getElementById('detailNgayDat');
+                    if (detailNgayDat) detailNgayDat.textContent = formatNgayDatApi(data.ngayDat);
+                    var detailLoaiHoaDon = document.getElementById('detailLoaiHoaDon');
+                    if (detailLoaiHoaDon) detailLoaiHoaDon.textContent = getLoaiHoaDonText(data.loaiHoaDon);
                     var detailTen = document.getElementById('detailTenKhach');
                     if (detailTen) detailTen.textContent = data.tenKhachHang || '';
                     var detailSdtEl = document.getElementById('detailSdt');
