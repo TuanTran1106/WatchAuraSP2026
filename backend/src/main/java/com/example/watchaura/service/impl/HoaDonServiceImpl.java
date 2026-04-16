@@ -14,6 +14,7 @@ import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.HoaDonChiTiet;
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.entity.KhachHang;
+import com.example.watchaura.entity.SerialSanPham;
 import com.example.watchaura.entity.SanPhamChiTiet;
 import com.example.watchaura.entity.Voucher;
 import com.example.watchaura.entity.VoucherUser;
@@ -23,12 +24,13 @@ import com.example.watchaura.repository.HoaDonChiTietRepository;
 import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.repository.KhachHangRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
+import com.example.watchaura.repository.SerialSanPhamRepository;
 import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.repository.VoucherUserRepository;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
-import com.example.watchaura.service.ghn.ShippingService;
+import com.example.watchaura.util.ShippingFeeUtil;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
@@ -41,6 +43,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +59,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class HoaDonServiceImpl implements HoaDonService {
-    private static final List<String> STOCK_RESERVED_STATUSES = List.of("CHO_XAC_NHAN", "CHO_THANH_TOAN");
 
     private final HoaDonRepository hoaDonRepository;
     private final HoaDonChiTietRepository hoaDonChiTietRepository;
@@ -66,8 +68,8 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final DiaChiGiaoHangRepository diaChiGiaoHangRepository;
     private final GioHangChiTietRepository gioHangChiTietRepository;
+    private final SerialSanPhamRepository serialSanPhamRepository;
     private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
-    private final ShippingService shippingService;
     private final KhuyenMaiService khuyenMaiService;
 
     @Override
@@ -177,26 +179,19 @@ public class HoaDonServiceImpl implements HoaDonService {
         LocalDateTime thoiDiemDat = LocalDateTime.now();
         List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(thoiDiemDat);
 
-        // Tính tổng tiền + chặn oversell:
-        // kiểm tra theo tồn thực tế trừ đi lượng đang "giữ chỗ" ở các đơn chờ.
+        // Tính tổng tiền (kiểm tra tồn kho = soLuongTon, không trừ giữ hàng nữa); đơn giá theo KM như giỏ/card
         BigDecimal tongTienTamTinh = BigDecimal.ZERO;
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findByIdWithLock(itemRequest.getSanPhamChiTietId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
 
+            // FIFO: Chỉ kiểm tra soLuongTon (ai thanh toán trước được mua)
             Integer soLuongTon = sanPhamChiTiet.getSoLuongTon() != null ? sanPhamChiTiet.getSoLuongTon() : 0;
-            Integer dangGiu = hoaDonChiTietRepository.sumReservedQtyBySanPhamChiTietId(
-                    itemRequest.getSanPhamChiTietId(),
-                    STOCK_RESERVED_STATUSES
-            );
-            int soLuongDangGiu = dangGiu != null ? dangGiu : 0;
-            int soLuongConCoTheDat = Math.max(0, soLuongTon - soLuongDangGiu);
 
-            if (soLuongConCoTheDat < itemRequest.getSoLuong()) {
+            if (soLuongTon < itemRequest.getSoLuong()) {
                 throw new RuntimeException("Số lượng tồn kho không đủ cho sản phẩm: "
                         + (sanPhamChiTiet.getSanPham() != null ? sanPhamChiTiet.getSanPham().getTenSanPham() : "ID " + itemRequest.getSanPhamChiTietId())
-                        + ". Khả dụng để đặt lúc này: " + soLuongConCoTheDat
-                        + " (tồn: " + soLuongTon + ", đang giữ: " + soLuongDangGiu + ").");
+                        + ". Vui lòng giảm số lượng hoặc chọn sản phẩm khác. (Còn " + soLuongTon + " sản phẩm)");
             }
 
             SanPhamChiTiet forPrice = sanPhamChiTietRepository.findByIdWithDetails(itemRequest.getSanPhamChiTietId())
@@ -216,12 +211,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         if (tienHangSauGiam.compareTo(BigDecimal.ZERO) < 0) {
             tienHangSauGiam = BigDecimal.ZERO;
         }
-        BigDecimal phiVanChuyen;
-        try {
-            phiVanChuyen = shippingService.calculateShippingFee(tienHangSauGiam, request.getToDistrictId(), request.getToWardCode());
-        } catch (Exception e) {
-            throw new RuntimeException("Không tính được phí giao hàng (GHN). Vui lòng chọn lại quận/huyện, phường/xã.");
-        }
+        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tienHangSauGiam);
         BigDecimal tongTienThanhToan = tienHangSauGiam.add(phiVanChuyen);
 
         HoaDon hoaDon = new HoaDon();
@@ -246,7 +236,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
 
-        // Tạo chi tiết hóa đơn (giữ chỗ logic thông qua trạng thái đơn chờ)
+        // Tạo chi tiết hóa đơn (KHÔNG giữ hàng - theo kiểu FIFO)
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(itemRequest.getSanPhamChiTietId())
                     .orElseThrow();
@@ -394,6 +384,7 @@ public class HoaDonServiceImpl implements HoaDonService {
             for (HoaDonChiTiet chiTiet : chiTiets) {
                 sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
             }
+            allocateSerialForOrderLines(chiTiets);
         }
 
         // Xử lý khi chuyển sang "Đã thanh toán" - trừ tồn kho nếu chưa trừ
@@ -426,7 +417,15 @@ public class HoaDonServiceImpl implements HoaDonService {
                 for (HoaDonChiTiet chiTiet : chiTiets) {
                     sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
                 }
+                allocateSerialForOrderLines(chiTiets);
             }
+        }
+
+        // Khi bắt đầu giao hàng, đảm bảo serial đã được gán cho từng dòng hóa đơn.
+        // Hữu ích cho đơn legacy/ngoại lệ chưa có serial ở bước trước.
+        if ("DANG_GIAO".equals(newStatus) && !"DANG_GIAO".equals(effectiveCurrent)) {
+            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
+            allocateSerialForOrderLines(chiTiets);
         }
 
         // Hoàn tồn kho khi hủy đơn (nếu đơn đã xác nhận/thanhtoán); KHÔNG cho hủy khi đã thanh toán
@@ -441,6 +440,7 @@ public class HoaDonServiceImpl implements HoaDonService {
                             .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
                     sanPhamChiTietRepository.restoreStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
                 }
+                releaseSerialForOrderLines(chiTiets);
             }
         }
 
@@ -796,6 +796,12 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         dto.setSoLuong(chiTiet.getSoLuong());
         dto.setDonGia(chiTiet.getDonGia());
+        dto.setMaSerials(serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId()).stream()
+                .map(SerialSanPham::getMaSerial)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList()));
 
         // Lấy tồn kho khả dụng hiện tại của sản phẩm chi tiết
         SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
@@ -810,6 +816,70 @@ public class HoaDonServiceImpl implements HoaDonService {
         }
 
         return dto;
+    }
+
+    private void allocateSerialForOrderLines(List<HoaDonChiTiet> chiTiets) {
+        LocalDateTime now = LocalDateTime.now();
+        for (HoaDonChiTiet chiTiet : chiTiets) {
+            List<SerialSanPham> alreadyAssigned = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
+            if (!alreadyAssigned.isEmpty()) {
+                boolean needSyncAssigned = false;
+                for (SerialSanPham serial : alreadyAssigned) {
+                    if (serial.getTrangThai() == null || serial.getTrangThai() != SerialSanPham.TRANG_THAI_DA_BAN) {
+                        serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
+                        needSyncAssigned = true;
+                    }
+                    if (serial.getNgayXuatKho() == null) {
+                        serial.setNgayXuatKho(now);
+                        needSyncAssigned = true;
+                    }
+                    if (serial.getNgayHetBaoHanh() == null) {
+                        serial.setNgayHetBaoHanh(now.plusMonths(12));
+                        needSyncAssigned = true;
+                    }
+                }
+                if (needSyncAssigned) {
+                    serialSanPhamRepository.saveAll(alreadyAssigned);
+                }
+            }
+
+            int assigned = alreadyAssigned.size();
+            int soLuongCanGan = Math.max(0, (chiTiet.getSoLuong() != null ? chiTiet.getSoLuong() : 0) - (int) assigned);
+            if (soLuongCanGan <= 0) {
+                continue;
+            }
+            List<SerialSanPham> availableSerials = serialSanPhamRepository.findBySanPhamChiTietIdAndTrangThaiOrderByIdAsc(
+                    chiTiet.getSanPhamChiTiet().getId(),
+                    SerialSanPham.TRANG_THAI_TRONG_KHO,
+                    PageRequest.of(0, soLuongCanGan)
+            );
+            if (availableSerials.size() < soLuongCanGan) {
+                throw new RuntimeException("Không đủ serial trong kho để xuất cho sản phẩm ID " + chiTiet.getSanPhamChiTiet().getId());
+            }
+            for (SerialSanPham serial : availableSerials) {
+                serial.setHoaDonChiTiet(chiTiet);
+                serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
+                serial.setNgayXuatKho(now);
+                serial.setNgayHetBaoHanh(now.plusMonths(12));
+            }
+            serialSanPhamRepository.saveAll(availableSerials);
+        }
+    }
+
+    private void releaseSerialForOrderLines(List<HoaDonChiTiet> chiTiets) {
+        for (HoaDonChiTiet chiTiet : chiTiets) {
+            List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
+            if (serials.isEmpty()) {
+                continue;
+            }
+            for (SerialSanPham serial : serials) {
+                serial.setHoaDonChiTiet(null);
+                serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                serial.setNgayXuatKho(null);
+                serial.setNgayHetBaoHanh(null);
+            }
+            serialSanPhamRepository.saveAll(serials);
+        }
     }
 
     private static String buildTenBienTheForChiTiet(SanPhamChiTiet spct) {

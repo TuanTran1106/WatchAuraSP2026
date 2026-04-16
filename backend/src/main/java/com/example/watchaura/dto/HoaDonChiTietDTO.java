@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -24,4 +25,5 @@ public class HoaDonChiTietDTO {
     private String hinhAnh;
     private String tenBienThe;
     private Integer soLuongKhaDung; // tồn kho khả dụng hiện tại của sản phẩm chi tiết
+    private List<String> maSerials;
 }

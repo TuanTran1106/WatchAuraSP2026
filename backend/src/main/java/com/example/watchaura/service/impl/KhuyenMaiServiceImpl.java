@@ -108,18 +108,7 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
     @Override
     public void delete(Integer id) {
-        KhuyenMai km = khuyenMaiRepository.findById(id).orElse(null);
-        if (km == null) {
-            return;
-        }
-        // Soft delete: chỉ ngừng hiệu lực để tránh mất lịch sử và dữ liệu liên quan.
-        km.setTrangThai(Boolean.FALSE);
-        LocalDateTime now = LocalDateTime.now();
-        if (km.getNgayKetThuc() == null || km.getNgayKetThuc().isAfter(now)) {
-            km.setNgayKetThuc(now);
-        }
-        km.setNgayCapNhat(now);
-        khuyenMaiRepository.save(km);
+        khuyenMaiRepository.deleteById(id);
     }
 
     @Override

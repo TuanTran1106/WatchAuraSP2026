@@ -40,12 +40,9 @@
             <li><a th:href="@{/lien-he}"><i class="fas fa-envelope"></i> Liên hệ</a></li>
             <li><a th:href="@{/tu-van-ai}"><i class="fas fa-robot"></i> Tư vấn thông minh</a></li>
             <li th:if="${currentUser != null}">
-                <a th:href="@{/dang-xuat}"
-                   data-confirm="Bạn có chắc chắn muốn đăng xuất?"
-                   data-confirm-title="Đăng xuất"
-                   data-confirm-ok="Đăng xuất"
-                   data-confirm-cancel="Ở lại"
-                   data-confirm-tone="danger">
+                <a th:href="@{/dang-xuat}" data-confirm="Bạn có chắc chắn muốn đăng xuất?"
+                    data-confirm-title="Đăng xuất" data-confirm-ok="Đăng xuất" data-confirm-cancel="Ở lại"
+                    data-confirm-tone="danger">
                     <i class="fas fa-sign-out-alt"></i> Đăng xuất
                 </a>
             </li>
@@ -84,9 +81,9 @@
     <div id="flashData" style="display:none" th:attr="data-success=${success}, data-error=${error}"></div>
     <script th:src="@{/js/confirm-modal.js}"></script>
     <script th:inline="javascript">
-        (function() {
+        (function () {
             // Nút +/- số lượng (trang chi tiết SP, giỏ hàng, v.v.) – delegation trên document
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 var btn = e.target.closest && e.target.closest('[data-qty-action]');
                 if (!btn) return;
                 e.preventDefault();
@@ -118,16 +115,16 @@
                 el.setAttribute('role', 'alert');
                 el.innerHTML = '<div class="toast-item__icon">' + icon + '</div>' +
                     '<div class="toast-item__body">' +
-                        '<p class="toast-item__title">' + title + '</p>' +
-                        '<p class="toast-item__msg">' + (message || '') + '</p>' +
+                    '<p class="toast-item__title">' + title + '</p>' +
+                    '<p class="toast-item__msg">' + (message || '') + '</p>' +
                     '</div>' +
                     '<button type="button" class="toast-item__close" aria-label="Đóng">&times;</button>' +
                     '<span class="toast-item__progress"></span>';
                 stack.appendChild(el);
 
-                var close = function() {
+                var close = function () {
                     el.style.animation = 'toastSlideOut 0.3s ease forwards';
-                    setTimeout(function() { el.remove(); }, 320);
+                    setTimeout(function () { el.remove(); }, 320);
                 };
 
                 el.querySelector('.toast-item__close').addEventListener('click', close);

@@ -12,29 +12,9 @@
         .guest-checkout-page .form-group { margin-bottom: 15px; }
         .guest-checkout-page .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 5px; }
         .guest-checkout-page .form-group input,
-        .guest-checkout-page .form-group textarea,
-        .guest-checkout-page .form-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 14px;
-            background: #fff;
-        }
+        .guest-checkout-page .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
         .guest-checkout-page .form-group input:focus,
-        .guest-checkout-page .form-group textarea:focus,
-        .guest-checkout-page .form-group select:focus {
-            outline: none;
-            border-color: #1a1a2e;
-            box-shadow: 0 0 0 3px rgba(26,26,46,0.08);
-        }
-        .guest-checkout-page .form-group select:disabled {
-            background: #f6f7fb;
-            color: #666;
-            cursor: not-allowed;
-        }
-        .guest-checkout-page .field-hint { margin-top: 6px; font-size: 12px; color: #666; }
-        .guest-checkout-page .field-error { margin-top: 6px; font-size: 12px; color: #c9302c; display:none; }
+        .guest-checkout-page .form-group textarea:focus { outline: none; border-color: #1a1a2e; }
         .guest-checkout-page .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
         .guest-checkout-page .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(26, 26, 46, 0.3); }
         .guest-checkout-page .order-summary { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
@@ -103,31 +83,7 @@
                         <h3>Địa chỉ giao hàng</h3>
                         <div class="form-group">
                             <label for="diaChi">Địa chỉ *</label>
-                            <input type="text" id="diaChi" name="diaChi" required placeholder="Số nhà, tên đường...">
-                        </div>
-                        <div class="form-group">
-                            <label for="provinceSelect">Tỉnh / Thành phố *</label>
-                            <select id="provinceSelect" required class="form-control">
-                                <option value="">— Chọn tỉnh/thành phố —</option>
-                                <option th:each="p : ${provinces}"
-                                        th:value="${p.provinceId}"
-                                        th:text="${p.provinceName}"></option>
-                            </select>
-                            <div class="field-error" id="provinceErr">Không tải được tỉnh/thành phố.</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="districtSelect">Quận / Huyện *</label>
-                            <select id="districtSelect" name="districtId" required class="form-control" disabled>
-                                <option value="">Chọn tỉnh/thành phố trước</option>
-                            </select>
-                            <div class="field-error" id="districtErr">Không tải được quận/huyện.</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="wardSelect">Phường / Xã *</label>
-                            <select id="wardSelect" name="wardCode" required disabled class="form-control">
-                                <option value="">— Chọn phường/xã —</option>
-                            </select>
-                            <div class="field-error" id="wardErr">Không tải được phường/xã.</div>
+                            <input type="text" id="diaChi" name="diaChi" required placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố">
                         </div>
                         <div class="form-group">
                             <label for="ghiChu">Ghi chú (tùy chọn)</label>
@@ -162,15 +118,16 @@
                 <div class="summary-total">
                     <div class="total-row">
                         <span>Tạm tính</span>
-                        <span class="summary-amount" th:if="${cart != null}" id="subTotalText" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        <span class="summary-amount" th:if="${cart != null}" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                     </div>
                     <div class="total-row">
                         <span>Phí giao hàng</span>
-                        <span class="summary-amount" id="shippingFeeText">—</span>
+                        <span class="summary-amount" th:if="${checkoutShippingFee != null and checkoutShippingFee == 0}" style="color:#16a34a;font-weight:600;">Miễn phí</span>
+                        <span class="summary-amount" th:if="${checkoutShippingFee == null or checkoutShippingFee != 0}" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
                     </div>
                     <div class="total-row final">
                         <span>Tổng cộng</span>
-                        <span class="summary-amount" id="grandTotalText" th:if="${checkoutGrandTotal != null}" th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        <span class="summary-amount" th:if="${checkoutGrandTotal != null}" th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                     </div>
                 </div>
 
@@ -180,169 +137,6 @@
             </div>
         </div>
     </div>
-<script th:inline="javascript">
-    (function() {
-        function boot() {
-            var provinceSelect = document.getElementById('provinceSelect');
-            var districtSelect = document.getElementById('districtSelect');
-            var wardSelect = document.getElementById('wardSelect');
-            var shippingFeeText = document.getElementById('shippingFeeText');
-            var grandTotalText = document.getElementById('grandTotalText');
-            var baseTotal = /*[[${cart.tongTien}]]*/ 0;
-            var districtErr = document.getElementById('districtErr');
-            var wardErr = document.getElementById('wardErr');
-
-            if (!provinceSelect || !districtSelect || !wardSelect) {
-                return;
-            }
-
-            function formatVnd(n) {
-                var num = Number(n || 0);
-                if (isNaN(num)) num = 0;
-                return num.toLocaleString('vi-VN') + ' ₫';
-            }
-
-            function setShippingFee(fee) {
-                if (shippingFeeText) shippingFeeText.textContent = formatVnd(fee);
-                var total = Number(baseTotal || 0) + Number(fee || 0);
-                if (grandTotalText) grandTotalText.textContent = formatVnd(total);
-            }
-
-            function resetWards() {
-                if (wardErr) wardErr.style.display = 'none';
-                wardSelect.innerHTML = '<option value="">— Chọn phường/xã —</option>';
-                wardSelect.disabled = true;
-                setShippingFee(0);
-                if (shippingFeeText) shippingFeeText.textContent = '—';
-                if (grandTotalText) grandTotalText.textContent = formatVnd(baseTotal);
-            }
-
-            function loadDistricts(provinceId) {
-                resetWards();
-                if (districtErr) districtErr.style.display = 'none';
-                districtSelect.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
-                districtSelect.disabled = true;
-                if (!provinceId) {
-                    districtSelect.innerHTML = '<option value="">Chọn tỉnh/thành phố trước</option>';
-                    return;
-                }
-                fetch('/districts?provinceId=' + encodeURIComponent(provinceId))
-                    .then(function(r){ return r.json(); })
-                    .then(function(items){
-                        districtSelect.innerHTML = '<option value="">— Chọn quận/huyện —</option>';
-                        (items || []).forEach(function(d){
-                            var opt = document.createElement('option');
-                            opt.value = d.districtId;
-                            opt.textContent = d.districtName;
-                            districtSelect.appendChild(opt);
-                        });
-                        if (!items || items.length === 0) {
-                            var optEmpty = document.createElement('option');
-                            optEmpty.value = '';
-                            optEmpty.textContent = 'Không có quận/huyện';
-                            optEmpty.disabled = true;
-                            districtSelect.appendChild(optEmpty);
-                            districtSelect.disabled = true;
-                            if (districtErr) {
-                                districtErr.textContent = 'Danh sách quận/huyện trống (GHN).';
-                                districtErr.style.display = '';
-                            }
-                            return;
-                        }
-                        districtSelect.disabled = false;
-                    })
-                    .catch(function(){
-                        districtSelect.innerHTML = '<option value="">Không tải được quận/huyện</option>';
-                        districtSelect.disabled = true;
-                        if (districtErr) districtErr.style.display = '';
-                    });
-            }
-
-            function loadWards(districtId) {
-                resetWards();
-                if (!districtId) return;
-                if (wardErr) wardErr.style.display = 'none';
-                fetch('/wards?districtId=' + encodeURIComponent(districtId))
-                    .then(function(r){ return r.json(); })
-                    .then(function(items){
-                        wardSelect.disabled = false;
-                        (items || []).forEach(function(w){
-                            var opt = document.createElement('option');
-                            opt.value = w.wardCode;
-                            opt.textContent = w.wardName;
-                            wardSelect.appendChild(opt);
-                        });
-                        if (!items || items.length === 0) {
-                            wardSelect.innerHTML = '<option value="">Không có phường/xã</option>';
-                            wardSelect.disabled = true;
-                            if (wardErr) {
-                                wardErr.textContent = 'Danh sách phường/xã trống (GHN).';
-                                wardErr.style.display = '';
-                            }
-                        }
-                    })
-                    .catch(function(){
-                        resetWards();
-                        if (wardErr) wardErr.style.display = '';
-                    });
-            }
-
-            function calcFee(districtId, wardCode) {
-                if (!districtId || !wardCode) return;
-                var body = 'district_id=' + encodeURIComponent(districtId) + '&ward_code=' + encodeURIComponent(wardCode) + '&subtotal=' + encodeURIComponent(baseTotal || 0);
-                fetch('/shipping-fee', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: body
-                })
-                    .then(function(r){ return r.json(); })
-                    .then(function(resp){
-                        if (!resp || resp.success !== true) {
-                            if (shippingFeeText) shippingFeeText.textContent = 'Không tính được';
-                            if (grandTotalText) grandTotalText.textContent = formatVnd(baseTotal);
-                            return;
-                        }
-                        if (Number(resp.fee || 0) === 0 && Number(baseTotal || 0) >= 2000000) {
-                            if (shippingFeeText) shippingFeeText.textContent = 'Miễn phí';
-                        } else {
-                            if (shippingFeeText) shippingFeeText.textContent = formatVnd(resp.fee);
-                        }
-                        setShippingFee(resp.fee);
-                    })
-                    .catch(function(){
-                        if (shippingFeeText) shippingFeeText.textContent = 'Không tính được';
-                        if (grandTotalText) grandTotalText.textContent = formatVnd(baseTotal);
-                    });
-            }
-
-            provinceSelect.addEventListener('change', function(){
-                loadDistricts(provinceSelect.value);
-            });
-            provinceSelect.addEventListener('input', function(){
-                loadDistricts(provinceSelect.value);
-            });
-            districtSelect.addEventListener('change', function(){
-                loadWards(districtSelect.value);
-            });
-            wardSelect.addEventListener('change', function(){
-                calcFee(districtSelect.value, wardSelect.value);
-            });
-
-            // init
-            if (grandTotalText) grandTotalText.textContent = formatVnd(baseTotal);
-            if (shippingFeeText) shippingFeeText.textContent = '—';
-            if (provinceSelect.value) {
-                loadDistricts(provinceSelect.value);
-            }
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', boot);
-        } else {
-            boot();
-        }
-    })();
-</script>
 </div>
 </body>
 </html>

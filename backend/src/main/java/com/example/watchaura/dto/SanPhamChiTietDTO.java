@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -34,4 +35,6 @@ public class SanPhamChiTietDTO {
     private Double trongLuong;
     private Boolean trangThai;
     private String hinhAnh;
+    private Integer soLuongSerialTrongKho;
+    private List<String> serials;
 }

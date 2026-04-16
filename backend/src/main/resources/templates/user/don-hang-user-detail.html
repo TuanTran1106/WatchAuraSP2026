@@ -1,385 +1,442 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Chi tiết đơn hàng - WatchAura</title>
 </head>
+
 <body>
-<div th:fragment="content" id="orderDetailPage">
-    <div class="order-detail-page">
-        <div class="order-detail-container order-container">
+    <div th:fragment="content" id="orderDetailPage">
+        <div class="order-detail-page">
+            <div class="order-detail-container order-container">
 
-            <header class="order-detail-header cart-header">
-                <h1 class="order-detail__title cart-page__title">Chi tiết đơn hàng</h1>
-                <p class="order-detail__subtitle cart-page__subtitle" id="orderCodeDisplay">
-                    Mã đơn: <strong th:text="${hoaDon.maDonHang}"></strong>
-                </p>
-            </header>
+                <header class="order-detail-header cart-header">
+                    <h1 class="order-detail__title cart-page__title">Chi tiết đơn hàng</h1>
+                    <p class="order-detail__subtitle cart-page__subtitle" id="orderCodeDisplay">
+                        Mã đơn: <strong th:text="${hoaDon.maDonHang}"></strong>
+                    </p>
+                </header>
 
-            <!-- Loading indicator -->
-            <div id="orderDetailLoading" style="display: none; text-align: center; padding: 2rem;">
-                <i class="fas fa-spinner fa-spin fa-2x"></i>
-                <p>Đang tải thông tin...</p>
+                <!-- Loading indicator -->
+                <div id="orderDetailLoading" style="display: none; text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Đang tải thông tin...</p>
+                </div>
+
+                <!-- Nội dung chi tiết đơn hàng -->
+                <div id="orderDetailContent">
+                    <!-- Trạng thái & thanh toán -->
+                    <section class="order-detail-card order-detail-meta">
+                        <div class="order-detail-meta__item">
+                            <span class="detail-card__label">Trạng thái đơn</span>
+                            <th:block th:switch="${hoaDon.trangThaiDonHang}">
+                                <span th:case="'CAN_XU_LY'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-can-xu-ly">Cần xử lý</span>
+                                <span th:case="'CHO_THANH_TOAN'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-cho-thanh-toan">Chờ thanh
+                                    toán</span>
+                                <span th:case="'CHO_XAC_NHAN'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-waiting">Chờ xác nhận</span>
+                                <span th:case="'DA_THANH_TOAN'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh
+                                    toán</span>
+                                <span th:case="'DA THANH TOAN'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh
+                                    toán</span>
+                                <span th:case="'DA_XAC_NHAN'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-processing">Đã xác nhận</span>
+                                <span th:case="'DANG_GIAO'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
+                                <span th:case="'DA_GIAO'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-done">Đã giao</span>
+                                <span th:case="'HOAN_THANH'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-completed">Hoàn thành</span>
+                                <span th:case="'DA_HUY'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
+                                <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status"
+                                    th:text="${hoaDon.trangThaiDonHang}">—</span>
+                            </th:block>
+                        </div>
+                        <div class="order-detail-meta__item">
+                            <span class="detail-card__label">Thanh toán</span>
+                            <span class="order-detail-meta__payment" id="paymentMethod"
+                                th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
+                        </div>
+                    </section>
+
+                    <!-- Thông tin giao hàng -->
+                    <section class="order-detail-card detail-card">
+                        <h2 class="detail-card__heading">Thông tin giao hàng</h2>
+                        <div class="detail-card__grid info-grid">
+                            <div>
+                                <span class="detail-card__label">Ngày đặt</span>
+                                <p class="detail-card__value" id="detailNgayDat"
+                                    th:text="${hoaDon.ngayDat != null} ? ${#temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm')} : '—'">
+                                    —</p>
+                            </div>
+                            <div>
+                                <span class="detail-card__label">Loại hóa đơn</span>
+                                <p class="detail-card__value" id="detailLoaiHoaDon"
+                                    th:text="${hoaDon.loaiHoaDon == 'ONLINE' ? 'Online' : (hoaDon.loaiHoaDon == 'OFFLINE' ? 'Tại quầy' : '—')}">
+                                    —</p>
+                            </div>
+                            <div>
+                                <span class="detail-card__label">Họ tên</span>
+                                <p class="detail-card__value" id="detailTenKhach" th:text="${hoaDon.tenKhachHang}"></p>
+                            </div>
+                            <div>
+                                <span class="detail-card__label">Số điện thoại</span>
+                                <p class="detail-card__value" id="detailSdt" th:text="${hoaDon.sdtKhachHang}"></p>
+                            </div>
+                            <div>
+                                <span class="detail-card__label">Email</span>
+                                <p class="detail-card__value" id="detailEmail"
+                                    th:text="${hoaDon.email != null and !#strings.isEmpty(hoaDon.email)} ? ${hoaDon.email} : '—'">
+                                    —</p>
+                            </div>
+                            <div>
+                                <span class="detail-card__label">Giới tính</span>
+                                <p class="detail-card__value" id="detailGioiTinh"
+                                    th:text="${hoaDon.gioiTinh != null and !#strings.isEmpty(hoaDon.gioiTinh)} ? ${hoaDon.gioiTinh} : 'Chưa cập nhật'">
+                                    Chưa cập nhật</p>
+                            </div>
+                            <div>
+                                <span class="detail-card__label">Ngày sinh</span>
+                                <p class="detail-card__value" id="detailNgaySinh"
+                                    th:text="${hoaDon.ngaySinh != null} ? ${#temporals.format(hoaDon.ngaySinh, 'dd/MM/yyyy')} : 'Chưa cập nhật'">
+                                    Chưa cập nhật</p>
+                            </div>
+                            <div class="info-grid__full">
+                                <span class="detail-card__label">Địa chỉ</span>
+                                <p class="detail-card__value" id="detailDiaChi" th:text="${hoaDon.diaChi}"></p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sản phẩm đã đặt -->
+                    <section class="order-detail-card detail-card">
+                        <h2 class="detail-card__heading">Sản phẩm đã đặt</h2>
+                        <div class="order-detail-table-wrap cart-table-wrap">
+                            <table class="order-detail-table cart-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th>Số lượng</th>
+                                        <th>Giá gốc</th>
+                                        <th>Đơn giá (KM)</th>
+                                        <th>Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderItemsBody">
+                                    <tr th:each="item : ${hoaDon.items}">
+                                        <td class="cart-table__name">
+                                            <span th:text="${item.tenSanPham}"></span>
+                                            <span class="order-detail__variant"
+                                                th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}"
+                                                th:text="| — ${item.tenBienThe}|"></span>
+                                            <span class="order-detail__variant"
+                                                th:if="${item.maSerials != null and !item.maSerials.isEmpty() and (hoaDon.trangThaiDonHang == 'DANG_GIAO' or hoaDon.trangThaiDonHang == 'DA_GIAO' or hoaDon.trangThaiDonHang == 'HOAN_THANH' or hoaDon.trangThaiDonHang == 'DA_THANH_TOAN' or hoaDon.trangThaiDonHang == 'DA THANH TOAN')}"
+                                                th:text="| · Serial: ${#strings.listJoin(item.maSerials, ', ')}|"></span>
+                                        </td>
+                                        <td th:text="${item.soLuong}"></td>
+                                        <td class="cart-table__price"
+                                            th:text="|${#numbers.formatDecimal(item.giaGoc != null ? item.giaGoc : item.donGia,0,'COMMA',0,'POINT')} đ|">
+                                        </td>
+                                        <td class="cart-table__price"
+                                            th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|">
+                                        </td>
+                                        <td class="cart-table__total"
+                                            th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Tổng thanh toán -->
+                    <section class="order-detail-card order-detail-summary cart-summary__box">
+                        <h2 class="detail-card__heading visually-hidden">Tổng thanh toán</h2>
+                        <div class="order-detail-summary__row cart-summary__row">
+                            <span class="order-detail-summary__label">Tạm tính (đơn giá KM)</span>
+                            <span class="order-detail-summary__value order-detail-summary__value--money" id="tempTotal"
+                                th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT')} đ|"></span>
+                        </div>
+                        <div class="order-detail-summary__row cart-summary__row order-detail-summary__row--stack">
+                            <span class="order-detail-summary__label-wrap">
+                                <span class="order-detail-summary__label">Voucher</span>
+                                <span class="order-detail-summary__sublabel">Số tiền đã trừ</span>
+                            </span>
+                            <span
+                                class="order-detail-summary__value order-detail-summary__value--money order-detail-summary__value--discount">−
+                                <span id="discount"
+                                    th:text="|${#numbers.formatDecimal(hoaDon.tienGiam != null ? hoaDon.tienGiam : 0,0,'COMMA',0,'POINT')} đ|"></span></span>
+                        </div>
+                        <div class="order-detail-summary__row cart-summary__row order-detail-summary__row--stack">
+                            <span class="order-detail-summary__label-wrap">
+                                <span class="order-detail-summary__label">Phí giao hàng (ship)</span>
+                                <span class="order-detail-summary__sublabel">Phí vận chuyển áp dụng cho đơn này</span>
+                            </span>
+                            <span class="order-detail-summary__value order-detail-summary__value--money"
+                                id="shippingFee"
+                                th:text="|${#numbers.formatDecimal(hoaDon.phiVanChuyen != null ? hoaDon.phiVanChuyen : 0, 0, 'COMMA', 0, 'POINT')} đ|">0
+                                đ</span>
+                        </div>
+                        <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
+                            <span class="order-detail-summary__label">Tổng thanh toán</span>
+                            <span class="order-detail-summary__total cart-summary__value" id="totalPayment"
+                                th:text="|${#numbers.formatDecimal(hoaDon.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
+                        </div>
+                    </section>
+
+                    <!-- Đã xác nhận sau khi từng báo không đủ tồn kho -->
+                    <section id="orderDetailNoteSectionResolved"
+                        class="order-detail-card order-detail-note order-detail-note--success"
+                        th:style="${hoaDon.trangThaiDonHang == 'DA_XAC_NHAN' and hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho')} ? 'display:block' : 'display:none'">
+                        <h2 class="detail-card__heading"><i class="fas fa-check-circle" aria-hidden="true"></i> Thông
+                            báo đơn hàng</h2>
+                        <p id="orderDetailNoteTextResolved" class="order-detail-note__text">Shop đã cập nhật thêm số
+                            lượng và đơn của bạn đã được xác nhận</p>
+                    </section>
+                    <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi chưa giao (ẩn khi Đang giao / Đã giao) -->
+                    <section id="orderDetailNoteSection"
+                        class="order-detail-card order-detail-note order-detail-note--warning"
+                        th:style="${((hoaDon.trangThaiDonHang == 'CAN_XU_LY' and hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()) or (hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho') and hoaDon.trangThaiDonHang != 'DA_XAC_NHAN' and hoaDon.trangThaiDonHang != 'DANG_GIAO' and hoaDon.trangThaiDonHang != 'DA_GIAO'))} ? 'display:block' : 'display:none'">
+                        <h2 class="detail-card__heading"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            Thông báo đơn hàng</h2>
+                        <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ
+                            tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
+                    </section>
+                </div>
+
+                <div class="order-detail-back">
+                    <a th:href="@{/don-hang}" class="btn-order btn-order--primary" id="btnBackToList">← Quay lại đơn
+                        hàng</a>
+                </div>
+
             </div>
-
-            <!-- Nội dung chi tiết đơn hàng -->
-            <div id="orderDetailContent">
-                <!-- Trạng thái & thanh toán -->
-                <section class="order-detail-card order-detail-meta">
-                    <div class="order-detail-meta__item">
-                        <span class="detail-card__label">Trạng thái đơn</span>
-                        <th:block th:switch="${hoaDon.trangThaiDonHang}">
-                            <span th:case="'CAN_XU_LY'" id="orderStatus" class="order-detail-meta__badge order-status status-can-xu-ly">Cần xử lý</span>
-                            <span th:case="'CHO_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-cho-thanh-toan">Chờ thanh toán</span>
-                            <span th:case="'CHO_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-waiting">Chờ xác nhận</span>
-                            <span th:case="'DA_THANH_TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
-                            <span th:case="'DA THANH TOAN'" id="orderStatus" class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh toán</span>
-                            <span th:case="'DA_XAC_NHAN'" id="orderStatus" class="order-detail-meta__badge order-status status-processing">Đã xác nhận</span>
-                            <span th:case="'DANG_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-shipping">Đang giao</span>
-                            <span th:case="'DA_GIAO'" id="orderStatus" class="order-detail-meta__badge order-status status-done">Đã giao</span>
-                            <span th:case="'HOAN_THANH'" id="orderStatus" class="order-detail-meta__badge order-status status-completed">Hoàn thành</span>
-                            <span th:case="'DA_HUY'" id="orderStatus" class="order-detail-meta__badge order-status status-cancel">Đã hủy</span>
-                            <span th:case="*" id="orderStatus" class="order-detail-meta__badge order-status" th:text="${hoaDon.trangThaiDonHang}">—</span>
-                        </th:block>
-                    </div>
-                    <div class="order-detail-meta__item">
-                        <span class="detail-card__label">Thanh toán</span>
-                        <span class="order-detail-meta__payment" id="paymentMethod" th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'VNPay'}"></span>
-                    </div>
-                </section>
-
-                <!-- Thông tin giao hàng -->
-                <section class="order-detail-card detail-card">
-                    <h2 class="detail-card__heading">Thông tin giao hàng</h2>
-                    <div class="detail-card__grid info-grid">
-                        <div>
-                            <span class="detail-card__label">Ngày đặt</span>
-                            <p class="detail-card__value" id="detailNgayDat" 
-                               th:text="${hoaDon.ngayDat != null} ? ${#temporals.format(hoaDon.ngayDat, 'dd/MM/yyyy HH:mm')} : '—'">—</p>
-                        </div>
-                        <div>
-                            <span class="detail-card__label">Loại hóa đơn</span>
-                            <p class="detail-card__value" id="detailLoaiHoaDon" 
-                               th:text="${hoaDon.loaiHoaDon == 'ONLINE' ? 'Online' : (hoaDon.loaiHoaDon == 'OFFLINE' ? 'Tại quầy' : '—')}">—</p>
-                        </div>
-                        <div>
-                            <span class="detail-card__label">Họ tên</span>
-                            <p class="detail-card__value" id="detailTenKhach" th:text="${hoaDon.tenKhachHang}"></p>
-                        </div>
-                        <div>
-                            <span class="detail-card__label">Số điện thoại</span>
-                            <p class="detail-card__value" id="detailSdt" th:text="${hoaDon.sdtKhachHang}"></p>
-                        </div>
-                        <div>
-                            <span class="detail-card__label">Email</span>
-                            <p class="detail-card__value" id="detailEmail"
-                               th:text="${hoaDon.email != null and !#strings.isEmpty(hoaDon.email)} ? ${hoaDon.email} : '—'">—</p>
-                        </div>
-                        <div>
-                            <span class="detail-card__label">Giới tính</span>
-                            <p class="detail-card__value" id="detailGioiTinh"
-                               th:text="${hoaDon.gioiTinh != null and !#strings.isEmpty(hoaDon.gioiTinh)} ? ${hoaDon.gioiTinh} : 'Chưa cập nhật'">Chưa cập nhật</p>
-                        </div>
-                        <div>
-                            <span class="detail-card__label">Ngày sinh</span>
-                            <p class="detail-card__value" id="detailNgaySinh"
-                               th:text="${hoaDon.ngaySinh != null} ? ${#temporals.format(hoaDon.ngaySinh, 'dd/MM/yyyy')} : 'Chưa cập nhật'">Chưa cập nhật</p>
-                        </div>
-                        <div class="info-grid__full">
-                            <span class="detail-card__label">Địa chỉ</span>
-                            <p class="detail-card__value" id="detailDiaChi" th:text="${hoaDon.diaChi}"></p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Sản phẩm đã đặt -->
-                <section class="order-detail-card detail-card">
-                    <h2 class="detail-card__heading">Sản phẩm đã đặt</h2>
-                    <div class="order-detail-table-wrap cart-table-wrap">
-                        <table class="order-detail-table cart-table">
-                            <thead>
-                                <tr>
-                                    <th>Sản phẩm</th>
-                                    <th>Số lượng</th>
-                                    <th>Giá gốc</th>
-                                    <th>Đơn giá (KM)</th>
-                                    <th>Thành tiền</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orderItemsBody">
-                                <tr th:each="item : ${hoaDon.items}">
-                                    <td class="cart-table__name">
-                                        <span th:text="${item.tenSanPham}"></span>
-                                        <span class="order-detail__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
-                                    </td>
-                                    <td th:text="${item.soLuong}"></td>
-                                    <td class="cart-table__price"
-                                        th:text="|${#numbers.formatDecimal(item.giaGoc != null ? item.giaGoc : item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
-                                    <td class="cart-table__price"
-                                        th:text="|${#numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT')} đ|"></td>
-                                    <td class="cart-table__total" th:text="|${#numbers.formatDecimal(item.thanhTien,0,'COMMA',0,'POINT')} đ|"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Tổng thanh toán -->
-                <section class="order-detail-card order-detail-summary cart-summary__box">
-                    <h2 class="detail-card__heading visually-hidden">Tổng thanh toán</h2>
-                    <div class="order-detail-summary__row cart-summary__row">
-                        <span class="order-detail-summary__label">Tạm tính (đơn giá KM)</span>
-                        <span class="order-detail-summary__value order-detail-summary__value--money" id="tempTotal"
-                              th:text="|${#numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT')} đ|"></span>
-                    </div>
-                    <div class="order-detail-summary__row cart-summary__row order-detail-summary__row--stack">
-                        <span class="order-detail-summary__label-wrap">
-                            <span class="order-detail-summary__label">Voucher</span>
-                            <span class="order-detail-summary__sublabel">Số tiền đã trừ</span>
-                        </span>
-                        <span class="order-detail-summary__value order-detail-summary__value--money order-detail-summary__value--discount">− <span id="discount" th:text="|${#numbers.formatDecimal(hoaDon.tienGiam != null ? hoaDon.tienGiam : 0,0,'COMMA',0,'POINT')} đ|"></span></span>
-                    </div>
-                    <div class="order-detail-summary__row cart-summary__row order-detail-summary__row--stack">
-                        <span class="order-detail-summary__label-wrap">
-                            <span class="order-detail-summary__label">Phí giao hàng (ship)</span>
-                            <span class="order-detail-summary__sublabel">Phí vận chuyển áp dụng cho đơn này</span>
-                        </span>
-                        <span class="order-detail-summary__value order-detail-summary__value--money" id="shippingFee"
-                              th:text="|${#numbers.formatDecimal(hoaDon.phiVanChuyen != null ? hoaDon.phiVanChuyen : 0, 0, 'COMMA', 0, 'POINT')} đ|">0 đ</span>
-                    </div>
-                    <div class="order-detail-summary__row order-detail-summary__row--total cart-summary__row">
-                        <span class="order-detail-summary__label">Tổng thanh toán</span>
-                        <span class="order-detail-summary__total cart-summary__value" id="totalPayment" th:text="|${#numbers.formatDecimal(hoaDon.tongTienThanhToan,0,'COMMA',0,'POINT')} đ|"></span>
-                    </div>
-                </section>
-
-                <!-- Đã xác nhận sau khi từng báo không đủ tồn kho -->
-                <section id="orderDetailNoteSectionResolved" class="order-detail-card order-detail-note order-detail-note--success"
-                         th:style="${hoaDon.trangThaiDonHang == 'DA_XAC_NHAN' and hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho')} ? 'display:block' : 'display:none'">
-                    <h2 class="detail-card__heading"><i class="fas fa-check-circle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
-                    <p id="orderDetailNoteTextResolved" class="order-detail-note__text">Shop đã cập nhật thêm số lượng và đơn của bạn đã được xác nhận</p>
-                </section>
-                <!-- Cảnh báo: Cần xử lý có ghi chú, hoặc ghi chú tồn kho khi chưa giao (ẩn khi Đang giao / Đã giao) -->
-                <section id="orderDetailNoteSection" class="order-detail-card order-detail-note order-detail-note--warning"
-                         th:style="${((hoaDon.trangThaiDonHang == 'CAN_XU_LY' and hoaDon.ghiChu != null and !hoaDon.ghiChu.isEmpty()) or (hoaDon.ghiChu != null and #strings.contains(hoaDon.ghiChu, 'Không đủ tồn kho') and hoaDon.trangThaiDonHang != 'DA_XAC_NHAN' and hoaDon.trangThaiDonHang != 'DANG_GIAO' and hoaDon.trangThaiDonHang != 'DA_GIAO'))} ? 'display:block' : 'display:none'">
-                    <h2 class="detail-card__heading"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Thông báo đơn hàng</h2>
-                    <p id="orderDetailNoteText" class="order-detail-note__text" th:text="${hoaDon.ghiChu}">Không đủ tồn kho: - [sản phẩm]: cần X, chỉ còn Y;</p>
-                </section>
-            </div>
-
-            <div class="order-detail-back">
-                <a th:href="@{/don-hang}" class="btn-order btn-order--primary" id="btnBackToList">← Quay lại đơn hàng</a>
-            </div>
-
         </div>
-    </div>
 
-    <script th:inline="javascript">
-    (function() {
-        var page = document.getElementById('orderDetailPage');
-        if (!page) return;
+        <script th:inline="javascript">
+            (function () {
+                var page = document.getElementById('orderDetailPage');
+                if (!page) return;
 
-        var hoaDonId = /*[[${hoaDon.id}]]*/ null;
-        var apiUrl = /*[[@{/don-hang/chi-tiet/api/}]]*/ '/don-hang/chi-tiet/api/';
+                var hoaDonId = /*[[${hoaDon.id}]]*/ null;
+                var apiUrl = /*[[@{/don-hang/chi-tiet/api/}]]*/ '/don-hang/chi-tiet/api/';
 
-        function formatCurrencyVnd(value) {
-            if (value == null) return '0 đ';
-            return Number(value).toLocaleString('vi-VN') + ' đ';
-        }
-
-        function formatNgaySinhApi(iso) {
-            if (!iso) return 'Chưa cập nhật';
-            var p = String(iso).split('-');
-            if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
-            return iso;
-        }
-
-        function formatNgayDatApi(iso) {
-            if (!iso) return '—';
-            var parts = String(iso).split('T');
-            if (parts.length > 0) {
-                var dateParts = parts[0].split('-');
-                if (dateParts.length === 3) {
-                    var time = parts.length > 1 ? parts[1].substring(0, 5) : '';
-                    return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] + (time ? ' ' + time : '');
+                function formatCurrencyVnd(value) {
+                    if (value == null) return '0 đ';
+                    return Number(value).toLocaleString('vi-VN') + ' đ';
                 }
-            }
-            return iso;
-        }
 
-        function getLoaiHoaDonText(loai) {
-            if (loai === 'ONLINE') return 'Online';
-            if (loai === 'OFFLINE') return 'Tại quầy';
-            return '—';
-        }
+                function formatNgaySinhApi(iso) {
+                    if (!iso) return 'Chưa cập nhật';
+                    var p = String(iso).split('-');
+                    if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
+                    return iso;
+                }
 
-        function normalizeTrangThai(raw) {
-            if (!raw) return raw;
-            if (raw === 'DA THANH TOAN') return 'DA_THANH_TOAN';
-            return raw;
-        }
-
-        function getTenTrangThai(trangThai) {
-            var t = normalizeTrangThai(trangThai);
-            var map = {
-                'CAN_XU_LY': 'Cần xử lý',
-                'CHO_THANH_TOAN': 'Chờ thanh toán',
-                'CHO_XAC_NHAN': 'Chờ xác nhận',
-                'DA_THANH_TOAN': 'Đã thanh toán',
-                'DA_XAC_NHAN': 'Đã xác nhận',
-                'DANG_GIAO': 'Đang giao',
-                'DA_GIAO': 'Đã giao',
-                'HOAN_THANH': 'Hoàn thành',
-                'DA_HUY': 'Đã hủy'
-            };
-            return map[t] || 'Hoàn thành';
-        }
-
-        function getStatusClass(trangThai) {
-            var t = normalizeTrangThai(trangThai);
-            var map = {
-                'CAN_XU_LY': 'status-can-xu-ly',
-                'CHO_THANH_TOAN': 'status-cho-thanh-toan',
-                'CHO_XAC_NHAN': 'status-waiting',
-                'DA_THANH_TOAN': 'status-da-thanh-toan',
-                'DA_XAC_NHAN': 'status-processing',
-                'DANG_GIAO': 'status-shipping',
-                'DA_GIAO': 'status-done',
-                'HOAN_THANH': 'status-completed',
-                'DA_HUY': 'status-cancel'
-            };
-            return map[t] || '';
-        }
-
-        function loadOrderDetail() {
-            if (!hoaDonId) return;
-
-            var loading = document.getElementById('orderDetailLoading');
-            var content = document.getElementById('orderDetailContent');
-
-            if (loading && content) {
-                loading.style.display = '';
-                content.style.display = 'none';
-            }
-
-            fetch(apiUrl + hoaDonId)
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (loading && content) {
-                        loading.style.display = 'none';
-                        content.style.display = '';
-                    }
-
-                    if (!data.success) {
-                        if (typeof window.showToast === 'function') {
-                            window.showToast(data.message || 'Có lỗi xảy ra!', 'error');
+                function formatNgayDatApi(iso) {
+                    if (!iso) return '—';
+                    var parts = String(iso).split('T');
+                    if (parts.length > 0) {
+                        var dateParts = parts[0].split('-');
+                        if (dateParts.length === 3) {
+                            var time = parts.length > 1 ? parts[1].substring(0, 5) : '';
+                            return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] + (time ? ' ' + time : '');
                         }
-                        return;
+                    }
+                    return iso;
+                }
+
+                function getLoaiHoaDonText(loai) {
+                    if (loai === 'ONLINE') return 'Online';
+                    if (loai === 'OFFLINE') return 'Tại quầy';
+                    return '—';
+                }
+
+                function normalizeTrangThai(raw) {
+                    if (!raw) return raw;
+                    if (raw === 'DA THANH TOAN') return 'DA_THANH_TOAN';
+                    return raw;
+                }
+
+                function getTenTrangThai(trangThai) {
+                    var t = normalizeTrangThai(trangThai);
+                    var map = {
+                        'CAN_XU_LY': 'Cần xử lý',
+                        'CHO_THANH_TOAN': 'Chờ thanh toán',
+                        'CHO_XAC_NHAN': 'Chờ xác nhận',
+                        'DA_THANH_TOAN': 'Đã thanh toán',
+                        'DA_XAC_NHAN': 'Đã xác nhận',
+                        'DANG_GIAO': 'Đang giao',
+                        'DA_GIAO': 'Đã giao',
+                        'HOAN_THANH': 'Hoàn thành',
+                        'DA_HUY': 'Đã hủy'
+                    };
+                    return map[t] || 'Hoàn thành';
+                }
+
+                function getStatusClass(trangThai) {
+                    var t = normalizeTrangThai(trangThai);
+                    var map = {
+                        'CAN_XU_LY': 'status-can-xu-ly',
+                        'CHO_THANH_TOAN': 'status-cho-thanh-toan',
+                        'CHO_XAC_NHAN': 'status-waiting',
+                        'DA_THANH_TOAN': 'status-da-thanh-toan',
+                        'DA_XAC_NHAN': 'status-processing',
+                        'DANG_GIAO': 'status-shipping',
+                        'DA_GIAO': 'status-done',
+                        'HOAN_THANH': 'status-completed',
+                        'DA_HUY': 'status-cancel'
+                    };
+                    return map[t] || '';
+                }
+
+                function loadOrderDetail() {
+                    if (!hoaDonId) return;
+
+                    var loading = document.getElementById('orderDetailLoading');
+                    var content = document.getElementById('orderDetailContent');
+
+                    if (loading && content) {
+                        loading.style.display = '';
+                        content.style.display = 'none';
                     }
 
-                    var orderCodeDisplay = document.getElementById('orderCodeDisplay');
-                    if (orderCodeDisplay) {
-                        orderCodeDisplay.innerHTML = 'Mã đơn: <strong>' + (data.maDonHang || '') + '</strong>';
-                    }
+                    fetch(apiUrl + hoaDonId)
+                        .then(function (res) { return res.json(); })
+                        .then(function (data) {
+                            if (loading && content) {
+                                loading.style.display = 'none';
+                                content.style.display = '';
+                            }
 
-                    var detailNgayDat = document.getElementById('detailNgayDat');
-                    if (detailNgayDat) detailNgayDat.textContent = formatNgayDatApi(data.ngayDat);
-                    var detailLoaiHoaDon = document.getElementById('detailLoaiHoaDon');
-                    if (detailLoaiHoaDon) detailLoaiHoaDon.textContent = getLoaiHoaDonText(data.loaiHoaDon);
-                    var detailTen = document.getElementById('detailTenKhach');
-                    if (detailTen) detailTen.textContent = data.tenKhachHang || '';
-                    var detailSdtEl = document.getElementById('detailSdt');
-                    if (detailSdtEl) detailSdtEl.textContent = data.sdtKhachHang || '';
-                    var detailDiaChiEl = document.getElementById('detailDiaChi');
-                    if (detailDiaChiEl) detailDiaChiEl.textContent = data.diaChi || '';
-                    var detailEmailEl = document.getElementById('detailEmail');
-                    if (detailEmailEl) detailEmailEl.textContent = (data.email && String(data.email).trim()) ? data.email : '—';
-                    var detailGioiTinhEl = document.getElementById('detailGioiTinh');
-                    if (detailGioiTinhEl) {
-                        detailGioiTinhEl.textContent = (data.gioiTinh && String(data.gioiTinh).trim()) ? data.gioiTinh : 'Chưa cập nhật';
-                    }
-                    var detailNgaySinhEl = document.getElementById('detailNgaySinh');
-                    if (detailNgaySinhEl) detailNgaySinhEl.textContent = formatNgaySinhApi(data.ngaySinh);
+                            if (!data.success) {
+                                if (typeof window.showToast === 'function') {
+                                    window.showToast(data.message || 'Có lỗi xảy ra!', 'error');
+                                }
+                                return;
+                            }
 
-                    var itemsBody = document.getElementById('orderItemsBody');
-                    if (itemsBody && data.items) {
-                        itemsBody.innerHTML = '';
-                        data.items.forEach(function(item) {
-                            var row = document.createElement('tr');
-                            var nameCell = (item.tenSanPham || '') + (item.tenBienThe ? '<span class="order-detail__variant"> — ' + item.tenBienThe + '</span>' : '');
-                            var giaGoc = item.giaGoc != null ? item.giaGoc : item.donGia;
-                            row.innerHTML = '<td class="cart-table__name">' + nameCell + '</td>' +
-                                '<td>' + (item.soLuong || 0) + '</td>' +
-                                '<td class="cart-table__price">' + formatCurrencyVnd(giaGoc) + '</td>' +
-                                '<td class="cart-table__price">' + formatCurrencyVnd(item.donGia) + '</td>' +
-                                '<td class="cart-table__total">' + formatCurrencyVnd(item.thanhTien) + '</td>';
-                            itemsBody.appendChild(row);
+                            var orderCodeDisplay = document.getElementById('orderCodeDisplay');
+                            if (orderCodeDisplay) {
+                                orderCodeDisplay.innerHTML = 'Mã đơn: <strong>' + (data.maDonHang || '') + '</strong>';
+                            }
+
+                            var detailNgayDat = document.getElementById('detailNgayDat');
+                            if (detailNgayDat) detailNgayDat.textContent = formatNgayDatApi(data.ngayDat);
+                            var detailLoaiHoaDon = document.getElementById('detailLoaiHoaDon');
+                            if (detailLoaiHoaDon) detailLoaiHoaDon.textContent = getLoaiHoaDonText(data.loaiHoaDon);
+                            var detailTen = document.getElementById('detailTenKhach');
+                            if (detailTen) detailTen.textContent = data.tenKhachHang || '';
+                            var detailSdtEl = document.getElementById('detailSdt');
+                            if (detailSdtEl) detailSdtEl.textContent = data.sdtKhachHang || '';
+                            var detailDiaChiEl = document.getElementById('detailDiaChi');
+                            if (detailDiaChiEl) detailDiaChiEl.textContent = data.diaChi || '';
+                            var detailEmailEl = document.getElementById('detailEmail');
+                            if (detailEmailEl) detailEmailEl.textContent = (data.email && String(data.email).trim()) ? data.email : '—';
+                            var detailGioiTinhEl = document.getElementById('detailGioiTinh');
+                            if (detailGioiTinhEl) {
+                                detailGioiTinhEl.textContent = (data.gioiTinh && String(data.gioiTinh).trim()) ? data.gioiTinh : 'Chưa cập nhật';
+                            }
+                            var detailNgaySinhEl = document.getElementById('detailNgaySinh');
+                            if (detailNgaySinhEl) detailNgaySinhEl.textContent = formatNgaySinhApi(data.ngaySinh);
+
+                            var itemsBody = document.getElementById('orderItemsBody');
+                            if (itemsBody && data.items) {
+                                itemsBody.innerHTML = '';
+                                var status = data.trangThaiDonHang || '';
+                                var showSerial = status === 'DANG_GIAO'
+                                    || status === 'DA_GIAO'
+                                    || status === 'HOAN_THANH'
+                                    || status === 'DA_THANH_TOAN'
+                                    || status === 'DA THANH TOAN';
+                                data.items.forEach(function (item) {
+                                    var row = document.createElement('tr');
+                                    var serialText = '';
+                                    if (showSerial && item.maSerials && item.maSerials.length) {
+                                        serialText = '<span class="order-detail__variant"> · Serial: ' + item.maSerials.join(', ') + '</span>';
+                                    }
+                                    var nameCell = (item.tenSanPham || '')
+                                        + (item.tenBienThe ? '<span class="order-detail__variant"> — ' + item.tenBienThe + '</span>' : '')
+                                        + serialText;
+                                    var giaGoc = item.giaGoc != null ? item.giaGoc : item.donGia;
+                                    row.innerHTML = '<td class="cart-table__name">' + nameCell + '</td>' +
+                                        '<td>' + (item.soLuong || 0) + '</td>' +
+                                        '<td class="cart-table__price">' + formatCurrencyVnd(giaGoc) + '</td>' +
+                                        '<td class="cart-table__price">' + formatCurrencyVnd(item.donGia) + '</td>' +
+                                        '<td class="cart-table__total">' + formatCurrencyVnd(item.thanhTien) + '</td>';
+                                    itemsBody.appendChild(row);
+                                });
+                            }
+
+                            var tempTotal = document.getElementById('tempTotal');
+                            if (tempTotal) tempTotal.textContent = formatCurrencyVnd(data.tongTienTamTinh);
+
+                            var discount = document.getElementById('discount');
+                            if (discount) discount.textContent = formatCurrencyVnd(data.tienGiam);
+
+                            var shippingFee = document.getElementById('shippingFee');
+                            if (shippingFee) {
+                                var phi = data.phiVanChuyen != null ? Number(data.phiVanChuyen) : 0;
+                                shippingFee.textContent = formatCurrencyVnd(phi);
+                            }
+
+                            var totalPayment = document.getElementById('totalPayment');
+                            if (totalPayment) totalPayment.textContent = formatCurrencyVnd(data.tongTienThanhToan);
+
+                            var orderStatus = document.getElementById('orderStatus');
+                            if (orderStatus) {
+                                orderStatus.textContent = getTenTrangThai(data.trangThaiDonHang) || '';
+                                orderStatus.className = 'order-detail-meta__badge order-status ' + getStatusClass(data.trangThaiDonHang);
+                            }
+
+                            var noteSectionResolved = document.getElementById('orderDetailNoteSectionResolved');
+                            var noteSection = document.getElementById('orderDetailNoteSection');
+                            var noteText = document.getElementById('orderDetailNoteText');
+                            var stockResolved = data.ghiChu && data.trangThaiDonHang === 'DA_XAC_NHAN' && data.ghiChu.indexOf('Không đủ tồn kho') !== -1;
+                            var hideStockNote = data.trangThaiDonHang === 'DANG_GIAO' || data.trangThaiDonHang === 'DA_GIAO';
+                            var hasStockWarning = data.ghiChu && !hideStockNote && (data.trangThaiDonHang === 'CAN_XU_LY' || (data.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
+                            if (noteSectionResolved) {
+                                noteSectionResolved.style.display = stockResolved ? 'block' : 'none';
+                            }
+                            if (noteSection && noteText) {
+                                if (hasStockWarning) {
+                                    noteSection.style.display = 'block';
+                                    noteText.textContent = data.ghiChu;
+                                } else {
+                                    noteSection.style.display = 'none';
+                                }
+                            }
+
+                            var paymentMethod = document.getElementById('paymentMethod');
+                            if (paymentMethod) paymentMethod.textContent = data.tenPhuongThuc || '';
+                        })
+                        .catch(function () {
+                            if (loading && content) {
+                                loading.style.display = 'none';
+                                content.style.display = '';
+                            }
                         });
-                    }
-
-                    var tempTotal = document.getElementById('tempTotal');
-                    if (tempTotal) tempTotal.textContent = formatCurrencyVnd(data.tongTienTamTinh);
-
-                    var discount = document.getElementById('discount');
-                    if (discount) discount.textContent = formatCurrencyVnd(data.tienGiam);
-
-                    var shippingFee = document.getElementById('shippingFee');
-                    if (shippingFee) {
-                        var phi = data.phiVanChuyen != null ? Number(data.phiVanChuyen) : 0;
-                        shippingFee.textContent = formatCurrencyVnd(phi);
-                    }
-
-                    var totalPayment = document.getElementById('totalPayment');
-                    if (totalPayment) totalPayment.textContent = formatCurrencyVnd(data.tongTienThanhToan);
-
-                    var orderStatus = document.getElementById('orderStatus');
-                    if (orderStatus) {
-                        orderStatus.textContent = getTenTrangThai(data.trangThaiDonHang) || '';
-                        orderStatus.className = 'order-detail-meta__badge order-status ' + getStatusClass(data.trangThaiDonHang);
-                    }
-
-                    var noteSectionResolved = document.getElementById('orderDetailNoteSectionResolved');
-                    var noteSection = document.getElementById('orderDetailNoteSection');
-                    var noteText = document.getElementById('orderDetailNoteText');
-                    var stockResolved = data.ghiChu && data.trangThaiDonHang === 'DA_XAC_NHAN' && data.ghiChu.indexOf('Không đủ tồn kho') !== -1;
-                    var hideStockNote = data.trangThaiDonHang === 'DANG_GIAO' || data.trangThaiDonHang === 'DA_GIAO';
-                    var hasStockWarning = data.ghiChu && !hideStockNote && (data.trangThaiDonHang === 'CAN_XU_LY' || (data.ghiChu.indexOf('Không đủ tồn kho') !== -1 && !stockResolved));
-                    if (noteSectionResolved) {
-                        noteSectionResolved.style.display = stockResolved ? 'block' : 'none';
-                    }
-                    if (noteSection && noteText) {
-                        if (hasStockWarning) {
-                            noteSection.style.display = 'block';
-                            noteText.textContent = data.ghiChu;
-                        } else {
-                            noteSection.style.display = 'none';
-                        }
-                    }
-
-                    var paymentMethod = document.getElementById('paymentMethod');
-                    if (paymentMethod) paymentMethod.textContent = data.tenPhuongThuc || '';
-                })
-                .catch(function() {
-                    if (loading && content) {
-                        loading.style.display = 'none';
-                        content.style.display = '';
-                    }
-                });
-        }
-
-        var backBtn = document.getElementById('btnBackToList');
-        if (backBtn) {
-            backBtn.addEventListener('click', function(e) {
-                if (window.history.length > 1) {
-                    e.preventDefault();
-                    window.history.back();
                 }
-            });
-        }
 
-        loadOrderDetail();
-    })();
-    </script>
-</div>
+                var backBtn = document.getElementById('btnBackToList');
+                if (backBtn) {
+                    backBtn.addEventListener('click', function (e) {
+                        if (window.history.length > 1) {
+                            e.preventDefault();
+                            window.history.back();
+                        }
+                    });
+                }
+
+                loadOrderDetail();
+            })();
+        </script>
+    </div>
 </body>
+
 </html>

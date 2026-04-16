@@ -13,13 +13,7 @@ import com.example.watchaura.service.EmailService;
 import com.example.watchaura.service.GuestCartViewService;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
-import com.example.watchaura.service.ghn.DistrictService;
-import com.example.watchaura.service.ghn.ProvinceService;
-import com.example.watchaura.service.ghn.ShippingService;
-import com.example.watchaura.service.ghn.WardService;
-import com.example.watchaura.dto.ghn.DistrictDTO;
-import com.example.watchaura.dto.ghn.ProvinceDTO;
-import com.example.watchaura.dto.ghn.WardDTO;
+import com.example.watchaura.util.ShippingFeeUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -27,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,7 +29,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,10 +46,6 @@ public class CheckoutController {
     private final GuestCartViewService guestCartViewService;
     private final KhuyenMaiService khuyenMaiService;
     private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
-    private final DistrictService districtService;
-    private final ProvinceService provinceService;
-    private final WardService wardService;
-    private final ShippingService shippingService;
 
     /**
      * Thanh toán khách (không đăng nhập): form nhập thông tin + COD.
@@ -78,44 +66,11 @@ public class CheckoutController {
 
         model.addAttribute("cart", cart);
         BigDecimal sub = cart.getTongTien() != null ? cart.getTongTien() : BigDecimal.ZERO;
-        model.addAttribute("checkoutShippingFee", BigDecimal.ZERO);
-        model.addAttribute("checkoutGrandTotal", sub);
-        List<ProvinceDTO> provinces = provinceService.getProvinces();
-        model.addAttribute("provinces", provinces);
+        model.addAttribute("checkoutShippingFee", ShippingFeeUtil.feeForMerchandiseSubtotal(sub));
+        model.addAttribute("checkoutGrandTotal", sub.add(ShippingFeeUtil.feeForMerchandiseSubtotal(sub)));
         model.addAttribute("title", "Thanh toán - WatchAura");
         model.addAttribute("content", "user/checkout :: content");
         return "layout/user-layout";
-    }
-
-    @GetMapping("/districts")
-    @ResponseBody
-    public List<DistrictDTO> districts(@RequestParam("provinceId") Integer provinceId) {
-        return districtService.getDistrictsByProvince(provinceId);
-    }
-
-    @GetMapping("/wards")
-    @ResponseBody
-    public List<WardDTO> wards(@RequestParam("districtId") Integer districtId) {
-        return wardService.getWardsByDistrict(districtId);
-    }
-
-    @PostMapping("/shipping-fee")
-    @ResponseBody
-    public Map<String, Object> shippingFee(
-            @RequestParam("district_id") Integer districtId,
-            @RequestParam("ward_code") String wardCode,
-            @RequestParam(value = "subtotal", required = false) BigDecimal subtotal
-    ) {
-        Map<String, Object> resp = new HashMap<>();
-        try {
-            BigDecimal fee = shippingService.calculateShippingFee(subtotal, districtId, wardCode);
-            resp.put("success", true);
-            resp.put("fee", fee);
-        } catch (Exception e) {
-            resp.put("success", false);
-            resp.put("message", e.getMessage() != null ? e.getMessage() : "Không tính được phí giao hàng");
-        }
-        return resp;
     }
 
     @PostMapping("/checkout")
@@ -124,8 +79,6 @@ public class CheckoutController {
             @RequestParam String email,
             @RequestParam String sdt,
             @RequestParam String diaChi,
-            @RequestParam Integer districtId,
-            @RequestParam String wardCode,
             @RequestParam(required = false) String ghiChu,
             HttpSession session,
             RedirectAttributes redirect
@@ -135,27 +88,7 @@ public class CheckoutController {
             return "redirect:/thanh-toan";
         }
 
-        Object rawCart = session.getAttribute("cart");
-        Map<Integer, Integer> cart = new java.util.HashMap<>();
-        if (rawCart instanceof Map<?, ?> m) {
-            for (Map.Entry<?, ?> e : m.entrySet()) {
-                Integer k = null;
-                Integer v = null;
-                if (e.getKey() instanceof Integer ik) {
-                    k = ik;
-                } else if (e.getKey() != null) {
-                    try { k = Integer.parseInt(String.valueOf(e.getKey())); } catch (Exception ignored) {}
-                }
-                if (e.getValue() instanceof Integer iv) {
-                    v = iv;
-                } else if (e.getValue() != null) {
-                    try { v = Integer.parseInt(String.valueOf(e.getValue())); } catch (Exception ignored) {}
-                }
-                if (k != null && v != null) {
-                    cart.put(k, v);
-                }
-            }
-        }
+        Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
 
         if (cart == null || cart.isEmpty()) {
             return "redirect:/gio-hang";
@@ -204,13 +137,7 @@ public class CheckoutController {
             chiTietList.add(ct);
         }
 
-        BigDecimal phiVanChuyen;
-        try {
-            phiVanChuyen = shippingService.calculateShippingFee(tongTienTamTinh, districtId, wardCode);
-        } catch (Exception e) {
-            redirect.addFlashAttribute("error", "Không tính được phí giao hàng (GHN). Vui lòng chọn lại quận/huyện, phường/xã.");
-            return "redirect:/checkout";
-        }
+        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tongTienTamTinh);
         BigDecimal tongTienThanhToan = tongTienTamTinh.add(phiVanChuyen);
         hoaDon.setTongTienTamTinh(tongTienTamTinh);
         hoaDon.setTongTienThanhToan(tongTienThanhToan);

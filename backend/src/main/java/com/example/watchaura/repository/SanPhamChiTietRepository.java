@@ -22,6 +22,7 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
             "LEFT JOIN FETCH spct.chatLieuDay " +
+            "LEFT JOIN FETCH spct.serialSanPhams " +
             "WHERE sp.id = :sanPhamId")
     List<SanPhamChiTiet> findBySanPhamId(@Param("sanPhamId") Integer sanPhamId);
 
@@ -39,6 +40,7 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
             "LEFT JOIN FETCH spct.chatLieuDay " +
+            "LEFT JOIN FETCH spct.serialSanPhams " +
             "WHERE spct.id = :id")
     Optional<SanPhamChiTiet> findByIdWithDetails(@Param("id") Integer id);
 
@@ -48,7 +50,8 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
             "LEFT JOIN FETCH sp.loaiMay " +
             "LEFT JOIN FETCH spct.mauSac " +
             "LEFT JOIN FETCH spct.kichThuoc " +
-            "LEFT JOIN FETCH spct.chatLieuDay ")
+            "LEFT JOIN FETCH spct.chatLieuDay " +
+            "LEFT JOIN FETCH spct.serialSanPhams ")
     List<SanPhamChiTiet> findAllWithDetails();
 
     /**
