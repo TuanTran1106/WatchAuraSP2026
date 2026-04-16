@@ -6,6 +6,8 @@ import com.example.watchaura.dto.DiaChiRequest;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.service.DiaChiService;
 import com.example.watchaura.service.KhachHangService;
+import com.example.watchaura.dto.ghn.ProvinceDTO;
+import com.example.watchaura.service.ghn.ProvinceService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +28,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiresRole(value = {}, requireAuth = true)
 public class UserAccountController {
 
-    private final KhachHangService khachHangService;
     private final DiaChiService diaChiService;
+    private final ProvinceService provinceService;
 
     /** Trang tài khoản: thông tin cá nhân + đổi mật khẩu + địa chỉ mặc định. Chỉ dành cho user đã đăng nhập. */
     @GetMapping
@@ -48,6 +50,8 @@ public class UserAccountController {
         model.addAttribute("defaultDiaChi", defaultDiaChi.orElse(null));
         model.addAttribute("listDiaChi", diaChiService.getByKhachHang(khachHangId));
         model.addAttribute("diaChiThemRequest", new DiaChiRequest());
+        java.util.List<ProvinceDTO> provinces = provinceService.getProvinces();
+        model.addAttribute("provinces", provinces);
 
         return "layout/user-layout";
     }
@@ -83,6 +87,9 @@ public class UserAccountController {
         diaChi.setPhuongXa(request.getPhuongXa());
         diaChi.setQuanHuyen(request.getQuanHuyen());
         diaChi.setTinhThanh(request.getTinhThanh());
+        diaChi.setGhnProvinceId(request.getGhnProvinceId());
+        diaChi.setGhnDistrictId(request.getGhnDistrictId());
+        diaChi.setGhnWardCode(request.getGhnWardCode());
         diaChi.setMacDinh(listDiaChi.isEmpty());
         diaChiService.create(khachHangId, diaChi);
         redirect.addFlashAttribute("success", "Đã thêm địa chỉ mới.");
@@ -132,6 +139,9 @@ public class UserAccountController {
         diaChi.setPhuongXa(request.getPhuongXa());
         diaChi.setQuanHuyen(request.getQuanHuyen());
         diaChi.setTinhThanh(request.getTinhThanh());
+        diaChi.setGhnProvinceId(request.getGhnProvinceId());
+        diaChi.setGhnDistrictId(request.getGhnDistrictId());
+        diaChi.setGhnWardCode(request.getGhnWardCode());
         diaChi.setMacDinh(listDiaChi.isEmpty());
         diaChiService.create(khachHangId, diaChi);
         redirect.addFlashAttribute("success", "Đã thêm địa chỉ mới.");

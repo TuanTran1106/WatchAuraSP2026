@@ -16,7 +16,10 @@ import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
 import com.example.watchaura.service.DiaChiService;
-import com.example.watchaura.util.ShippingFeeUtil;
+import com.example.watchaura.dto.ghn.DistrictDTO;
+import com.example.watchaura.dto.ghn.ProvinceDTO;
+import com.example.watchaura.service.ghn.DistrictService;
+import com.example.watchaura.service.ghn.ProvinceService;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.entity.Voucher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,6 +59,8 @@ public class UserCheckoutController {
     private final VoucherService voucherService;
     private final DiaChiService diaChiService;
     private final VNPayProperties vnPayProperties;
+    private final DistrictService districtService;
+    private final ProvinceService provinceService;
 
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
@@ -100,6 +105,8 @@ public class UserCheckoutController {
         model.addAttribute("content", "user/thanh-toan :: content");
         model.addAttribute("cart", cart);
         addCheckoutPricingAttributes(model, cart);
+        List<ProvinceDTO> provinces = provinceService.getProvinces();
+        model.addAttribute("provinces", provinces);
         model.addAttribute("khachHang", khachHang);
         if (!model.containsAttribute("checkoutForm")) {
             CheckoutForm form = new CheckoutForm();
@@ -264,6 +271,8 @@ public class UserCheckoutController {
             request.setGhiChu(form.getGhiChu() != null ? form.getGhiChu().trim() : null);
             request.setVoucherId(voucherId);
             request.setNhanVienId(null);
+            request.setToDistrictId(form.getToDistrictId());
+            request.setToWardCode(form.getToWardCode());
 
             List<HoaDonChiTietRequest> items = cart.getItems().stream()
                     .map(item -> new HoaDonChiTietRequest(item.getSanPhamChiTietId(), item.getSoLuong()))
@@ -470,9 +479,9 @@ public class UserCheckoutController {
 
     private void addCheckoutPricingAttributes(Model model, GioHangDTO cart) {
         BigDecimal sub = cart != null && cart.getTongTien() != null ? cart.getTongTien() : BigDecimal.ZERO;
-        BigDecimal ship = ShippingFeeUtil.feeForMerchandiseSubtotal(sub);
-        model.addAttribute("checkoutShippingFee", ship);
-        model.addAttribute("checkoutGrandTotal", sub.add(ship));
+        // Phí ship sẽ được tính realtime bằng GHN khi user chọn quận/huyện + phường/xã
+        model.addAttribute("checkoutShippingFee", BigDecimal.ZERO);
+        model.addAttribute("checkoutGrandTotal", sub);
     }
 
     private static String getBaseUrl(HttpServletRequest request) {
@@ -550,6 +559,8 @@ public class UserCheckoutController {
         private String email;
         @NotBlank(message = "Địa chỉ giao hàng không được để trống")
         private String diaChi;
+        private Integer toDistrictId;
+        private String toWardCode;
         private String ghiChu;
         private String phuongThucThanhToan = "COD";
         private String maVoucher;

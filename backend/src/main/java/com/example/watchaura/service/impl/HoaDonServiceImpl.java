@@ -28,7 +28,7 @@ import com.example.watchaura.repository.VoucherUserRepository;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
-import com.example.watchaura.util.ShippingFeeUtil;
+import com.example.watchaura.service.ghn.ShippingService;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class HoaDonServiceImpl implements HoaDonService {
+    private static final List<String> STOCK_RESERVED_STATUSES = List.of("CHO_XAC_NHAN", "CHO_THANH_TOAN");
 
     private final HoaDonRepository hoaDonRepository;
     private final HoaDonChiTietRepository hoaDonChiTietRepository;
@@ -66,6 +67,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     private final DiaChiGiaoHangRepository diaChiGiaoHangRepository;
     private final GioHangChiTietRepository gioHangChiTietRepository;
     private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+    private final ShippingService shippingService;
     private final KhuyenMaiService khuyenMaiService;
 
     @Override
@@ -175,19 +177,26 @@ public class HoaDonServiceImpl implements HoaDonService {
         LocalDateTime thoiDiemDat = LocalDateTime.now();
         List<KhuyenMai> khuyenMaiDangChay = khuyenMaiService.getActivePromotions(thoiDiemDat);
 
-        // Tính tổng tiền (kiểm tra tồn kho = soLuongTon, không trừ giữ hàng nữa); đơn giá theo KM như giỏ/card
+        // Tính tổng tiền + chặn oversell:
+        // kiểm tra theo tồn thực tế trừ đi lượng đang "giữ chỗ" ở các đơn chờ.
         BigDecimal tongTienTamTinh = BigDecimal.ZERO;
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findByIdWithLock(itemRequest.getSanPhamChiTietId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết"));
 
-            // FIFO: Chỉ kiểm tra soLuongTon (ai thanh toán trước được mua)
             Integer soLuongTon = sanPhamChiTiet.getSoLuongTon() != null ? sanPhamChiTiet.getSoLuongTon() : 0;
+            Integer dangGiu = hoaDonChiTietRepository.sumReservedQtyBySanPhamChiTietId(
+                    itemRequest.getSanPhamChiTietId(),
+                    STOCK_RESERVED_STATUSES
+            );
+            int soLuongDangGiu = dangGiu != null ? dangGiu : 0;
+            int soLuongConCoTheDat = Math.max(0, soLuongTon - soLuongDangGiu);
 
-            if (soLuongTon < itemRequest.getSoLuong()) {
+            if (soLuongConCoTheDat < itemRequest.getSoLuong()) {
                 throw new RuntimeException("Số lượng tồn kho không đủ cho sản phẩm: "
                         + (sanPhamChiTiet.getSanPham() != null ? sanPhamChiTiet.getSanPham().getTenSanPham() : "ID " + itemRequest.getSanPhamChiTietId())
-                        + ". Vui lòng giảm số lượng hoặc chọn sản phẩm khác. (Còn " + soLuongTon + " sản phẩm)");
+                        + ". Khả dụng để đặt lúc này: " + soLuongConCoTheDat
+                        + " (tồn: " + soLuongTon + ", đang giữ: " + soLuongDangGiu + ").");
             }
 
             SanPhamChiTiet forPrice = sanPhamChiTietRepository.findByIdWithDetails(itemRequest.getSanPhamChiTietId())
@@ -207,7 +216,12 @@ public class HoaDonServiceImpl implements HoaDonService {
         if (tienHangSauGiam.compareTo(BigDecimal.ZERO) < 0) {
             tienHangSauGiam = BigDecimal.ZERO;
         }
-        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tienHangSauGiam);
+        BigDecimal phiVanChuyen;
+        try {
+            phiVanChuyen = shippingService.calculateShippingFee(tienHangSauGiam, request.getToDistrictId(), request.getToWardCode());
+        } catch (Exception e) {
+            throw new RuntimeException("Không tính được phí giao hàng (GHN). Vui lòng chọn lại quận/huyện, phường/xã.");
+        }
         BigDecimal tongTienThanhToan = tienHangSauGiam.add(phiVanChuyen);
 
         HoaDon hoaDon = new HoaDon();
@@ -232,7 +246,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
 
-        // Tạo chi tiết hóa đơn (KHÔNG giữ hàng - theo kiểu FIFO)
+        // Tạo chi tiết hóa đơn (giữ chỗ logic thông qua trạng thái đơn chờ)
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
             SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(itemRequest.getSanPhamChiTietId())
                     .orElseThrow();

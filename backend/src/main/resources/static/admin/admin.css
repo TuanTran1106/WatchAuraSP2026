@@ -2542,6 +2542,16 @@ body.dash-modal-open {
   color: #b91c1c;
 }
 
+.btn-icon--deactivate {
+  color: #d97706;
+  padding: 0;
+}
+
+.btn-icon--deactivate:hover {
+  background: #fef3c7;
+  color: #b45309;
+}
+
 .content .table td a.btn-icon {
   margin-right: 0.25rem;
 }

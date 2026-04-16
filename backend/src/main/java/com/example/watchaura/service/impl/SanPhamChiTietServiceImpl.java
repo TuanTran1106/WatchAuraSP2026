@@ -5,12 +5,18 @@ import com.example.watchaura.dto.SanPhamChiTietDTO;
 import com.example.watchaura.dto.SanPhamChiTietRequest;
 import com.example.watchaura.entity.*;
 import com.example.watchaura.repository.*;
+import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietService;
+import com.example.watchaura.util.KhuyenMaiPricing;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
@@ -20,6 +26,8 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
     private final MauSacRepository mauSacRepository;
     private final KichThuocRepository kichThuocRepository;
     private final ChatLieuDayRepository chatLieuDayRepository;
+    private final SanPhamChiTietKhuyenMaiRepository sanPhamChiTietKhuyenMaiRepository;
+    private final KhuyenMaiService khuyenMaiService;
 
     /**
      * Lấy tất cả sản phẩm chi tiết
@@ -61,6 +69,7 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         // Kiểm tra sản phẩm tồn tại
         SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + request.getIdSanPham()));
+        validateGiaBanKhongXungDotKhuyenMaiTien(null, sanPham, request.getGiaBan());
 
         // Tạo entity
         SanPhamChiTiet spct = new SanPhamChiTiet();
@@ -110,6 +119,7 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         // Kiểm tra sản phẩm tồn tại
         SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + request.getIdSanPham()));
+        validateGiaBanKhongXungDotKhuyenMaiTien(id, sanPham, request.getGiaBan());
 
         spct.setSanPham(sanPham);
 
@@ -207,4 +217,58 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         return dto;
     }
 
+    private void validateGiaBanKhongXungDotKhuyenMaiTien(Integer spctId, SanPham sanPham, BigDecimal giaBanMoi) {
+        if (giaBanMoi == null || giaBanMoi.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        Set<Integer> seenPromotionIds = new HashSet<>();
+        if (spctId != null) {
+            sanPhamChiTietKhuyenMaiRepository.findActiveKhuyenMaiBySpctId(spctId, now).forEach(link -> {
+                KhuyenMai km = link.getKhuyenMai();
+                validateFixedPromotionAmount(km, giaBanMoi, seenPromotionIds);
+            });
+        }
+        String tenDanhMuc = sanPham != null && sanPham.getDanhMuc() != null
+                ? sanPham.getDanhMuc().getTenDanhMuc()
+                : null;
+        khuyenMaiService.getActivePromotions(now).forEach(km -> {
+            if (!appliesToCategory(km, tenDanhMuc)) {
+                return;
+            }
+            validateFixedPromotionAmount(km, giaBanMoi, seenPromotionIds);
+        });
+    }
+
+    private static boolean appliesToCategory(KhuyenMai km, String tenDanhMuc) {
+        if (km == null) {
+            return false;
+        }
+        String danhMucApDung = km.getDanhMucApDung();
+        if (danhMucApDung == null || danhMucApDung.isBlank()) {
+            return true;
+        }
+        if (tenDanhMuc == null || tenDanhMuc.isBlank()) {
+            return false;
+        }
+        return danhMucApDung.trim().equalsIgnoreCase(tenDanhMuc.trim());
+    }
+
+    private static void validateFixedPromotionAmount(KhuyenMai km, BigDecimal giaBanMoi, Set<Integer> seenPromotionIds) {
+        if (km == null || km.getId() == null || !seenPromotionIds.add(km.getId())) {
+            return;
+        }
+        if (KhuyenMaiPricing.phanLoai(km.getLoaiGiam()) != KhuyenMaiPricing.LoaiGiamTinh.TIEN) {
+            return;
+        }
+        if (km.getGiaTriGiam() == null) {
+            return;
+        }
+        if (km.getGiaTriGiam().compareTo(giaBanMoi) >= 0) {
+            String ten = km.getTenChuongTrinh() != null && !km.getTenChuongTrinh().isBlank()
+                    ? km.getTenChuongTrinh()
+                    : ("ID " + km.getId());
+            throw new RuntimeException("Giá bán mới phải lớn hơn mức giảm tiền của khuyến mãi '" + ten + "'.");
+        }
+    }
 }

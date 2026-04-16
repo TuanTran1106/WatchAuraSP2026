@@ -79,6 +79,9 @@ public class DiaChiServiceImpl implements DiaChiService {
         dc.setPhuongXa(diaChi.getPhuongXa());
         dc.setQuanHuyen(diaChi.getQuanHuyen());
         dc.setTinhThanh(diaChi.getTinhThanh());
+        dc.setGhnProvinceId(diaChi.getGhnProvinceId());
+        dc.setGhnDistrictId(diaChi.getGhnDistrictId());
+        dc.setGhnWardCode(diaChi.getGhnWardCode());
         dc.setMacDinh(diaChi.getMacDinh());
 
         if (Boolean.TRUE.equals(diaChi.getMacDinh())) {
