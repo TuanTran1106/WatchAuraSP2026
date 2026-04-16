@@ -50,6 +50,12 @@ public class HoaDonChiTietServiceImpl implements HoaDonChiTietService {
         
         dto.setSoLuong(chiTiet.getSoLuong());
         dto.setDonGia(chiTiet.getDonGia());
+        if (chiTiet.getSerialSanPhams() != null) {
+            dto.setMaSerials(chiTiet.getSerialSanPhams().stream()
+                    .filter(s -> s != null && s.getMaSerial() != null && !s.getMaSerial().isBlank())
+                    .map(s -> s.getMaSerial().trim())
+                    .collect(Collectors.toList()));
+        }
         
         if (dto.getDonGia() != null && dto.getSoLuong() != null) {
             dto.setThanhTien(dto.getDonGia().multiply(BigDecimal.valueOf(dto.getSoLuong())));

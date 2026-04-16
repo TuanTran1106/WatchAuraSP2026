@@ -242,11 +242,11 @@
                                 <form
                                     th:action="@{/admin/khuyen-mai/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
                                     method="post" style="display:inline;" class="js-admin-ajax-form" data-ajax="true"
-                                    data-confirm="Ngừng áp dụng khuyến mãi này?"
-                                    data-confirm-title="Ngừng áp dụng khuyến mãi" data-confirm-ok="Ngừng áp dụng" data-confirm-cancel="Hủy"
-                                    data-confirm-tone="warning">
-                                    <button type="submit" class="btn-icon btn-icon--deactivate" title="Ngừng áp dụng"
-                                        aria-label="Ngừng áp dụng khuyến mãi"><i class="fa-solid fa-ban"></i></button>
+                                    data-confirm="Xóa khuyến mãi này? Hành động này không thể hoàn tác."
+                                    data-confirm-title="Xóa khuyến mãi" data-confirm-ok="Xóa" data-confirm-cancel="Hủy"
+                                    data-confirm-tone="danger">
+                                    <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i
+                                            class="fa-solid fa-trash"></i></button>
                                 </form>
                             </div>
                         </td>

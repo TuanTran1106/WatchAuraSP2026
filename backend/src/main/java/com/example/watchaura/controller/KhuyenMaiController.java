@@ -254,11 +254,11 @@ public class KhuyenMaiController {
             model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
             model.addAttribute("khuyenMai", new KhuyenMai());
             model.addAttribute("formAction", "/admin/khuyen-mai");
-            model.addAttribute("message", "Đã ngừng áp dụng khuyến mãi.");
+            model.addAttribute("message", "Xóa khuyến mãi thành công.");
             attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
-        redirect.addFlashAttribute("message", "Đã ngừng áp dụng khuyến mãi.");
+        redirect.addFlashAttribute("message", "Xóa khuyến mãi thành công.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);

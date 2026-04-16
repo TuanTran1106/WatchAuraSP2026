@@ -339,6 +339,14 @@
                 display: block;
             }
 
+            .variant-item .variant-serial {
+                margin-top: 8px;
+                font-size: 11px;
+                color: #475569;
+                line-height: 1.45;
+                word-break: break-word;
+            }
+
             .variant-item .variant-status {
                 display: flex;
                 justify-content: space-between;
@@ -854,6 +862,20 @@
 
             .variant-row .variant-remove:hover {
                 background: #c0392b;
+            }
+
+            .variant-serial-preview {
+                margin-top: 6px;
+                padding: 10px 12px;
+                border: 1px dashed #cbd5e1;
+                border-radius: 8px;
+                background: #f8fafc;
+                font-size: 12px;
+                color: #475569;
+                line-height: 1.45;
+                max-height: 88px;
+                overflow: auto;
+                word-break: break-word;
             }
 
             /* Toggle Switch CSS */
@@ -1457,6 +1479,11 @@
                     </div>
                 </div>
 
+                <div class="modal-form-group" style="grid-column: 1 / -1;">
+                    <label>Serial hiện có</label>
+                    <div class="variant-serial-preview">Tự sinh serial theo số lượng tồn khi lưu biến thể mới.</div>
+                </div>
+
                 <button type="button" class="variant-remove" onclick="removeVariantRow(this)">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -1718,6 +1745,11 @@
                                     </div>
                                     <div class="variant-price">
                                         ${price} · <span class="muted">SL: ${qty}</span>
+                                    </div>
+                                    <div class="variant-serial">
+                                        <strong>Serial:</strong> ${detail.serials && detail.serials.length
+                                        ? `${detail.soLuongSerialTrongKho || 0} trong kho · ${detail.serials.slice(0, 4).join(' || ')}${detail.serials.length > 4 ? ' ...' : ''}`
+                                        : 'Chưa có'}
                                     </div>
                                     <div class="variant-status">
                                         <span class="status-label">Trạng thái:</span>
@@ -2148,6 +2180,11 @@
                                 </div>
                             </div>
 
+                            <div class="modal-form-group" style="grid-column: 1 / -1;">
+                                <label>Serial hiện có</label>
+                                <div class="variant-serial-preview"></div>
+                            </div>
+
                             <button type="button" class="variant-remove" onclick="removeVariantRow(this)">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -2171,6 +2208,14 @@
                             variantRow.querySelector('.variant-doChiuNuoc').value = variant.doChiuNuoc || '';
                             variantRow.querySelector('.variant-beRongDay').value = variant.beRongDay || '';
                             variantRow.querySelector('.variant-trongLuong').value = variant.trongLuong || '';
+                            const serialPreview = variantRow.querySelector('.variant-serial-preview');
+                            if (serialPreview) {
+                                if (variant.serials && variant.serials.length) {
+                                    serialPreview.textContent = `${variant.soLuongSerialTrongKho || 0} serial trong kho: ${variant.serials.join(' || ')}`;
+                                } else {
+                                    serialPreview.textContent = 'Chưa có serial.';
+                                }
+                            }
 
                             // Set trạng thái
                             const statusRadios = variantRow.querySelectorAll(`input[name="trangThaiChiTiet-${variantIndex}"]`);

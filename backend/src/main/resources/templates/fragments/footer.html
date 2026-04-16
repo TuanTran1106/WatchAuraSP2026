@@ -1,45 +1,98 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <body>
 
-<footer th:fragment="footer" class="user-footer">
-    <div class="container footer-inner">
-        <div class="footer__col">
-            <h4 class="footer__title">Về WatchAura</h4>
-            <p class="footer__text">Chuyên đồng hồ chính hãng – Cam kết bảo hành, giao hàng toàn quốc, đổi trả linh hoạt.</p>
-        </div>
-        <div class="footer__col">
-            <h4 class="footer__title">Liên kết nhanh</h4>
-            <a th:href="@{/}">Trang chủ</a>
-            <a th:href="@{/san-pham}">Sản phẩm</a>
-            <a th:href="@{/tin-tuc}">Tin tức</a>
-            <a th:href="@{/lien-he}">Liên hệ</a>
-            <a th:href="@{/gio-hang}">Giỏ hàng</a>
-            <a th:href="@{/admin/login}" class="footer__admin-link">
-                <i class="fas fa-shield-alt"></i> Đăng nhập Admin
-            </a>
-        </div>
-        <div class="footer__col">
-            <h4 class="footer__title">Liên hệ</h4>
-            <p class="footer__contact-item"><i class="fas fa-phone"></i> <span>Hotline: <strong>1900 xxxx</strong></span></p>
-            <p class="footer__contact-item"><i class="fas fa-envelope"></i> <span>support@watchaura.vn</span></p>
-            <p class="footer__contact-item"><i class="fas fa-map-marker-alt"></i> <span>TP. Hồ Chí Minh</span></p>
-        </div>
-        <div class="footer__col footer__col--newsletter">
-            <h4 class="footer__title">Đăng ký nhận tin</h4>
-            <p class="footer__text">Nhận thông tin khuyến mãi và sản phẩm mới.</p>
-            <form class="footer-newsletter" th:action="@{/dang-ky-nhan-tin}" method="post">
-                <input type="email" name="email" class="footer-newsletter__input" placeholder="Email của bạn" required>
-                <button type="submit" class="footer-newsletter__btn">Đăng ký</button>
-            </form>
-        </div>
-    </div>
-    <div class="footer__bottom">
-        <div class="container">
-            <p class="footer__copyright">© 2026 WatchAura. Bảo lưu mọi quyền.</p>
-        </div>
-    </div>
-</footer>
+    <th:block th:fragment="footer">
+        <footer class="main-footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="footer-logo">
+                            <img th:src="@{/images/Logo2.png}"
+                                src="https://via.placeholder.com/180x60/1a1a2e/64b5f6?text=LOGO" alt="Logo"
+                                class="img-fluid">
+                        </div>
+                        <div class="footer-section">
+                            <h5>Thông tin liên hệ</h5>
+                            <div class="contact-info">
+                                <p><i class="fas fa-envelope"></i><strong>Mail:</strong> phucnhph50219@gmail.com</p>
+                                <p><i class="fas fa-phone"></i><strong>Hotline:</strong> 0123.456.789 </p>
+                                <p><i class="fas fa-map-marker-alt"></i><strong>Địa chỉ:</strong> Hà Nội, Việt Nam</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h5>Hướng dẫn</h5>
+                            <ul>
+                                <li><a href="#">Hướng dẫn mua hàng</a></li>
+                                <li><a href="#">Hướng dẫn sử dụng đồng hồ</a></li>
+                                <li><a href="#">Chính sách đổi hàng</a></li>
+                                <li><a href="#">Chính sách bảo hành</a></li>
+                                <li><a href="#">Thông tin chuyển khoản</a></li>
+                                <li><a href="#">Câu hỏi thường gặp</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h5>Sản phẩm &amp; Dịch vụ</h5>
+                            <ul>
+                                <li><a href="#">Liên hệ &amp; Đặt hàng</a></li>
+                                <li><a href="#">Dịch vụ in Logo lên đồng hồ</a></li>
+                                <li><a href="#">Dịch vụ khắc Laser lên đồng hồ</a></li>
+                                <li><a href="#">Dây da zircon - Hộp đồng hồ</a></li>
+                                <li><a href="#">Bảo trì và sửa chữa</a></li>
+                                <li><a href="#">Tư vấn chọn đồng hồ</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h5>Đăng ký nhận tin</h5>
+                            <p class="newsletter-description">Nhận thông tin khuyến mãi và sản phẩm mới nhất từ chúng
+                                tôi</p>
+                            <form class="newsletter-form" id="homeNewsletterForm">
+                                <input type="email" class="newsletter-input" placeholder="Nhập địa chỉ email" required>
+                                <button type="submit" class="newsletter-btn">
+                                    <i class="fas fa-paper-plane me-1"></i>Đăng ký
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 text-start">
+                            <p class="mb-0">© 2024 Watch Aura. Tất cả quyền được bảo lưu.</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <p class="mb-0">
+                                <a href="#" style="color: #B9863EFF; text-decoration: none;">Điều khoản sử dụng</a> |
+                                <a href="#" style="color: #B9863EFF; text-decoration: none;"> Chính sách bảo mật</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <script>
+            (function () {
+                var form = document.getElementById('homeNewsletterForm');
+                if (!form) return;
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var input = form.querySelector('.newsletter-input');
+                    if (input) input.value = '';
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Đăng ký nhận tin thành công!', 'success');
+                    }
+                });
+            })();
+        </script>
+    </th:block>
 
 </body>
+
 </html>

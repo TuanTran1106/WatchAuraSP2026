@@ -600,6 +600,7 @@ public class DonHangUserController {
                         itemMap.put("donGia", item.getDonGia());
                         itemMap.put("giaGoc", item.getGiaGoc());
                         itemMap.put("thanhTien", item.getThanhTien());
+                        itemMap.put("maSerials", item.getMaSerials());
                         return itemMap;
                     })
                     .collect(Collectors.toList()));

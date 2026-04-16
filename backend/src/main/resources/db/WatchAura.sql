@@ -1,6 +1,7 @@
-CREATE DATABASE WATCHAURA_STORE;
+CREATE DATABASE WATCHAURA_STORE2;
 GO
-USE WATCHAURA_STORE;
+
+USE WATCHAURA_STORE2;
 GO
 
 CREATE TABLE ChucVu (
@@ -34,14 +35,19 @@ CREATE TABLE DiaChi (
                         mac_dinh BIT DEFAULT 0,
                         FOREIGN KEY (id_khach_hang) REFERENCES KhachHang(id)
 );
+
 CREATE TABLE ThuongHieu (
                             id INT IDENTITY(1,1) PRIMARY KEY,
                             ten_thuong_hieu NVARCHAR(100) NOT NULL
 );
+ALTER TABLE ThuongHieu add hinh_anh NVARCHAR (225);
+
 CREATE TABLE DanhMuc (
                          id INT IDENTITY(1,1) PRIMARY KEY,
                          ten_danh_muc NVARCHAR(100) NOT NULL
 );
+ALTER TABLE DanhMuc add hinh_anh NVARCHAR (225);
+
 CREATE TABLE LoaiMay (
                          id INT IDENTITY(1,1) PRIMARY KEY,
                          ten_loai_may NVARCHAR(100)
@@ -61,6 +67,7 @@ CREATE TABLE ChatLieuDay (
                              id INT IDENTITY(1,1) PRIMARY KEY,
                              ten_chat_lieu NVARCHAR(100)
 );
+
 CREATE TABLE SanPham (
                          id INT IDENTITY(1,1) PRIMARY KEY,
                          ma_san_pham NVARCHAR(50) NOT NULL UNIQUE,
@@ -96,6 +103,7 @@ CREATE TABLE SanPhamChiTiet (
                                 FOREIGN KEY (id_chat_lieu_day) REFERENCES ChatLieuDay(id),
                                 FOREIGN KEY (id_loai_may) REFERENCES LoaiMay(id)
 );
+
 CREATE TABLE GioHang (
                          id INT IDENTITY(1,1) PRIMARY KEY,
                          id_khach_hang INT NOT NULL,
@@ -112,6 +120,7 @@ CREATE TABLE GioHangChiTiet (
                                 FOREIGN KEY (id_gio_hang) REFERENCES GioHang(id),
                                 FOREIGN KEY (id_san_pham_chi_tiet) REFERENCES SanPhamChiTiet(id)
 );
+
 CREATE TABLE Voucher (
                          id INT IDENTITY(1,1) PRIMARY KEY,
                          ma_voucher VARCHAR(50) NOT NULL UNIQUE,
@@ -123,7 +132,6 @@ CREATE TABLE Voucher (
                          don_hang_toi_thieu DECIMAL(18,2) DEFAULT 0,
                          so_luong_tong INT NOT NULL,
                          so_luong_da_dung INT DEFAULT 0,
-                         gioi_han_moi_user BIT NOT NULL DEFAULT 0,
                          ngay_bat_dau DATETIME NOT NULL,
                          ngay_ket_thuc DATETIME NOT NULL,
                          trang_thai BIT NOT NULL DEFAULT 1,
@@ -131,17 +139,9 @@ CREATE TABLE Voucher (
                          ngay_cap_nhat DATETIME
 );
 
-CREATE TABLE Voucher_User (
-                             id INT IDENTITY(1,1) PRIMARY KEY,
-                             id_voucher INT NOT NULL,
-                             id_khach_hang INT NOT NULL,
-                             so_lan_da_dung INT NOT NULL DEFAULT 0,
-                             lan_cuoi_dung DATETIME NULL,
-                             CONSTRAINT UQ_VoucherUser UNIQUE (id_voucher, id_khach_hang),
-                             FOREIGN KEY (id_voucher) REFERENCES Voucher(id),
-                             FOREIGN KEY (id_khach_hang) REFERENCES KhachHang(id)
-);
-----------------------------
+ALTER TABLE Voucher add gioi_han_moi_user bit ;
+ALTER TABLE Voucher ADD danh_muc_ap_dung NVARCHAR(255) NULL;
+
 CREATE TABLE KhuyenMai (
                            id INT IDENTITY(1,1) PRIMARY KEY,
                            ma_khuyen_mai VARCHAR(50) UNIQUE,
@@ -157,7 +157,6 @@ CREATE TABLE KhuyenMai (
                            ngay_cap_nhat DATETIME
 );
 
-
 CREATE TABLE SanPhamChiTietKhuyenMai (
                                          id INT IDENTITY(1,1) PRIMARY KEY,
                                          id_san_pham_chi_tiet INT,
@@ -165,6 +164,7 @@ CREATE TABLE SanPhamChiTietKhuyenMai (
                                          FOREIGN KEY (id_san_pham_chi_tiet) REFERENCES SanPhamChiTiet(id),
                                          FOREIGN KEY (id_khuyen_mai) REFERENCES KhuyenMai(id)
 );
+
 CREATE TABLE HoaDon (
                         id INT IDENTITY(1,1) PRIMARY KEY,
                         ma_don_hang VARCHAR(50) NOT NULL UNIQUE,
@@ -182,13 +182,12 @@ CREATE TABLE HoaDon (
                         dia_chi NVARCHAR(255) NOT NULL,
                         ten_khach_hang NVARCHAR(100) NOT NULL,
                         sdt_khach_hang VARCHAR(20) NOT NULL,
-                        ghi_chu NVARCHAR(255) NULL
-	FOREIGN KEY (id_nhan_vien) REFERENCES KhachHang(id),
+                        ghi_chu NVARCHAR(255) NULL,
+                        FOREIGN KEY (id_nhan_vien) REFERENCES KhachHang(id),
                         FOREIGN KEY (id_khach_hang) REFERENCES KhachHang(id),
-                        FOREIGN KEY (id_voucher) REFERENCES Voucher(id),
-
-
+                        FOREIGN KEY (id_voucher) REFERENCES Voucher(id)
 );
+ALTER TABLE HoaDon ALTER COLUMN id_khach_hang INT NULL;
 
 CREATE TABLE DiaChiGiaoHang (
                                 id INT IDENTITY(1,1) PRIMARY KEY,
@@ -202,6 +201,7 @@ CREATE TABLE DiaChiGiaoHang (
                                 ghi_chu NVARCHAR(255),
                                 FOREIGN KEY (id_hoa_don) REFERENCES HoaDon(id)
 );
+
 CREATE TABLE HoaDonChiTiet (
                                id INT IDENTITY(1,1) PRIMARY KEY,
                                id_hoa_don INT NOT NULL,
@@ -211,6 +211,7 @@ CREATE TABLE HoaDonChiTiet (
                                FOREIGN KEY (id_hoa_don) REFERENCES HoaDon(id),
                                FOREIGN KEY (id_san_pham_chi_tiet) REFERENCES SanPhamChiTiet(id)
 );
+
 CREATE TABLE Blog (
                       id INT IDENTITY(1,1) PRIMARY KEY,
                       tieu_de NVARCHAR(255),
@@ -219,127 +220,367 @@ CREATE TABLE Blog (
                       ngay_dang DATETIME DEFAULT GETDATE()
 );
 
-INSERT INTO ChucVu (ten_chuc_vu) VALUES
-                                     (N'Admin'),
-                                     (N'Nhân viên'),
-                                     (N'Khách hàng');
-INSERT INTO KhachHang
-(ma_nguoi_dung, ten_nguoi_dung, email, sdt, mat_khau, gioi_tinh, ngay_sinh, id_chuc_vu)
-VALUES
-    ('ADMIN01', N'Phạm Quang Huy', 'admin@watchaura.vn', '0909123456', 'admin123', N'Nam', '1995-04-12', 1),
-    ('NV001',   N'Nguyễn Minh Tuấn', 'tuan.nv@watchaura.vn', '0912345678', 'nv123', N'Nam', '1998-09-20', 2),
-    ('KH001',   N'Trần Thị Mai', 'mai.tran@gmail.com', '0987654321', 'kh123', N'Nữ', '2000-03-15', 3);
-INSERT INTO DiaChi
-(id_khach_hang, dia_chi_cu_the, phuong_xa, quan_huyen, tinh_thanh, mac_dinh)
-VALUES
-    (1, N'12 Nguyễn Huệ', N'Bến Nghé', N'Quận 1', N'TP Hồ Chí Minh', 1),
-    (2, N'88 Trần Hưng Đạo', N'Phường 7', N'Quận 5', N'TP Hồ Chí Minh', 1),
-    (3, N'25 Lý Thường Kiệt', N'Phường Trần Phú', N'Hà Đông', N'Hà Nội', 1);
+CREATE TABLE DanhGia (
+                         id INT IDENTITY(1,1) PRIMARY KEY,
+                         id_san_pham_chi_tiet INT,
+                         id_khach_hang INT,
+                         so_sao INT,
+                         noi_dung NVARCHAR(500),
+                         ngay_danh_gia DATETIME DEFAULT GETDATE(),
+
+                         FOREIGN KEY (id_san_pham_chi_tiet) REFERENCES SanPhamChiTiet(id),
+                         FOREIGN KEY (id_khach_hang) REFERENCES KhachHang(id)
+);
+
+SELECT * FROM DanhGia
+
+-- ===================================
+-- INSERT DATA
+-- ===================================
+
+-- Insert ChucVu
+    INSERT INTO ChucVu (ten_chuc_vu) VALUES
+    (N'Admin'),
+    (N'Nhân viên'),
+    (N'Khách hàng');
+
+-- Insert KhachHang
+INSERT INTO KhachHang (ma_nguoi_dung, ten_nguoi_dung, email, sdt, mat_khau, gioi_tinh, ngay_sinh, id_chuc_vu) VALUES
+                                                                                                                  ('ADMIN01', N'Phạm Quang Huy', 'admin@watchaura.vn', '0909123456', 'admin123', N'Nam', '1995-04-12', 1),
+                                                                                                                  ('NV001', N'Nguyễn Minh Tuấn', 'tuan.nv@watchaura.vn', '0912345678', 'nv123', N'Nam', '1998-09-20', 2),
+                                                                                                                  ('KH001', N'Trần Thị Mai', 'mai.tran@gmail.com', '0987654321', 'kh123', N'Nữ', '2000-03-15', 3);
+
+-- Insert DiaChi
+INSERT INTO DiaChi (id_khach_hang, dia_chi_cu_the, phuong_xa, quan_huyen, tinh_thanh, mac_dinh) VALUES
+                                                                                                    (1, N'12 Nguyễn Huệ', N'Bến Nghé', N'Quận 1', N'TP Hồ Chí Minh', 1),
+                                                                                                    (2, N'88 Trần Hưng Đạo', N'Phường 7', N'Quận 5', N'TP Hồ Chí Minh', 1),
+                                                                                                    (3, N'25 Lý Thường Kiệt', N'Phường Trần Phú', N'Hà Đông', N'Hà Nội', 1);
+
+-- Insert ThuongHieu
 INSERT INTO ThuongHieu (ten_thuong_hieu) VALUES
                                              (N'Rolex'),
                                              (N'Omega'),
                                              (N'Seiko');
+
+-- Insert DanhMuc
 INSERT INTO DanhMuc (ten_danh_muc) VALUES
                                        (N'Đồng hồ hiện đại'),
                                        (N'Đồng hồ nam'),
-                                       (N'Đồng hồ nữ')
+                                       (N'Đồng hồ nữ');
 
+-- Insert MauSac
+INSERT INTO MauSac (ten_mau_sac) VALUES
+                                     (N'Đen'),
+                                     (N'Bạc'),
+                                     (N'Nâu');
 
-    INSERT INTO MauSac (ten_mau_sac) VALUES
-    (N'Đen'),
-    (N'Bạc'),
-    (N'Nâu');
-
+-- Insert LoaiMay
 INSERT INTO LoaiMay (ten_loai_may) VALUES
                                        (N'Automatic'),
                                        (N'Cơ tay'),
                                        (N'Quartz');
+
+-- Insert KichThuoc
 INSERT INTO KichThuoc (ten_kich_thuoc) VALUES
                                            (N'40mm'),
                                            (N'42mm'),
                                            (N'44mm');
+
+-- Insert ChatLieuDay
 INSERT INTO ChatLieuDay (ten_chat_lieu) VALUES
                                             (N'Da bò'),
                                             (N'Thép không gỉ'),
                                             (N'Cao su');
-INSERT INTO SanPham
-(ma_san_pham, ten_san_pham, mo_ta, id_thuong_hieu, id_danh_muc, phong_cach)
-VALUES
-    ('SP001', N'Rolex Submariner', N'Đồng hồ cơ cao cấp, chống nước tốt', 1, 1, N'Sang trọng'),
-    ('SP002', N'Omega Seamaster', N'Đồng hồ thể thao chuyên nghiệp', 2, 1, N'Thể thao'),
-    ('SP003', N'Seiko Presage', N'Đồng hồ cơ Nhật Bản cổ điển', 3, 3, N'Cổ điển');
-INSERT INTO SanPhamChiTiet
-(id_san_pham, id_mau_sac, id_kich_thuoc, id_chat_lieu_day, id_loai_may,
- so_luong_ton, gia_ban, duong_kinh, do_chiu_nuoc, be_rong_day, trong_luong)
-VALUES
-    (1, 1, 2, 2, 1, 10, 250000000, 42, 300, 20, 150),
-    (2, 2, 1, 2, 1, 15, 180000000, 40, 300, 20, 145),
-    (3, 3, 1, 1, 2, 20, 18000000, 40, 50, 18, 120);
 
-INSERT INTO GioHang (id_khach_hang)
-VALUES
-    (3),
-    (2),
-    (1);
-INSERT INTO GioHangChiTiet
-(id_gio_hang, id_san_pham_chi_tiet, so_luong)
-VALUES
-    (3, 1, 1),
-    (2, 2, 1),
-    (1, 3, 1);
+-- Insert SanPham
+INSERT INTO SanPham (ma_san_pham, ten_san_pham, mo_ta, id_thuong_hieu, id_danh_muc, phong_cach) VALUES
+                                                                                                    ('SP001', N'Rolex Submariner', N'Đồng hồ cơ cao cấp, chống nước tốt', 1, 1, N'Sang trọng'),
+                                                                                                    ('SP002', N'Omega Seamaster', N'Đồng hồ thể thao chuyên nghiệp', 2, 1, N'Thể thao'),
+                                                                                                    ('SP003', N'Seiko Presage', N'Đồng hồ cơ Nhật Bản cổ điển', 3, 3, N'Cổ điển');
 
-SELECT * FROM SanPhamChiTiet;
+-- Insert SanPhamChiTiet
+INSERT INTO SanPhamChiTiet (id_san_pham, id_mau_sac, id_kich_thuoc, id_chat_lieu_day, id_loai_may, so_luong_ton, gia_ban, duong_kinh, do_chiu_nuoc, be_rong_day, trong_luong) VALUES
+                                                                                                                                                                                  (1, 1, 2, 2, 1, 10, 250000000, 42, 300, 20, 150),
+                                                                                                                                                                                  (2, 2, 1, 2, 1, 15, 180000000, 40, 300, 20, 145),
+                                                                                                                                                                                  (3, 3, 1, 1, 2, 20, 18000000, 40, 50, 18, 120);
 
-INSERT INTO Voucher
-(ma_voucher, ten_voucher, loai_voucher, gia_tri, don_hang_toi_thieu,so_luong_tong, ngay_bat_dau, ngay_ket_thuc)
-VALUES
-    ('SALE10', N'Giảm 10%', 'PERCENT', 10, 5000000, 100, GETDATE(), DATEADD(DAY,30,GETDATE())),
-    ('SALE500K', N'Giảm 500K', 'FIXED', 500000, 10000000, 50, GETDATE(), DATEADD(DAY,20,GETDATE())),
-    ('VIP20', N'Khách VIP giảm 20%', 'PERCENT', 20, 20000000, 30, GETDATE(), DATEADD(DAY,60,GETDATE()));
-INSERT INTO KhuyenMai
-(ma_khuyen_mai, ten_chuong_trinh, loai_giam, gia_tri_giam,
- ngay_bat_dau, ngay_ket_thuc)
-VALUES
-    ('KM01', N'Khuyến mãi hè', 'PERCENT', 15, GETDATE(), DATEADD(DAY,30,GETDATE())),
-    ('KM02', N'Sale cuối năm', 'FIXED', 2000000, GETDATE(), DATEADD(DAY,45,GETDATE())),
-    ('KM03', N'Black Friday', 'PERCENT', 25, GETDATE(), DATEADD(DAY,10,GETDATE()));
-INSERT INTO SanPhamChiTietKhuyenMai
-(id_san_pham_chi_tiet, id_khuyen_mai)
-VALUES
-    (1, 1),
-    (2, 3),
-    (3, 2);
+-- Insert GioHang
+INSERT INTO GioHang (id_khach_hang) VALUES
+                                        (1),
+                                        (2),
+                                        (3);
 
-INSERT INTO HoaDon
-(ma_don_hang, id_khach_hang, id_nhan_vien, id_voucher,
- tong_tien_tam_tinh, tien_giam, tong_tien_thanh_toan,
- phuong_thuc_thanh_toan, loai_hoa_don, trang_thai_don_hang,
- dia_chi, ten_khach_hang, sdt_khach_hang)
-VALUES
-    ('HD001', 3, 2, 1, 18000000, 1800000, 16200000, 'COD', 'ONLINE', 'HOAN_THANH',
-     N'25 Lý Thường Kiệt, Hà Đông, Hà Nội', N'Trần Thị Mai', '0987654321'),
-    ('HD002', 2, 2, NULL, 180000000, 0, 180000000, 'VNPAY', 'ONLINE', 'DANG_GIAO',
-     N'88 Trần Hưng Đạo, Q5, TP HCM', N'Nguyễn Minh Tuấn', '0912345678'),
-    ('HD003', 3, 2, 2, 250000000, 500000, 249500000, 'COD', 'ONLINE', 'CHO_XAC_NHAN',
-     N'25 Lý Thường Kiệt, Hà Đông, Hà Nội', N'Trần Thị Mai', '0987654321');
-INSERT INTO HoaDonChiTiet
-(id_hoa_don, id_san_pham_chi_tiet, so_luong, don_gia)
-VALUES
-    (1, 3, 1, 18000000),
-    (2, 2, 1, 180000000),
-    (3, 1, 1, 250000000);
-INSERT INTO DiaChiGiaoHang
-(id_hoa_don, ten_nguoi_nhan, sdt_nguoi_nhan,
- dia_chi_cu_the, phuong_xa, quan_huyen, tinh_thanh)
-VALUES
-    (1, N'Trần Thị Mai', '0987654321', N'25 Lý Thường Kiệt', N'Trần Phú', N'Hà Đông', N'Hà Nội'),
-    (2, N'Nguyễn Minh Tuấn', '0912345678', N'88 Trần Hưng Đạo', N'Phường 7', N'Quận 5', N'TP HCM'),
-    (3, N'Trần Thị Mai', '0987654321', N'25 Lý Thường Kiệt', N'Trần Phú', N'Hà Đông', N'Hà Nội');
-INSERT INTO Blog (tieu_de, noi_dung)
-VALUES
-    (N'Cách chọn đồng hồ cơ chuẩn', N'Hướng dẫn chọn đồng hồ cơ phù hợp cổ tay.'),
-    (N'Rolex có gì đặc biệt?', N'Phân tích vì sao Rolex luôn giữ giá.'),
-    (N'Bảo quản đồng hồ đúng cách', N'Mẹo giúp đồng hồ bền đẹp theo thời gian.');
+-- Insert GioHangChiTiet
+INSERT INTO GioHangChiTiet (id_gio_hang, id_san_pham_chi_tiet, so_luong) VALUES
+                                                                             (1, 1, 1),
+                                                                             (2, 2, 1),
+                                                                             (3, 3, 1);
+
+-- Insert Voucher
+INSERT INTO Voucher (ma_voucher, ten_voucher, loai_voucher, gia_tri, don_hang_toi_thieu, so_luong_tong, ngay_bat_dau, ngay_ket_thuc) VALUES
+                                                                                                                                         ('SALE10', N'Giảm 10%', 'PERCENT', 10, 5000000, 100, GETDATE(), DATEADD(DAY, 30, GETDATE())),
+                                                                                                                                         ('SALE500K', N'Giảm 500K', 'FIXED', 500000, 10000000, 50, GETDATE(), DATEADD(DAY, 20, GETDATE())),
+                                                                                                                                         ('VIP20', N'Khách VIP giảm 20%', 'PERCENT', 20, 20000000, 30, GETDATE(), DATEADD(DAY, 60, GETDATE()));
+
+-- Insert KhuyenMai
+INSERT INTO KhuyenMai (ma_khuyen_mai, ten_chuong_trinh, loai_giam, gia_tri_giam, ngay_bat_dau, ngay_ket_thuc) VALUES
+                                                                                                                  ('KM01', N'Khuyến mãi hè', 'PERCENT', 15, GETDATE(), DATEADD(DAY, 30, GETDATE())),
+                                                                                                                  ('KM02', N'Sale cuối năm', 'FIXED', 2000000, GETDATE(), DATEADD(DAY, 45, GETDATE())),
+                                                                                                                  ('KM03', N'Black Friday', 'PERCENT', 25, GETDATE(), DATEADD(DAY, 10, GETDATE()));
+
+-- Insert SanPhamChiTietKhuyenMai
+INSERT INTO SanPhamChiTietKhuyenMai (id_san_pham_chi_tiet, id_khuyen_mai) VALUES
+                                                                              (1, 1),
+                                                                              (2, 3),
+                                                                              (3, 2);
+
+-- Insert HoaDon
+INSERT INTO HoaDon (ma_don_hang, id_khach_hang, id_nhan_vien, id_voucher, tong_tien_tam_tinh, tien_giam, tong_tien_thanh_toan, phuong_thuc_thanh_toan, loai_hoa_don, trang_thai_don_hang, dia_chi, ten_khach_hang, sdt_khach_hang) VALUES
+                                                                                                                                                                                                                                       ('HD001', 3, 2, 1, 18000000, 1800000, 16200000, 'COD', 'ONLINE', 'HOAN_THANH', N'25 Lý Thường Kiệt, Hà Đông, Hà Nội', N'Trần Thị Mai', '0987654321'),
+                                                                                                                                                                                                                                       ('HD002', 2, 2, NULL, 180000000, 0, 180000000, 'VNPAY', 'ONLINE', 'DANG_GIAO', N'88 Trần Hưng Đạo, Q5, TP HCM', N'Nguyễn Minh Tuấn', '0912345678'),
+                                                                                                                                                                                                                                       ('HD003', 3, 2, 2, 250000000, 500000, 249500000, 'COD', 'ONLINE', 'CHO_XAC_NHAN', N'25 Lý Thường Kiệt, Hà Đông, Hà Nội', N'Trần Thị Mai', '0987654321');
+
+-- Insert HoaDonChiTiet
+INSERT INTO HoaDonChiTiet (id_hoa_don, id_san_pham_chi_tiet, so_luong, don_gia) VALUES
+                                                                                    (1, 3, 1, 18000000),
+                                                                                    (2, 2, 1, 180000000),
+                                                                                    (3, 1, 1, 250000000);
+
+-- Insert DiaChiGiaoHang
+INSERT INTO DiaChiGiaoHang (id_hoa_don, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_cu_the, phuong_xa, quan_huyen, tinh_thanh) VALUES
+                                                                                                                               (1, N'Trần Thị Mai', '0987654321', N'25 Lý Thường Kiệt', N'Trần Phú', N'Hà Đông', N'Hà Nội'),
+                                                                                                                               (2, N'Nguyễn Minh Tuấn', '0912345678', N'88 Trần Hưng Đạo', N'Phường 7', N'Quận 5', N'TP HCM'),
+                                                                                                                               (3, N'Trần Thị Mai', '0987654321', N'25 Lý Thường Kiệt', N'Trần Phú', N'Hà Đông', N'Hà Nội');
+
+-- Insert Blog
+INSERT INTO Blog (tieu_de, noi_dung) VALUES
+                                         (N'Cách chọn đồng hồ cơ chuẩn', N'Hướng dẫn chọn đồng hồ cơ phù hợp cổ tay.'),
+                                         (N'Rolex có gì đặc biệt?', N'Phân tích vì sao Rolex luôn giữ giá.'),
+                                         (N'Bảo quản đồng hồ đúng cách', N'Mẹo giúp đồng hồ bền đẹp theo thời gian.');
+
+ALTER TABLE HoaDon ALTER COLUMN id_khach_hang INT NULL;
+ALTER TABLE SanPhamChiTiet ADD  so_luong_da_dat INT DEFAULT 0;
+ALTER TABLE KhuyenMai ADD danh_muc_ap_dung NVARCHAR(255) NULL;
+ALTER TABLE HoaDon ADD email NVARCHAR(255) NULL;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'dbo.SanPham') AND name = N'id_loai_may'
+)
+BEGIN
+ALTER TABLE dbo.SanPham ADD id_loai_may INT NULL;
+END
+GO
+
+-- 2) Gán giá trị từ biến thể (một giá trị đại diện mỗi sản phẩm khi có nhiều dòng)
+UPDATE sp
+SET sp.id_loai_may = x.id_loai_may
+    FROM dbo.SanPham sp
+INNER JOIN (
+    SELECT id_san_pham, MIN(id_loai_may) AS id_loai_may
+    FROM dbo.SanPhamChiTiet
+    WHERE id_loai_may IS NOT NULL
+    GROUP BY id_san_pham
+) x ON sp.id = x.id_san_pham;
+GO
+
+-- 3) Khóa ngoại SanPham -> LoaiMay
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_SanPham_LoaiMay')
+BEGIN
+ALTER TABLE dbo.SanPham
+    ADD CONSTRAINT FK_SanPham_LoaiMay FOREIGN KEY (id_loai_may) REFERENCES dbo.LoaiMay(id);
+END
+GO
+
+ALTER TABLE SanPham
+
+    ADD
+
+        gia_tri_khuyen_mai DECIMAL(18, 2) NULL,
+
+    loai_khuyen_mai NVARCHAR(50) NULL,
+
+    ngay_bat_dau_khuyen_mai DATETIME2 NULL,
+
+    ngay_ket_thuc_khuyen_mai DATETIME2 NULL,
+
+    trang_thai_khuyen_mai INT NULL;
+
+IF COL_LENGTH('DiaChi', 'ghn_province_id') IS NULL
+BEGIN
+ALTER TABLE DiaChi ADD ghn_province_id INT NULL;
+END
+IF COL_LENGTH('DiaChi', 'ghn_district_id') IS NULL
+BEGIN
+ALTER TABLE DiaChi ADD ghn_district_id INT NULL;
+END
+IF COL_LENGTH('DiaChi', 'ghn_ward_code') IS NULL
+BEGIN
+ALTER TABLE DiaChi ADD ghn_ward_code NVARCHAR(20) NULL;
+END
+
+CREATE TABLE SerialSanPham (
+                               id INT IDENTITY(1,1) PRIMARY KEY,
+
+    -- Liên kết tới biến thể sản phẩm (để tra cứu nhanh theo sản phẩm)
+                               id_san_pham_chi_tiet INT NOT NULL,
+
+    -- Liên kết tới dòng hóa đơn chi tiết khi được bán
+    -- NULL = chưa bán (còn trong kho)
+                               id_hoa_don_chi_tiet INT NULL,
+
+    -- Mã serial duy nhất cho từng chiếc đồng hồ
+                               ma_serial NVARCHAR(100) NOT NULL UNIQUE,
+
+    -- Trạng thái: 0 = trong kho, 1 = đã bán, 2 = bảo hành, 3 = đã trả hàng
+                               trang_thai INT NOT NULL DEFAULT 0,
+
+    -- Ngày xuất kho (khi đơn hàng hoàn thành)
+                               ngay_xuat_kho DATETIME NULL,
+
+    -- Ngày hết bảo hành (tính từ ngày bán)
+                               ngay_het_bao_hanh DATETIME NULL,
+
+                               ghi_chu NVARCHAR(255) NULL,
+                               ngay_tao DATETIME DEFAULT GETDATE(),
+
+                               FOREIGN KEY (id_san_pham_chi_tiet) REFERENCES SanPhamChiTiet(id),
+                               FOREIGN KEY (id_hoa_don_chi_tiet)  REFERENCES HoaDonChiTiet(id)
+);
+
+-- Index tra cứu nhanh theo serial
+CREATE UNIQUE INDEX UX_SerialSanPham_MaSerial
+    ON SerialSanPham(ma_serial);
+
+-- Index tra cứu theo sản phẩm & trạng thái (dùng khi chọn serial kho)
+CREATE INDEX IX_SerialSanPham_SanPham_TrangThai
+    ON SerialSanPham(id_san_pham_chi_tiet, trang_thai);
+
+-- Index tra cứu theo hóa đơn chi tiết
+CREATE INDEX IX_SerialSanPham_HoaDonChiTiet
+    ON SerialSanPham(id_hoa_don_chi_tiet);
+
+
+-- ===================================
+-- INSERT DỮ LIỆU MẪU
+-- ===================================
+
+-- Thêm serial vào kho cho SanPhamChiTiet id=1 (Rolex Submariner, tồn 10 chiếc)
+-- Format: [MaSanPham]-[MauSac]-[KichThuoc]-[SoThuTu]
+INSERT INTO SerialSanPham (id_san_pham_chi_tiet, ma_serial, trang_thai) VALUES
+                                                                            (1, 'SP001-DEN-42-0001', 0),
+                                                                            (1, 'SP001-DEN-42-0002', 0),
+                                                                            (1, 'SP001-DEN-42-0003', 0),
+                                                                            (1, 'SP001-DEN-42-0004', 0),
+                                                                            (1, 'SP001-DEN-42-0005', 0);
+
+-- Thêm serial cho SanPhamChiTiet id=2 (Omega Seamaster, tồn 15 chiếc)
+INSERT INTO SerialSanPham (id_san_pham_chi_tiet, ma_serial, trang_thai) VALUES
+                                                                            (2, 'SP002-BAC-40-0001', 0),
+                                                                            (2, 'SP002-BAC-40-0002', 0),
+                                                                            (2, 'SP002-BAC-40-0003', 0),
+                                                                            (2, 'SP002-BAC-40-0004', 0),
+                                                                            (2, 'SP002-BAC-40-0005', 0);
+
+-- Thêm serial cho SanPhamChiTiet id=3 (Seiko Presage, tồn 20 chiếc)
+INSERT INTO SerialSanPham (id_san_pham_chi_tiet, ma_serial, trang_thai) VALUES
+                                                                            (3, 'SP003-NAU-40-0001', 0),
+                                                                            (3, 'SP003-NAU-40-0002', 0),
+                                                                            (3, 'SP003-NAU-40-0003', 0),
+                                                                            (3, 'SP003-NAU-40-0004', 0),
+                                                                            (3, 'SP003-NAU-40-0005', 0);
+
+-- Gán serial cho đơn hàng đã hoàn thành (HD001 - HoaDonChiTiet id=1, mua Seiko x1)
+UPDATE SerialSanPham
+SET
+    id_hoa_don_chi_tiet = 1,
+    trang_thai          = 1,                              -- đã bán
+    ngay_xuat_kho       = GETDATE(),
+    ngay_het_bao_hanh   = DATEADD(YEAR, 2, GETDATE())    -- bảo hành 2 năm
+WHERE ma_serial = 'SP003-NAU-40-0001';
+
+-- Gán serial cho đơn HD002 - HoaDonChiTiet id=2 (Omega x1)
+UPDATE SerialSanPham
+SET
+    id_hoa_don_chi_tiet = 2,
+    trang_thai          = 1,
+    ngay_xuat_kho       = GETDATE(),
+    ngay_het_bao_hanh   = DATEADD(YEAR, 2, GETDATE())
+WHERE ma_serial = 'SP002-BAC-40-0001';
+
+-- Gán serial cho đơn HD003 - HoaDonChiTiet id=3 (Rolex x1)
+UPDATE SerialSanPham
+SET
+    id_hoa_don_chi_tiet = 3,
+    trang_thai          = 1,
+    ngay_xuat_kho       = GETDATE(),
+    ngay_het_bao_hanh   = DATEADD(YEAR, 5, GETDATE())    -- Rolex bảo hành 5 năm
+WHERE ma_serial = 'SP001-DEN-42-0001';
+
+
+-- ===================================
+-- QUERY HỮU ÍCH
+-- ===================================
+
+-- 1. Xem toàn bộ serial kèm thông tin sản phẩm và đơn hàng
+SELECT
+    s.ma_serial,
+    sp.ten_san_pham,
+    ms.ten_mau_sac,
+    ks.ten_kich_thuoc,
+    CASE s.trang_thai
+        WHEN 0 THEN N'Trong kho'
+        WHEN 1 THEN N'Đã bán'
+        WHEN 2 THEN N'Bảo hành'
+        WHEN 3 THEN N'Đã trả hàng'
+        END AS trang_thai,
+    hd.ma_don_hang,
+    kh.ten_nguoi_dung AS ten_khach_hang,
+    s.ngay_xuat_kho,
+    s.ngay_het_bao_hanh
+FROM SerialSanPham s
+         JOIN SanPhamChiTiet spct ON s.id_san_pham_chi_tiet = spct.id
+         JOIN SanPham        sp   ON spct.id_san_pham        = sp.id
+         JOIN MauSac         ms   ON spct.id_mau_sac          = ms.id
+         JOIN KichThuoc      ks   ON spct.id_kich_thuoc        = ks.id
+         LEFT JOIN HoaDonChiTiet hdct ON s.id_hoa_don_chi_tiet = hdct.id
+         LEFT JOIN HoaDon        hd   ON hdct.id_hoa_don        = hd.id
+         LEFT JOIN KhachHang     kh   ON hd.id_khach_hang       = kh.id
+ORDER BY sp.ten_san_pham, s.ma_serial;
+
+-- 2. Tra cứu bảo hành theo mã serial (khách hàng dùng)
+SELECT
+    s.ma_serial,
+    sp.ten_san_pham,
+    hd.ma_don_hang,
+    kh.ten_nguoi_dung,
+    s.ngay_xuat_kho,
+    s.ngay_het_bao_hanh,
+    CASE
+        WHEN s.ngay_het_bao_hanh > GETDATE() THEN N'Còn bảo hành'
+        ELSE N'Hết bảo hành'
+        END AS tinh_trang_bao_hanh
+FROM SerialSanPham s
+         JOIN SanPhamChiTiet spct ON s.id_san_pham_chi_tiet = spct.id
+         JOIN SanPham        sp   ON spct.id_san_pham        = sp.id
+         LEFT JOIN HoaDonChiTiet hdct ON s.id_hoa_don_chi_tiet = hdct.id
+         LEFT JOIN HoaDon        hd   ON hdct.id_hoa_don        = hd.id
+         LEFT JOIN KhachHang     kh   ON hd.id_khach_hang       = kh.id
+WHERE s.ma_serial = 'SP001-DEN-42-0001';  -- thay bằng serial cần tra
+
+-- 3. Đếm serial còn trong kho theo từng biến thể
+SELECT
+    sp.ten_san_pham,
+    ms.ten_mau_sac,
+    ks.ten_kich_thuoc,
+    COUNT(*) AS so_serial_trong_kho
+FROM SerialSanPham s
+         JOIN SanPhamChiTiet spct ON s.id_san_pham_chi_tiet = spct.id
+         JOIN SanPham        sp   ON spct.id_san_pham        = sp.id
+         JOIN MauSac         ms   ON spct.id_mau_sac          = ms.id
+         JOIN KichThuoc      ks   ON spct.id_kich_thuoc        = ks.id
+WHERE s.trang_thai = 0  -- chỉ lấy hàng trong kho
+GROUP BY sp.ten_san_pham, ms.ten_mau_sac, ks.ten_kich_thuoc;
 
 SELECT * FROM ChucVu;
 SELECT * FROM KhachHang;
