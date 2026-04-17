@@ -39,23 +39,11 @@ public class AuthController {
             @RequestParam(value = "success", required = false) String success,
             HttpSession session,
             Model model) {
-        // Nếu đã đăng nhập rồi thì chuyển hướng đến trang phù hợp
+        // Nếu đã đăng nhập rồi thì chuyển hướng về trang chủ để mua hàng
         Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
         if (userId != null) {
             Optional<KhachHang> opt = khachHangService.getByIdForView(userId);
             if (opt.isPresent()) {
-                KhachHang kh = opt.get();
-                if (isTaiKhoanNoiBo(kh)) {
-                    String tenChucVu = kh.getChucVu() != null ? kh.getChucVu().getTenChucVu() : null;
-                    if (tenChucVu != null) {
-                        if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
-                            return "redirect:/ban-hang";
-                        } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
-                                || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
-                            return "redirect:/admin";
-                        }
-                    }
-                }
                 return "redirect:/home";
             }
         }
@@ -228,7 +216,7 @@ public class AuthController {
                 || t.equalsIgnoreCase("admin") || t.equalsIgnoreCase("quanly");
     }
 
-    /** Đăng nhập — Admin/Nhân viên → chuyển đến /admin hoặc /ban-hang; khách hàng → /home hoặc trang gốc */
+    /** Đăng nhập — mọi tài khoản (khách hàng, admin, nhân viên) đều vào /home để mua hàng */
     @PostMapping("/dang-nhap")
     public String dangNhap(
             @RequestParam("email") String email,
@@ -255,30 +243,6 @@ public class AuthController {
         }
 
         session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
-
-        // Lấy URL gốc cần chuyển hướng sau khi đăng nhập
-        String originalUri = (String) session.getAttribute("originalUri");
-        if (originalUri != null && !originalUri.isBlank()) {
-            session.removeAttribute("originalUri");
-            redirect.addFlashAttribute("welcomeMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
-            return "redirect:" + originalUri;
-        }
-
-        // Nếu không có originalUri, phân loại theo vai trò
-        if (kh.getChucVu() != null) {
-            String tenChucVu = kh.getChucVu().getTenChucVu();
-            if (tenChucVu != null) {
-                if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
-                    redirect.addFlashAttribute("welcomeMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
-                    return "redirect:/ban-hang";
-                } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
-                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
-                    redirect.addFlashAttribute("welcomeMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
-                    return "redirect:/admin";
-                }
-            }
-        }
-
         redirect.addFlashAttribute("welcomeMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
         return "redirect:/home";
     }
