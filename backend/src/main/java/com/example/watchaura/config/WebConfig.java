@@ -31,8 +31,9 @@ public class WebConfig implements WebMvcConfigurer {
                 // 收银页面路径 - Admin, Quản lý, Nhân viên 可访问
                 .addPathPatterns("/ban-hang/**")
                 // 用户专属页面 - 需要登录
+                .addPathPatterns("/gio-hang")
                 .addPathPatterns("/gio-hang/**")
-                .addPathPatterns("/checkout/**")
+                .addPathPatterns("/thanh-toan")
                 .addPathPatterns("/thanh-toan/**")
                 // /don-hang/** 和 /theo-doi-don-hang - KHÔNG yêu cầu đăng nhập (theo dõi đơn bằng mã)
                 .addPathPatterns("/nguoidung/**")
@@ -48,6 +49,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "/admin/403",
                         "/admin/403.html",
                         "/admin/error/**",
+                        // 访客结账 - 不需要登录
+                        "/checkout",
+                        "/checkout/**",
                         // Theo dõi đơn hàng - không cần đăng nhập
                         "/don-hang",
                         "/don-hang/**",

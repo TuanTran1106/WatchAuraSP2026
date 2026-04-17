@@ -62,8 +62,9 @@ public class UserGioHangController {
     @GetMapping
     public String page(HttpSession session, Model model, RedirectAttributes redirect) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
+
         // =============================
-        // ✅ GUEST
+        // ✅ CHƯA LOGIN → dùng SESSION CART
         // =============================
         if (userId == null) {
             GioHangDTO cart = guestCartViewService.buildCartDto(session);
@@ -72,8 +73,11 @@ public class UserGioHangController {
             model.addAttribute("content", "user/gio-hang :: content");
             return "layout/user-layout";
         }
-        GioHangDTO cart = gioHangService.getOrCreateCart(userId);
 
+        // =============================
+        // ✅ ĐÃ LOGIN → dùng DB CART
+        // =============================
+        GioHangDTO cart = gioHangService.getOrCreateCart(userId);
         model.addAttribute("cart", cart);
         model.addAttribute("guestCart", false);
         model.addAttribute("content", "user/gio-hang :: content");
