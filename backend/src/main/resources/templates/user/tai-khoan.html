@@ -8,17 +8,20 @@
 
         <h1 class="account-page__title">Tài khoản của tôi</h1>
 
-        <!-- Thông tin tài khoản (gồm nút đổi mật khẩu + form bên trong) -->
-        <section class="account-card" id="doi-mat-khau" th:if="${currentUser != null}">
-            <h2 class="account-card__heading">
-                <i class="fas fa-user-circle"></i> Thông tin tài khoản
+        <!-- Thông tin tài khoản -->
+        <section class="account-card" id="thong-tin-tai-khoan" th:if="${currentUser != null}">
+            <h2 class="account-card__heading account-card__heading--row">
+                <span><i class="fas fa-user-circle"></i> Thông tin tài khoản</span>
+                <button type="button" class="btn-toggle-password-form btn-edit-profile" id="btnToggleHoSoForm" aria-expanded="false" aria-controls="accountHoSoForm" title="Chỉnh sửa thông tin">
+                    <i class="fas fa-pen" aria-hidden="true"></i> Chỉnh sửa thông tin
+                </button>
             </h2>
             <div class="account-info">
                 <div class="account-info__avatar" aria-hidden="true">
                     <i class="fas fa-user" th:if="${currentUser.hinhAnh == null or currentUser.hinhAnh == ''}"></i>
                     <img th:if="${currentUser.hinhAnh != null and currentUser.hinhAnh != ''}" th:src="${currentUser.hinhAnh}" alt="Avatar" class="account-info__img">
                 </div>
-                <dl class="account-info__list">
+                <dl class="account-info__list" id="accountHoSoDisplay">
                     <div class="account-info__row">
                         <dt>Họ và tên</dt>
                         <dd th:text="${currentUser.tenNguoiDung}">—</dd>
@@ -48,6 +51,53 @@
                     </div>
                 </dl>
             </div>
+            <div class="account-form-wrap" id="accountHoSoForm" role="region" aria-labelledby="btnToggleHoSoForm">
+                <form class="auth-form account-form account-form--address" id="formCapNhatHoSo">
+                    <table class="account-address-form-table">
+                        <tbody>
+                            <tr>
+                                <td class="account-address-form-table__label"><label for="hoSoTen">Họ và tên <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="text" id="hoSoTen" name="tenNguoiDung" required maxlength="100" th:value="${currentUser.tenNguoiDung}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label"><label for="hoSoEmail">Email <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="email" id="hoSoEmail" name="email" required maxlength="100" th:value="${currentUser.email}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label"><label for="hoSoSdt">Số điện thoại <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="tel" id="hoSoSdt" name="sdt" required maxlength="20" th:value="${currentUser.sdt}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label"><label for="hoSoNgaySinh">Ngày sinh</label></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="date" id="hoSoNgaySinh" name="ngaySinh" th:value="${currentUser.ngaySinh != null ? #temporals.format(currentUser.ngaySinh, 'yyyy-MM-dd') : ''}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label"><label for="hoSoGioiTinh">Giới tính</label></td>
+                                <td class="account-address-form-table__input">
+                                    <select id="hoSoGioiTinh" name="gioiTinh">
+                                        <option value="">— Chọn —</option>
+                                        <option value="Nam" th:selected="${currentUser.gioiTinh == 'Nam'}">Nam</option>
+                                        <option value="Nữ" th:selected="${currentUser.gioiTinh == 'Nữ'}">Nữ</option>
+                                        <option value="Khác" th:selected="${currentUser.gioiTinh == 'Khác'}">Khác</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="account-ho-so-actions">
+                        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Lưu thay đổi</button>
+                        <button type="button" class="btn-ho-so-cancel" id="btnHoSoCancel">Hủy</button>
+                    </div>
+                </form>
+            </div>
         </section>
 
         <!-- Quản lý địa chỉ -->
@@ -56,114 +106,82 @@
                 <i class="fas fa-map-marker-alt"></i> Địa chỉ của tôi
             </h2>
 
-            <!-- Danh sách địa chỉ + chọn mặc định -->
-            <div class="account-address-list-wrap" id="diaChiListSection" th:if="${listDiaChi != null and !listDiaChi.isEmpty()}">
-                <form th:action="@{/nguoidung/dia-chi-mac-dinh}" method="post" class="account-address-list-form ajax-form" data-target="#diaChiListSection">
-                    <ul class="account-address-list">
-                        <li th:each="dc : ${listDiaChi}" class="account-address-list__item" th:classappend="${defaultDiaChi != null and defaultDiaChi.id == dc.id} ? 'account-address-list__item--default' : ''">
-                            <label class="account-address-list__label">
-                                <input type="radio" name="diaChiId" th:value="${dc.id}" th:checked="${defaultDiaChi != null and defaultDiaChi.id == dc.id}" required>
-                                <span class="account-address-list__card">
-                                    <span class="account-address-list__badge" th:if="${defaultDiaChi != null and defaultDiaChi.id == dc.id}">Mặc định</span>
-                                    <dl class="account-info__list account-address-list__dl">
-                                        <div class="account-info__row">
-                                            <dt>Địa chỉ</dt>
-                                            <dd th:text="${dc.diaChiCuThe}">—</dd>
-                                        </div>
-                                        <div class="account-info__row" th:if="${dc.phuongXa != null and dc.phuongXa != ''}">
-                                            <dt>Phường/Xã</dt>
-                                            <dd th:text="${dc.phuongXa}">—</dd>
-                                        </div>
-                                        <div class="account-info__row" th:if="${dc.quanHuyen != null and dc.quanHuyen != ''}">
-                                            <dt>Quận/Huyện</dt>
-                                            <dd th:text="${dc.quanHuyen}">—</dd>
-                                        </div>
-                                        <div class="account-info__row">
-                                            <dt>Tỉnh/Thành phố</dt>
-                                            <dd th:text="${dc.tinhThanh}">—</dd>
-                                        </div>
-                                    </dl>
-                                </span>
-                            </label>
+            <div id="diaChiAjaxTarget" th:fragment="diaChiAjaxTarget">
+                <div th:if="${listDiaChi != null and !listDiaChi.isEmpty()}" class="account-address-list-wrap">
+                    <ul class="account-address-list account-address-list--cards">
+                        <li th:each="dc : ${listDiaChi}" class="account-address-list__item"
+                            th:classappend="${defaultDiaChi != null and defaultDiaChi.id == dc.id} ? 'account-address-list__item--default' : ''"
+                            th:with="tenNhan=${(dc.tenNguoiNhan != null and !dc.tenNguoiNhan.isEmpty()) ? dc.tenNguoiNhan : currentUser.tenNguoiDung},
+                                     sdtNhan=${(dc.sdtNguoiNhan != null and !dc.sdtNguoiNhan.isEmpty()) ? dc.sdtNguoiNhan : (currentUser.sdt != null ? currentUser.sdt : '')}">
+                            <div class="account-address-card">
+                                <label class="account-address-card__main">
+                                    <input type="radio" name="diaChiId" th:value="${dc.id}" th:checked="${defaultDiaChi != null and defaultDiaChi.id == dc.id}" class="account-address-card__radio">
+                                    <span class="account-address-card__body">
+                                        <span class="account-address-card__badge" th:if="${defaultDiaChi != null and defaultDiaChi.id == dc.id}">Mặc định</span>
+                                        <p class="account-address-card__recipient">
+                                            <strong th:text="${tenNhan}">Tên</strong>
+                                            <span class="account-address-card__sep">|</span>
+                                            <span th:text="${sdtNhan}">SĐT</span>
+                                        </p>
+                                        <p class="account-address-card__street"><span class="account-address-card__pin" aria-hidden="true">📍</span> <span th:text="${dc.diaChiCuThe}">Đường</span></p>
+                                        <p class="account-address-card__meta" th:text="${dc.phuongXa + ', ' + dc.quanHuyen + ', ' + dc.tinhThanh}">PX, QH, TT</p>
+                                    </span>
+                                </label>
+                                <div class="account-address-card__actions" role="toolbar" aria-label="Thao tác địa chỉ">
+                                    <button type="button" class="account-address-card__icon-btn js-copy-address" title="Sao chép"
+                                            th:attr="data-copy=${tenNhan + ' | ' + sdtNhan + ' — ' + dc.diaChiCuThe + ', ' + dc.phuongXa + ', ' + dc.quanHuyen + ', ' + dc.tinhThanh}">
+                                        <i class="far fa-copy" aria-hidden="true"></i><span>Sao chép</span>
+                                    </button>
+                                    <button type="button" class="account-address-card__icon-btn js-edit-address" title="Sửa" th:attr="data-id=${dc.id}">
+                                        <i class="fas fa-pen" aria-hidden="true"></i><span>Sửa</span>
+                                    </button>
+                                    <button type="button" class="account-address-card__icon-btn js-delete-address account-address-card__icon-btn--danger" title="Xóa" th:attr="data-id=${dc.id}">
+                                        <i class="fas fa-trash-alt" aria-hidden="true"></i><span>Xóa</span>
+                                    </button>
+                                </div>
+                            </div>
                         </li>
                     </ul>
-                    <div class="account-address-list__actions">
-                        <button type="submit" class="btn-toggle-password-form btn-submit-default"><i class="fas fa-map-pin"></i> Cập nhật mặc định</button>
-                        <button type="button" class="btn-toggle-password-form btn-add-address" id="btnToggleThemDiaChiForm" aria-expanded="false" aria-controls="accountThemDiaChiForm" title="Thêm địa chỉ">
-                            <i class="fas fa-plus btn-toggle-password-form__icon-open" aria-hidden="true"></i>
-                            <i class="fas fa-times btn-toggle-password-form__icon-close" aria-hidden="true" style="display:none"></i>
-                            <span class="btn-toggle-password-form__text">Thêm địa chỉ</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Chưa có địa chỉ -->
-            <div th:if="${listDiaChi == null or listDiaChi.isEmpty()}" class="account-address-empty">
-                <p>Chưa có địa chỉ nào.</p>
-                <button type="button" class="btn-toggle-password-form btn-add-address" id="btnToggleThemDiaChiFormEmpty" aria-expanded="false" aria-controls="accountThemDiaChiFormEmpty" title="Thêm địa chỉ">
-                    <i class="fas fa-plus btn-toggle-password-form__icon-open" aria-hidden="true"></i>
-                    <span class="btn-toggle-password-form__text">Thêm địa chỉ</span>
-                </button>
-                <div class="account-form-wrap account-form-wrap--address" id="accountThemDiaChiFormEmpty" role="region" aria-labelledby="btnToggleThemDiaChiFormEmpty"
-                     th:classappend="${addressThemFormVisible != null and addressThemFormVisible} ? 'account-form-wrap--visible' : ''">
-                    <form class="auth-form account-form account-form--address" th:action="@{/nguoidung/dia-chi/them}" th:object="${diaChiThemRequest}" method="post">
-                        <table class="account-address-form-table">
-                            <tbody>
-                                <tr>
-                                    <td class="account-address-form-table__label"><label for="diaChiCuTheThem">Địa chỉ cụ thể (số nhà, đường) <span class="required">*</span></label></td>
-                                    <td class="account-address-form-table__input">
-                                        <input type="text" id="diaChiCuTheThem" th:field="*{diaChiCuThe}" placeholder="Ví dụ: 123 Nguyễn Huệ">
-                                        <p th:if="${#fields.hasErrors('diaChiCuThe')}" class="field-error" th:errors="*{diaChiCuThe}"></p>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="account-address-form-table__label"><label for="ghnProvinceIdThem">Tỉnh/Thành phố <span class="required">*</span></label></td>
-                                    <td class="account-address-form-table__input">
-                                        <select id="ghnProvinceIdThem" th:field="*{ghnProvinceId}" class="form-control js-ghn-province" required>
-                                            <option value="">— Chọn tỉnh/thành phố —</option>
-                                            <option th:each="p : ${provinces}" th:value="${p.provinceId}" th:text="${p.provinceName}"></option>
-                                        </select>
-                                        <input type="hidden" th:field="*{tinhThanh}" class="js-text-province">
-                                        <p th:if="${#fields.hasErrors('tinhThanh')}" class="field-error" th:errors="*{tinhThanh}"></p>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="account-address-form-table__label"><label for="ghnDistrictIdThem">Quận/Huyện <span class="required">*</span></label></td>
-                                    <td class="account-address-form-table__input">
-                                        <select id="ghnDistrictIdThem" th:field="*{ghnDistrictId}" class="form-control js-ghn-district" required disabled>
-                                            <option value="">Chọn tỉnh/thành phố trước</option>
-                                        </select>
-                                        <input type="hidden" th:field="*{quanHuyen}" class="js-text-district">
-                                        <p th:if="${#fields.hasErrors('quanHuyen')}" class="field-error" th:errors="*{quanHuyen}"></p>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="account-address-form-table__label"><label for="ghnWardCodeThem">Phường/Xã <span class="required">*</span></label></td>
-                                    <td class="account-address-form-table__input">
-                                        <select id="ghnWardCodeThem" th:field="*{ghnWardCode}" class="form-control js-ghn-ward" required disabled>
-                                            <option value="">Chọn quận/huyện trước</option>
-                                        </select>
-                                        <input type="hidden" th:field="*{phuongXa}" class="js-text-ward">
-                                        <p th:if="${#fields.hasErrors('phuongXa')}" class="field-error" th:errors="*{phuongXa}"></p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> Thêm địa chỉ</button>
-                    </form>
+                </div>
+                <div th:if="${listDiaChi == null or listDiaChi.isEmpty()}" class="account-address-empty">
+                    <p>Chưa có địa chỉ nào. Hãy thêm ít nhất một địa chỉ để đặt hàng thuận tiện hơn.</p>
                 </div>
             </div>
 
-            <!-- Form thêm địa chỉ (khi đã có danh sách) -->
-            <div class="account-form-wrap account-form-wrap--address" id="accountThemDiaChiForm" role="region" aria-labelledby="btnToggleThemDiaChiForm"
+            <div class="account-address-toolbar">
+                <button type="button" class="btn-toggle-password-form btn-add-address" id="btnToggleThemDiaChi" aria-expanded="false" aria-controls="accountThemDiaChiForm" title="Thêm địa chỉ">
+                    <i class="fas fa-plus btn-toggle-password-form__icon-open" aria-hidden="true"></i>
+                    <i class="fas fa-times btn-toggle-password-form__icon-close" aria-hidden="true" style="display:none"></i>
+                    <span class="btn-toggle-password-form__text">Thêm địa chỉ</span>
+                </button>
+            </div>
+
+            <div class="account-form-wrap account-form-wrap--address" id="accountThemDiaChiForm" role="region" aria-labelledby="btnToggleThemDiaChi"
                  th:classappend="${addressThemFormVisible != null and addressThemFormVisible} ? 'account-form-wrap--visible' : ''">
-                <form class="auth-form account-form account-form--address ajax-form" th:action="@{/nguoidung/dia-chi/them-ajax}" th:object="${diaChiThemRequest}" method="post" data-target="#diaChiListSection">
+                <form class="auth-form account-form account-form--address ajax-form" th:action="@{/nguoidung/dia-chi/them-ajax}" th:object="${diaChiThemRequest}" method="post" data-target="#diaChiAjaxTarget">
+                    <p class="account-address-form-hint">Giao hàng theo họ tên và SĐT bạn nhập dưới đây.</p>
                     <table class="account-address-form-table">
                         <tbody>
                             <tr>
+                                <td class="account-address-form-table__label"><label for="tenNguoiNhanThem">Họ tên người nhận <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="text" id="tenNguoiNhanThem" th:field="*{tenNguoiNhan}" maxlength="100" placeholder="Ví dụ: Nguyễn Văn A" required>
+                                    <p th:if="${#fields.hasErrors('tenNguoiNhan')}" class="field-error" th:errors="*{tenNguoiNhan}"></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="account-address-form-table__label"><label for="sdtNguoiNhanThem">Số điện thoại người nhận <span class="required">*</span></label></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="tel" id="sdtNguoiNhanThem" th:field="*{sdtNguoiNhan}" maxlength="20" placeholder="0912345678" required>
+                                    <p th:if="${#fields.hasErrors('sdtNguoiNhan')}" class="field-error" th:errors="*{sdtNguoiNhan}"></p>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="account-address-form-table__label"><label for="diaChiCuTheThem2">Địa chỉ cụ thể (số nhà, đường) <span class="required">*</span></label></td>
-                                <td class="account-address-form-table__input"><input type="text" id="diaChiCuTheThem2" th:field="*{diaChiCuThe}" placeholder="Ví dụ: 123 Nguyễn Huệ"></td>
+                                <td class="account-address-form-table__input">
+                                    <input type="text" id="diaChiCuTheThem2" th:field="*{diaChiCuThe}" placeholder="Ví dụ: 123 Nguyễn Huệ">
+                                    <p th:if="${#fields.hasErrors('diaChiCuThe')}" class="field-error" th:errors="*{diaChiCuThe}"></p>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="account-address-form-table__label"><label for="ghnProvinceIdThem2">Tỉnh/Thành phố <span class="required">*</span></label></td>
@@ -173,6 +191,7 @@
                                         <option th:each="p : ${provinces}" th:value="${p.provinceId}" th:text="${p.provinceName}"></option>
                                     </select>
                                     <input type="hidden" th:field="*{tinhThanh}" class="js-text-province">
+                                    <p th:if="${#fields.hasErrors('tinhThanh')}" class="field-error" th:errors="*{tinhThanh}"></p>
                                 </td>
                             </tr>
                             <tr>
@@ -182,6 +201,7 @@
                                         <option value="">Chọn tỉnh/thành phố trước</option>
                                     </select>
                                     <input type="hidden" th:field="*{quanHuyen}" class="js-text-district">
+                                    <p th:if="${#fields.hasErrors('quanHuyen')}" class="field-error" th:errors="*{quanHuyen}"></p>
                                 </td>
                             </tr>
                             <tr>
@@ -191,12 +211,75 @@
                                         <option value="">Chọn quận/huyện trước</option>
                                     </select>
                                     <input type="hidden" th:field="*{phuongXa}" class="js-text-ward">
+                                    <p th:if="${#fields.hasErrors('phuongXa')}" class="field-error" th:errors="*{phuongXa}"></p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                     <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> Thêm địa chỉ</button>
                 </form>
+            </div>
+
+            <!-- Modal sửa địa chỉ -->
+            <div class="account-modal" id="modalSuaDiaChi" hidden>
+                <div class="account-modal__backdrop js-close-modal-dia-chi" role="presentation"></div>
+                <div class="account-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalSuaDiaChiTitle">
+                    <div class="account-modal__header">
+                        <h3 id="modalSuaDiaChiTitle">Sửa địa chỉ</h3>
+                        <button type="button" class="account-modal__close js-close-modal-dia-chi" aria-label="Đóng">&times;</button>
+                    </div>
+                    <form class="auth-form account-form account-form--address" id="formSuaDiaChi">
+                        <input type="hidden" id="editDiaChiId" name="id">
+                        <table class="account-address-form-table">
+                            <tbody>
+                                <tr>
+                                    <td class="account-address-form-table__label"><label for="editTenNguoiNhan">Họ tên người nhận <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__input"><input type="text" id="editTenNguoiNhan" maxlength="100" required></td>
+                                </tr>
+                                <tr>
+                                    <td class="account-address-form-table__label"><label for="editSdtNguoiNhan">Số điện thoại <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__input"><input type="tel" id="editSdtNguoiNhan" maxlength="20" required></td>
+                                </tr>
+                                <tr>
+                                    <td class="account-address-form-table__label"><label for="editDiaChiCuThe">Địa chỉ cụ thể <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__input"><input type="text" id="editDiaChiCuThe" required></td>
+                                </tr>
+                                <tr>
+                                    <td class="account-address-form-table__label"><label for="editGhnProvinceId">Tỉnh/Thành phố <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__input">
+                                        <select id="editGhnProvinceId" class="form-control js-ghn-province" required>
+                                            <option value="">— Chọn tỉnh/thành phố —</option>
+                                            <option th:each="p : ${provinces}" th:value="${p.provinceId}" th:text="${p.provinceName}"></option>
+                                        </select>
+                                        <input type="hidden" id="editTinhThanh" class="js-text-province">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="account-address-form-table__label"><label for="editGhnDistrictId">Quận/Huyện <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__input">
+                                        <select id="editGhnDistrictId" class="form-control js-ghn-district" required disabled>
+                                            <option value="">Chọn tỉnh/thành phố trước</option>
+                                        </select>
+                                        <input type="hidden" id="editQuanHuyen" class="js-text-district">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="account-address-form-table__label"><label for="editGhnWardCode">Phường/Xã <span class="required">*</span></label></td>
+                                    <td class="account-address-form-table__input">
+                                        <select id="editGhnWardCode" class="form-control js-ghn-ward" required disabled>
+                                            <option value="">Chọn quận/huyện trước</option>
+                                        </select>
+                                        <input type="hidden" id="editPhuongXa" class="js-text-ward">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="account-modal__footer">
+                            <button type="button" class="btn-ho-so-cancel js-close-modal-dia-chi">Hủy</button>
+                            <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Lưu địa chỉ</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </section>
 
@@ -211,6 +294,8 @@
                     var txtDistrict = form.querySelector('.js-text-district');
                     var txtWard = form.querySelector('.js-text-ward');
                     if (!provinceSel || !districtSel || !wardSel) return;
+                    if (form.getAttribute('data-ghn-wired') === '1') return;
+                    form.setAttribute('data-ghn-wired', '1');
 
                     function resetDistrict() {
                         districtSel.innerHTML = '<option value="">Chọn tỉnh/thành phố trước</option>';
@@ -302,6 +387,10 @@
                     document.querySelectorAll('form.account-form--address').forEach(wireAddressForm);
                 }
 
+                window.initAccountAddressForms = function (root) {
+                    (root || document).querySelectorAll('form.account-form--address').forEach(wireAddressForm);
+                };
+
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', boot);
                 } else {
@@ -311,7 +400,7 @@
         </script>
 
         <!-- Bảo mật tài khoản -->
-        <section class="account-card" id="bao-mat" th:if="${currentUser != null}">
+        <section class="account-card" id="doi-mat-khau" th:if="${currentUser != null}">
             <h2 class="account-card__heading">
                 <i class="fas fa-shield-alt"></i> Bảo mật
             </h2>
@@ -448,9 +537,9 @@
                 }
             });
         });
-        // Toggle form Thêm địa chỉ (khi đã có danh sách địa chỉ)
+        // Toggle form Thêm địa chỉ
         var themDiaChiFormWrap = document.getElementById('accountThemDiaChiForm');
-        var btnToggleThemDiaChi = document.getElementById('btnToggleThemDiaChiForm');
+        var btnToggleThemDiaChi = document.getElementById('btnToggleThemDiaChi');
         if (themDiaChiFormWrap && btnToggleThemDiaChi) {
             var themToggleText = btnToggleThemDiaChi.querySelector('.btn-toggle-password-form__text');
             function updateThemToggle(visible) {
@@ -471,32 +560,93 @@
                 updateThemToggle(true);
             }
         }
-        // Toggle form Thêm địa chỉ (khi chưa có địa chỉ nào)
-        var themDiaChiFormEmptyWrap = document.getElementById('accountThemDiaChiFormEmpty');
-        var btnToggleThemDiaChiEmpty = document.getElementById('btnToggleThemDiaChiFormEmpty');
-        if (themDiaChiFormEmptyWrap && btnToggleThemDiaChiEmpty) {
-            var themToggleTextEmpty = btnToggleThemDiaChiEmpty.querySelector('.btn-toggle-password-form__text');
-            function updateThemToggleEmpty(visible) {
-                var iconOpen = btnToggleThemDiaChiEmpty.querySelector('.btn-toggle-password-form__icon-open');
-                var iconClose = btnToggleThemDiaChiEmpty.querySelector('.btn-toggle-password-form__icon-close');
-                if (themToggleTextEmpty) themToggleTextEmpty.style.display = visible ? 'none' : '';
-                if (iconOpen) iconOpen.style.display = visible ? 'none' : 'inline-block';
-                if (iconClose) iconClose.style.display = visible ? 'inline-block' : 'none';
-                btnToggleThemDiaChiEmpty.setAttribute('title', visible ? 'Đóng' : 'Thêm địa chỉ');
+
+        var hoSoWrap = document.getElementById('accountHoSoForm');
+        var btnToggleHoSo = document.getElementById('btnToggleHoSoForm');
+        var btnHoSoCancel = document.getElementById('btnHoSoCancel');
+        if (hoSoWrap && btnToggleHoSo) {
+            function setHoSoVisible(visible) {
+                hoSoWrap.classList.toggle('account-form-wrap--visible', visible);
+                btnToggleHoSo.setAttribute('aria-expanded', visible);
             }
-            btnToggleThemDiaChiEmpty.addEventListener('click', function() {
-                var isVisible = themDiaChiFormEmptyWrap.classList.contains('account-form-wrap--visible');
-                themDiaChiFormEmptyWrap.classList.toggle('account-form-wrap--visible', !isVisible);
-                btnToggleThemDiaChiEmpty.setAttribute('aria-expanded', !isVisible);
-                updateThemToggleEmpty(!isVisible);
+            btnToggleHoSo.addEventListener('click', function() {
+                var v = !hoSoWrap.classList.contains('account-form-wrap--visible');
+                setHoSoVisible(v);
             });
-            if (themDiaChiFormEmptyWrap.classList.contains('account-form-wrap--visible')) {
-                updateThemToggleEmpty(true);
+            if (btnHoSoCancel) {
+                btnHoSoCancel.addEventListener('click', function() { setHoSoVisible(false); });
             }
+        }
+
+        var formCapNhatHoSo = document.getElementById('formCapNhatHoSo');
+        if (formCapNhatHoSo) {
+            formCapNhatHoSo.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var submitBtn = formCapNhatHoSo.querySelector('button[type="submit"]');
+                var prevHtml = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+                }
+                fetch('/nguoidung/cap-nhat-ho-so', {
+                    method: 'POST',
+                    body: new FormData(formCapNhatHoSo)
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(j) {
+                    if (j.success) {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(j.message || 'Đã cập nhật thông tin.', 'success');
+                        }
+                        window.location.reload();
+                    } else {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(j.message || 'Không cập nhật được.', 'error');
+                        }
+                    }
+                })
+                .catch(function() {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Có lỗi xảy ra.', 'error');
+                    }
+                })
+                .finally(function() {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = prevHtml;
+                    }
+                });
+            });
         }
     });
 
-    // AJAX xử lý form địa chỉ (đặt mặc định, thêm mới)
+    function syncAccountDefaultDiaChiFromDom() {
+        var c = document.querySelector('#dia-chi input[name="diaChiId"]:checked');
+        window.__accountLastDefaultDiaChiId = c ? String(c.value) : '';
+    }
+
+    function refreshDiaChiAjaxTarget(done) {
+        var targetSel = '#diaChiAjaxTarget';
+        fetch(window.location.pathname + '?fragment=dia-chi')
+            .then(function(res) { return res.text(); })
+            .then(function(html) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(html, 'text/html');
+                var newSection = doc.querySelector(targetSel);
+                var currentSection = document.querySelector(targetSel);
+                if (newSection && currentSection) {
+                    currentSection.innerHTML = newSection.innerHTML;
+                }
+                syncAccountDefaultDiaChiFromDom();
+                if (typeof done === 'function') done();
+            })
+            .catch(function() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Không tải lại danh sách địa chỉ.', 'error');
+                }
+            });
+    }
+
     function bindAjaxForms() {
         document.querySelectorAll('.ajax-form').forEach(function(form) {
             if (form.hasAttribute('data-ajax-bound')) return;
@@ -508,6 +658,7 @@
                 var formData = new FormData(form);
                 var targetSection = form.getAttribute('data-target');
                 var submitBtn = form.querySelector('button[type="submit"]');
+                var defaultSubmitHtml = submitBtn ? submitBtn.innerHTML : '';
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
@@ -520,51 +671,337 @@
                 .then(function(response) { return response.text(); })
                 .then(function(text) {
                     var isSuccess = text.startsWith('success:');
-                    var message = isSuccess ? text.substring(8) : text.substring(6);
+                    var message = isSuccess ? text.substring(8) : (text.startsWith('error:') ? text.substring(6) : text);
 
                     if (isSuccess) {
-                        // Tải lại phần danh sách địa chỉ
-                        fetch(window.location.pathname + '?fragment=dia-chi')
-                            .then(function(res) { return res.text(); })
-                            .then(function(html) {
-                                var parser = new DOMParser();
-                                var doc = parser.parseFromString(html, 'text/html');
-                                var newSection = doc.querySelector(targetSection);
-                                var currentSection = document.querySelector(targetSection);
-                                if (newSection && currentSection) {
-                                    currentSection.innerHTML = newSection.innerHTML;
-                                }
-                                // Hiển thị toast
-                                if (typeof showToast === 'function') {
-                                    showToast(message, 'success');
-                                }
-                                // Reset form nếu là form thêm
-                                form.reset();
-                                // Bind lại sự kiện cho form mới
-                                bindAjaxForms();
-                            });
+                        refreshDiaChiAjaxTarget(function() {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(message, 'success');
+                            }
+                            form.reset();
+                            bindAjaxForms();
+                        });
                     } else {
-                        if (typeof showToast === 'function') {
-                            showToast(message || 'Có lỗi xảy ra!', 'error');
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(message || 'Có lỗi xảy ra!', 'error');
                         }
                     }
                 })
                 .catch(function() {
-                    if (typeof showToast === 'function') {
-                        showToast('Có lỗi xảy ra!', 'error');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Có lỗi xảy ra!', 'error');
                     }
                 })
                 .finally(function() {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = form.querySelector('.fa-plus') ? '<i class="fas fa-plus"></i> Thêm địa chỉ' :
-                                             (form.querySelector('.fa-map-pin') ? '<i class="fas fa-map-pin"></i> Cập nhật mặc định' : 'Lưu');
+                        submitBtn.innerHTML = defaultSubmitHtml;
                     }
                 });
             });
         });
     }
     bindAjaxForms();
+    syncAccountDefaultDiaChiFromDom();
+
+    document.addEventListener('change', function(e) {
+        var t = e.target;
+        if (!t || !t.closest || !t.closest('#dia-chi')) return;
+        if (t.name !== 'diaChiId' || t.type !== 'radio') return;
+
+        var newId = String(t.value);
+        var prevId = typeof window.__accountLastDefaultDiaChiId !== 'undefined' ? String(window.__accountLastDefaultDiaChiId) : '';
+        if (newId === prevId) return;
+
+        var prevRadio = null;
+        if (prevId) {
+            document.querySelectorAll('#dia-chi input[name="diaChiId"]').forEach(function(inp) {
+                if (String(inp.value) === prevId) prevRadio = inp;
+            });
+        }
+
+        if (prevRadio) {
+            prevRadio.checked = true;
+            t.checked = false;
+        }
+
+        function applyDefaultChoice() {
+            t.checked = true;
+            if (prevRadio) prevRadio.checked = false;
+            var fd = new FormData();
+            fd.append('diaChiId', newId);
+            fetch('/nguoidung/dia-chi-mac-dinh', { method: 'POST', body: fd })
+                .then(function(r) { return r.text(); })
+                .then(function(text) {
+                    if (text.startsWith('success:')) {
+                        var msg = text.substring(8);
+                        refreshDiaChiAjaxTarget(function() {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(msg, 'success');
+                            }
+                        });
+                    } else {
+                        if (prevRadio) {
+                            prevRadio.checked = true;
+                        }
+                        t.checked = false;
+                        syncAccountDefaultDiaChiFromDom();
+                        var err = text.startsWith('error:') ? text.substring(6) : text;
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(err || 'Không đặt được mặc định.', 'error');
+                        }
+                    }
+                })
+                .catch(function() {
+                    if (prevRadio) prevRadio.checked = true;
+                    t.checked = false;
+                    syncAccountDefaultDiaChiFromDom();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Có lỗi xảy ra.', 'error');
+                    }
+                });
+        }
+
+        function cancelDefaultChoice() {
+            if (prevRadio) {
+                prevRadio.checked = true;
+                t.checked = false;
+            } else {
+                t.checked = false;
+            }
+        }
+
+        if (typeof window.confirmModal === 'function') {
+            window.confirmModal({
+                title: 'Đặt địa chỉ mặc định',
+                message: 'Đặt địa chỉ này làm địa chỉ nhận hàng mặc định?',
+                confirmText: 'Đặt mặc định',
+                cancelText: 'Hủy',
+                tone: 'info'
+            }).then(function(ok) {
+                if (!ok) {
+                    cancelDefaultChoice();
+                    return;
+                }
+                applyDefaultChoice();
+            });
+        } else if (window.confirm('Đặt địa chỉ này làm địa chỉ nhận hàng mặc định?')) {
+            applyDefaultChoice();
+        } else {
+            cancelDefaultChoice();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        var copyBtn = e.target.closest && e.target.closest('.js-copy-address');
+        if (copyBtn && copyBtn.getAttribute('data-copy')) {
+            e.preventDefault();
+            var txt = copyBtn.getAttribute('data-copy');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(txt).then(function() {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Đã sao chép địa chỉ.', 'success');
+                    }
+                }).catch(function() {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Không sao chép được.', 'error');
+                    }
+                });
+            }
+            return;
+        }
+        var delBtn = e.target.closest && e.target.closest('.js-delete-address');
+        if (delBtn && delBtn.getAttribute('data-id')) {
+            e.preventDefault();
+            var id = delBtn.getAttribute('data-id');
+            if (!confirm('Xóa địa chỉ này?')) return;
+            fetch('/api/addresses/' + encodeURIComponent(id), { method: 'DELETE' })
+                .then(function(r) { return r.json(); })
+                .then(function(j) {
+                    if (j.success) {
+                        refreshDiaChiAjaxTarget(function() {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast('Đã xóa địa chỉ.', 'success');
+                            }
+                        });
+                    } else {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(j.message || 'Không xóa được.', 'error');
+                        }
+                    }
+                })
+                .catch(function() {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Có lỗi xảy ra.', 'error');
+                    }
+                });
+            return;
+        }
+        var editBtn = e.target.closest && e.target.closest('.js-edit-address');
+        if (editBtn && editBtn.getAttribute('data-id')) {
+            e.preventDefault();
+            openEditDiaChiModal(editBtn.getAttribute('data-id'));
+            return;
+        }
+        if (e.target.closest && e.target.closest('.js-close-modal-dia-chi')) {
+            e.preventDefault();
+            closeEditDiaChiModal();
+        }
+    });
+
+    function loadDistrictsChain(provinceId, districtIdToSelect, wardCodeToSelect) {
+        var districtSel = document.getElementById('editGhnDistrictId');
+        var wardSel = document.getElementById('editGhnWardCode');
+        var txtDistrict = document.getElementById('editQuanHuyen');
+        var txtWard = document.getElementById('editPhuongXa');
+        if (!districtSel || !wardSel) return Promise.resolve();
+        wardSel.innerHTML = '<option value="">Chọn quận/huyện trước</option>';
+        wardSel.disabled = true;
+        if (txtWard) txtWard.value = '';
+        if (!provinceId) {
+            districtSel.innerHTML = '<option value="">Chọn tỉnh/thành phố trước</option>';
+            districtSel.disabled = true;
+            if (txtDistrict) txtDistrict.value = '';
+            return Promise.resolve();
+        }
+        districtSel.innerHTML = '<option value="">Đang tải...</option>';
+        districtSel.disabled = true;
+        return fetch('/districts?provinceId=' + encodeURIComponent(provinceId))
+            .then(function(r) { return r.json(); })
+            .then(function(items) {
+                districtSel.innerHTML = '<option value="">— Chọn quận/huyện —</option>';
+                (items || []).forEach(function(d) {
+                    var opt = document.createElement('option');
+                    opt.value = d.districtId;
+                    opt.textContent = d.districtName;
+                    districtSel.appendChild(opt);
+                });
+                districtSel.disabled = !(items && items.length);
+                if (districtIdToSelect != null && String(districtIdToSelect) !== '') {
+                    districtSel.value = String(districtIdToSelect);
+                }
+                var dOpt = districtSel.options[districtSel.selectedIndex];
+                if (txtDistrict && dOpt) txtDistrict.value = dOpt.textContent || '';
+                var did = districtSel.value;
+                if (!did) return Promise.resolve();
+                wardSel.innerHTML = '<option value="">Đang tải...</option>';
+                return fetch('/wards?districtId=' + encodeURIComponent(did))
+                    .then(function(r2) { return r2.json(); })
+                    .then(function(witems) {
+                        wardSel.innerHTML = '<option value="">— Chọn phường/xã —</option>';
+                        (witems || []).forEach(function(w) {
+                            var opt = document.createElement('option');
+                            opt.value = w.wardCode;
+                            opt.textContent = w.wardName;
+                            wardSel.appendChild(opt);
+                        });
+                        wardSel.disabled = !(witems && witems.length);
+                        if (wardCodeToSelect) {
+                            wardSel.value = String(wardCodeToSelect);
+                        }
+                        var wOpt = wardSel.options[wardSel.selectedIndex];
+                        if (txtWard && wOpt) txtWard.value = wOpt.textContent || '';
+                    });
+            })
+            .catch(function() {
+                districtSel.innerHTML = '<option value="">Lỗi tải</option>';
+                wardSel.innerHTML = '<option value="">—</option>';
+            });
+    }
+
+    function openEditDiaChiModal(id) {
+        var modal = document.getElementById('modalSuaDiaChi');
+        if (!modal) return;
+        fetch('/api/addresses/' + encodeURIComponent(id))
+            .then(function(r) {
+                if (!r.ok) throw new Error();
+                return r.json();
+            })
+            .then(function(data) {
+                document.getElementById('editDiaChiId').value = data.id;
+                document.getElementById('editTenNguoiNhan').value = data.tenNguoiNhan || '';
+                document.getElementById('editSdtNguoiNhan').value = data.sdtNguoiNhan || '';
+                document.getElementById('editDiaChiCuThe').value = data.diaChiCuThe || '';
+                var pSel = document.getElementById('editGhnProvinceId');
+                var txtP = document.getElementById('editTinhThanh');
+                if (pSel) {
+                    pSel.value = data.ghnProvinceId != null ? String(data.ghnProvinceId) : '';
+                    var pOpt = pSel.options[pSel.selectedIndex];
+                    if (txtP && pOpt) txtP.value = pOpt.textContent || '';
+                }
+                return loadDistrictsChain(data.ghnProvinceId, data.ghnDistrictId, data.ghnWardCode);
+            })
+            .then(function() {
+                modal.hidden = false;
+                document.body.classList.add('account-modal-open');
+            })
+            .catch(function() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Không tải được địa chỉ.', 'error');
+                }
+            });
+    }
+
+    function closeEditDiaChiModal() {
+        var modal = document.getElementById('modalSuaDiaChi');
+        if (modal) modal.hidden = true;
+        document.body.classList.remove('account-modal-open');
+    }
+
+    var formSuaDiaChi = document.getElementById('formSuaDiaChi');
+    if (formSuaDiaChi) {
+        formSuaDiaChi.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var id = document.getElementById('editDiaChiId').value;
+            var params = new URLSearchParams();
+            params.append('tenNguoiNhan', document.getElementById('editTenNguoiNhan').value.trim());
+            params.append('sdtNguoiNhan', document.getElementById('editSdtNguoiNhan').value.trim());
+            params.append('diaChiCuThe', document.getElementById('editDiaChiCuThe').value.trim());
+            params.append('tinhThanh', document.getElementById('editTinhThanh').value.trim());
+            params.append('quanHuyen', document.getElementById('editQuanHuyen').value.trim());
+            params.append('phuongXa', document.getElementById('editPhuongXa').value.trim());
+            params.append('ghnProvinceId', document.getElementById('editGhnProvinceId').value);
+            params.append('ghnDistrictId', document.getElementById('editGhnDistrictId').value);
+            params.append('ghnWardCode', document.getElementById('editGhnWardCode').value);
+            var submitBtn = formSuaDiaChi.querySelector('button[type="submit"]');
+            var prev = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+            }
+            fetch('/api/addresses/' + encodeURIComponent(id), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: params.toString()
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(j) {
+                if (j.success) {
+                    closeEditDiaChiModal();
+                    refreshDiaChiAjaxTarget(function() {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('Đã cập nhật địa chỉ.', 'success');
+                        }
+                    });
+                } else {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(j.message || 'Không lưu được.', 'error');
+                    }
+                }
+            })
+            .catch(function() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Có lỗi xảy ra.', 'error');
+                }
+            })
+            .finally(function() {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = prev;
+                }
+            });
+        });
+    }
     </script>
 </div>
 </body>

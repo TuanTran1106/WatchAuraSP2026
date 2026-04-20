@@ -7,15 +7,20 @@ import com.example.watchaura.dto.ghn.GhnFeeDataDTO;
 import com.example.watchaura.dto.ghn.GhnFeeRequest;
 import com.example.watchaura.dto.ghn.GhnServiceDTO;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class ShippingService {
+    private static final Logger log = LoggerFactory.getLogger(ShippingService.class);
+
     private final GhnApiClient ghnApiClient;
     private final GhnProperties ghnProperties;
 
@@ -36,6 +41,7 @@ public class ShippingService {
         }
 
         Integer serviceId = resolveServiceId(toDistrictId);
+        log.info("[GHN] toDistrictId={} -> serviceId={}", toDistrictId, serviceId);
         if (serviceId == null) {
             throw new IllegalStateException("Không tìm thấy dịch vụ vận chuyển phù hợp (GHN)");
         }
@@ -47,6 +53,9 @@ public class ShippingService {
         req.setToWardCode(toWardCode.trim());
         req.setServiceId(serviceId);
         req.setWeight(ghnProperties.getWeight());
+        req.setLength(ghnProperties.getLength());
+        req.setWidth(ghnProperties.getWidth());
+        req.setHeight(ghnProperties.getHeight());
 
         GhnApiResponse<GhnFeeDataDTO> resp = ghnApiClient.post(
                 "/v2/shipping-order/fee",
@@ -60,15 +69,39 @@ public class ShippingService {
     }
 
     private Integer resolveServiceId(Integer toDistrictId) {
-        // Ưu tiên serviceId cấu hình nếu còn dùng được
-        Integer configured = ghnProperties.getServiceId();
         List<GhnServiceDTO> services = getAvailableServices(toDistrictId);
-        if (services == null || services.isEmpty()) return null;
-        if (configured != null) {
-            boolean ok = services.stream().anyMatch(s -> s != null && configured.equals(s.getServiceId()));
-            if (ok) return configured;
+        if (services == null || services.isEmpty()) {
+            return null;
         }
-        return services.get(0) != null ? services.get(0).getServiceId() : null;
+
+        // Chọn service nhất quán theo loại dịch vụ: ưu tiên "Tiêu chuẩn".
+        Integer standardServiceId = services.stream()
+        .filter(s -> s != null && s.getServiceId() != null)
+        .filter(s -> isStandardService(s.getShortName()))
+        .map(GhnServiceDTO::getServiceId)
+        .findFirst()
+        .orElse(null);
+    
+    if (standardServiceId != null) {
+        return standardServiceId;
+    }
+
+        // Fallback ổn định: nếu không có "Tiêu chuẩn", lấy service_id nhỏ nhất.
+        return services.stream()
+    .filter(s -> s != null && s.getServiceId() != null)
+    .map(GhnServiceDTO::getServiceId)
+    .findFirst()
+    .orElse(null);
+    }
+
+    private boolean isStandardService(String shortName) {
+        if (shortName == null || shortName.isBlank()) {
+            return false;
+        }
+        String normalized = shortName.trim().toLowerCase(Locale.ROOT);
+        return normalized.contains("tiêu chuẩn")
+                || normalized.contains("tieu chuan")
+                || normalized.contains("standard");
     }
 
     private List<GhnServiceDTO> getAvailableServices(Integer toDistrictId) {

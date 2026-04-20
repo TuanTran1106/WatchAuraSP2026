@@ -6,7 +6,7 @@ body.confirm-modal-open {
 .confirm-modal {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 12000;
   display: none;
 }
 

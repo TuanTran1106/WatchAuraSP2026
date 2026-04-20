@@ -24,5 +24,14 @@ public class GhnFeeRequest {
 
     @JsonProperty("weight")
     private Integer weight;
+
+    @JsonProperty("length")
+    private Integer length;
+
+    @JsonProperty("width")
+    private Integer width;
+
+    @JsonProperty("height")
+    private Integer height;
 }
 

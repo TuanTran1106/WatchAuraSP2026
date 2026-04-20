@@ -2,6 +2,7 @@ package com.example.watchaura.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ public class RegisterRequest {
     @Size(max = 100)
     private String email;
 
+    @Pattern(regexp = "^(0[35789])([0-9]{8})$", message = "Số điện thoại không hợp lệ")
     @Size(max = 20)
     private String sdt;
 

@@ -20,4 +20,7 @@ public interface DiaChiService {
     DiaChi update(Integer id, DiaChi diaChi);
 
     void delete(Integer id);
+
+    /** Xóa địa chỉ của khách; nếu là mặc định thì gán mặc định cho địa chỉ còn lại (id nhỏ nhất). */
+    void deleteForKhachHang(Integer khachHangId, Integer diaChiId);
 }

@@ -27,9 +27,12 @@ public class GhnProperties {
     private Integer fromDistrictId = 1454;
     private String fromWardCode = "21211";
 
-    /** Default service config */
+    /** Legacy service config (không nên fix cứng; giữ lại để tương thích cấu hình cũ) */
     private Integer serviceId = 53320;
     private Integer weight = 500;
+    private Integer length = 20;
+    private Integer width = 15;
+    private Integer height = 10;
 
     /** Miễn phí ship khi đơn >= ngưỡng (VND) */
     private BigDecimal freeShippingThreshold = new BigDecimal("2000000");

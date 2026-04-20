@@ -336,3 +336,71 @@
     color: #c9a227;
     background: rgba(255, 255, 255, 0.05);
 }
+
+/* ===== Apple navigation glass ===== */
+.user-header {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: none;
+}
+
+.logo,
+.nav a,
+.nav-dropdown__toggle,
+.nav-link {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: -0.12px;
+}
+
+.logo:hover,
+.nav a:hover,
+.nav-dropdown__toggle:hover,
+.nav-link:hover,
+.nav-cart:hover,
+.nav-icon-btn:hover,
+.nav-dropdown__item:hover {
+    color: #0071e3;
+}
+
+.header-search {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.header-search:focus-within {
+    border-color: rgba(0, 113, 227, 0.72);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.25);
+}
+
+.header-search__btn,
+.btn-header,
+.nav-cart__count {
+    background: #0071e3;
+    color: #ffffff !important;
+}
+
+.header-search__btn:hover,
+.btn-header:hover {
+    background: #0066cc;
+    color: #ffffff !important;
+}
+
+.btn-header--outline {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #ffffff !important;
+}
+
+.btn-header--outline:hover {
+    border-color: #0071e3;
+    background: rgba(0, 113, 227, 0.12) !important;
+    color: #0071e3 !important;
+}
+
+.nav-user {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 300;
+}

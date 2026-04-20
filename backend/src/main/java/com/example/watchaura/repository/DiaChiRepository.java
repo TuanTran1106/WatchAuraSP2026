@@ -10,9 +10,9 @@ import java.util.Optional;
 
 @Repository
 public interface DiaChiRepository extends JpaRepository<DiaChi, Integer> {
-    List<DiaChi> findByKhachHangId(Integer khachHangId);
+    List<DiaChi> findByKhachHangIdAndDeletedFalse(Integer khachHangId);
 
-    Optional<DiaChi> findFirstByKhachHangIdAndMacDinhTrue(Integer khachHangId);
+    Optional<DiaChi> findFirstByKhachHangIdAndMacDinhTrueAndDeletedFalse(Integer khachHangId);
 }
 
 

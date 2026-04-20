@@ -54,4 +54,14 @@ public class DiaChi {
 
     @Column(name = "mac_dinh")
     private Boolean macDinh;
+
+    /** Người nhận tại địa chỉ này (tùy chọn; nếu null thì dùng thông tin tài khoản khi checkout). */
+    @Column(name = "ten_nguoi_nhan", length = 100)
+    private String tenNguoiNhan;
+
+    @Column(name = "sdt_nguoi_nhan", length = 20)
+    private String sdtNguoiNhan;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted = false;
 }

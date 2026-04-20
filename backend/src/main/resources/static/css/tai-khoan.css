@@ -479,6 +479,268 @@
     margin-right: 0.25rem;
 }
 
+.btn-edit-profile {
+    background: #2c3e50;
+    font-size: 0.85rem;
+    padding: 0.45rem 0.9rem;
+}
+
+.btn-edit-profile:hover {
+    background: #1a252f;
+}
+
+.account-ho-so-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.btn-ho-so-cancel {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+    background: #eee;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-ho-so-cancel:hover {
+    background: #ddd;
+}
+
+.account-address-toolbar {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.account-address-form-hint {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0 0 1rem;
+}
+
+/* Card địa chỉ (dễ quét) */
+.account-address-list--cards {
+    gap: 0.75rem;
+}
+
+.account-address-card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 1rem 1rem 1rem 0.75rem;
+}
+
+.account-address-list__item--default .account-address-card {
+    border-color: #c9a227;
+    background: #fdfbf5;
+}
+
+.account-address-card__main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    margin: 0;
+}
+
+.account-address-card__radio {
+    margin-top: 0.35rem;
+    accent-color: #c9a227;
+    flex-shrink: 0;
+}
+
+.account-address-card__body {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    padding-right: 4.5rem;
+}
+
+.account-address-card__badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #b8921f;
+    background: #f0e6d3;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.account-address-card__recipient {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+}
+
+.account-address-card__recipient strong {
+    font-weight: 700;
+}
+
+.account-address-card__sep {
+    color: #aaa;
+    margin: 0 0.35rem;
+    font-weight: 400;
+}
+
+.account-address-card__street {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: #222;
+    line-height: 1.45;
+}
+
+.account-address-card__pin {
+    margin-right: 0.2rem;
+}
+
+.account-address-card__meta {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+.account-address-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .account-address-card__actions {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+    .account-address-card:hover .account-address-card__actions {
+        opacity: 1;
+    }
+}
+
+.account-address-card__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #444;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.account-address-card__icon-btn:hover {
+    border-color: #c9a227;
+    color: #1a1a1a;
+}
+
+.account-address-card__icon-btn--danger:hover {
+    border-color: #c0392b;
+    color: #c0392b;
+}
+
+.account-address-card__icon-btn span {
+    display: none;
+}
+
+@media (min-width: 480px) {
+    .account-address-card__icon-btn span {
+        display: inline;
+    }
+}
+
+/* Modal sửa địa chỉ */
+.account-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.account-modal[hidden] {
+    display: none !important;
+}
+
+.account-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.account-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.account-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+.account-modal__header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.account-modal__close {
+    border: none;
+    background: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #888;
+    padding: 0.25rem;
+}
+
+.account-modal__close:hover {
+    color: #222;
+}
+
+.account-modal__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+body.account-modal-open {
+    overflow: hidden;
+}
+
 @media (max-width: 600px) {
     .account-info__row {
         grid-template-columns: 1fr;

@@ -15,7 +15,7 @@
         <div th:if="${error}" class="alert alert--error" th:text="${error}"></div>
 
         <!-- Carousel banner -->
-        <section class="banner-carousel" aria-label="Banner khuyến mãi">
+        <section class="banner-carousel home-hero section-tone--dark" aria-label="Banner khuyến mãi">
             <div class="banner-carousel__track-wrap">
                 <div class="banner-carousel__track">
                     <div class="banner-carousel__slide" data-slide="0">
@@ -40,6 +40,10 @@
                         </a>
                     </div>
                 </div>
+            </div>
+            <div class="home-hero__content" aria-hidden="true">
+                <p class="home-hero__kicker">WATCHAURA</p>
+                <h1 class="home-hero__title">MEN WATCH</h1>
             </div>
             <button type="button" class="banner-carousel__btn banner-carousel__btn--prev" aria-label="Banner trước"
                 onclick="window.watchAuraBannerPrev();">‹</button>
@@ -81,7 +85,7 @@
         </script>
 
         <!-- Thương hiệu đồng hành -->
-        <section class="section brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
+        <section class="section section-tone--light brands" th:if="${thuongHieuList != null and !thuongHieuList.isEmpty()}">
             <div class="container">
                 <h2 class="section__title">Thương hiệu đồng hành</h2>
                 <div class="brands__list">
@@ -98,7 +102,7 @@
         </section>
 
         <!-- Sản phẩm nổi bật (card kiểu TrangChu) -->
-        <section class="section products">
+        <section class="section section-tone--white products">
             <div class="container">
                 <h2 class="section__title">Sản phẩm nổi bật</h2>
                 <div class="products-grid">
@@ -176,8 +180,98 @@
             </div>
         </section>
 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+        <script>
+            (function () {
+                if (!window.gsap || !window.ScrollTrigger) return;
+
+                window.gsap.registerPlugin(window.ScrollTrigger);
+
+                var productSection = document.querySelector('.products');
+                if (!productSection) return;
+
+                var productCards = productSection.querySelectorAll('.product-card');
+                if (!productCards.length) return;
+
+                window.gsap.set(productCards, { y: 30, opacity: 0 });
+
+                window.gsap.to(productCards, {
+                    y: 0,
+                    opacity: 1,
+                    duration: 1.2,
+                    ease: 'power3.out',
+                    stagger: 0.14,
+                    scrollTrigger: {
+                        trigger: productSection,
+                        start: 'top 78%',
+                        toggleActions: 'play none none none'
+                    }
+                });
+
+                var heroImages = document.querySelectorAll('.home-hero .banner-carousel__img');
+                if (heroImages.length) {
+                    window.gsap.to(heroImages, {
+                        yPercent: 12,
+                        ease: 'none',
+                        scrollTrigger: {
+                            trigger: '.home-hero',
+                            start: 'top top',
+                            end: 'bottom top',
+                            scrub: 1.4
+                        }
+                    });
+                }
+
+                var revealTargets = document.querySelectorAll('.home-page .section__title, .home-page .brands__item, .home-page .product-card, .home-page .blog-card, .home-page .promo-card, .home-page .feature-item');
+                revealTargets.forEach(function (el) {
+                    window.gsap.fromTo(el,
+                        { opacity: 0, scale: 0.95, y: 18 },
+                        {
+                            opacity: 1,
+                            scale: 1,
+                            y: 0,
+                            duration: 1.2,
+                            ease: 'power3.out',
+                            scrollTrigger: {
+                                trigger: el,
+                                start: 'top 88%',
+                                toggleActions: 'play none none none'
+                            }
+                        });
+                });
+            })();
+        </script>
+        <script>
+            (function () {
+                var productCards = document.querySelectorAll('.products .product-card');
+                if (!productCards.length) return;
+
+                productCards.forEach(function (card) {
+                    card.addEventListener('mousemove', function (event) {
+                        var rect = card.getBoundingClientRect();
+                        var x = event.clientX - rect.left;
+                        var y = event.clientY - rect.top;
+                        var centerX = rect.width / 2;
+                        var centerY = rect.height / 2;
+
+                        var rotateY = ((x - centerX) / centerX) * 4;
+                        var rotateX = ((centerY - y) / centerY) * 4;
+
+                        card.style.setProperty('--card-rotate-x', rotateX.toFixed(2) + 'deg');
+                        card.style.setProperty('--card-rotate-y', rotateY.toFixed(2) + 'deg');
+                    });
+
+                    card.addEventListener('mouseleave', function () {
+                        card.style.setProperty('--card-rotate-x', '0deg');
+                        card.style.setProperty('--card-rotate-y', '0deg');
+                    });
+                });
+            })();
+        </script>
+
         <!-- Khuyến mãi -->
-        <section class="section promotions" th:if="${khuyenMaiDangChay != null and !khuyenMaiDangChay.isEmpty()}">
+        <section class="section section-tone--white promotions" th:if="${khuyenMaiDangChay != null and !khuyenMaiDangChay.isEmpty()}">
             <div class="container">
                 <h2 class="section__title">Khuyến mãi đang diễn ra</h2>
                 <div class="promo-list">
@@ -201,7 +295,7 @@
         </section>
 
         <!-- Tin tức / Blog -->
-        <section class="section blog">
+        <section class="section section-tone--light blog">
             <div class="container">
                 <h2 class="section__title">Tin tức &amp; Blog</h2>
                 <div class="blog__grid" th:if="${blogMoi != null and !blogMoi.isEmpty()}">
@@ -228,7 +322,7 @@
         </section>
 
         <!-- Feature section (giống TrangChu) -->
-        <section class="top-features">
+        <section class="top-features section-tone--light">
             <div class="container">
                 <div class="features__grid">
                     <div class="feature-item">
