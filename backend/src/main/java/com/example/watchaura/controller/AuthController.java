@@ -92,15 +92,24 @@ public class AuthController {
             return "redirect:/admin/login";
         }
 
+        // Kiểm tra vai trò và chuyển hướng phù hợp
         String redirectUrl = null;
+        boolean isAdmin = false;
+        boolean isNhanVien = false;
+
         if (kh.getChucVu() != null) {
             String tenChucVu = kh.getChucVu().getTenChucVu();
             if (tenChucVu != null) {
-                if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
-                    redirectUrl = "/ban-hang";
-                } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
-                        || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
+                String normalizedRole = normalizeRole(tenChucVu);
+                // Admin hoặc Quản lý -> vào /admin
+                if (normalizedRole.contains("admin") || normalizedRole.contains("quanly")) {
                     redirectUrl = "/admin";
+                    isAdmin = true;
+                }
+                // Nhân viên -> vào /ban-hang
+                else if (normalizedRole.contains("nhanvien")) {
+                    redirectUrl = "/ban-hang";
+                    isNhanVien = true;
                 }
             }
         }
@@ -111,8 +120,33 @@ public class AuthController {
         }
 
         session.setAttribute(SESSION_CURRENT_USER_ID, kh.getId());
-        redirect.addFlashAttribute("successMessage", "Xin chào, " + kh.getTenNguoiDung() + "!");
+        if (isAdmin) {
+            redirect.addFlashAttribute("successMessage", "Xin chào Admin " + kh.getTenNguoiDung() + "!");
+        } else {
+            redirect.addFlashAttribute("successMessage", "Xin chào, " + kh.getTenNguoiDung() + "! Vui lòng vào khu vực bán hàng.");
+        }
         return "redirect:" + redirectUrl;
+    }
+
+    /**
+     * Chuẩn hóa tên chức vụ để so sánh
+     */
+    private String normalizeRole(String role) {
+        if (role == null) return "";
+        return role.toLowerCase().trim()
+                .replace("á", "a").replace("à", "a").replace("ả", "a").replace("ã", "a").replace("ạ", "a")
+                .replace("ắ", "a").replace("ằ", "a").replace("ẳ", "a").replace("ẵ", "a")
+                .replace("â", "a").replace("ấ", "a").replace("ầ", "a").replace("ẩ", "a").replace("ẫ", "a")
+                .replace("é", "e").replace("è", "e").replace("ẻ", "e").replace("ẽ", "e").replace("ẹ", "e")
+                .replace("ê", "e").replace("ế", "e").replace("ề", "e").replace("ể", "e").replace("ễ", "e")
+                .replace("í", "i").replace("ì", "i").replace("ỉ", "i").replace("ĩ", "i").replace("ị", "i")
+                .replace("ó", "o").replace("ò", "o").replace("ỏ", "o").replace("õ", "o").replace("ọ", "o")
+                .replace("ô", "o").replace("ố", "o").replace("ồ", "o").replace("ổ", "o").replace("ỗ", "o")
+                .replace("ơ", "o").replace("ớ", "o").replace("ờ", "o").replace("ở", "o").replace("ỡ", "o")
+                .replace("ú", "u").replace("ù", "u").replace("ủ", "u").replace("ũ", "u").replace("ụ", "u")
+                .replace("ư", "u").replace("ứ", "u").replace("ừ", "u").replace("ử", "u").replace("ữ", "u")
+                .replace("ý", "y").replace("ỳ", "y").replace("ỷ", "y").replace("ỹ", "y").replace("ỵ", "y")
+                .replace("đ", "d");
     }
 
     /** Trang đăng nhập nhân viên (user layout) */

@@ -84,9 +84,43 @@ body.wa-login-page {
 
 .admin-login__subtitle {
     text-align: center;
-    margin: 0 0 1.75rem;
+    margin: 0 0 1.25rem;
     font-size: 0.9rem;
     color: #777;
+}
+
+.admin-login__info-box {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+    color: #92400e;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.admin-login__info-box i {
+    color: #d97706;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.admin-login__info-box strong {
+    color: #b45309;
+}
+
+.admin-login__info-box a {
+    color: #d97706;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.admin-login__info-box a:hover {
+    text-decoration: underline;
 }
 
 .admin-login__alert {

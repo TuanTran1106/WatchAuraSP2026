@@ -92,25 +92,81 @@ public class PermissionInterceptor implements HandlerInterceptor {
      */
     private boolean hasPermission(KhachHang user, RequiresRole requiresRole) {
         if (requiresRole.value() == null || requiresRole.value().length == 0) {
-            return true; // 没有指定角色要求，只要登录即可
+            return true;
         }
 
-        // 获取用户角色名称
         ChucVu chucVu = user.getChucVu();
         if (chucVu == null || chucVu.getTenChucVu() == null) {
-            return false; // 用户没有角色，拒绝访问
+            return false;
         }
 
-        String userRole = chucVu.getTenChucVu();
+        String userRole = chucVu.getTenChucVu().toLowerCase().trim();
 
-        // 将需要的角色转换为 Set（不区分大小写比较）
-        Set<String> allowedRoles = new HashSet<>();
-        for (String role : requiresRole.value()) {
-            allowedRoles.add(role.toLowerCase().trim());
+        for (String allowedRole : requiresRole.value()) {
+            String normalizedRole = allowedRole.toLowerCase().trim();
+            // Xử lý các biến thể của role name
+            if (isRoleMatch(userRole, normalizedRole)) {
+                return true;
+            }
         }
 
-        // 检查用户角色是否在允许列表中
-        return allowedRoles.contains(userRole.toLowerCase().trim());
+        return false;
+    }
+
+    /**
+     * Kiểm tra xem role của user có khớp với role được phép không
+     */
+    private boolean isRoleMatch(String userRole, String allowedRole) {
+        // Trực tiếp so sánh (không dấu vs không dấu)
+        if (userRole.equals(allowedRole)) {
+            return true;
+        }
+
+        // Chuẩn hóa tiếng Việt để so sánh (bỏ dấu)
+        String normalizedUserRole = normalizeVietnamese(userRole);
+        String normalizedAllowedRole = normalizeVietnamese(allowedRole);
+
+        if (normalizedUserRole.equals(normalizedAllowedRole)) {
+            return true;
+        }
+
+        // Xử lý các alias phổ biến
+        if (allowedRole.equals("admin")) {
+            return normalizedUserRole.contains("admin");
+        }
+        if (allowedRole.equals("nhân viên") || allowedRole.equals("nhanvien")) {
+            return normalizedUserRole.contains("nhân viên") || normalizedUserRole.contains("nhanvien") || normalizedUserRole.equals("nhanvien");
+        }
+        if (allowedRole.equals("quản lý") || allowedRole.equals("quanly")) {
+            return normalizedUserRole.contains("quản lý") || normalizedUserRole.contains("quanly") || normalizedUserRole.equals("quanly");
+        }
+        if (allowedRole.equals("khách hàng") || allowedRole.equals("khachhang")) {
+            return normalizedUserRole.contains("khách hàng") || normalizedUserRole.contains("khachhang") || normalizedUserRole.equals("khachhang");
+        }
+
+        return false;
+    }
+
+    /**
+     * Chuẩn hóa chuỗi tiếng Việt - bỏ dấu
+     */
+    private String normalizeVietnamese(String input) {
+        if (input == null) return "";
+        String normalized = input.toLowerCase()
+                .replace("ă", "a").replace("ắ", "a").replace("ằ", "a").replace("ẳ", "a").replace("ẵ", "a")
+                .replace("â", "a").replace("ấ", "a").replace("ầ", "a").replace("ẩ", "a").replace("ẫ", "a")
+                .replace("á", "a").replace("à", "a").replace("ả", "a").replace("ã", "a").replace("ạ", "a")
+                .replace("đ", "d")
+                .replace("ê", "e").replace("ế", "e").replace("ề", "e").replace("ể", "e").replace("ễ", "e")
+                .replace("é", "e").replace("è", "e").replace("ẻ", "e").replace("ẽ", "e").replace("ẹ", "e")
+                .replace("ô", "o").replace("ố", "o").replace("ồ", "o").replace("ổ", "o").replace("ỗ", "o")
+                .replace("ơ", "o").replace("ớ", "o").replace("ờ", "o").replace("ở", "o").replace("ỡ", "o")
+                .replace("ó", "o").replace("ò", "o").replace("ỏ", "o").replace("õ", "o").replace("ọ", "o")
+                .replace("ư", "u").replace("ứ", "u").replace("ừ", "u").replace("ử", "u").replace("ữ", "u")
+                .replace("ú", "u").replace("ù", "u").replace("ủ", "u").replace("ũ", "u").replace("ụ", "u")
+                .replace("î", "i").replace("í", "i").replace("ì", "i").replace("ỉ", "i").replace("ĩ", "i").replace("ị", "i")
+                .replace("ý", "y").replace("ỳ", "y").replace("ỷ", "y").replace("ỹ", "y").replace("ỵ", "y");
+        return normalized.trim();
     }
 
     /**
