@@ -4,1650 +4,852 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bán hàng tại quầy</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-<div th:fragment="content" class="pos-scope">
+<div th:fragment="content" class="pos-container">
     <style>
-        .pos-scope {
-            --bg-page: #0f172a;
-            --bg-card: #1e293b;
-            --bg-card-hover: #334155;
-            --border: #334155;
-            --text: #f1f5f9;
+        :root {
+            --bg-main: #f8fafc;
+            --bg-white: #ffffff;
+            --bg-gray: #f1f5f9;
+            --bg-dark: #1e293b;
+            --border: #e2e8f0;
+            --border-dark: #cbd5e1;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
             --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --success: #10b981;
-            --radius: 12px;
-            --radius-sm: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
-            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-            color: var(--text);
-            background: var(--bg-page);
-            margin: -1.5rem;
-            padding: 1.25rem 1.5rem 2rem;
-            min-height: calc(100vh - 8rem);
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #dbeafe;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --radius-sm: 6px;
+            --radius: 10px;
+            --radius-lg: 14px;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .pos-container { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-main); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+        .pos-header { background: var(--bg-white); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: 0; z-index: 100; }
+        .pos-header__left { display: flex; align-items: center; gap: 20px; }
+        .pos-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.2rem; }
+        .pos-logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), #7c3aed); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; }
+        .pos-datetime { display: flex; flex-direction: column; font-size: 0.85rem; color: var(--text-secondary); }
+        .pos-datetime strong { font-size: 1rem; color: var(--text-primary); font-weight: 600; }
+        .pos-header__right { display: flex; align-items: center; gap: 12px; }
+        .pos-user { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--bg-gray); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; }
+        .pos-user:hover { background: var(--border); }
+        .pos-user__avatar { width: 32px; height: 32px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.85rem; }
+        .pos-user__info { font-size: 0.85rem; }
+        .pos-user__name { font-weight: 600; color: var(--text-primary); }
+        .pos-user__role { font-size: 0.75rem; color: var(--text-secondary); }
+        .pos-main { flex: 1; display: grid; grid-template-columns: 1fr 420px; gap: 0; height: calc(100vh - 65px); }
 
-        /* Breadcrumb */
-        .pos-breadcrumb {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-        .pos-breadcrumb a { color: var(--accent); text-decoration: none; }
-        .pos-breadcrumb a:hover { text-decoration: underline; }
-        .pos-breadcrumb__user {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .pos-breadcrumb__user a { font-size: 0.85rem; }
+        /* Tabs */
+        .pos-invoice-tabs { padding: 12px 20px; background: var(--bg-gray); border-bottom: 1px solid var(--border); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; align-items: center; }
+        .pos-invoice-tabs::-webkit-scrollbar { display: none; }
+        .pos-invoice-tabs__label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; margin-right: 4px; display: flex; align-items: center; gap: 6px; }
+        .pos-invoice-tab { padding: 8px 12px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; transition: all 0.2s; min-width: 120px; max-width: 180px; }
+        .pos-invoice-tab:hover { border-color: var(--accent); background: var(--accent-light); }
+        .pos-invoice-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .pos-invoice-tab__info { flex: 1; min-width: 0; overflow: hidden; }
+        .pos-invoice-tab__code { font-weight: 600; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; }
+        .pos-invoice-tab__amount { font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
+        .pos-invoice-tab__badge { background: var(--success); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; min-width: 20px; text-align: center; }
+        .pos-invoice-tab.active .pos-invoice-tab__badge { background: rgba(255,255,255,0.3); }
+        .pos-invoice-tab__close { width: 20px; height: 20px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; color: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; opacity: 0.7; transition: all 0.15s; }
+        .pos-invoice-tab__close:hover { background: var(--danger); color: white; opacity: 1; }
+        .pos-new-invoice-btn { padding: 8px 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+        .pos-new-invoice-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .pos-invoice-tabs__actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
 
-        /* Toolbar hóa đơn */
-        .pos-invoice-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.75rem 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow);
-        }
-        .pos-toolbar-title {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text);
-            flex-shrink: 0;
-        }
-        .pos-invoice-toolbar .tabs-list {
-            display: flex;
-            gap: 0.35rem;
-            overflow-x: auto;
-            flex: 1;
-            min-width: 0;
-            padding: 0.15rem 0;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border) transparent;
-        }
-        .pos-invoice-toolbar .tabs-list::-webkit-scrollbar { height: 4px; }
-        .pos-invoice-toolbar .tabs-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        /* Products */
+        .pos-products { display: flex; flex-direction: column; overflow: hidden; }
+        .pos-search { padding: 16px 20px; background: var(--bg-white); border-bottom: 1px solid var(--border); display: flex; gap: 12px; }
+        .pos-search__input-wrap { flex: 1; position: relative; }
+        .pos-search__icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; pointer-events: none; }
+        .pos-search__input { width: 100%; padding: 12px 14px 12px 44px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; background: var(--bg-white); transition: all 0.2s; }
+        .pos-search__input:focus { outline: none; border-color: var(--accent); background: var(--bg-white); box-shadow: 0 0 0 4px var(--accent-light); }
+        .pos-search__input:focus + .pos-search__icon,
+        .pos-search__input-wrap:hover .pos-search__icon { color: var(--accent); }
+        .pos-search__input::placeholder { color: var(--text-muted); }
+        .pos-search__barcode { display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: var(--bg-dark); color: white; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .pos-search__barcode:hover { background: #334155; }
+        .pos-categories { padding: 12px 20px; background: var(--bg-white); border-bottom: 1px solid var(--border); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+        .pos-categories::-webkit-scrollbar { display: none; }
+        .pos-category { padding: 8px 16px; background: var(--bg-gray); border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .pos-category:hover { background: var(--border); border-color: var(--border-dark); }
+        .pos-category.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .pos-product-grid { flex: 1; overflow-y: auto; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; align-content: start; background: var(--bg-main); }
+        .pos-product-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; }
+        .pos-product-card:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .pos-product-card__img { width: 100%; height: 120px; background: var(--bg-gray); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .pos-product-card__img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+        .pos-product-card__img .no-img { font-size: 2.5rem; color: var(--text-muted); }
+        .pos-product-card__stock { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
+        .pos-product-card__stock.in-stock { background: var(--success-light); color: var(--success); }
+        .pos-product-card__stock.low-stock { background: var(--warning-light); color: var(--warning); }
+        .pos-product-card__stock.out-of-stock { background: var(--danger-light); color: var(--danger); }
+        .pos-product-card__info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .pos-product-card__name { font-weight: 600; font-size: 0.875rem; color: var(--text-primary); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; }
+        .pos-product-card__variant { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .pos-product-card__price { font-weight: 700; font-size: 1rem; color: var(--success); margin-top: auto; }
 
-        .tab-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0.85rem;
-            border-radius: var(--radius-sm);
-            background: var(--bg-page);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 0.8125rem;
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        .tab-item:hover { border-color: var(--accent); color: var(--text); }
-        .tab-item.active {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        .tab-item .tab-badge {
-            background: var(--success);
-            color: #0f172a;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 1px 5px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-        }
-        .tab-item.active .tab-badge { background: var(--accent); color: white; }
-        .tab-item .tab-close {
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            cursor: pointer;
-            padding: 0;
-        }
-        .tab-item .tab-close:hover { background: #ef4444; color: white; }
+        /* Cart Sidebar */
+        .pos-sidebar { background: var(--bg-white); border-left: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .pos-cart-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .pos-cart-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
+        .pos-cart-title__icon { width: 36px; height: 36px; background: var(--accent-light); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .pos-cart-count { padding: 4px 10px; background: var(--accent); color: white; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+        .pos-cart-clear { padding: 8px 14px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .pos-cart-clear:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+        .pos-cart-items { flex: 1; overflow-y: auto; padding: 12px; }
+        .pos-cart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; padding: 40px 20px; }
+        .pos-cart-empty__icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.4; }
+        .pos-cart-empty__text { font-size: 0.95rem; margin-bottom: 8px; font-weight: 500; }
+        .pos-cart-empty__hint { font-size: 0.85rem; }
+        .pos-cart-item { background: var(--bg-gray); border-radius: var(--radius); padding: 12px; padding-right: 80px; margin-bottom: 10px; display: flex; gap: 12px; position: relative; }
+        .pos-cart-item__img { width: 60px; height: 60px; background: var(--bg-white); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+        .pos-cart-item__img img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+        .pos-cart-item__img .no-img { font-size: 1.5rem; color: var(--text-muted); }
+        .pos-cart-item__info { flex: 1; min-width: 0; padding-right: 70px; }
+        .pos-cart-item__name { font-weight: 600; font-size: 0.875rem; color: var(--text-primary); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .pos-cart-item__variant { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .pos-cart-item__price { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+        .pos-cart-item__price .sale { color: var(--success); font-weight: 600; }
+        .pos-cart-item__qty { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .pos-qty-btn { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--bg-white); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--text-primary); transition: all 0.15s; }
+        .pos-qty-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
+        .pos-qty-btn.minus:hover { background: var(--danger); border-color: var(--danger); }
+        .pos-qty-value { min-width: 32px; text-align: center; font-weight: 700; font-size: 0.95rem; }
+        .pos-cart-item__total { position: absolute; top: 12px; right: 12px; font-weight: 700; color: var(--success); font-size: 0.95rem; }
+        .pos-cart-item__delete { position: absolute; bottom: 12px; right: 12px; width: 26px; height: 26px; border: none; background: var(--danger-light); color: var(--danger); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .pos-cart-item__delete:hover { background: var(--danger); color: white; }
 
-        .btn-pos-primary {
-            background: var(--accent);
-            border: none;
-            color: #fff;
-            font-weight: 600;
-            padding: 0.55rem 1rem;
-            border-radius: var(--radius-sm);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .btn-pos-primary:hover { background: var(--accent-hover); color: #fff; }
+        /* Summary */
+        .pos-cart-summary { padding: 16px 20px; border-top: 1px solid var(--border); background: var(--bg-gray); }
+        .pos-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.9rem; }
+        .pos-summary-row__label { color: var(--text-secondary); }
+        .pos-summary-row__value { font-weight: 600; color: var(--text-primary); }
+        .pos-summary-row.discount { color: var(--success); }
+        .pos-summary-row.discount .pos-summary-row__value { color: var(--success); }
+        .pos-summary-row.total { padding-top: 12px; margin-top: 8px; border-top: 2px dashed var(--border-dark); }
+        .pos-summary-row.total .pos-summary-row__label { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+        .pos-summary-row.total .pos-summary-row__value { font-size: 1.3rem; font-weight: 800; color: var(--success); }
 
-        /* Layout chính: giỏ lớn bên trái, cột phải stack */
-        .pos-main-grid {
-            display: grid;
-            grid-template-columns: 1fr min(380px, 100%);
-            gap: 1.25rem;
-            align-items: start;
-        }
-        @media (max-width: 991px) {
-            .pos-main-grid { grid-template-columns: 1fr; }
-        }
+        /* Customer */
+        .pos-customer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; }
+        .pos-customer__input { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.875rem; background: var(--bg-white); transition: all 0.2s; }
+        .pos-customer__input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+        #customerName { flex: 1; min-width: 150px; }
+        #customerPhone { width: 130px; }
+        #customerEmail { flex: 1; min-width: 150px; margin-top: 8px; }
 
-        /* Giỏ hàng card */
-        .pos-cart-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            min-height: 420px;
-            max-height: calc(100vh - 240px);
-        }
-        .pos-cart-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .pos-cart-head h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
-        .pos-cart-head h3 i { color: var(--accent); margin-right: 0.35rem; }
-        .pos-tab-info { font-size: 0.8rem; color: var(--text-muted); }
+        /* Voucher */
+        .pos-voucher { padding: 12px 20px; border-top: 1px solid var(--border); }
+        .pos-voucher__input-wrap { display: flex; gap: 8px; }
+        .pos-voucher__input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.875rem; }
+        .pos-voucher__input:focus { outline: none; border-color: var(--accent); }
+        .pos-voucher__btn { padding: 10px 16px; background: var(--warning-light); border: 1px solid var(--warning); border-radius: var(--radius-sm); color: var(--warning); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .pos-voucher__btn:hover { background: var(--warning); color: white; }
+        .pos-voucher__applied { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--success-light); border-radius: var(--radius-sm); margin-top: 8px; }
+        .pos-voucher__applied-tag { background: var(--success); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+        .pos-voucher__applied-text { flex: 1; font-size: 0.85rem; color: var(--success); font-weight: 500; }
+        .pos-voucher__applied-remove { width: 24px; height: 24px; border: none; background: var(--success); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        .pos-cart-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.75rem 1.25rem;
-            min-height: 200px;
-        }
-        .cart-empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem 1rem;
-            color: var(--text-muted);
-            text-align: center;
-            min-height: 220px;
-        }
-        .cart-empty i { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.45; }
-        .cart-item {
-            background: var(--bg-page);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.75rem;
-        }
-        .cart-item .item-name {
-            font-weight: 600;
-            color: var(--text);
-            font-size: 0.9375rem;
-            line-height: 1.35;
-            word-break: break-word;
-        }
-        .cart-item .item-variant { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.2rem; }
-        .cart-item .item-variant-detail {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.35rem;
-            margin-top: 0.3rem;
-        }
-        .cart-item .variant-tag {
-            background: rgba(59, 130, 246, 0.12);
-            border: 1px solid rgba(59, 130, 246, 0.25);
-            color: #93c5fd;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-        .cart-item .item-price { font-size: 0.8125rem; color: var(--text-muted); }
-        .cart-item .item-total { font-weight: 700; color: var(--success); font-size: 0.9375rem; }
-        .cart-item .btn-group-cart .btn {
-            width: 28px;
-            height: 28px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.875rem;
-        }
-        .cart-item .btn-delete {
-            color: #ef4444;
-            border-color: #ef4444;
-        }
-        .cart-item .btn-delete:hover {
-            background-color: #ef4444;
-            border-color: #ef4444;
-            color: #fff;
-        }
-        .cart-item-img {
-            width: 56px;
-            height: 56px;
-            object-fit: contain;
-            border-radius: 6px;
-            background: #334155;
-            flex-shrink: 0;
-        }
-        .cart-item-img-placeholder {
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #334155;
-            border-radius: 6px;
-            color: var(--text-muted);
-            font-size: 1.4rem;
-            flex-shrink: 0;
-        }
+        /* Payment */
+        .pos-payment { padding: 16px 20px; border-top: 1px solid var(--border); }
+        .pos-payment__title { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pos-payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .pos-payment-method { padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; text-align: center; }
+        .pos-payment-method:hover { border-color: var(--accent); }
+        .pos-payment-method.active { border-color: var(--accent); background: var(--accent-light); }
+        .pos-payment-method__icon { font-size: 1.5rem; margin-bottom: 6px; }
+        .pos-payment-method__name { font-weight: 600; font-size: 0.875rem; }
+        .pos-checkout { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--success), #15803d); border: none; border-radius: var(--radius); color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4); }
+        .pos-checkout:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5); }
+        .pos-checkout:disabled { background: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none; }
+        .pos-checkout__icon { font-size: 1.3rem; }
 
-        .pos-cart-actions {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 0.6rem;
-            padding: 1rem 1.25rem;
-            border-top: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .btn-pos-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text);
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            cursor: pointer;
-        }
-        .btn-pos-outline:hover { border-color: var(--accent); color: var(--accent); }
+        /* Quick Actions */
+        .pos-quick-actions { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .pos-quick-action { flex: 1; padding: 10px; background: var(--bg-gray); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; }
+        .pos-quick-action:hover { background: var(--accent-light); border-color: var(--accent); }
+        .pos-quick-action__icon { font-size: 1.2rem; margin-bottom: 4px; display: block; }
+        .pos-quick-action__text { font-weight: 500; color: var(--text-secondary); }
 
-        /* Cột phải: stack các panel */
-        .pos-side-stack { display: flex; flex-direction: column; gap: 1rem; }
-        .pos-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.1rem 1.25rem;
-            box-shadow: var(--shadow);
-        }
-        .pos-panel__title {
-            font-weight: 700;
-            font-size: 0.95rem;
-            margin-bottom: 0.85rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-        .pos-panel .form-control, .pos-panel .form-select {
-            background: var(--bg-page);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-        }
-        .pos-panel .form-control::placeholder { color: var(--text-muted); }
-        .pos-panel .form-control:focus, .pos-panel .form-select:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-            color: var(--text);
-        }
-        .pos-panel .form-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
-
-        .pos-btn-soft {
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.35);
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 0.85rem;
-            padding: 0.4rem 0.75rem;
-            border-radius: var(--radius-sm);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .pos-btn-soft:hover { background: rgba(59, 130, 246, 0.25); color: #93c5fd; }
-
-        .pos-summary-line {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.45rem;
-            font-size: 0.9rem;
-        }
-        .pos-summary-line--total {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--success);
-            margin-top: 0.5rem;
-            padding-top: 0.65rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .pos-pay-options { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.75rem 0 1rem; }
-        .pos-pay-options .form-check { margin: 0; padding-left: 1.75rem; }
-        .pos-pay-options .form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
-        .pos-pay-options .form-check-label { color: var(--text); font-size: 0.9rem; }
-
-        .btn-pos-confirm {
-            width: 100%;
-            background: var(--accent);
-            border: none;
-            color: #fff;
-            font-weight: 700;
-            padding: 0.85rem 1rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-        }
-        .btn-pos-confirm:hover { background: var(--accent-hover); color: #fff; }
-
-        .btn-pos-voucher {
-            background: var(--accent);
-            border: none;
-            color: #fff;
-            font-weight: 600;
-            border-radius: var(--radius-sm);
-            font-size: 0.875rem;
-            cursor: pointer;
-        }
-        .btn-pos-voucher:hover { background: var(--accent-hover); color: #fff; }
-
-        /* Product picker modal */
-        .product-card--modal {
-            background: var(--bg-page);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            overflow: hidden;
-            transition: border-color 0.2s, transform 0.15s;
-            height: 100%;
-        }
-        .product-card--modal:hover { border-color: var(--accent); transform: translateY(-1px); }
-        .product-card--modal .product-img-wrap {
-            background: #334155;
-            height: 110px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-        }
-        .product-card--modal .product-img { width: 100%; height: 100%; object-fit: contain; }
-        .product-card--modal .card-body { padding: 0.55rem 0.6rem; }
-        .product-card--modal .name {
-            font-weight: 600;
-            font-size: 0.77rem;
-            color: var(--text);
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .product-card--modal .price {
-            font-weight: 700;
-            color: var(--success);
-            font-size: 0.8rem;
-            margin-top: 0.3rem;
-        }
-        .product-card--modal .variant-info {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-            line-height: 1.4;
-        }
-        .product-card--modal .stock-info {
-            font-size: 0.72rem;
-            margin-top: 0.25rem;
-            font-weight: 600;
-        }
-        .product-card--modal .stock-info.in-stock { color: var(--success); }
-        .product-card--modal .stock-info.low-stock { color: #f59e0b; }
-        .product-card--modal .stock-info.out-of-stock { color: #ef4444; }
-
-        /* Modals */
-        .modal-pos .modal-dialog { max-width: 1400px; }
-        .modal-pos .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); }
-        .modal-pos .modal-header { border-bottom: 1px solid var(--border); }
-        .modal-pos .modal-body { max-height: 75vh; overflow-y: auto; padding: 1.25rem; }
-        .modal-pos .btn-close { filter: invert(1); opacity: 0.8; }
-
-        /* Modal xác nhận (thay browser confirm) — đồng bộ theme tối */
-        .modal-pos--confirm .modal-dialog {
-            max-width: 420px;
-        }
-        .pos-confirm-dialog {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
-            overflow: hidden;
-        }
-        .pos-confirm-dialog__head {
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.75rem;
-        }
-        .pos-confirm-dialog__head .modal-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0;
-            line-height: 1.35;
-        }
-        .pos-confirm-dialog__close {
-            flex-shrink: 0;
-            width: 2.35rem;
-            height: 2.35rem;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(248, 250, 252, 0.22);
-            border-radius: var(--radius-sm);
-            background: rgba(15, 23, 42, 0.6);
-            color: #f1f5f9;
-            line-height: 1;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
-        }
-        .pos-confirm-dialog__close:hover {
-            background: rgba(239, 68, 68, 0.22);
-            border-color: rgba(252, 165, 165, 0.45);
-            color: #fff;
-        }
-        .pos-confirm-dialog__close:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
-        .pos-confirm-dialog__close-svg {
-            display: block;
-            flex-shrink: 0;
-            pointer-events: none;
-        }
-        .pos-confirm-dialog__body {
-            padding: 1.15rem 1.25rem 1.25rem;
-            color: var(--text-muted);
-            font-size: 0.9375rem;
-            line-height: 1.55;
-        }
-        .pos-confirm-dialog__foot {
-            border-top: 1px solid var(--border);
-            padding: 0.85rem 1.25rem;
-            gap: 0.65rem;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-            background: rgba(15, 23, 42, 0.35);
-        }
-        .btn-pos-dialog-cancel {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-weight: 600;
-            font-size: 0.9rem;
-            padding: 0.5rem 1.1rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
-        }
-        .btn-pos-dialog-cancel:hover {
-            background: var(--bg-page);
-            border-color: var(--text-muted);
-            color: var(--text);
-        }
-        .btn-pos-dialog-ok {
-            background: var(--accent);
-            border: none;
-            color: #fff;
-            font-weight: 700;
-            font-size: 0.9rem;
-            padding: 0.5rem 1.2rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .btn-pos-dialog-ok:hover {
-            background: var(--accent-hover);
-            color: #fff;
-        }
-        .modal-pos--confirm .modal-content {
-            border: none;
-        }
-
-        /* Neo theo viewport; biến màu (modal có thể được append ra body, không còn con của .pos-scope) */
-        #posConfirmModal.modal {
-            --bg-page: #0f172a;
-            --bg-card: #1e293b;
-            --bg-card-hover: #334155;
-            --border: #334155;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --success: #10b981;
-            --radius: 12px;
-            --radius-sm: 8px;
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 1rem;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-            overflow-y: auto;
-            z-index: 1060;
-        }
-        #posConfirmModal.modal.show {
-            display: flex;
-        }
-        #posConfirmModal .modal-dialog {
-            margin: auto;
-            max-width: 420px;
-            width: 100%;
-        }
-
-        /* Search form tìm kiếm sản phẩm */
-        .pos-search-form {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--bg-page);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.45rem 0.75rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .pos-search-form:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-        .pos-search-form .search-icon {
-            color: var(--text-muted);
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-        .pos-search-form .search-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text);
-            font-size: 0.9rem;
-            padding: 0;
-            min-width: 0;
-        }
-        .pos-search-form .search-input::placeholder {
-            color: var(--text-muted);
-        }
-        .pos-search-form .search-clear {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            transition: background 0.2s, color 0.2s;
-            flex-shrink: 0;
-        }
-        .pos-search-form .search-clear:hover {
-            background: var(--bg-card-hover);
-            color: var(--text);
-        }
-
-        /* Grid flex — 5 sản phẩm / hàng */
-        .pos-product-item {
-            flex: 0 0 calc(20% - 0.6rem);
-            max-width: calc(20% - 0.6rem);
-        }
-        @media (max-width: 1199px) {
-            .pos-product-item { flex: 0 0 calc(25% - 0.6rem); max-width: calc(25% - 0.6rem); }
-        }
-        @media (max-width: 767px) {
-            .pos-product-item { flex: 0 0 calc(33.333% - 0.6rem); max-width: calc(33.333% - 0.6rem); }
-        }
-        @media (max-width: 480px) {
-            .pos-product-item { flex: 0 0 calc(50% - 0.6rem); max-width: calc(50% - 0.6rem); }
-        }
+        /* Modal */
+        .pos-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .pos-modal-overlay.show { display: flex; }
+        .pos-modal { background: var(--bg-white); border-radius: var(--radius-lg); width: 100%; max-width: 1000px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; animation: modalIn 0.25s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .pos-modal__header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .pos-modal__title { font-size: 1.25rem; font-weight: 700; }
+        .pos-modal__close { width: 36px; height: 36px; border: none; background: var(--bg-gray); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-secondary); transition: all 0.2s; }
+        .pos-modal__close:hover { background: var(--danger-light); color: var(--danger); }
+        .pos-modal__body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+        .pos-modal__product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+        .pos-modal__input-wrap { position: relative; }
+        .pos-modal__input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; pointer-events: none; }
+        .pos-modal__input { width: 100%; padding: 12px 14px 12px 44px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; background: var(--bg-white); transition: all 0.2s; }
+        .pos-modal__input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-light); }
+        .pos-modal__input:focus + .pos-modal__input-icon,
+        .pos-modal__input-wrap:hover .pos-modal__input-icon { color: var(--accent); }
+        .pos-modal__input::placeholder { color: var(--text-muted); }
 
         /* Toast */
-        #toastContainer {
-            position: fixed;
-            top: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10050;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
+        .pos-toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .pos-toast { padding: 14px 20px; background: var(--bg-white); border-radius: var(--radius); box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 12px; animation: toastIn 0.3s ease; border-left: 4px solid; min-width: 300px; }
+        .pos-toast.success { border-color: var(--success); }
+        .pos-toast.error { border-color: var(--danger); }
+        .pos-toast.warning { border-color: var(--warning); }
+        .pos-toast__icon { font-size: 1.3rem; }
+        .pos-toast.success .pos-toast__icon { color: var(--success); }
+        .pos-toast.error .pos-toast__icon { color: var(--danger); }
+        .pos-toast.warning .pos-toast__icon { color: var(--warning); }
+        .pos-toast__content { flex: 1; }
+        .pos-toast__title { font-weight: 600; font-size: 0.9rem; }
+        .pos-toast__message { font-size: 0.85rem; color: var(--text-secondary); }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .pos-main { grid-template-columns: 1fr; }
+            .pos-sidebar { position: fixed; right: 0; top: 65px; bottom: 0; width: 400px; transform: translateX(100%); transition: transform 0.3s ease; z-index: 200; }
+            .pos-sidebar.open { transform: translateX(0); }
         }
-        .toast-pos {
-            pointer-events: auto;
-            min-width: 320px;
-            max-width: 420px;
-            padding: 1rem 1.25rem;
-            border-radius: var(--radius);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            animation: toastIn 0.35s ease;
-            border: 1px solid;
-        }
-        .toast-pos.toast-warning { background: #1e293b; border-color: #f59e0b; color: #fef3c7; }
-        .toast-pos.toast-success { background: #1e293b; border-color: #10b981; color: #d1fae5; }
-        .toast-pos.toast-error { background: #1e293b; border-color: #ef4444; color: #fecaca; }
-        .toast-pos.toast-info { background: #1e293b; border-color: #3b82f6; color: #dbeafe; }
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .pos-cart-toggle { display: none; position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--accent); border: none; border-radius: 50%; color: white; font-size: 1.5rem; cursor: pointer; box-shadow: var(--shadow-lg); z-index: 150; align-items: center; justify-content: center; }
+        .pos-cart-toggle .badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     </style>
 
-    <div id="toastContainer" aria-live="polite"></div>
-
-    <div class="pos-breadcrumb">
-        <div>
-            <a th:href="@{/admin}">Trang chủ</a>
-            <span> / </span>
-            <span style="color: var(--text);">Bán hàng tại quầy</span>
+    <!-- Header -->
+    <header class="pos-header">
+        <div class="pos-header__left">
+            <div class="pos-logo"><div class="pos-logo-icon"><i class="fa-solid fa-shop"></i></div><span>POS Bán hàng</span></div>
+            <div class="pos-datetime"><span id="posDate"></span><strong id="posTime"></strong></div>
         </div>
-        <div class="pos-breadcrumb__user">
-            <span><i class="bi bi-person-circle" style="color: var(--accent);"></i> <span th:text="${tenNhanVien}">Nhân viên</span></span>
-            <a th:href="@{/dang-xuat}">Đăng xuất</a>
-        </div>
-    </div>
-
-    <div class="pos-invoice-toolbar">
-        <span class="pos-toolbar-title">Hóa đơn chờ</span>
-        <div class="tabs-list" id="tabsList"></div>
-        <button type="button" class="btn-pos-primary" onclick="taoDonMoi()">
-            <i class="bi bi-plus-lg"></i> Tạo hóa đơn mới
-        </button>
-    </div>
-
-    <div class="pos-main-grid">
-        <div class="pos-cart-card">
-            <div class="pos-cart-head">
-                <h3><i class="bi bi-cart3"></i> Giỏ hàng</h3>
-                <span class="pos-tab-info" id="tabInfo"></span>
-            </div>
-            <div class="pos-cart-body">
-                <input type="hidden" id="hoaDonId" th:value="${hoaDonId}">
-                <div class="cart-items" id="cartItems">
-                    <div class="cart-empty">
-                        <i class="bi bi-bag"></i>
-                        <span>Không có sản phẩm nào trong giỏ hàng</span>
-                    </div>
-                </div>
-            </div>
-            <div class="pos-cart-actions">
-                <button type="button" class="btn-pos-primary" onclick="openProductModal()">
-                    <i class="bi bi-grid-3x3-gap"></i> Chọn sản phẩm
-                </button>
+        <div class="pos-header__right">
+            <button class="pos-search__barcode" onclick="openBarcodeModal()"><i class="fa-solid fa-barcode"></i> Quét mã vạch</button>
+            <div class="pos-user">
+                <div class="pos-user__avatar">NV</div>
+                <div class="pos-user__info"><div class="pos-user__name">Nhân viên</div><div class="pos-user__role">Ca: 08:00 - 17:00</div></div>
             </div>
         </div>
+    </header>
 
-        <div class="pos-side-stack">
-            <div class="pos-panel">
-                <div class="pos-panel__title">Khách hàng</div>
-                <div class="mb-2">
-                    <label class="form-label" for="khTen">Tên khách hàng</label>
-                    <input type="text" class="form-control" id="khTen" placeholder="Nhập tên" autocomplete="name">
-                </div>
-                <div class="mb-2">
-                    <label class="form-label" for="khSdt">Số điện thoại</label>
-                    <input type="tel" class="form-control" id="khSdt" placeholder="Số điện thoại" autocomplete="tel">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="khEmail">Email <span style="font-weight:400;opacity:.7;">(không bắt buộc)</span></label>
-                    <input type="email" class="form-control" id="khEmail" placeholder="Nhập email" autocomplete="email">
-                </div>
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                    <a th:href="@{/admin/khach-hang}" target="_blank" rel="noopener" class="pos-btn-soft">Chọn khách hàng</a>
-                    <a th:href="@{/admin/khach-hang}" target="_blank" rel="noopener" class="pos-btn-soft">Thêm khách hàng</a>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="luuThongTinKhach()">
-                    Lưu thông tin lên hóa đơn
-                </button>
-            </div>
-
-            <div class="pos-panel">
-                <div class="pos-panel__title">Thông tin đơn hàng</div>
-                <div class="pos-summary-line">
-                    <span>Tổng tiền hàng</span>
-                    <span id="tamTinh">0 ₫</span>
-                </div>
-                <div class="pos-summary-line">
-                    <span>Giảm giá</span>
-                    <span id="giamGia">0 ₫</span>
-                </div>
-                <div class="pos-summary-line pos-summary-line--total">
-                    <span>Tổng thanh toán</span>
-                    <span id="tongThanhToan">0 ₫</span>
-                </div>
-
-                <div class="mt-3">
-                    <label class="form-label">Mã voucher</label>
-                    <input type="text" id="voucherCode" class="form-control mb-2" placeholder="Nhập mã voucher">
-                    <div id="voucherListWrap" style="display:none;" class="mb-2">
-                        <select id="voucherSelect" class="form-select" style="cursor:pointer;">
-                            <option value="">— Chọn voucher khả dụng —</option>
-                        </select>
-                        <small class="d-block mt-1" style="font-size: 0.75rem; color: var(--text-muted);">Chỉ voucher còn hiệu lực và còn lượt.</small>
-                    </div>
-                    <button class="btn btn-pos-voucher w-100" type="button" onclick="apDungVoucher()">
-                        <i class="bi bi-tag"></i> Áp dụng voucher
-                    </button>
-                </div>
-
-                <div class="pos-panel__title mt-3 mb-2" style="border-bottom: none; padding-bottom: 0;">Phương thức thanh toán</div>
-                <div class="pos-pay-options">
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="pttt" id="ptTienMat" value="TIEN_MAT" checked>
-                        <label class="form-check-label" for="ptTienMat">Tiền mặt</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="pttt" id="ptVnPay" value="VNPAY">
-                        <label class="form-check-label" for="ptVnPay">Thanh toán VNPay (QR)</label>
-                    </div>
-                </div>
-
-                <button type="button" class="btn-pos-confirm" onclick="xacNhanThanhToan()">
-                    Xác nhận thanh toán
-                </button>
-            </div>
+    <!-- Invoice Tabs -->
+    <div class="pos-invoice-tabs">
+        <span class="pos-invoice-tabs__label"><i class="fa-solid fa-clock-rotate-left"></i> Hóa đơn chờ</span>
+        <div id="tabsList" style="display: contents;"></div>
+        <div class="pos-invoice-tabs__actions">
+            <button class="pos-new-invoice-btn" onclick="createNewInvoice()"><i class="fa-solid fa-circle-plus"></i> Tạo đơn mới</button>
         </div>
     </div>
 
-    <!-- Modal chọn sản phẩm -->
-    <div class="modal fade modal-pos" id="productModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-xl modal-dialog-centered">
-            <div class="modal-content">
-               
-                <div class="modal-body">
-                <div class="pos-search-form mb-3">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" id="productModalSearch" placeholder="Tìm theo tên, thương hiệu..." autocomplete="off">
-                    <button type="button" class="search-clear" id="clearSearch" onclick="clearSearchInput()" title="Xóa tìm kiếm" style="display:none;">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-                    <div id="productModalGrid" style="display:flex;flex-wrap:wrap;gap:0.75rem;">
-                        <div class="pos-product-item" th:each="sp : ${sanPhamList}">
-                            <div class="product-card--modal h-100"
-                                 th:data-search="${(sp.sanPham != null ? sp.sanPham.tenSanPham : '') + ' ' + (sp.sanPham != null and sp.sanPham.thuongHieu != null ? sp.sanPham.thuongHieu.tenThuongHieu : '')}"
-                                 th:data-id="${sp.id}"
-                                 th:data-variants="${sp.mauSac != null ? sp.mauSac.tenMauSac : ''} + '|' + ${sp.kichThuoc != null ? sp.kichThuoc.tenKichThuoc : ''} + '|' + ${sp.chatLieuDay != null ? sp.chatLieuDay.tenChatLieu : ''} + '|' + ${sp.duongKinh != null ? sp.duongKinh : ''} + '|' + ${sp.doChiuNuoc != null ? sp.doChiuNuoc : ''} + '|' + ${sp.beRongDay != null ? sp.beRongDay : ''} + '|' + ${sp.trongLuong != null ? sp.trongLuong : ''} + '|' + ${sp.soLuongTon != null ? sp.soLuongTon : 0} + '|' + ${sp.giaBan != null ? sp.giaBan : 0}"
-                                 th:onclick="'addToCart(' + ${sp.id} + '); closeProductModal();'">
-                                <div class="product-img-wrap">
-                                    <th:block th:if="${sp.sanPham != null and sp.sanPham.hinhAnh != null}">
-                                        <img class="product-img" th:src="${#strings.startsWith(sp.sanPham.hinhAnh, '/') ? sp.sanPham.hinhAnh : '/uploads/' + sp.sanPham.hinhAnh}" th:alt="${sp.sanPham.tenSanPham}">
-                                    </th:block>
-                                    <th:block th:unless="${sp.sanPham != null and sp.sanPham.hinhAnh != null}">
-                                        <i class="bi bi-image" style="font-size:2rem;color:var(--text-muted)"></i>
-                                    </th:block>
-                                </div>
-                                <div class="card-body">
-                                    <p class="name mb-0" th:text="${sp.sanPham != null ? sp.sanPham.tenSanPham : 'N/A'}"></p>
-                                    <p class="price mb-0"
-                                       th:text="${#numbers.formatDecimal((kmGiaMap[sp.id] != null ? kmGiaMap[sp.id].giaSauGiam : sp.giaBan), 0, 'COMMA', 0, 'POINT') + ' ₫'}"></p>
-                                    <p class="variant-info mb-0">
-                                        <th:block th:if="${sp.mauSac != null}">
-                                            <i class="bi bi-palette"></i> <span th:text="${sp.mauSac.tenMauSac}">Màu sắc</span>
-                                        </th:block>
-                                        <th:block th:if="${sp.kichThuoc != null}">
-                                            <span th:if="${sp.mauSac != null}"> · </span><i class="bi bi-rulers"></i> <span th:text="${sp.kichThuoc.tenKichThuoc}">Kích thước</span>
-                                        </th:block>
-                                        <th:block th:if="${sp.chatLieuDay != null}">
-                                            <span th:if="${sp.mauSac != null or sp.kichThuoc != null}"> · </span><i class="bi bi-circle"></i> <span th:text="${sp.chatLieuDay.tenChatLieu}">Chất liệu dây</span>
-                                        </th:block>
-                                    </p>
-                                    <p class="stock-info mb-0"
-                                       th:classappend="${sp.soLuongTon == null or sp.soLuongTon == 0 ? 'out-of-stock' : (sp.soLuongTon <= 3 ? 'low-stock' : 'in-stock')}"
-                                       th:text="${sp.soLuongTon != null and sp.soLuongTon > 0 ? 'Còn ' + sp.soLuongTon + ' sản phẩm' : 'Hết hàng'}">
-                                        <th:block th:if="${sp.soLuongTon != null}">
-                                            <th:block th:if="${sp.soLuongTon > 3}">Còn <span th:text="${sp.soLuongTon}"></span> sản phẩm</th:block>
-                                            <th:block th:if="${sp.soLuongTon > 0 and sp.soLuongTon <= 3}">Chỉ còn <span th:text="${sp.soLuongTon}"></span> sản phẩm</th:block>
-                                            <th:block th:if="${sp.soLuongTon == 0}">Hết hàng</th:block>
-                                        </th:block>
-                                    </p>
-                                </div>
-                            </div>
+    <!-- Main -->
+    <main class="pos-main">
+        <section class="pos-products">
+            <div class="pos-search">
+                <div class="pos-search__input-wrap"><i class="fa-solid fa-magnifying-glass pos-search__icon"></i><input type="text" class="pos-search__input" id="productSearch" placeholder="Tìm sản phẩm..." oninput="filterProducts()"></div>
+            </div>
+            <div class="pos-categories" id="categories">
+                <div class="pos-category active" data-id="all"><i class="fa-solid fa-border-all"></i>Tất cả</div>
+                <div class="pos-category" data-id="dong-ho-nam"><i class="fa-solid fa-clock"></i>Đồng hồ nam</div>
+                <div class="pos-category" data-id="dong-ho-nu"><i class="fa-regular fa-clock"></i>Đồng hồ nữ</div>
+            </div>
+            <div class="pos-product-grid" id="productGrid">
+                <th:block th:each="sp : ${sanPhamList}">
+                    <div class="pos-product-card" th:data-id="${sp.id}" th:data-search="${(sp.sanPham != null ? sp.sanPham.tenSanPham : '') + ' ' + (sp.sanPham != null and sp.sanPham.thuongHieu != null ? sp.sanPham.thuongHieu.tenThuongHieu : '')}" th:data-category-name="${sp.sanPham != null and sp.sanPham.danhMuc != null ? sp.sanPham.danhMuc.tenDanhMuc : 'Tất cả'}" th:onclick="'addToCart(' + ${sp.id} + ')'">
+                        <div class="pos-product-card__img">
+                            <th:block th:if="${sp.sanPham != null and sp.sanPham.hinhAnh != null}"><img th:src="${#strings.startsWith(sp.sanPham.hinhAnh, '/') ? sp.sanPham.hinhAnh : '/uploads/' + sp.sanPham.hinhAnh}" th:alt="${sp.sanPham.tenSanPham}"></th:block>
+                            <th:block th:unless="${sp.sanPham != null and sp.sanPham.hinhAnh != null}"><i class="fa-regular fa-image no-img"></i></th:block>
+                            <span class="pos-product-card__stock" th:classappend="${sp.soLuongTon == null or sp.soLuongTon == 0 ? 'out-of-stock' : (sp.soLuongTon <= 3 ? 'low-stock' : 'in-stock')}" th:text="${sp.soLuongTon != null and sp.soLuongTon > 0 ? (sp.soLuongTon > 3 ? 'Còn ' + sp.soLuongTon : 'Còn ít') : 'Hết hàng'}"></span>
+                        </div>
+                        <div class="pos-product-card__info">
+                            <div class="pos-product-card__name" th:text="${sp.sanPham != null ? sp.sanPham.tenSanPham : 'N/A'}"></div>
+                            <div class="pos-product-card__variant"><th:block th:if="${sp.mauSac != null}"><span th:text="${sp.mauSac.tenMauSac}"></span></th:block><th:block th:if="${sp.kichThuoc != null}"><span> · </span><span th:text="${sp.kichThuoc.tenKichThuoc}"></span></th:block></div>
+                            <div class="pos-product-card__price" th:text="${#numbers.formatDecimal((kmGiaMap[sp.id] != null ? kmGiaMap[sp.id].giaSauGiam : sp.giaBan), 0, 'COMMA', 0, 'POINT') + ' ₫'}"></div>
                         </div>
                     </div>
+                </th:block>
+            </div>
+        </section>
+
+        <aside class="pos-sidebar" id="cartSidebar">
+            <div class="pos-cart-header">
+                <div class="pos-cart-title"><div class="pos-cart-title__icon"><i class="fa-solid fa-cart-shopping"></i></div><span>Giỏ hàng</span><span class="pos-cart-count" id="cartCount">0</span></div>
+                <button class="pos-cart-clear" onclick="clearCart()"><i class="fa-solid fa-trash"></i> Xóa all</button>
+            </div>
+            <div class="pos-cart-items" id="cartItems">
+                <div class="pos-cart-empty"><i class="fa-solid fa-cart-arrow-down pos-cart-empty__icon"></i><div class="pos-cart-empty__text">Giỏ hàng trống</div><div class="pos-cart-empty__hint">Chọn sản phẩm để thêm vào</div></div>
+            </div>
+            <div class="pos-customer">
+                <input type="text" class="pos-customer__input" id="customerName" placeholder="Tên khách hàng...">
+                <input type="tel" class="pos-customer__input" id="customerPhone" placeholder="SĐT...">
+                <input type="email" class="pos-customer__input" id="customerEmail" placeholder="Email...">
+            </div>
+            <div class="pos-voucher">
+                <div class="pos-voucher__input-wrap"><i class="fa-solid fa-ticket pos-voucher__input-icon"></i><input type="text" class="pos-voucher__input" id="voucherCode" placeholder="Nhập mã voucher..."><button class="pos-voucher__btn" onclick="applyVoucher()"><i class="fa-solid fa-check"></i> Áp dụng</button></div>
+                <div id="voucherApplied" style="display: none;"></div>
+            </div>
+            <div class="pos-cart-summary">
+                <div class="pos-summary-row"><span class="pos-summary-row__label">Tổng tiền hàng</span><span class="pos-summary-row__value" id="subtotal">0 ₫</span></div>
+                <div class="pos-summary-row discount" id="discountRow" style="display: none;"><span class="pos-summary-row__label">Giảm giá</span><span class="pos-summary-row__value" id="discount">-0 ₫</span></div>
+                <div class="pos-summary-row total"><span class="pos-summary-row__label">Thành tiền</span><span class="pos-summary-row__value" id="total">0 ₫</span></div>
+            </div>
+            <div class="pos-payment">
+                <div class="pos-payment__title">Phương thức thanh toán</div>
+                <div class="pos-payment-methods">
+                    <div class="pos-payment-method active" data-method="cash" onclick="selectPayment('cash')"><div class="pos-payment-method__icon"><i class="fa-solid fa-money-bill-wave"></i></div><div class="pos-payment-method__name">Tiền mặt</div></div>
+                    <div class="pos-payment-method" data-method="qr" onclick="selectPayment('qr')"><div class="pos-payment-method__icon"><i class="fa-solid fa-qrcode"></i></div><div class="pos-payment-method__name">VNPay QR</div></div>
+                </div>
+                <button class="pos-checkout" id="checkoutBtn" onclick="checkout()" disabled><i class="fa-solid fa-credit-card pos-checkout__icon"></i><span>Thanh toán</span><span id="checkoutTotal">0 ₫</span></button>
+            </div>
+            <div class="pos-quick-actions">
+                <div class="pos-quick-action" onclick="openProductModal()"><i class="fa-solid fa-boxes-stacked pos-quick-action__icon"></i><span class="pos-quick-action__text">Sản phẩm</span></div>
+                <div class="pos-quick-action" onclick="holdOrder()"><i class="fa-solid fa-circle-pause pos-quick-action__icon"></i><span class="pos-quick-action__text">Tạm giữ</span></div>
+                <div class="pos-quick-action" onclick="printBill()"><i class="fa-solid fa-print pos-quick-action__icon"></i><span class="pos-quick-action__text">In hóa đơn</span></div>
+            </div>
+        </aside>
+    </main>
+
+    <button class="pos-cart-toggle" id="cartToggle" onclick="toggleCart()"><i class="fa-solid fa-cart-plus"></i><span class="badge" id="mobileCartBadge">0</span></button>
+    <div class="pos-toast-container" id="toastContainer"></div>
+
+    <!-- Barcode Modal -->
+    <div class="pos-modal-overlay" id="barcodeModal">
+        <div class="pos-modal" style="max-width: 400px;">
+            <div class="pos-modal__header"><h3 class="pos-modal__title">Quét mã vạch</h3><button class="pos-modal__close" onclick="closeBarcodeModal()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="pos-modal__body"><div class="pos-modal__input-wrap"><i class="fa-solid fa-barcode pos-modal__input-icon"></i><input type="text" class="pos-modal__input" id="barcodeInput" placeholder="Nhập mã sản phẩm..." onkeydown="if(event.key==='Enter')submitBarcode()"></div><button class="pos-checkout" style="margin-top: 16px;" onclick="submitBarcode()"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button></div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="pos-modal-overlay" id="productModal">
+        <div class="pos-modal">
+            <div class="pos-modal__header"><h3 class="pos-modal__title">Chọn sản phẩm</h3><button class="pos-modal__close" onclick="closeProductModal()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="pos-modal__body">
+                <div class="pos-modal__input-wrap" style="margin-bottom: 16px;"><i class="fa-solid fa-magnifying-glass pos-modal__input-icon"></i><input type="text" class="pos-modal__input" id="modalProductSearch" placeholder="Tìm sản phẩm..." oninput="filterModalProducts()"></div>
+                <div class="pos-modal__product-grid" id="modalProductGrid">
+                    <th:block th:each="sp : ${sanPhamList}">
+                        <div class="pos-product-card" th:data-id="${sp.id}" th:data-search="${(sp.sanPham != null ? sp.sanPham.tenSanPham : '') + ' ' + (sp.sanPham != null and sp.sanPham.thuongHieu != null ? sp.sanPham.thuongHieu.tenThuongHieu : '')}" th:onclick="'addToCart(' + ${sp.id} + '); closeProductModal();'">
+                            <div class="pos-product-card__img"><th:block th:if="${sp.sanPham != null and sp.sanPham.hinhAnh != null}"><img th:src="${#strings.startsWith(sp.sanPham.hinhAnh, '/') ? sp.sanPham.hinhAnh : '/uploads/' + sp.sanPham.hinhAnh}" th:alt="${sp.sanPham.tenSanPham}"></th:block><th:block th:unless="${sp.sanPham != null and sp.sanPham.hinhAnh != null}"><i class="fa-regular fa-image no-img"></i></th:block></div>
+                            <div class="pos-product-card__info"><div class="pos-product-card__name" th:text="${sp.sanPham != null ? sp.sanPham.tenSanPham : 'N/A'}"></div><div class="pos-product-card__price" th:text="${#numbers.formatDecimal((kmGiaMap[sp.id] != null ? kmGiaMap[sp.id].giaSauGiam : sp.giaBan), 0, 'COMMA', 0, 'POINT') + ' ₫'}"></div></div>
+                        </div>
+                    </th:block>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal xác nhận thanh toán / thao tác quan trọng (theme tối) -->
-    <div class="modal fade modal-pos modal-pos--confirm" id="posConfirmModal" tabindex="-1"
-         aria-labelledby="posConfirmTitle" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content pos-confirm-dialog">
-                <div class="modal-header pos-confirm-dialog__head border-0">
-                    <h5 class="modal-title" id="posConfirmTitle">Xác nhận thanh toán</h5>
-                    <button type="button" class="pos-confirm-dialog__close" data-bs-dismiss="modal" title="Đóng" aria-label="Đóng hộp thoại">
-                        <svg class="pos-confirm-dialog__close-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true">
-                            <path d="M18 6 6 18M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body pos-confirm-dialog__body">
-                    <p class="mb-0" id="posConfirmMessage">Nội dung xác nhận</p>
-                </div>
-                <div class="modal-footer pos-confirm-dialog__foot border-0">
-                    <button type="button" class="btn-pos-dialog-cancel" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn-pos-dialog-ok" id="posConfirmBtnOk">Xác nhận thanh toán</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <input type="hidden" id="hoaDonId" th:value="${hoaDonId}">
+    <input type="hidden" id="selectedPayment" value="cash">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Variables
         var currentTabId = null;
-        var pendingTabId = 0;
-        var POS_HIDDEN_TABS_KEY = 'posHiddenTabs';
+        var tabsData = [];
+        var cartItems = [];
+        var cartTotal = 0;
+        var cartDiscount = 0;
         var hiddenTabIds = new Set();
-        var EMPTY_CART_HTML = '<div class="cart-empty"><i class="bi bi-bag"></i><span>Không có sản phẩm nào trong giỏ hàng</span></div>';
+        var TABS_KEY = 'posTabs';
+        var HIDDEN_KEY = 'posHiddenTabs';
 
-        function loadHiddenTabs() {
+        // Storage functions
+        function loadStoredTabs() {
             try {
-                var raw = localStorage.getItem(POS_HIDDEN_TABS_KEY);
-                if (!raw) return;
-                var arr = JSON.parse(raw);
-                if (Array.isArray(arr)) {
-                    hiddenTabIds = new Set(arr.map(function (x) { return Number(x); }).filter(function (x) { return Number.isFinite(x); }));
-                }
-            } catch (e) {}
+                var raw = localStorage.getItem(TABS_KEY);
+                if (raw) tabsData = JSON.parse(raw);
+                var hidden = localStorage.getItem(HIDDEN_KEY);
+                if (hidden) hiddenTabIds = new Set(JSON.parse(hidden));
+            } catch (e) { console.error(e); }
         }
 
-        function saveHiddenTabs() {
+        function saveStoredTabs() {
             try {
-                localStorage.setItem(POS_HIDDEN_TABS_KEY, JSON.stringify(Array.from(hiddenTabIds)));
-            } catch (e) {}
+                localStorage.setItem(TABS_KEY, JSON.stringify(tabsData));
+                localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(hiddenTabIds)));
+            } catch (e) { console.error(e); }
         }
 
-        function unhideTabId(id) {
-            if (!Number.isFinite(id)) return;
-            if (hiddenTabIds.has(id)) {
-                hiddenTabIds.delete(id);
-                saveHiddenTabs();
-            }
+        function formatMoney(num) { return (num || 0).toLocaleString('vi-VN') + ' ₫'; }
+        function formatInvoiceCode(maDon) { return (!maDon || maDon === 'Đơn mới') ? 'Đơn mới' : (maDon.length > 10 ? '...' + maDon.slice(-8) : maDon); }
+
+        // Toast
+        function showToast(message, type) {
+            type = type || 'success';
+            var c = document.getElementById('toastContainer');
+            var t = document.createElement('div');
+            t.className = 'pos-toast ' + type;
+            var icons = { success: 'fa-check-circle', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation' };
+            var titles = { success: 'Thành công', error: 'Lỗi', warning: 'Thông báo' };
+            t.innerHTML = '<i class="fa-solid ' + icons[type] + ' pos-toast__icon"></i><div class="pos-toast__content"><div class="pos-toast__title">' + titles[type] + '</div><div class="pos-toast__message">' + message + '</div></div>';
+            c.appendChild(t);
+            setTimeout(function() { t.style.animation = 'toastIn 0.3s ease reverse'; setTimeout(function() { t.remove(); }, 300); }, 3000);
         }
 
-        function formatMoney(num) {
-            return (num || 0).toLocaleString('vi-VN') + ' ₫';
+        // DateTime
+        function updateDateTime() {
+            var now = new Date();
+            document.getElementById('posDate').textContent = now.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' });
+            document.getElementById('posTime').textContent = now.toLocaleTimeString('vi-VN');
         }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
 
-        function formatTenDon(maDon) {
-            if (!maDon) return 'Đơn mới';
-            return maDon.length > 12 ? '...' + maDon.slice(-10) : maDon;
-        }
-
-        function clearKhachFields() {
-            var t = document.getElementById('khTen');
-            var s = document.getElementById('khSdt');
-            var e = document.getElementById('khEmail');
-            if (t) t.value = '';
-            if (s) s.value = '';
-            if (e) e.value = '';
-        }
-
-        /** Sau thanh toán thành công: xóa tab đơn đó, reset giỏ và hoaDonId */
-        function resetPOSAfterPayment(paidHoaDonId) {
-            var numId = parseInt(paidHoaDonId, 10);
-            var tabs = window._tabsData || [];
-            var idx = tabs.findIndex(function(t) { return t.id === numId; });
-            if (idx !== -1) tabs.splice(idx, 1);
-            window._tabsData = tabs;
-            currentTabId = null;
-            document.getElementById('hoaDonId').value = '0';
-            document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-            document.getElementById('tamTinh').innerText = '0 ₫';
-            document.getElementById('giamGia').innerText = '0 ₫';
-            document.getElementById('tongThanhToan').innerText = '0 ₫';
-            var ti = document.getElementById('tabInfo');
-            if (ti) ti.innerHTML = '';
-            clearKhachFields();
-            var vc = document.getElementById('voucherCode');
-            if (vc) vc.value = '';
-            loadDonDangMo();
-        }
-
-        /** Làm mới dòng “Còn X sản phẩm” trong modal chọn hàng sau khi trừ tồn */
-        function refreshProductStockPos() {
-            fetch('/ban-hang/api/ton-kho-pos')
-                .then(function(res) { return res.json(); })
-                .then(function(rows) {
-                    var map = {};
-                    (rows || []).forEach(function(r) {
-                        if (r && r.id != null) {
-                            map[r.id] = r.soLuongTon != null ? r.soLuongTon : 0;
-                        }
-                    });
-                    document.querySelectorAll('.product-card--modal[data-id]').forEach(function(card) {
-                        var id = parseInt(card.getAttribute('data-id'), 10);
-                        if (!Number.isFinite(id) || !Object.prototype.hasOwnProperty.call(map, id)) return;
-                        var ton = map[id];
-                        var stockEl = card.querySelector('.stock-info');
-                        if (!stockEl) return;
-                        stockEl.classList.remove('in-stock', 'low-stock', 'out-of-stock');
-                        if (ton <= 0) {
-                            stockEl.classList.add('out-of-stock');
-                            stockEl.textContent = 'Hết hàng';
-                        } else if (ton <= 3) {
-                            stockEl.classList.add('low-stock');
-                            stockEl.textContent = 'Chỉ còn ' + ton + ' sản phẩm';
-                        } else {
-                            stockEl.classList.add('in-stock');
-                            stockEl.textContent = 'Còn ' + ton + ' sản phẩm';
-                        }
-                    });
-                })
-                .catch(function() {});
-        }
-
-        function fillKhachFromCart(data) {
-            var t = document.getElementById('khTen');
-            var s = document.getElementById('khSdt');
-            var e = document.getElementById('khEmail');
-            if (!t || !s) return;
-            if (data && data.tenKhachHang != null) t.value = data.tenKhachHang;
-            else t.value = '';
-            if (data && data.sdtKhachHang != null) s.value = data.sdtKhachHang;
-            else s.value = '';
-            if (e) {
-                if (data && data.emailKhachHang != null) e.value = data.emailKhachHang;
-                else e.value = '';
-            }
-        }
-
-        function renderTabs(tabs) {
+        // Tab functions
+        function renderTabs() {
             var list = document.getElementById('tabsList');
             if (!list) return;
             list.innerHTML = '';
-            tabs.forEach(function(tab) {
-                var isActive = tab.id === currentTabId;
+            var visible = tabsData.filter(function(t) { return !hiddenTabIds.has(t.id); });
+            visible.forEach(function(tab) {
                 var el = document.createElement('div');
-                el.className = 'tab-item' + (isActive ? ' active' : '');
-                el.setAttribute('data-id', tab.id);
-                el.setAttribute('title', tab.maDonHang + ' — ' + tab.tenTrangThai);
-                el.innerHTML =
-                    '<span>' + formatTenDon(tab.maDonHang) + '</span>' +
-                    '<span class="tab-badge">' + tab.soSanPham + '</span>' +
-                    '<button type="button" class="tab-close" onclick="event.stopPropagation(); closeTab(' + tab.id + ')">×</button>';
+                el.className = 'pos-invoice-tab' + (tab.id === currentTabId ? ' active' : '');
+                el.dataset.id = tab.id;
                 el.onclick = function() { switchTab(tab.id); };
+                el.innerHTML = '<div class="pos-invoice-tab__info"><div class="pos-invoice-tab__code">' + formatInvoiceCode(tab.maDonHang) + '</div><div class="pos-invoice-tab__amount">' + formatMoney(tab.tongTien || 0) + '</div></div><span class="pos-invoice-tab__badge">' + (tab.soSanPham || 0) + '</span><button class="pos-invoice-tab__close" onclick="event.stopPropagation(); closeTab(' + tab.id + ')"><i class="fa-solid fa-xmark"></i></button>';
                 list.appendChild(el);
             });
+            if (visible.length === 0) {
+                var def = document.createElement('div');
+                def.className = 'pos-invoice-tab active';
+                def.innerHTML = '<div class="pos-invoice-tab__info"><div class="pos-invoice-tab__code">Đơn mới</div><div class="pos-invoice-tab__amount">0 ₫</div></div><span class="pos-invoice-tab__badge">0</span>';
+                def.onclick = function() { switchTab(0); };
+                list.appendChild(def);
+            }
         }
 
-        function openProductModal() {
-            var el = document.getElementById('productModal');
-            if (!el) return;
-            var m = bootstrap.Modal.getOrCreateInstance(el);
-            m.show();
-            var inp = document.getElementById('productModalSearch');
-            if (inp) { inp.value = ''; filterProductModal(''); setTimeout(function() { inp.focus(); }, 400); }
+        function updateTabInfo(tabId, soSanPham, tongTien) {
+            var tab = tabsData.find(function(t) { return t.id === tabId; });
+            if (tab) {
+                tab.soSanPham = soSanPham;
+                tab.tongTien = tongTien;
+                saveStoredTabs();
+                renderTabs();
+            }
         }
 
-        function closeProductModal() {
-            var el = document.getElementById('productModal');
-            if (!el) return;
-            var inst = bootstrap.Modal.getInstance(el);
-            if (inst) inst.hide();
+        function createNewInvoice() {
+            showToast('Đang tạo đơn mới...', 'warning');
+            fetch('/ban-hang/api/tao-don-moi', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success && data.id) {
+                        tabsData.unshift({ id: data.id, maDonHang: data.maDonHang || 'HD' + data.id, trangThai: data.trangThai, tenTrangThai: data.tenTrangThai, tongTien: 0, soSanPham: 0 });
+                        currentTabId = data.id;
+                        document.getElementById('hoaDonId').value = data.id;
+                        cartItems = [];
+                        cartDiscount = 0;
+                        clearCustomerFields();
+                        updateCartUI();
+                        saveStoredTabs();
+                        renderTabs();
+                        showToast('Đã tạo: ' + (data.maDonHang || 'HD' + data.id), 'success');
+                    } else {
+                        showToast(data.message || 'Lỗi tạo đơn', 'error');
+                    }
+                })
+                .catch(function(e) { console.error(e); showToast('Lỗi kết nối', 'error'); });
         }
 
-        function filterProductModal(q) {
-            q = (q || '').toLowerCase().trim();
-            var grid = document.getElementById('productModalGrid');
-            if (!grid) return;
-            var cols = grid.querySelectorAll('[data-search]');
-            cols.forEach(function(col) {
-                var parent = col.closest('.col-6') || col.closest('.pos-product-item') || col.parentElement;
-                if (!parent) return;
-                var hay = (col.getAttribute('data-search') || '').toLowerCase();
-                parent.style.display = (!q || hay.indexOf(q) !== -1) ? '' : 'none';
+        function switchTab(tabId) {
+            currentTabId = tabId;
+            document.getElementById('hoaDonId').value = tabId > 0 ? tabId : 0;
+            if (tabId > 0) { loadCartForTab(tabId); }
+            else { cartItems = []; cartDiscount = 0; updateCartUI(); clearCustomerFields(); }
+            renderTabs();
+            closeTabsDropdown();
+        }
+
+        function closeTab(tabId, event) {
+            if (event) event.stopPropagation();
+            var tab = tabsData.find(function(t) { return t.id === tabId; });
+            if (!tab) return;
+            if (tabId > 0 && tab.soSanPham > 0) {
+                showConfirm('Đóng hóa đơn "' + tab.maDonHang + '"?', function() {
+                    doCloseTab(tab, tabId);
+                });
+                return;
+            }
+            doCloseTab(tab, tabId);
+        }
+
+        function doCloseTab(tab, tabId) {
+            tabsData = tabsData.filter(function(t) { return t.id !== tabId; });
+            if (tabId > 0) hiddenTabIds.add(tabId);
+            if (currentTabId === tabId) {
+                var remain = tabsData.filter(function(t) { return !hiddenTabIds.has(t.id); });
+                if (remain.length > 0) { switchTab(remain[0].id); }
+                else { currentTabId = 0; document.getElementById('hoaDonId').value = '0'; cartItems = []; cartDiscount = 0; updateCartUI(); clearCustomerFields(); }
+            }
+            saveStoredTabs();
+            renderTabs();
+            showToast('Đã đóng tab', 'success');
+        }
+
+        function closeAllTabs() {
+            var cur = tabsData.find(function(t) { return t.id === currentTabId; });
+            tabsData = cur ? [cur] : [];
+            tabsData.forEach(function(t) { if (t.id > 0) hiddenTabIds.add(t.id); });
+            if (!cur) { currentTabId = 0; document.getElementById('hoaDonId').value = '0'; cartItems = []; cartDiscount = 0; updateCartUI(); }
+            saveStoredTabs();
+            renderTabs();
+            closeTabsDropdown();
+            showToast('Đã đóng tất cả tab', 'success');
+        }
+
+        function loadPendingOrders() {
+            fetch('/ban-hang/api/don-dang-mo')
+                .then(function(r) { return r.json(); })
+                .then(function(serverTabs) {
+                    var localTabs = tabsData.filter(function(t) { return t.id < 0; });
+                    var filtered = (serverTabs || []).filter(function(t) { return !hiddenTabIds.has(t.id); });
+                    tabsData = localTabs.concat(filtered);
+                    if (!currentTabId && tabsData.length > 0) switchTab(tabsData[0].id);
+                    saveStoredTabs();
+                    renderTabs();
+                    closeTabsDropdown();
+                })
+                .catch(function(e) { console.error(e); showToast('Lỗi tải danh sách', 'error'); });
+        }
+
+        function loadCartForTab(tabId) {
+            fetch('/ban-hang/cart/' + tabId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    cartItems = data.items || [];
+                    cartDiscount = data.giamGia || 0;
+                    if (data.tenKhachHang) document.getElementById('customerName').value = data.tenKhachHang;
+                    if (data.sdtKhachHang) document.getElementById('customerPhone').value = data.sdtKhachHang;
+                    if (data.emailKhachHang) document.getElementById('customerEmail').value = data.emailKhachHang;
+                    if (cartItems.length === 0) { autoCloseTab(); return; }
+                    updateCartUI();
+                    updateTabInfo(tabId, cartItems.reduce(function(s, i) { return s + i.soLuong; }, 0), data.tongThanhToan);
+                })
+                .catch(function(e) { console.error(e); cartItems = []; updateCartUI(); });
+        }
+
+        function autoCloseTab() {
+            var hoaDonId = parseInt(document.getElementById('hoaDonId').value) || 0;
+            currentTabId = 0;
+            document.getElementById('hoaDonId').value = '0';
+            cartItems = [];
+            cartDiscount = 0;
+            updateCartUI();
+            clearCustomerFields();
+            tabsData = tabsData.filter(function(t) { return t.id !== hoaDonId; });
+            var remain = tabsData.filter(function(t) { return !hiddenTabIds.has(t.id); });
+            if (remain.length > 0) { switchTab(remain[0].id); }
+            else { createNewInvoice(); }
+            renderTabs();
+            showToast('Đã đóng hóa đơn trống', 'success');
+        }
+
+        function toggleTabsDropdown() { document.getElementById('tabsDropdownMenu').classList.toggle('show'); }
+        function closeTabsDropdown() { document.getElementById('tabsDropdownMenu').classList.remove('show'); }
+        function clearCustomerFields() { document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = ''; document.getElementById('customerEmail').value = ''; }
+
+        // Filter
+        function filterProducts() {
+            var q = document.getElementById('productSearch').value.toLowerCase().trim();
+            var activeCatName = document.querySelector('.pos-category.active') ? document.querySelector('.pos-category.active').textContent.trim() : 'Tất cả';
+            document.querySelectorAll('#productGrid .pos-product-card').forEach(function(card) {
+                var search = (card.dataset.search || '').toLowerCase();
+                var catName = card.dataset.categoryName || 'Tất cả';
+                var show = (!q || search.indexOf(q) !== -1) && (activeCatName === 'Tất cả' || catName.includes(activeCatName.replace('Đồng hồ ', '')));
+                card.style.display = show ? '' : 'none';
             });
         }
 
-        function openBarcodeModal() {
-            var el = document.getElementById('barcodeModal');
-            if (!el) return;
-            bootstrap.Modal.getOrCreateInstance(el).show();
-            var inp = document.getElementById('barcodeInput');
-            if (inp) { inp.value = ''; setTimeout(function() { inp.focus(); }, 400); }
+        document.querySelectorAll('.pos-category').forEach(function(cat) {
+            cat.addEventListener('click', function() {
+                document.querySelectorAll('.pos-category').forEach(function(c) { c.classList.remove('active'); });
+                cat.classList.add('active');
+                filterProducts();
+            });
+        });
+
+        function filterModalProducts() {
+            var q = document.getElementById('modalProductSearch').value.toLowerCase().trim();
+            document.querySelectorAll('#modalProductGrid .pos-product-card').forEach(function(card) {
+                var search = (card.dataset.search || '').toLowerCase();
+                card.style.display = !q || search.indexOf(q) !== -1 ? '' : 'none';
+            });
         }
 
-        function submitBarcode() {
-            var raw = (document.getElementById('barcodeInput') || {}).value || '';
-            var id = parseInt(raw.replace(/\D/g, ''), 10);
-            if (!Number.isFinite(id) || id <= 0) {
-                showToast('Vui lòng nhập mã ID biến thể (số).', 'warning');
-                return;
-            }
-            addToCart(id);
-            var el = document.getElementById('barcodeModal');
-            if (el) {
-                var inst = bootstrap.Modal.getInstance(el);
-                if (inst) inst.hide();
-            }
-        }
 
-        function switchTab(hoaDonId) {
-            if (currentTabId === hoaDonId) return;
-            currentTabId = hoaDonId;
-            document.getElementById('hoaDonId').value = (hoaDonId > 0) ? hoaDonId : 0;
-            if (hoaDonId < 0) {
-                document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-                document.getElementById('tamTinh').innerText = '0 ₫';
-                document.getElementById('giamGia').innerText = '0 ₫';
-                document.getElementById('tongThanhToan').innerText = '0 ₫';
-                document.getElementById('tabInfo').innerHTML = 'Đang soạn · 0 ₫';
-                clearKhachFields();
+        // Cart UI
+        function updateCartUI() {
+            var container = document.getElementById('cartItems');
+            var count = document.getElementById('cartCount');
+            var subtotal = document.getElementById('subtotal');
+            var discountRow = document.getElementById('discountRow');
+            var discount = document.getElementById('discount');
+            var total = document.getElementById('total');
+            var checkoutBtn = document.getElementById('checkoutBtn');
+            var checkoutTotal = document.getElementById('checkoutTotal');
+            var mobileBadge = document.getElementById('mobileCartBadge');
+
+            var totalItems = cartItems.reduce(function(s, i) { return s + i.soLuong; }, 0);
+            cartTotal = cartItems.reduce(function(s, i) { return s + (i.donGia * i.soLuong); }, 0);
+            count.textContent = totalItems;
+            mobileBadge.textContent = totalItems;
+            if (currentTabId > 0) updateTabInfo(currentTabId, totalItems, cartTotal - cartDiscount);
+
+            if (cartItems.length === 0) {
+                container.innerHTML = '<div class="pos-cart-empty"><i class="fa-solid fa-cart-arrow-down pos-cart-empty__icon"></i><div class="pos-cart-empty__text">Giỏ hàng trống</div><div class="pos-cart-empty__hint">Chọn sản phẩm để thêm vào</div></div>';
+                checkoutBtn.disabled = true;
             } else {
-                loadCart();
-                var activeTab = (window._tabsData || []).find(function(t) { return t.id === hoaDonId; });
-                if (activeTab) {
-                    document.getElementById('tabInfo').innerHTML = activeTab.tenTrangThai + ' · ' + formatMoney(activeTab.tongTien);
-                }
-            }
-        }
-
-        function taoDonMoi() {
-            var newId = --pendingTabId;
-            var newTab = {
-                id: newId,
-                maDonHang: 'Đơn mới',
-                trangThai: 'NEW',
-                tenTrangThai: 'Đang soạn',
-                tongTien: 0,
-                soSanPham: 0,
-                ngayDat: new Date().toISOString()
-            };
-            if (!window._tabsData) window._tabsData = [];
-            window._tabsData.unshift(newTab);
-            currentTabId = newId;
-            document.getElementById('hoaDonId').value = 0;
-            renderTabs(window._tabsData);
-            document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-            document.getElementById('tamTinh').innerText = '0 ₫';
-            document.getElementById('giamGia').innerText = '0 ₫';
-            document.getElementById('tongThanhToan').innerText = '0 ₫';
-            document.getElementById('tabInfo').innerHTML = 'Đang soạn · 0 ₫';
-            clearKhachFields();
-        }
-
-        function closeTab(hoaDonId, event) {
-            if (event) event.preventDefault();
-            if (hoaDonId > 0 && !confirmAction('Đóng tab hóa đơn này? (Chỉ ẩn tab, không xóa đơn)')) {
-                return;
-            }
-            var tabs = window._tabsData || [];
-            var idx = tabs.findIndex(function(t) { return t.id === hoaDonId; });
-            if (idx !== -1) tabs.splice(idx, 1);
-            if (hoaDonId > 0) {
-                hiddenTabIds.add(hoaDonId);
-                saveHiddenTabs();
-            }
-            if (currentTabId === hoaDonId) {
-                var next = tabs[idx] || tabs[idx - 1];
-                currentTabId = next ? next.id : null;
-                document.getElementById('hoaDonId').value = (currentTabId && currentTabId > 0) ? currentTabId : 0;
-            }
-            renderTabs(tabs);
-            if (currentTabId && currentTabId > 0) {
-                loadCart();
-            } else {
-                currentTabId = null;
-                document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-                document.getElementById('tamTinh').innerText = '0 ₫';
-                document.getElementById('giamGia').innerText = '0 ₫';
-                document.getElementById('tongThanhToan').innerText = '0 ₫';
-                document.getElementById('tabInfo').innerHTML = '';
-                clearKhachFields();
-            }
-        }
-
-        function loadDonDangMo() {
-            fetch('/ban-hang/api/don-dang-mo')
-                .then(function(res) { return res.json(); })
-                .then(function(tabs) {
-                    tabs = (tabs || []).filter(function (t) { return t && !hiddenTabIds.has(t.id); });
-                    var localTabs = (window._tabsData || []).filter(function(t) { return t.id < 0; });
-                    window._tabsData = localTabs.concat(tabs);
-                    renderTabs(window._tabsData);
-                    var activeTab = window._tabsData.find(function(t) { return t.id === currentTabId; });
-                    var infoEl = document.getElementById('tabInfo');
-                    if (infoEl) {
-                        if (activeTab) {
-                            infoEl.innerHTML = activeTab.tenTrangThai + ' · ' + formatMoney(activeTab.tongTien);
-                        } else {
-                            infoEl.innerHTML = '';
-                        }
-                    }
+                var html = '';
+                cartItems.forEach(function(item) {
+                    var sp = item.sanPhamChiTiet ? item.sanPhamChiTiet.sanPham : {};
+                    var bienThe = [];
+                    if (item.sanPhamChiTiet && item.sanPhamChiTiet.mauSac) bienThe.push(item.sanPhamChiTiet.mauSac.tenMauSac);
+                    if (item.sanPhamChiTiet && item.sanPhamChiTiet.kichThuoc) bienThe.push(item.sanPhamChiTiet.kichThuoc.tenKichThuoc);
+                    var img = sp.hinhAnh ? '<img src="' + (sp.hinhAnh.indexOf('/') === 0 ? sp.hinhAnh : '/uploads/' + sp.hinhAnh) + '" alt="' + (sp.tenSanPham || 'SP') + '">' : '<i class="fa-regular fa-image no-img"></i>';
+                    html += '<div class="pos-cart-item"><div class="pos-cart-item__img">' + img + '</div><div class="pos-cart-item__info"><div class="pos-cart-item__name">' + (sp.tenSanPham || 'Sản phẩm') + '</div>' + (bienThe.length ? '<div class="pos-cart-item__variant">' + bienThe.join(' · ') + '</div>' : '') + '<div class="pos-cart-item__price"><span class="sale">' + formatMoney(item.donGia) + '</span></div><div class="pos-cart-item__qty"><button class="pos-qty-btn minus" onclick="updateQuantity(' + item.id + ', -1)">−</button><span class="pos-qty-value">' + item.soLuong + '</span><button class="pos-qty-btn" onclick="updateQuantity(' + item.id + ', 1)">+</button></div></div><div class="pos-cart-item__total">' + formatMoney(item.donGia * item.soLuong) + '</div><button class="pos-cart-item__delete" onclick="removeItem(' + item.id + ')"><i class="fa-solid fa-trash"></i></button></div>';
                 });
-        }
-
-        function posFormatVariant(spct) {
-            if (!spct) return '';
-            var parts = [];
-            if (spct.mauSac && spct.mauSac.tenMauSac) parts.push('Màu: ' + spct.mauSac.tenMauSac);
-            if (spct.kichThuoc && spct.kichThuoc.tenKichThuoc) parts.push('Size: ' + spct.kichThuoc.tenKichThuoc);
-            if (spct.chatLieuDay && spct.chatLieuDay.tenChatLieu) parts.push('Dây: ' + spct.chatLieuDay.tenChatLieu);
-            if (spct.sanPham && spct.sanPham.loaiMay && spct.sanPham.loaiMay.tenLoaiMay) parts.push('Loại máy: ' + spct.sanPham.loaiMay.tenLoaiMay);
-            return parts.join(' · ');
-        }
-
-        function posFormatVariantDetail(spct) {
-            if (!spct) return '';
-            var details = [];
-            if (spct.duongKinh != null) details.push('Đường kính: ' + spct.duongKinh + 'mm');
-            if (spct.doChiuNuoc != null) details.push('Độ chịu nước: ' + spct.doChiuNuoc + 'm');
-            if (spct.beRongDay != null) details.push('Bề rộng dây: ' + spct.beRongDay + 'mm');
-            if (spct.trongLuong != null) details.push('Trọng lượng: ' + spct.trongLuong + 'g');
-            if (spct.soLuongTon != null) {
-                var stockClass = spct.soLuongTon > 3 ? 'stock-ok' : (spct.soLuongTon > 0 ? 'stock-low' : 'stock-out');
-                details.push('Tồn: ' + spct.soLuongTon);
+                container.innerHTML = html;
+                checkoutBtn.disabled = false;
             }
-            return details;
+
+            subtotal.textContent = formatMoney(cartTotal);
+            if (cartDiscount > 0) { discountRow.style.display = 'flex'; discount.textContent = '-' + formatMoney(cartDiscount); }
+            else { discountRow.style.display = 'none'; }
+            var final = cartTotal - cartDiscount;
+            total.textContent = formatMoney(final);
+            checkoutTotal.textContent = formatMoney(final);
         }
 
-        function showToast(message, type) {
-            type = type || 'info';
-            var titles = { warning: 'Thông báo', success: 'Thành công', error: 'Lỗi', info: 'Thông báo' };
-            var icons = { warning: 'bi-exclamation-triangle', success: 'bi-check-circle', error: 'bi-x-circle', info: 'bi-info-circle' };
-            var container = document.getElementById('toastContainer');
-            var el = document.createElement('div');
-            el.className = 'toast-pos toast-' + type;
-            el.setAttribute('role', 'alert');
-            el.innerHTML = '<span class="toast-icon bi ' + icons[type] + '"></span>' +
-                '<div class="toast-body"><div class="toast-title" style="font-weight:700;font-size:0.94rem">' + titles[type] + '</div><div style="font-size:0.875rem;opacity:0.95">' + message + '</div></div>';
-            container.appendChild(el);
-            setTimeout(function() {
-                el.style.opacity = '0';
-                setTimeout(function() { el.remove(); }, 300);
-            }, 3500);
-        }
-
-        function confirmAction(message) {
-            try { return window.confirm(message); } catch (e) { return true; }
-        }
-
-        var posConfirmCallback = null;
-
-        /**
-         * Modal xác nhận theo theme POS (thay confirm() trình duyệt).
-         * opts: { title, message, okText, onConfirm }
-         */
-        function showPosConfirm(opts) {
-            opts = opts || {};
-            var titleEl = document.getElementById('posConfirmTitle');
-            var msgEl = document.getElementById('posConfirmMessage');
-            var okBtn = document.getElementById('posConfirmBtnOk');
-            if (titleEl) titleEl.textContent = opts.title || 'Xác nhận';
-            if (msgEl) msgEl.textContent = opts.message || '';
-            if (okBtn) okBtn.textContent = opts.okText || 'Xác nhận';
-            posConfirmCallback = typeof opts.onConfirm === 'function' ? opts.onConfirm : null;
-            var el = document.getElementById('posConfirmModal');
-            if (!el) {
-                if (posConfirmCallback) posConfirmCallback();
-                return;
-            }
-            bootstrap.Modal.getOrCreateInstance(el).show();
-        }
-
-        function posConfirmAccept() {
-            var cb = posConfirmCallback;
-            posConfirmCallback = null;
-            var el = document.getElementById('posConfirmModal');
-            if (el) {
-                var inst = bootstrap.Modal.getInstance(el);
-                if (inst) inst.hide();
-            }
-            if (cb) cb();
-        }
-
+        // Cart actions
         function addToCart(productId) {
-            var hoaDonId = document.getElementById('hoaDonId').value;
-            var curId = Number(hoaDonId || 0);
-            if (curId > 0) unhideTabId(curId);
-            fetch('/ban-hang/them-san-pham', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'hoaDonId=' + hoaDonId + '&sanPhamChiTietId=' + productId
-            })
-                .then(function(res) { return res.text(); })
+            var hoaDonId = document.getElementById('hoaDonId').value || '0';
+            fetch('/ban-hang/them-san-pham', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'hoaDonId=' + hoaDonId + '&sanPhamChiTietId=' + productId })
+                .then(function(r) { return r.text(); })
                 .then(function(data) {
-                    if (data.startsWith('NEW:')) {
-                        var realId = parseInt(data.substring(4), 10);
-                        document.getElementById('hoaDonId').value = realId;
-                        currentTabId = realId;
-                        unhideTabId(realId);
-                        var tabs = window._tabsData || [];
-                        var newTabIdx = tabs.findIndex(function(t) { return t.id < 0; });
-                        if (newTabIdx !== -1) {
-                            tabs[newTabIdx].id = realId;
-                            tabs[newTabIdx].maDonHang = 'HD' + realId;
-                            tabs[newTabIdx].trangThai = 'DRAFT_OFFLINE';
-                            tabs[newTabIdx].tenTrangThai = 'Đang soạn';
-                        }
-                        renderTabs(tabs);
-                    } else if (data !== 'OK') {
-                        showToast(data, 'error');
-                        return;
+                    if (data.indexOf('NEW:') === 0) {
+                        var id = parseInt(data.substring(4));
+                        document.getElementById('hoaDonId').value = id;
+                        var existTab = tabsData.find(function(t) { return t.id === currentTabId && t.id < 0; });
+                        if (existTab) { existTab.id = id; existTab.maDonHang = 'HD' + id; }
+                        else { tabsData.unshift({ id: id, maDonHang: 'HD' + id, trangThai: 'DRAFT', tenTrangThai: 'Đang soạn', tongTien: 0, soSanPham: 1 }); }
+                        currentTabId = id;
+                        hiddenTabIds.delete(id);
+                        saveStoredTabs();
+                        renderTabs();
                     }
                     loadCart();
-                    loadDonDangMo();
+                    showToast('Đã thêm sản phẩm', 'success');
                 })
                 .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
         }
 
         function loadCart() {
             var hoaDonId = document.getElementById('hoaDonId').value;
+            if (!hoaDonId || hoaDonId === '0' || hoaDonId === 'null') { cartItems = []; updateCartUI(); return; }
             fetch('/ban-hang/cart/' + hoaDonId)
-                .then(function(res) { return res.json(); })
+                .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    var cart = document.getElementById('cartItems');
-                    cart.innerHTML = '';
-                    fillKhachFromCart(data);
-
-                    if (!data.items || data.items.length === 0) {
-                        cart.innerHTML = EMPTY_CART_HTML;
-                        document.getElementById('tamTinh').innerText = '0 ₫';
-                        document.getElementById('giamGia').innerText = '0 ₫';
-                        document.getElementById('tongThanhToan').innerText = '0 ₫';
-                        return;
-                    }
-
-                    data.items.forEach(function(item) {
-                        var spct = item.sanPhamChiTiet;
-                        var tenSanPham = (spct && spct.sanPham)
-                            ? spct.sanPham.tenSanPham : 'Sản phẩm';
-                        var bienThe = posFormatVariant(spct);
-                        var bienTheDetail = posFormatVariantDetail(spct);
-                        var giaGoc = (spct && spct.giaBan) ? Number(spct.giaBan) : Number(item.donGia || 0);
-                        var donGia = Number(item.donGia || 0);
-                        var coKhuyenMai = giaGoc > donGia;
-                        var thanhTien = item.donGia * item.soLuong;
-                        var hinhAnh = (spct && spct.sanPham && spct.sanPham.hinhAnh)
-                            ? (spct.sanPham.hinhAnh.startsWith('/')
-                                ? spct.sanPham.hinhAnh
-                                : '/uploads/' + spct.sanPham.hinhAnh)
-                            : null;
-                        var variantDetailHtml = '';
-                        if (bienTheDetail && bienTheDetail.length > 0) {
-                            variantDetailHtml = '<div class="item-variant-detail">';
-                            bienTheDetail.forEach(function(d) {
-                                var parts = d.split(': ');
-                                if (parts.length === 2) {
-                                    variantDetailHtml += '<span class="variant-tag">' + parts[0] + ': ' + parts[1] + '</span>';
-                                } else {
-                                    variantDetailHtml += '<span class="variant-tag">' + d + '</span>';
-                                }
-                            });
-                            variantDetailHtml += '</div>';
-                        }
-                        var div = document.createElement('div');
-                        div.className = 'cart-item';
-                        div.innerHTML =
-                            '<div style="display:flex;gap:0.75rem;align-items:flex-start;">' +
-                            (hinhAnh
-                                ? '<img class="cart-item-img" src="' + hinhAnh + '" alt="' + tenSanPham + '">'
-                                : '<div class="cart-item-img-placeholder"><i class="bi bi-image"></i></div>') +
-                            '<div style="flex:1;min-width:0;">' +
-                            '<div class="item-name">' + tenSanPham + '</div>' +
-                            (bienThe ? '<div class="item-variant">' + bienThe + '</div>' : '') +
-                            variantDetailHtml +
-                            (coKhuyenMai
-                                ? '<div class="item-price"><span style="text-decoration:line-through;opacity:.8;">' + giaGoc.toLocaleString('vi-VN') + ' ₫</span> <span style="color:#10b981;font-weight:700;margin-left:6px;">' + donGia.toLocaleString('vi-VN') + ' ₫</span></div>'
-                                : '<div class="item-price">' + donGia.toLocaleString('vi-VN') + ' ₫</div>') +
-                            '<div class="d-flex align-items-center justify-content-between mt-2">' +
-                            '<div class="d-flex align-items-center gap-1 btn-group-cart">' +
-                            '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="giamSL(' + item.id + ')">−</button>' +
-                            '<span class="px-2" style="min-width:24px;text-align:center">' + item.soLuong + '</span>' +
-                            '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="tangSL(' + item.id + ')">+</button>' +
-                            '<button type="button" class="btn btn-sm btn-delete ms-2" onclick="xoaSP(' + item.id + ')" title="Xóa"><i class="fas fa-trash-alt"></i></button>' +
-                            '</div>' +
-                            '<span class="item-total">' + thanhTien.toLocaleString('vi-VN') + ' ₫</span>' +
-                            '</div>' +
-                            '</div></div>';
-                        cart.appendChild(div);
-                    });
-
-                    document.getElementById('tamTinh').innerText = Number(data.tamTinh).toLocaleString('vi-VN') + ' ₫';
-                    document.getElementById('giamGia').innerText = Number(data.giamGia).toLocaleString('vi-VN') + ' ₫';
-                    document.getElementById('tongThanhToan').innerText = Number(data.tongThanhToan).toLocaleString('vi-VN') + ' ₫';
-                });
+                    cartItems = data.items || [];
+                    cartDiscount = data.giamGia || 0;
+                    if (data.tenKhachHang) document.getElementById('customerName').value = data.tenKhachHang;
+                    if (data.sdtKhachHang) document.getElementById('customerPhone').value = data.sdtKhachHang;
+                    if (data.emailKhachHang) document.getElementById('customerEmail').value = data.emailKhachHang;
+                    if (cartItems.length === 0) { autoCloseTab(); return; }
+                    updateCartUI();
+                    updateTabInfo(parseInt(hoaDonId), cartItems.reduce(function(s, i) { return s + i.soLuong; }, 0), data.tongThanhToan);
+                })
+                .catch(function() { cartItems = []; updateCartUI(); });
         }
 
-        function luuThongTinKhach() {
-            var hoaDonId = document.getElementById('hoaDonId').value;
-            var ten = (document.getElementById('khTen') || {}).value || '';
-            var sdt = (document.getElementById('khSdt') || {}).value || '';
-            var email = (document.getElementById('khEmail') || {}).value || '';
-            fetch('/ban-hang/cap-nhat-khach', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'hoaDonId=' + encodeURIComponent(hoaDonId) +
-                    '&tenKhachHang=' + encodeURIComponent(ten) +
-                    '&sdtKhachHang=' + encodeURIComponent(sdt) +
-                    '&emailKhachHang=' + encodeURIComponent(email)
-            })
-                .then(function(res) { return res.text(); })
+        function updateQuantity(itemId, delta) {
+            fetch('/ban-hang/' + (delta > 0 ? 'tang' : 'giam') + '-so-luong', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + itemId })
+                .then(function(r) { return r.text(); })
                 .then(function(data) {
-                    if (data === 'OK') {
-                        showToast('Đã lưu thông tin khách lên hóa đơn.', 'success');
-                    } else {
-                        showToast(data, 'warning');
+                    if (data === 'HOA_DON_DA_CHOT') { showToast('Hóa đơn đã thanh toán!', 'warning'); return; }
+                    if (data === 'CART_EMPTY') { autoCloseTab(); return; }
+                    loadCart();
+                })
+                .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
+        }
+
+        function removeItem(itemId) {
+            showConfirm('Xóa sản phẩm này?', function() {
+                fetch('/ban-hang/xoa-san-pham', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + itemId })
+                    .then(function(r) { return r.text(); })
+                    .then(function(data) {
+                        if (data === 'HOA_DON_DA_CHOT') { showToast('Hóa đơn đã thanh toán!', 'warning'); return; }
+                        if (data === 'CART_EMPTY') { autoCloseTab(); return; }
+                        loadCart();
+                        showToast('Đã xóa sản phẩm', 'success');
+                    })
+                    .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
+            });
+        }
+
+        function clearCart() {
+            if (cartItems.length === 0) return;
+            showConfirm('Xóa tất cả sản phẩm trong giỏ hàng?', function() {
+                var promises = cartItems.map(function(item) {
+                    return fetch('/ban-hang/xoa-san-pham', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + item.id });
+                });
+                Promise.all(promises).then(function() { autoCloseTab(); }).catch(function() { showToast('Có lỗi xảy ra', 'error'); });
+            });
+        }
+
+        // Payment
+        function selectPayment(method) {
+            document.querySelectorAll('.pos-payment-method').forEach(function(m) { m.classList.remove('active'); });
+            document.querySelector('.pos-payment-method[data-method="' + method + '"]').classList.add('active');
+            document.getElementById('selectedPayment').value = method;
+        }
+
+        function checkout() {
+            if (cartItems.length === 0) { showToast('Giỏ hàng trống!', 'warning'); return; }
+            var payment = document.getElementById('selectedPayment').value;
+            var hoaDonId = document.getElementById('hoaDonId').value;
+            if (payment === 'qr') { showQRCode(); return; }
+            showConfirm('Xác nhận thanh toán tiền mặt?', function() {
+                performCheckout(hoaDonId);
+            });
+        }
+
+        function performCheckout(hoaDonId) {
+            fetch('/ban-hang/thanh-toan', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'hoaDonId=' + hoaDonId + '&phuongThuc=TIEN_MAT' })
+                .then(function(r) { return r.text(); })
+                .then(function(data) {
+                    if (data === 'OK') { showToast('Thanh toán thành công!', 'success'); resetAfterPayment(hoaDonId); }
+                    else if (data.indexOf('KHONG_DU_TON_KHO:') === 0) { showToast('Tồn kho không đủ!', 'error'); }
+                    else { showToast(data, 'error'); }
+                })
+                .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
+        }
+
+        function resetAfterPayment(hoaDonId) {
+            var id = parseInt(hoaDonId);
+            tabsData = tabsData.filter(function(t) { return t.id !== id; });
+            currentTabId = 0;
+            document.getElementById('hoaDonId').value = '0';
+            cartItems = [];
+            cartDiscount = 0;
+            clearCustomerFields();
+            document.getElementById('voucherCode').value = '';
+            document.getElementById('voucherApplied').style.display = 'none';
+            updateCartUI();
+            saveStoredTabs();
+            renderTabs();
+            var remain = tabsData.filter(function(t) { return !hiddenTabIds.has(t.id); });
+            if (remain.length > 0) switchTab(remain[0].id);
+        }
+
+        function showQRCode() {
+            var total = cartTotal - cartDiscount;
+            var modal = document.createElement('div');
+            modal.className = 'pos-modal-overlay show';
+            modal.innerHTML = '<div class="pos-modal" style="max-width: 400px;"><div class="pos-modal__header"><h3 class="pos-modal__title">Quét mã QR thanh toán</h3><button class="pos-modal__close" onclick="this.closest(\'.pos-modal-overlay\').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="pos-modal__body" style="text-align: center;"><img src="https://img.vietqr.io/image/MB-019211908888-compact.png?amount=' + total + '&addInfo=ThanhToanDonHang" alt="QR" style="width: 250px; height: 250px; margin: 20px auto; display: block;"><p style="font-size: 1.2rem; font-weight: 700; color: var(--success);">' + formatMoney(total) + '</p><button class="pos-checkout" style="margin-top: 20px;" onclick="confirmQRPayment()"><i class="fa-solid fa-check"></i> Xác nhận đã thanh toán</button></div></div>';
+            document.body.appendChild(modal);
+        }
+
+        function confirmQRPayment() {
+            var hoaDonId = document.getElementById('hoaDonId').value;
+            fetch('/ban-hang/thanh-toan', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'hoaDonId=' + hoaDonId + '&phuongThuc=QR' })
+                .then(function(r) { return r.text(); })
+                .then(function(data) {
+                    if (data === 'OK') { showToast('Thanh toán thành công!', 'success'); document.querySelector('.pos-modal-overlay.show').remove(); resetAfterPayment(hoaDonId); }
+                    else { showToast(data, 'error'); }
+                })
+                .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
+        }
+
+        // Voucher
+        function applyVoucher() {
+            var code = document.getElementById('voucherCode').value.trim();
+            if (!code) { showToast('Nhập mã voucher!', 'warning'); return; }
+            var hoaDonId = document.getElementById('hoaDonId').value;
+            fetch('/ban-hang/ap-dung-voucher', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'maVoucher=' + encodeURIComponent(code) + '&hoaDonId=' + hoaDonId })
+                .then(function(r) { return r.text(); })
+                .then(function(data) {
+                    showToast(data, data.indexOf('thành công') !== -1 ? 'success' : 'warning');
+                    if (data.indexOf('thành công') !== -1) {
+                        document.getElementById('voucherApplied').style.display = 'flex';
+                        document.getElementById('voucherApplied').innerHTML = '<span class="pos-voucher__applied-tag">' + code + '</span><span class="pos-voucher__applied-text">Voucher đã được áp dụng</span><button class="pos-voucher__applied-remove" onclick="removeVoucher()"><i class="fa-solid fa-xmark"></i></button>';
+                        loadCart();
                     }
                 })
                 .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
         }
 
-        function xacNhanThanhToan() {
-            var total = document.getElementById('tongThanhToan').innerText;
-            var tongTien = parseFloat(total.replace(/[^\d]/g, ''));
-            if (!tongTien || tongTien <= 0) {
-                showToast('Giỏ hàng trống! Vui lòng thêm sản phẩm.', 'warning');
-                return;
-            }
-            var vnPay = document.getElementById('ptVnPay') && document.getElementById('ptVnPay').checked;
-            if (vnPay) {
-                moQR();
-                return;
-            }
-            showPosConfirm({
-                title: 'Xác nhận thanh toán tiền mặt',
-                message: 'Hệ thống sẽ trừ tồn kho và hoàn tất đơn. Bạn có chắc chắn muốn thanh toán?',
-                okText: 'Xác nhận thanh toán',
-                onConfirm: function() {
-                    var hoaDonId = document.getElementById('hoaDonId').value;
-                    fetch('/ban-hang/thanh-toan', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: 'hoaDonId=' + hoaDonId + '&phuongThuc=TIEN_MAT'
-                    })
-                        .then(function(res) { return res.text(); })
-                        .then(function(data) {
-                            if (data !== 'OK') {
-                                if (data.indexOf('KHONG_DU_TON_KHO:') === 0) {
-                                    showToast('Tồn kho không đủ! ' + data.replace('KHONG_DU_TON_KHO:', ''), 'warning');
-                                } else {
-                                    showToast(data, 'error');
-                                }
-                                return;
-                            }
-                            showToast('Thanh toán tiền mặt thành công!', 'success');
-                            resetPOSAfterPayment(hoaDonId);
-                            refreshProductStockPos();
-                        })
-                        .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
-                }
-            });
+        function removeVoucher() {
+            document.getElementById('voucherCode').value = '';
+            document.getElementById('voucherApplied').style.display = 'none';
+            cartDiscount = 0;
+            updateCartUI();
+            showToast('Đã hủy voucher', 'success');
         }
 
-        function clearSearchInput() {
-            var inp = document.getElementById('productModalSearch');
-            var btn = document.getElementById('clearSearch');
-            if (inp) inp.value = '';
-            if (btn) btn.style.display = 'none';
-            filterProductModal('');
-            var inp2 = document.getElementById('productModalSearch');
-            if (inp2) inp2.focus();
+        // Modals
+        function openBarcodeModal() { document.getElementById('barcodeModal').classList.add('show'); document.getElementById('barcodeInput').focus(); }
+        function closeBarcodeModal() { document.getElementById('barcodeModal').classList.remove('show'); }
+        function submitBarcode() {
+            var id = parseInt(document.getElementById('barcodeInput').value.replace(/\D/g, ''));
+            if (!id) { showToast('Nhập mã hợp lệ!', 'warning'); return; }
+            addToCart(id);
+            document.getElementById('barcodeInput').value = '';
+            closeBarcodeModal();
+        }
+        function openProductModal() { document.getElementById('productModal').classList.add('show'); document.getElementById('modalProductSearch').focus(); }
+        function closeProductModal() { document.getElementById('productModal').classList.remove('show'); }
+        function toggleCart() { document.getElementById('cartSidebar').classList.toggle('open'); }
+        function holdOrder() { showToast('Đơn đang được giữ', 'success'); }
+        function printBill() { showToast('Đang chuẩn bị in...', 'success'); }
+
+        // Custom Confirm Modal
+        function showConfirm(message, onConfirm) {
+            var overlay = document.createElement('div');
+            overlay.className = 'pos-modal-overlay show';
+            overlay._onConfirm = onConfirm;
+            overlay.innerHTML = '<div class="pos-modal" style="max-width: 360px;"><div class="pos-modal__header"><h3 class="pos-modal__title">Xác nhận</h3></div><div class="pos-modal__body" style="text-align: center; padding: 24px;"><i class="fa-regular fa-circle-question" style="font-size: 3rem; color: var(--warning); margin-bottom: 16px; display: block;"></i><p style="font-size: 1rem; color: var(--text-primary); margin-bottom: 24px;">' + message + '</p><div style="display: flex; gap: 12px; justify-content: center;"><button class="pos-checkout" style="flex: 1; background: var(--bg-gray); color: var(--text-primary);" onclick="this.closest(\'.pos-modal-overlay\').remove()">Hủy</button><button class="pos-checkout" style="flex: 1;" onclick="var o=this.closest(\'.pos-modal-overlay\');o._onConfirm&&o._onConfirm();o.remove()">Xác nhận</button></div></div></div>';
+            document.body.appendChild(overlay);
         }
 
+        // Init
         window.addEventListener('DOMContentLoaded', function() {
-            /* Đưa modal xác nhận ra <body> để position:fixed luôn tính theo viewport,
-               tránh bị “kẹt” góc dưới trái khi modal nằm trong .content / layout flex. */
-            var pcmMove = document.getElementById('posConfirmModal');
-            if (pcmMove && pcmMove.parentNode !== document.body) {
-                document.body.appendChild(pcmMove);
-            }
-            var okBtn = document.getElementById('posConfirmBtnOk');
-            if (okBtn) okBtn.addEventListener('click', posConfirmAccept);
-            var pcm = document.getElementById('posConfirmModal');
-            if (pcm) {
-                pcm.addEventListener('hidden.bs.modal', function() {
-                    posConfirmCallback = null;
-                });
-            }
-            var search = document.getElementById('productModalSearch');
-            if (search) {
-                search.addEventListener('input', function() {
-                    filterProductModal(this.value);
-                    var btn = document.getElementById('clearSearch');
-                    if (btn) btn.style.display = this.value ? 'flex' : 'none';
-                });
-            }
-            var bc = document.getElementById('barcodeInput');
-            if (bc) {
-                bc.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') { e.preventDefault(); submitBarcode(); }
-                });
-            }
+            loadStoredTabs();
+            var serverId = document.getElementById('hoaDonId').value;
+            if (serverId && serverId !== '0' && serverId !== 'null') { currentTabId = parseInt(serverId); loadCartForTab(currentTabId); }
         });
 
-        window.onload = function() {
-            loadHiddenTabs();
-            loadVoucherKhaDung();
-            fetch('/ban-hang/api/cleanup-empty', { method: 'POST' })
-                .then(function() {})
-                .catch(function() {});
-
-            var hoaDonIdVal = document.getElementById('hoaDonId').value;
-            if (hoaDonIdVal && hoaDonIdVal !== '0' && hoaDonIdVal !== 'null') {
-                currentTabId = parseInt(hoaDonIdVal, 10);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.pos-modal-overlay.show').forEach(function(m) { m.classList.remove('show'); });
+                document.getElementById('cartSidebar').classList.remove('open');
+                closeTabsDropdown();
             }
-            loadDonDangMo();
-
-            if (!currentTabId) {
-                document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-                document.getElementById('tamTinh').innerText = '0 ₫';
-                document.getElementById('giamGia').innerText = '0 ₫';
-                document.getElementById('tongThanhToan').innerText = '0 ₫';
-                clearKhachFields();
-            } else {
-                loadCart();
-            }
-        };
-
-        function tangSL(id) {
-            fetch('/ban-hang/tang-so-luong', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + id })
-                .then(function(res) { return res.text(); })
-                .then(function(data) {
-                    if (data === 'HOA_DON_DA_CHOT') { showToast('Hóa đơn đã thanh toán. Không thể thay đổi.', 'warning'); return; }
-                    loadCart();
-                    loadDonDangMo();
-                });
-        }
-
-        function giamSL(id) {
-            fetch('/ban-hang/giam-so-luong', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + id })
-                .then(function(res) { return res.text(); })
-                .then(function(data) {
-                    if (data === 'HOA_DON_DA_CHOT') { showToast('Hóa đơn đã thanh toán. Không thể thay đổi.', 'warning'); return; }
-                    if (data === 'CART_EMPTY') {
-                        currentTabId = null;
-                        document.getElementById('hoaDonId').value = '0';
-                        loadDonDangMo();
-                        document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-                        document.getElementById('tamTinh').innerText = '0 ₫';
-                        document.getElementById('giamGia').innerText = '0 ₫';
-                        document.getElementById('tongThanhToan').innerText = '0 ₫';
-                        document.getElementById('tabInfo').innerHTML = '';
-                        clearKhachFields();
-                        return;
-                    }
-                    loadCart();
-                    loadDonDangMo();
-                });
-        }
-
-        function xoaSP(id) {
-            if (!confirmAction('Xóa sản phẩm này khỏi giỏ?')) return;
-            fetch('/ban-hang/xoa-san-pham', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + id })
-                .then(function(res) { return res.text(); })
-                .then(function(data) {
-                    if (data === 'HOA_DON_DA_CHOT') { showToast('Hóa đơn đã thanh toán. Không thể xóa.', 'warning'); return; }
-                    if (data === 'CART_EMPTY') {
-                        currentTabId = null;
-                        document.getElementById('hoaDonId').value = '0';
-                        loadDonDangMo();
-                        document.getElementById('cartItems').innerHTML = EMPTY_CART_HTML;
-                        document.getElementById('tamTinh').innerText = '0 ₫';
-                        document.getElementById('giamGia').innerText = '0 ₫';
-                        document.getElementById('tongThanhToan').innerText = '0 ₫';
-                        document.getElementById('tabInfo').innerHTML = '';
-                        clearKhachFields();
-                        return;
-                    }
-                    loadCart();
-                    loadDonDangMo();
-                });
-        }
-
-        function moQR() {
-            var total = document.getElementById('tongThanhToan').innerText;
-            var soTien = total.replace(/\D/g, '');
-            document.getElementById('qrImg').src = 'https://img.vietqr.io/image/MB-019211908888-compact.png?amount=' + soTien + '&addInfo=ThanhToanDonHang';
-            new bootstrap.Modal(document.getElementById('qrModal')).show();
-        }
-
-        function xacNhanQR() {
-            var total = document.getElementById('tongThanhToan').innerText;
-            var tongTien = parseFloat(total.replace(/[^\d]/g, ''));
-            if (!tongTien || tongTien <= 0) { showToast('Giỏ hàng trống!', 'warning'); return; }
-            showPosConfirm({
-                title: 'Xác nhận thanh toán QR',
-                message: 'Xác nhận khách đã thanh toán? Hệ thống sẽ trừ tồn kho và chốt đơn.',
-                okText: 'Hoàn thành',
-                onConfirm: function() {
-                    var hoaDonId = document.getElementById('hoaDonId').value;
-                    fetch('/ban-hang/thanh-toan', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: 'hoaDonId=' + hoaDonId + '&phuongThuc=QR'
-                    })
-                        .then(function(res) { return res.text(); })
-                        .then(function(data) {
-                            if (data !== 'OK') {
-                                if (data.indexOf('KHONG_DU_TON_KHO:') === 0) {
-                                    showToast('Tồn kho không đủ! ' + data.replace('KHONG_DU_TON_KHO:', ''), 'warning');
-                                } else {
-                                    showToast(data, 'error');
-                                }
-                                return;
-                            }
-                            showToast('Thanh toán thành công!', 'success');
-                            var qm = document.getElementById('qrModal');
-                            var inst = qm ? bootstrap.Modal.getInstance(qm) : null;
-                            if (inst) inst.hide();
-                            resetPOSAfterPayment(hoaDonId);
-                            refreshProductStockPos();
-                        })
-                        .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
-                }
-            });
-        }
-
-        function apDungVoucher() {
-            var codeInput = document.getElementById('voucherCode');
-            var sel = document.getElementById('voucherSelect');
-            var code = (codeInput && codeInput.value) ? codeInput.value : '';
-            if ((!code || !code.trim()) && sel && sel.value) {
-                code = sel.value;
-                if (codeInput) codeInput.value = code;
-            }
-            var hoaDonId = document.getElementById('hoaDonId').value;
-            if (!code || !code.trim()) { showToast('Vui lòng nhập mã voucher.', 'warning'); return; }
-            if (!confirmAction("Áp dụng voucher '" + code.trim() + "' cho hóa đơn này?")) return;
-            fetch('/ban-hang/ap-dung-voucher', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'maVoucher=' + encodeURIComponent(code) + '&hoaDonId=' + hoaDonId
-            })
-                .then(function(res) { return res.text(); })
-                .then(function(data) { showToast(data, 'info'); loadCart(); loadDonDangMo(); });
-        }
-
-        function loadVoucherKhaDung() {
-            fetch('/ban-hang/api/voucher-kha-dung')
-                .then(function (res) { return res.json(); })
-                .then(function (items) {
-                    var wrap = document.getElementById('voucherListWrap');
-                    var s = document.getElementById('voucherSelect');
-                    if (!wrap || !s) return;
-                    s.innerHTML = '<option value="">— Chọn voucher khả dụng —</option>';
-                    if (!items || items.length === 0) {
-                        var opt = document.createElement('option');
-                        opt.value = ''; opt.textContent = 'Không có voucher khả dụng'; opt.disabled = true;
-                        s.appendChild(opt);
-                        wrap.style.display = '';
-                        return;
-                    }
-                    items.forEach(function (v) {
-                        if (!v || !v.maVoucher) return;
-                        var opt = document.createElement('option');
-                        opt.value = v.maVoucher;
-                        opt.textContent = (v.maVoucher || '') + (v.tenVoucher ? (' — ' + v.tenVoucher) : '');
-                        s.appendChild(opt);
-                    });
-                    wrap.style.display = '';
-                })
-                .catch(function () {
-                    var wrap = document.getElementById('voucherListWrap');
-                    if (wrap) wrap.style.display = '';
-                });
-        }
+            if (e.key === 'F1') { e.preventDefault(); openBarcodeModal(); }
+            if (e.key === 'F2') { e.preventDefault(); openProductModal(); }
+            if (e.key === 'F5') { e.preventDefault(); checkout(); }
+            if (e.key === 'F6') { e.preventDefault(); createNewInvoice(); }
+        });
     </script>
 </div>
 </body>
 </html>
+
