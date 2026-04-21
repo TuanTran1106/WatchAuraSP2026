@@ -398,29 +398,10 @@
             }
         };
 
-        function init() {
-            var page = document.querySelector('.product-detail-page');
-            if (!page) return;
-            var boxes = page.querySelectorAll('.variant-box');
-            var hid = page.querySelector('.input-variant-id');
+        var lastStock = {};
+        var pollInterval = null;
 
-            bindVariantBoxClicks(page);
-
-            var target = null;
-            if (hid && hid.value) {
-                boxes.forEach(function(b) { if (b.getAttribute('data-variant-id') === String(hid.value)) target = b; });
-            }
-            if (!target) {
-                boxes.forEach(function(b) { if (!target && !b.classList.contains('variant-box--disabled')) target = b; });
-            }
-            if (!target) target = boxes[0];
-            if (target) window.selectVariantBox(target);
-
-            initAddToCart();
-            if (pollInterval) clearInterval(pollInterval);
-            checkStock();
-            pollInterval = setInterval(checkStock, 5000);
-        }
+        function checkStock() {
             if (!productId) return;
             var page = document.querySelector('.product-detail-page');
             if (!page) return;
