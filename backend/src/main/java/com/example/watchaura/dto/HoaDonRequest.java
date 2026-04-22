@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -38,6 +39,8 @@ public class HoaDonRequest {
     private String email;
     
     private String ghiChu;
+
+    private BigDecimal phiVanChuyen;
     
     private DiaChiGiaoHangRequest diaChiGiaoHang;
 

@@ -44,4 +44,22 @@ public class DiaChi {
 
     @Column(name = "mac_dinh")
     private Boolean macDinh;
+
+    @Column(name = "ghn_province_id")
+    private Integer ghnProvinceId;
+
+    @Column(name = "ghn_district_id")
+    private Integer ghnDistrictId;
+
+    @Column(name = "ghn_ward_code", length = 20)
+    private String ghnWardCode;
+
+    @Column(name = "ten_nguoi_nhan", length = 100)
+    private String tenNguoiNhan;
+
+    @Column(name = "sdt_nguoi_nhan", length = 20)
+    private String sdtNguoiNhan;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
 }
