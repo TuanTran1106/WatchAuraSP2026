@@ -9,6 +9,8 @@ import java.util.List;
 public interface ShippingService {
     ShippingFeeResponse calculateFee(ShippingFeeRequest request, Integer khachHangId);
 
+    ShippingFeeResponse calculateGuestFee(ShippingFeeRequest request);
+
     List<ShippingLocationOption> getProvinces();
 
     List<ShippingLocationOption> getDistricts(Integer provinceId);

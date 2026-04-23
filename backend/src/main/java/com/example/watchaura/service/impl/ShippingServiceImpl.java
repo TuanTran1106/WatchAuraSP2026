@@ -33,7 +33,16 @@ public class ShippingServiceImpl implements ShippingService {
     @Override
     public ShippingFeeResponse calculateFee(ShippingFeeRequest request, Integer khachHangId) {
         Destination destination = resolveDestination(request, khachHangId);
+        return doCalculateFee(request, destination);
+    }
 
+    @Override
+    public ShippingFeeResponse calculateGuestFee(ShippingFeeRequest request) {
+        Destination destination = resolveDestination(request, null);
+        return doCalculateFee(request, destination);
+    }
+
+    private ShippingFeeResponse doCalculateFee(ShippingFeeRequest request, Destination destination) {
         if (shippingProperties.getToken() == null || shippingProperties.getToken().isBlank()) {
             return fallback("missing_provider_token", "Thiếu GHN token, đang dùng phí tạm.");
         }
