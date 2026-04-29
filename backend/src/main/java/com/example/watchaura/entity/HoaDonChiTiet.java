@@ -48,4 +48,8 @@ public class HoaDonChiTiet {
 
     @OneToMany(mappedBy = "hoaDonChiTiet")
     private List<SerialSanPham> serialSanPhams = new ArrayList<>();
+
+    public BigDecimal getThanhTien() {
+        return donGia.multiply(BigDecimal.valueOf(soLuong));
+    }
 }

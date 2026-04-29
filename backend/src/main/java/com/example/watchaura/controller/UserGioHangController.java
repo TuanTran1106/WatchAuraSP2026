@@ -42,10 +42,10 @@ public class UserGioHangController {
 
     @GetMapping("/so-luong")
     @ResponseBody
-    public java.util.Map<String, Integer> soLuong(HttpSession session) {
+    public ResponseEntity<java.util.Map<String, Integer>> soLuong(HttpSession session) {
         Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
         int count = 0;
-        
+
         if (userId != null) {
             count = gioHangService.getSoLuongGioHang(userId);
         } else {
@@ -55,8 +55,8 @@ public class UserGioHangController {
                 count = cart.values().stream().mapToInt(Integer::intValue).sum();
             }
         }
-        
-        return java.util.Map.of("soLuongGioHang", count);
+
+        return ResponseEntity.ok(java.util.Map.of("soLuongGioHang", count));
     }
 
     @GetMapping
@@ -164,7 +164,7 @@ public class UserGioHangController {
             cart.put(sanPhamChiTietId, soLuongMoi);
 
             session.setAttribute("cart", cart);
-            
+
             if (isAjax(request)) {
                 int totalItems = cart.values().stream().mapToInt(Integer::intValue).sum();
                 return ResponseEntity.ok(new CartAjaxResponse(true, "Đã thêm sản phẩm vào giỏ hàng.", null, totalItems, null, null, null));
@@ -175,7 +175,7 @@ public class UserGioHangController {
             }
             return "redirect:/gio-hang";
         }
-        
+
         // =============================
         // ✅ ĐÃ LOGIN → dùng DB CART
         // =============================

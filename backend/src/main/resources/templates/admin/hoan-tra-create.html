@@ -1,0 +1,602 @@
+<div class="htc-page" th:fragment="content">
+                <div class="htc-header">
+                    <a th:href="@{/admin/hoan-tra}" class="htc-back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Quay lại danh sách
+                    </a>
+                    <h1 class="htc-title">
+                        <i class="fas fa-rotate-left"></i>
+                        Tạo yêu cầu hoàn trả
+                    </h1>
+                </div>
+
+                <form id="hoanTraForm" method="post" th:action="@{/admin/hoan-tra/tao-moi}">
+                    <input type="hidden" name="idHoaDon" id="idHoaDon" value="">
+                    <input type="hidden" name="chiTietJson" id="chiTietJson" value="">
+                    <input type="hidden" name="loaiHoanTra" id="loaiHoanTra" value="TRA_HANG">
+
+                    <div class="htc-card">
+                        <div class="htc-card__header">
+                            <i class="fas fa-search"></i>
+                            <h2 class="htc-card__title">Bước 1: Tìm kiếm đơn hàng</h2>
+                        </div>
+                        <div class="htc-card__body">
+                            <div class="htc-search-section">
+                                <label class="htc-search-label">
+                                    <i class="fas fa-barcode"></i>
+                                    Nhập mã đơn hàng hoặc số điện thoại khách hàng
+                                </label>
+                                <div class="htc-search-box">
+                                    <input type="text" id="searchInput" class="htc-input" 
+                                           placeholder="Ví dụ: HD001, 0123456789...">
+                                    <button type="button" class="htc-btn htc-btn--primary" onclick="searchOrders()">
+                                        <i class="fas fa-search"></i>
+                                        Tìm kiếm
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="orderListContainer" class="htc-order-list" style="display: none;">
+                                <div id="orderListLoading" class="htc-loading" style="display: none;">
+                                    <i class="fas fa-spinner"></i>
+                                    <p>Đang tải danh sách...</p>
+                                </div>
+                                <div id="orderListEmpty" class="htc-empty" style="display: none;">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>Không tìm thấy đơn hàng nào có thể hoàn trả</p>
+                                </div>
+                                <div id="orderList"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="productSection" class="htc-product-section">
+                        <div class="htc-selected-order" id="selectedOrderCard" style="display: none;">
+                            <div class="htc-selected-order-info">
+                                <span class="htc-selected-order-code" id="selectedOrderCode"></span>
+                                <span class="htc-selected-order-customer" id="selectedOrderCustomer"></span>
+                            </div>
+                            <span class="htc-selected-order-change" onclick="clearSelection()">
+                                <i class="fas fa-times"></i> Đổi đơn hàng
+                            </span>
+                        </div>
+
+                        <div class="htc-card">
+                            <div class="htc-card__header">
+                                <i class="fas fa-exchange-alt"></i>
+                                <h2 class="htc-card__title">Bước 2: Chọn loại đổi trả</h2>
+                            </div>
+                            <div class="htc-card__body">
+                                <div class="htc-type-options">
+                                    <label class="htc-type-option">
+                                        <input type="radio" name="loaiHoanTraRadio" value="TRA_HANG" checked
+                                               onchange="setLoaiHoanTra(this.value)">
+                                        <div class="htc-type-card htc-type-card--return">
+                                            <div class="htc-type-icon">
+                                                <i class="fas fa-undo"></i>
+                                            </div>
+                                            <div class="htc-type-info">
+                                                <div class="htc-type-title">Trả hàng</div>
+                                                <div class="htc-type-desc">Khách hàng trả lại sản phẩm và hoàn tiền</div>
+                                            </div>
+                                            <div class="htc-type-check">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label class="htc-type-option">
+                                        <input type="radio" name="loaiHoanTraRadio" value="DOI_HANG"
+                                               onchange="setLoaiHoanTra(this.value)">
+                                        <div class="htc-type-card htc-type-card--exchange">
+                                            <div class="htc-type-icon">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </div>
+                                            <div class="htc-type-info">
+                                                <div class="htc-type-title">Đổi hàng</div>
+                                                <div class="htc-type-desc">Khách hàng đổi sang sản phẩm khác</div>
+                                            </div>
+                                            <div class="htc-type-check">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="htc-card">
+                            <div class="htc-card__header">
+                                <i class="fas fa-box-open"></i>
+                                <h2 class="htc-card__title">Bước 3: Chọn sản phẩm đổi trả</h2>
+                            </div>
+                            <div class="htc-card__body">
+                                <div id="productList"></div>
+                            </div>
+                        </div>
+
+                        <div class="htc-card">
+                            <div class="htc-card__header">
+                                <i class="fas fa-comment-alt"></i>
+                                <h2 class="htc-card__title">Bước 4: Lý do đổi trả</h2>
+                            </div>
+                            <div class="htc-card__body">
+                                <div class="htc-reason-presets">
+                                    <label class="htc-reason-preset">
+                                        <input type="radio" name="lyDoPreset" value="Sản phẩm bị lỗi, hỏng" checked
+                                               onchange="setLyDo(this.value)">
+                                        <span class="htc-reason-label">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            Sản phẩm bị lỗi, hỏng
+                                        </span>
+                                    </label>
+                                    <label class="htc-reason-preset">
+                                        <input type="radio" name="lyDoPreset" value="Sản phẩm không đúng với mô tả"
+                                               onchange="setLyDo(this.value)">
+                                        <span class="htc-reason-label">
+                                            <i class="fas fa-question-circle"></i>
+                                            Không đúng mô tả
+                                        </span>
+                                    </label>
+                                    <label class="htc-reason-preset">
+                                        <input type="radio" name="lyDoPreset" value="Giao sai sản phẩm"
+                                               onchange="setLyDo(this.value)">
+                                        <span class="htc-reason-label">
+                                            <i class="fas fa-truck"></i>
+                                            Giao sai sản phẩm
+                                        </span>
+                                    </label>
+                                    <label class="htc-reason-preset">
+                                        <input type="radio" name="lyDoPreset" value="Khách hàng đổi ý"
+                                               onchange="setLyDo(this.value)">
+                                        <span class="htc-reason-label">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                            Khách hàng đổi ý
+                                        </span>
+                                    </label>
+                                </div>
+                                <textarea name="lyDo" id="lyDoInput" class="htc-reason-textarea"
+                                          placeholder="Nhập lý do hoàn trả của bạn..." required
+                                          oninput="updateLyDoInput()">Sản phẩm bị lỗi, hỏng</textarea>
+                            </div>
+                        </div>
+
+                        <div class="htc-summary">
+                            <div class="htc-summary-row">
+                                <span class="htc-summary-label">Loại yêu cầu</span>
+                                <span class="htc-summary-value" id="loaiHienThi">Trả hàng</span>
+                            </div>
+                            <div class="htc-summary-row">
+                                <span class="htc-summary-label">Số serial/đơn vị hoàn trả</span>
+                                <span class="htc-summary-value" id="totalSerialsSelected">0</span>
+                            </div>
+                            <div class="htc-summary-row htc-summary-row--total">
+                                <span class="htc-summary-label" id="tongTienLabel">Tiền hoàn (nếu trả hàng)</span>
+                                <span class="htc-summary-value" id="totalRefundAmount">0 ₫</span>
+                            </div>
+                        </div>
+
+                        <div class="htc-actions">
+                            <a th:href="@{/admin/hoan-tra}" class="htc-btn htc-btn--secondary">
+                                <i class="fas fa-times"></i>
+                                Hủy
+                            </a>
+                            <button type="submit" class="htc-btn htc-btn--primary" id="btnSubmit" disabled>
+                                <i class="fas fa-paper-plane"></i>
+                                Tạo hoàn trả
+                            </button>
+                        </div>
+                    </div>
+                </form>
+        </div>
+
+<script th:src="@{/admin/admin.js}"></script>
+<script>
+var currentHoaDonId = null;
+var currentOrderData = null;
+var currentLoaiHoanTra = 'TRA_HANG';
+
+function formatCurrency(value) {
+    if (!value) return '0 ₫';
+    return Number(value).toLocaleString('vi-VN') + ' ₫';
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+        var date = new Date(dateStr);
+        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function setLoaiHoanTra(value) {
+    currentLoaiHoanTra = value;
+    document.getElementById('loaiHoanTra').value = value;
+    
+    var loaiHienThi = value === 'DOI_HANG' ? 'Đổi hàng' : 'Trả hàng';
+    document.getElementById('loaiHienThi').textContent = loaiHienThi;
+    
+    var tongTienLabel = value === 'DOI_HANG' ? 'Giá trị đổi (tham khảo)' : 'Tiền hoàn';
+    document.getElementById('tongTienLabel').textContent = tongTienLabel;
+    
+    updateSummary();
+}
+
+function setLyDo(value) {
+    document.getElementById('lyDoInput').value = value;
+}
+
+function updateLyDoInput() {
+    document.querySelectorAll('input[name="lyDoPreset"]').forEach(function(radio) {
+        radio.checked = false;
+    });
+}
+
+async function searchOrders() {
+    var keyword = document.getElementById('searchInput').value.trim();
+    if (!keyword) {
+        alert('Vui lòng nhập mã đơn hàng hoặc số điện thoại');
+        return;
+    }
+
+    var container = document.getElementById('orderListContainer');
+    var loading = document.getElementById('orderListLoading');
+    var empty = document.getElementById('orderListEmpty');
+    var list = document.getElementById('orderList');
+
+    container.style.display = 'block';
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    list.innerHTML = '';
+
+    try {
+        var response = await fetch('/admin/hoan-tra/api/hoa-don-co-the-hoan');
+        var result = await response.json();
+
+        loading.style.display = 'none';
+
+        if (result.success && result.items && result.items.length > 0) {
+            var filtered = result.items.filter(function(item) {
+                var matchMa = item.maDonHang && item.maDonHang.toLowerCase().includes(keyword.toLowerCase());
+                var matchSdt = item.sdtKhachHang && item.sdtKhachHang.includes(keyword);
+                return matchMa || matchSdt;
+            });
+
+            if (filtered.length > 0) {
+                filtered.forEach(function(item) {
+                    var div = document.createElement('div');
+                    div.className = 'htc-order-item';
+                    div.onclick = function() { selectOrder(item); };
+                    div.innerHTML = 
+                        '<div class="htc-order-info">' +
+                            '<span class="htc-order-code">' + item.maDonHang + '</span>' +
+                            '<span class="htc-order-customer">' + item.tenKhachHang + ' - ' + item.sdtKhachHang + '</span>' +
+                            '<span class="htc-order-date">' + formatDate(item.ngayDat) + '</span>' +
+                        '</div>' +
+                        '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">' +
+                            '<span class="htc-order-amount">' + formatCurrency(item.tongTienThanhToan) + '</span>' +
+                            '<span class="htc-order-status">' + item.trangThaiDonHang + '</span>' +
+                            (item.daCoHoanTra ? '<span style="font-size: 0.72rem; color: #f59e0b;">Đã có hoàn trả</span>' : '') +
+                        '</div>';
+                    list.appendChild(div);
+                });
+            } else {
+                empty.style.display = 'block';
+                empty.querySelector('p').textContent = 'Không tìm thấy đơn hàng phù hợp';
+            }
+        } else {
+            empty.style.display = 'block';
+            empty.querySelector('p').textContent = 'Không tìm thấy đơn hàng nào có thể hoàn trả';
+        }
+    } catch (error) {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+        empty.querySelector('p').textContent = 'Lỗi khi tải danh sách: ' + error.message;
+    }
+}
+
+async function selectOrder(order) {
+    document.querySelectorAll('.htc-order-item').forEach(function(item) {
+        item.classList.remove('htc-order-item--selected');
+    });
+    event.currentTarget.classList.add('htc-order-item--selected');
+
+    currentHoaDonId = order.id;
+    document.getElementById('idHoaDon').value = order.id;
+
+    var selectedCard = document.getElementById('selectedOrderCard');
+    selectedCard.style.display = 'flex';
+    document.getElementById('selectedOrderCode').textContent = order.maDonHang;
+    document.getElementById('selectedOrderCustomer').textContent = order.tenKhachHang + ' - ' + order.sdtKhachHang;
+
+    document.getElementById('orderListContainer').style.display = 'none';
+    document.getElementById('productSection').classList.add('active');
+
+    await loadOrderDetails(order.id);
+}
+
+async function loadOrderDetails(hoaDonId) {
+    var productList = document.getElementById('productList');
+    productList.innerHTML = '<div class="htc-loading"><i class="fas fa-spinner"></i><p>Đang tải chi tiết đơn hàng...</p></div>';
+
+    try {
+        var response = await fetch('/admin/hoan-tra/api/hoa-don/' + hoaDonId + '/chi-tiet');
+        var result = await response.json();
+
+        if (result.success) {
+            currentOrderData = result;
+            renderProducts(result);
+        } else {
+            productList.innerHTML = '<div class="htc-empty"><i class="fas fa-exclamation-triangle"></i><p>Lỗi: ' + result.message + '</p></div>';
+        }
+    } catch (error) {
+        productList.innerHTML = '<div class="htc-empty"><i class="fas fa-exclamation-triangle"></i><p>Lỗi khi tải chi tiết: ' + error.message + '</p></div>';
+    }
+}
+
+function renderProducts(data) {
+    var productList = document.getElementById('productList');
+    productList.innerHTML = '';
+
+    if (!data.chiTietList || data.chiTietList.length === 0) {
+        productList.innerHTML = '<div class="htc-empty"><i class="fas fa-inbox"></i><p>Đơn hàng không có sản phẩm nào</p></div>';
+        return;
+    }
+
+    data.chiTietList.forEach(function(item, index) {
+        var card = document.createElement('div');
+        card.className = 'htc-product-card';
+
+        var serialsHtml = '';
+        if (item.serials && item.serials.length > 0) {
+            serialsHtml += '<div style="margin-bottom: 0.75rem;">' +
+                '<div style="font-size: 0.82rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.5rem;">' +
+                    '<i class="fas fa-barcode"></i> Chọn serial hoàn trả' +
+                '</div>' +
+                '<div class="htc-serial-grid">';
+            
+            item.serials.forEach(function(serial) {
+                var disabled = !serial.coTheChon ? ' disabled' : '';
+                var selected = serial.daHoan ? ' selected' : '';
+                serialsHtml += 
+                    '<label class="htc-serial-checkbox' + disabled + selected + '">' +
+                        '<input type="checkbox"' +
+                            ' data-index="' + index + '"' +
+                            ' data-hdct-id="' + item.id + '"' +
+                            ' data-spt-id="' + item.idSanPhamChiTiet + '"' +
+                            ' data-serial="' + serial.maSerial + '"' +
+                            ' data-don-gia="' + item.donGia + '"' +
+                            (serial.coTheChon ? ' onchange="updateSelection()"' : ' disabled') + '>' +
+                        '<span class="htc-serial-box">' +
+                            (serial.daHoan ? '<i class="fas fa-check"></i>' : '<i class="fas fa-lock"></i>') +
+                        '</span>' +
+                        '<span class="htc-serial-code">' + serial.maSerial + '</span>' +
+                        '<span class="htc-serial-status htc-serial-status--' + (serial.daHoan ? 'returned' : 'sold') + '">' +
+                            serial.trangThaiHienThi +
+                        '</span>' +
+                    '</label>';
+            });
+            
+            serialsHtml += '</div></div>';
+        } else {
+            serialsHtml += '<div class="htc-qty-section">' +
+                '<span style="font-size: 0.85rem; color: #64748b;">Số lượng hoàn:</span>' +
+                '<input type="number" class="htc-qty-input"' +
+                    ' data-index="' + index + '"' +
+                    ' data-hdct-id="' + item.id + '"' +
+                    ' data-spt-id="' + item.idSanPhamChiTiet + '"' +
+                    ' data-don-gia="' + item.donGia + '"' +
+                    ' min="1" max="' + item.soLuongConLai + '" value="1"' +
+                    (item.soLuongConLai <= 0 ? ' disabled' : '') +
+                    ' onchange="updateQtySelection(this)">' +
+            '</div>';
+        }
+
+        var fullyReturnedHtml = item.soLuongConLai <= 0 ? 
+            '<div class="htc-fully-returned"><i class="fas fa-check-circle"></i> Đã hoàn đủ số lượng mua</div>' : '';
+
+        card.innerHTML = 
+            '<div class="htc-product-header">' +
+                '<div class="htc-product-image">' +
+                    (item.hinhAnh ? '<img src="' + item.hinhAnh + '" alt="' + item.tenSanPham + '" onerror="this.style.display=\'none\'">' : '<div class="htc-product-image-placeholder"><i class="fas fa-image"></i></div>') +
+                '</div>' +
+                '<div class="htc-product-info">' +
+                    '<div class="htc-product-name">' + item.tenSanPham + '</div>' +
+                    (item.tenBienThe ? '<div class="htc-product-variant">' + item.tenBienThe + '</div>' : '') +
+                '</div>' +
+                '<div class="htc-product-price">' +
+                    '<div class="htc-product-price-label">Đơn giá</div>' +
+                    '<div class="htc-product-price-value">' + formatCurrency(item.donGia) + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="htc-product-stats">' +
+                '<div class="htc-product-stat">' +
+                    '<span class="htc-product-stat-label">Đã mua</span>' +
+                    '<span class="htc-product-stat-value">' + item.soLuongMua + '</span>' +
+                '</div>' +
+                '<div class="htc-product-stat">' +
+                    '<span class="htc-product-stat-label">Đã hoàn</span>' +
+                    '<span class="htc-product-stat-value">' + item.soLuongDaHoanTra + '</span>' +
+                '</div>' +
+                '<div class="htc-product-stat">' +
+                    '<span class="htc-product-stat-label">Có thể hoàn</span>' +
+                    '<span class="htc-product-stat-value highlight">' + item.soLuongConLai + '</span>' +
+                '</div>' +
+            '</div>' +
+            (item.soLuongConLai > 0 ? serialsHtml : fullyReturnedHtml) +
+            '<div class="htc-item-total" id="item-total-' + index + '">' +
+                '<span class="htc-item-total-label">Thành tiền hoàn: </span>' +
+                '<span class="htc-item-total-value">0 ₫</span>' +
+            '</div>';
+
+        productList.appendChild(card);
+    });
+
+    updateSummary();
+}
+
+function updateSelection() {
+    document.querySelectorAll('.htc-serial-checkbox').forEach(function(label) {
+        var checkbox = label.querySelector('input[type="checkbox"]');
+        if (checkbox && !checkbox.disabled) {
+            if (checkbox.checked) {
+                label.classList.add('selected');
+            } else {
+                label.classList.remove('selected');
+            }
+        }
+    });
+    updateSummary();
+}
+
+function updateQtySelection(input) {
+    var itemIndex = input.getAttribute('data-index');
+    var donGia = parseFloat(input.getAttribute('data-don-gia')) || 0;
+    var qty = parseInt(input.value) || 0;
+    var max = parseInt(input.max) || 1;
+    
+    if (qty > max) {
+        input.value = max;
+        qty = max;
+    }
+    if (qty < 1) {
+        input.value = 1;
+        qty = 1;
+    }
+    
+    var total = donGia * qty;
+    var totalEl = document.getElementById('item-total-' + itemIndex);
+    if (totalEl) {
+        totalEl.querySelector('.htc-item-total-value').textContent = formatCurrency(total);
+    }
+    
+    updateSummary();
+}
+
+function updateSummary() {
+    var totalSerials = 0;
+    var totalAmount = 0;
+
+    document.querySelectorAll('.htc-serial-checkbox input:checked').forEach(function(cb) {
+        totalSerials++;
+        totalAmount += parseFloat(cb.getAttribute('data-don-gia')) || 0;
+    });
+
+    document.querySelectorAll('.htc-qty-input:not(:disabled)').forEach(function(input) {
+        var qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+            totalSerials += qty;
+            totalAmount += (parseFloat(input.getAttribute('data-don-gia')) || 0) * qty;
+        }
+    });
+
+    document.getElementById('totalSerialsSelected').textContent = totalSerials;
+    document.getElementById('totalRefundAmount').textContent = formatCurrency(totalAmount);
+    document.getElementById('btnSubmit').disabled = totalSerials === 0;
+}
+
+function clearSelection() {
+    currentHoaDonId = null;
+    currentOrderData = null;
+    document.getElementById('idHoaDon').value = '';
+    document.getElementById('selectedOrderCard').style.display = 'none';
+    document.getElementById('productSection').classList.remove('active');
+    document.getElementById('productList').innerHTML = '';
+    document.getElementById('orderListContainer').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+    updateSummary();
+}
+
+document.getElementById('hoanTraForm').addEventListener('submit', function(e) {
+    var totalSerials = 0;
+    
+    document.querySelectorAll('.htc-serial-checkbox input:checked').forEach(function() {
+        totalSerials++;
+    });
+    
+    document.querySelectorAll('.htc-qty-input:not(:disabled)').forEach(function(input) {
+        var qty = parseInt(input.value) || 0;
+        totalSerials += qty;
+    });
+
+    if (totalSerials === 0) {
+        e.preventDefault();
+        alert('Vui lòng chọn ít nhất một sản phẩm để hoàn trả.');
+        return false;
+    }
+
+    var lyDo = document.getElementById('lyDoInput').value.trim();
+    if (!lyDo) {
+        e.preventDefault();
+        alert('Vui lòng nhập lý do hoàn trả.');
+        return false;
+    }
+
+    if (!currentHoaDonId) {
+        e.preventDefault();
+        alert('Vui lòng chọn đơn hàng.');
+        return false;
+    }
+
+    var chiTietList = [];
+    var seenItems = {};
+
+    document.querySelectorAll('.htc-serial-checkbox input:checked').forEach(function(cb) {
+        var hdctId = cb.getAttribute('data-hdct-id');
+        var spctId = cb.getAttribute('data-spt-id');
+        var serial = cb.getAttribute('data-serial');
+        var donGia = parseFloat(cb.getAttribute('data-don-gia')) || 0;
+
+        var key = hdctId + '-' + spctId;
+        if (!seenItems[key]) {
+            seenItems[key] = {
+                idHoaDonChiTiet: parseInt(hdctId),
+                idSanPhamChiTiet: parseInt(spctId),
+                soLuongHoanTra: 0,
+                donGia: donGia,
+                serials: []
+            };
+        }
+        seenItems[key].soLuongHoanTra++;
+        seenItems[key].serials.push(serial);
+    });
+
+    document.querySelectorAll('.htc-qty-input:not(:disabled)').forEach(function(input) {
+        var qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+            var hdctId = input.getAttribute('data-hdct-id');
+            var spctId = input.getAttribute('data-spt-id');
+            var donGia = parseFloat(input.getAttribute('data-don-gia')) || 0;
+            var key = hdctId + '-' + spctId;
+            
+            if (!seenItems[key]) {
+                seenItems[key] = {
+                    idHoaDonChiTiet: parseInt(hdctId),
+                    idSanPhamChiTiet: parseInt(spctId),
+                    soLuongHoanTra: qty,
+                    donGia: donGia,
+                    serials: []
+                };
+            } else {
+                seenItems[key].soLuongHoanTra += qty;
+            }
+        }
+    });
+
+    Object.values(seenItems).forEach(function(item) {
+        chiTietList.push(item);
+    });
+
+    document.getElementById('chiTietJson').value = JSON.stringify(chiTietList);
+    return true;
+});
+
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchOrders();
+    }
+});
+</script>
+</div>

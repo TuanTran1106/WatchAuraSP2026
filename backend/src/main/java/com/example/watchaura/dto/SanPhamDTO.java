@@ -49,6 +49,8 @@ public class SanPhamDTO {
     /** Tổng số lượng tồn của tất cả biến thể */
     private Integer soLuongTon;
 
+    private LocalDateTime ngayTao;
+
     /**
      * Có từ 2 biến thể có giá và (min niêm yết ≠ max hoặc min giá hiệu lực ≠ max) — card hiển thị khoảng giá; badge KM vẫn dùng mức giảm của biến thể “tốt nhất” (giá sau KM thấp nhất).
      */

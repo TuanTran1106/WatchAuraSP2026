@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -34,4 +35,6 @@ public class SanPhamChiTietRequest {
     private Double beRongDay;
     private Double trongLuong;
     private Boolean trangThai = true;
+
+    private List<String> serials;
 }

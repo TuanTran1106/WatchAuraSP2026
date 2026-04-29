@@ -182,6 +182,13 @@
     border: 1px solid #6ee7b7;
 }
 
+/* Thanh toán Onl thành công (VNPay đã xác nhận, chờ admin xử lý) */
+.status-da-thanh-toan-onl {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
 /* ----- Card đơn hàng (danh sách) ----- */
 .order-list {
     display: flex;
@@ -372,6 +379,26 @@
 
 .btn-order--edit:hover {
     background: #b45309;
+    color: #fff;
+}
+
+.btn-order--return {
+    background: #dc2626;
+    color: #fff;
+}
+
+.btn-order--return:hover {
+    background: #b91c1c;
+    color: #fff;
+}
+
+.btn-order--return-history {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.btn-order--return-history:hover {
+    background: #6d28d9;
     color: #fff;
 }
 
@@ -577,6 +604,22 @@
 
 .order-detail-back .btn-order {
     padding: 0.6rem 1.25rem;
+}
+
+.order-detail-actions {
+    margin-top: 1.5rem;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.order-detail-actions .btn-order {
+    padding: 0.6rem 1.25rem;
+}
+
+.order-detail-actions .btn-order i {
+    margin-right: 0.4rem;
 }
 
 .visually-hidden {

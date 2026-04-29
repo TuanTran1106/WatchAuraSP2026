@@ -38,6 +38,8 @@
                                     toán</span>
                                 <span th:case="'CHO_XAC_NHAN'" id="orderStatus"
                                     class="order-detail-meta__badge order-status status-waiting">Chờ xác nhận</span>
+                                <span th:case="'DA_THANH_TOAN_ONL'" id="orderStatus"
+                                    class="order-detail-meta__badge order-status status-da-thanh-toan-onl">TT Vn Pay thành công</span>
                                 <span th:case="'DA_THANH_TOAN'" id="orderStatus"
                                     class="order-detail-meta__badge order-status status-da-thanh-toan">Đã thanh
                                     toán</span>
@@ -215,6 +217,24 @@
                         hàng</a>
                 </div>
 
+                <!-- Action Buttons -->
+                <th:block th:if="${hoaDon.trangThaiDonHang == 'HOAN_THANH'}">
+                    <div class="order-detail-actions" id="orderDetailActions">
+                        <!-- Nếu chưa có yêu cầu hoàn trả: hiện nút Trả/Đổi hàng -->
+                        <a th:if="${hoanTra == null}"
+                           th:href="@{'/khach-hang/hoan-tra/tao-moi/' + ${hoaDon.id}}"
+                           class="btn-order btn-order--return">
+                            <i class="fas fa-undo"></i> Trả/Đổi hàng
+                        </a>
+                        <!-- Nếu đã có yêu cầu hoàn trả: hiện nút Lịch sử trả hàng -->
+                        <a th:if="${hoanTra != null}"
+                           th:href="@{'/khach-hang/hoan-tra/' + ${hoanTra.id}}"
+                           class="btn-order btn-order--return-history">
+                            <i class="fas fa-history"></i> Lịch sử trả hàng
+                        </a>
+                    </div>
+                </th:block>
+
             </div>
         </div>
 
@@ -269,6 +289,7 @@
                         'CAN_XU_LY': 'Cần xử lý',
                         'CHO_THANH_TOAN': 'Chờ thanh toán',
                         'CHO_XAC_NHAN': 'Chờ xác nhận',
+                        'DA_THANH_TOAN_ONL': 'TT Vn Pay thành công',
                         'DA_THANH_TOAN': 'Đã thanh toán',
                         'DA_XAC_NHAN': 'Đã xác nhận',
                         'DANG_GIAO': 'Đang giao',
@@ -285,6 +306,7 @@
                         'CAN_XU_LY': 'status-can-xu-ly',
                         'CHO_THANH_TOAN': 'status-cho-thanh-toan',
                         'CHO_XAC_NHAN': 'status-waiting',
+                        'DA_THANH_TOAN_ONL': 'status-da-thanh-toan-onl',
                         'DA_THANH_TOAN': 'status-da-thanh-toan',
                         'DA_XAC_NHAN': 'status-processing',
                         'DANG_GIAO': 'status-shipping',
@@ -414,6 +436,27 @@
 
                             var paymentMethod = document.getElementById('paymentMethod');
                             if (paymentMethod) paymentMethod.textContent = data.tenPhuongThuc || '';
+
+                            // Update action buttons based on hoanTra status
+                            var actionsContainer = document.getElementById('orderDetailActions');
+                            if (actionsContainer) {
+                                var hoanTra = data.hoanTra;
+                                var actionsHtml = '';
+
+                                if (data.trangThaiDonHang === 'HOAN_THANH') {
+                                    if (hoanTra && hoanTra.id) {
+                                        // Da co yeu cau hoan tra - hien nut Lich su tra hang
+                                        actionsHtml = '<a href="/khach-hang/hoan-tra/' + hoanTra.id + '" class="btn-order btn-order--return-history">' +
+                                            '<i class="fas fa-history"></i> Lịch sử trả hàng</a>';
+                                    } else {
+                                        // Chua co yeu cau hoan tra - hien nut Tra/Doi hang
+                                        actionsHtml = '<a href="/khach-hang/hoan-tra/tao-moi/' + data.id + '" class="btn-order btn-order--return">' +
+                                            '<i class="fas fa-undo"></i> Trả/Đổi hàng</a>';
+                                    }
+                                }
+
+                                actionsContainer.innerHTML = actionsHtml;
+                            }
                         })
                         .catch(function () {
                             if (loading && content) {

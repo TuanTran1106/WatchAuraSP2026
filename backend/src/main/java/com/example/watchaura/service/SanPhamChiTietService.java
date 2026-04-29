@@ -18,5 +18,9 @@ public interface SanPhamChiTietService {
     void deleteSanPhamChiTiet(Integer id);
 
     List<SanPhamChiTietDTO> getSanPhamChiTietBySanPhamId(Integer sanPhamId);
+
+    boolean existsByVariant(Integer sanPhamId, Integer mauSacId, Integer kichThuocId, Integer chatLieuDayId, Integer excludeId);
+
+    boolean existsBySanPhamAndVariant(Integer sanPhamId, Integer mauSacId, Integer kichThuocId, Integer chatLieuDayId);
 }
 

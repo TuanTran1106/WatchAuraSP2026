@@ -161,11 +161,25 @@
                             <div class="order-card__actions order-actions">
                                 <a th:href="@{'/don-hang/chi-tiet/' + ${don.id}}" class="btn-order btn-order--primary btn-view-detail" th:data-id="${don.id}">Xem chi tiết</a>
                                 <a th:if="${don.trangThaiDonHang == 'CAN_XU_LY'}" th:href="@{'/don-hang/chinh-sua/' + ${don.id}}" class="btn-order btn-order--edit">Chỉnh sửa đơn hàng</a>
-                                <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false}">
+                                <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false},
+                                                  coHoanTra=${hoanTraMap != null and hoanTraMap.get(don.id) != null},
+                                                  hoanTraInfo=${hoanTraMap != null ? hoanTraMap.get(don.id) : null}">
                                     <a th:if="${don.trangThaiDonHang == 'HOAN_THANH' and !daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--review">Đánh giá</a>
                                     <a th:if="${don.trangThaiDonHang == 'HOAN_THANH' and daDanhGia}" th:href="@{'/danh-gia/' + ${don.id}}" class="btn-order btn-order--view-review">Xem đánh giá</a>
                                 </th:block>
                                 <a th:if="${don.trangThaiDonHang == 'HOAN_THANH' || don.trangThaiDonHang == 'DA_HUY'}" th:href="@{'/mua-lai/' + ${don.id}}" class="btn-order btn-order--rebuy">Mua lại</a>
+                                <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false},
+                                                  coHoanTra=${hoanTraMap != null and hoanTraMap.get(don.id) != null},
+                                                  hoanTraInfo=${hoanTraMap != null ? hoanTraMap.get(don.id) : null}">
+                                    <!-- Nếu chưa có yêu cầu hoàn trả: hiện nút Trả/Đổi hàng -->
+                                    <a th:if="${don.trangThaiDonHang == 'HOAN_THANH' and !coHoanTra}"
+                                       th:href="@{'/khach-hang/hoan-tra/tao-moi/' + ${don.id}}"
+                                       class="btn-order btn-order--return">Trả/Đổi hàng</a>
+                                    <!-- Nếu đã có yêu cầu hoàn trả: hiện nút Lịch sử trả hàng -->
+                                    <a th:if="${coHoanTra and hoanTraInfo != null}"
+                                       th:href="@{'/khach-hang/hoan-tra/' + ${hoanTraInfo.id}}"
+                                       class="btn-order btn-order--return-history">Lịch sử trả hàng</a>
+                                </th:block>
                             </div>
                         </div>
                     </div>
@@ -358,6 +372,10 @@
                         '<div class="order-card__note order-card__note--warning">' +
                         '<i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>' + (don.ghiChu || '') + '</span></div>' : '');
 
+                    var showReturn = don.trangThaiDonHang === 'HOAN_THANH';
+                    var hoanTraInfo = don.hoanTra || null;
+                    var hasHoanTra = hoanTraInfo && hoanTraInfo.id;
+
                     card.innerHTML = '<div class="order-card__top">' +
                         '<div class="order-card__meta">' +
                         '<span class="order-card__code">Mã đơn: <strong>' + (don.maDonHang || '') + '</strong></span>' +
@@ -377,6 +395,9 @@
                         (don.trangThaiDonHang === 'CAN_XU_LY' ? '<a href="/don-hang/chinh-sua/' + don.id + '" class="btn-order btn-order--edit">Chỉnh sửa đơn hàng</a>' : '') +
                         (don.trangThaiDonHang === 'HOAN_THANH' ? (don.daDanhGia ? '<a href="/danh-gia/' + don.id + '" class="btn-order btn-order--view-review">Xem đánh giá</a>' : '<a href="/danh-gia/' + don.id + '" class="btn-order btn-order--review">Đánh giá</a>') : '') +
                         (don.trangThaiDonHang === 'HOAN_THANH' || don.trangThaiDonHang === 'DA_HUY' ? '<a href="/mua-lai/' + don.id + '" class="btn-order btn-order--rebuy">Mua lại</a>' : '') +
+                        (showReturn ? (hasHoanTra ?
+                            '<a href="/khach-hang/hoan-tra/' + hoanTraInfo.id + '" class="btn-order btn-order--return-history">Lịch sử trả hàng</a>' :
+                            '<a href="/khach-hang/hoan-tra/tao-moi/' + don.id + '" class="btn-order btn-order--return">Trả/Đổi hàng</a>') : '') +
                         '</div></div>';
 
                     orderList.appendChild(card);

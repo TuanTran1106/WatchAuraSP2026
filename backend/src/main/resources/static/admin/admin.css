@@ -2193,6 +2193,17 @@ body.dash-modal-open {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
+.table-status-select.status--da-thanh-toan-onl {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.table-status-select.status--da-thanh-toan-onl:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 .table-status-select.status--da-huy {
   background-color: #fef2f2;
   border-color: #fca5a5;
@@ -2824,6 +2835,17 @@ body.dash-modal-open {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23047857' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
     linear-gradient(160deg, #f0fdf4 0%, #d1fae5 55%, #a7f3d0 100%);
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 0.7rem center, 0 0;
+  background-size: 14px, 100% 100%;
+}
+
+.invoice-detail .invoice-detail__status-select.status--da-thanh-toan-onl {
+  border-color: rgba(59, 130, 246, 0.28);
+  color: #1e40af;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231e40af' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, #eff6ff 0%, #dbeafe 55%, #bfdbfe 100%);
   background-repeat: no-repeat, no-repeat;
   background-position: right 0.7rem center, 0 0;
   background-size: 14px, 100% 100%;
@@ -3625,7 +3647,18 @@ body:has(.admin-layout.theme-dark) {
   color: #6ee7b7;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236ee7b7' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
-    linear-gradient(160deg, rgba(5, 150, 105, 0.22) 0%, rgba(4, 120, 87, 0.18) 100%);
+    linear-gradient(160deg, rgba(5, 150, 105, 0.25) 0%, rgba(16, 185, 129, 0.2) 100%);
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 0.7rem center, 0 0;
+  background-size: 14px, 100% 100%;
+}
+
+.admin-layout.theme-dark .invoice-detail .invoice-detail__status-select.status--da-thanh-toan-onl {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393c5fd' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.2) 100%);
   background-repeat: no-repeat, no-repeat;
   background-position: right 0.7rem center, 0 0;
   background-size: 14px, 100% 100%;

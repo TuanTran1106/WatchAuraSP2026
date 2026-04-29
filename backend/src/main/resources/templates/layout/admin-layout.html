@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/admin/admin.css" />
 
    <link rel="stylesheet" href="/css/confirm-modal.css" />
+   <link rel="stylesheet" href="/css/hoan-tra-admin.css" />
+   <link rel="stylesheet" href="/css/hoan-tra-create.css" />
 
 </head>
 
@@ -24,7 +26,7 @@
             <a th:href="@{/admin}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
             <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i
                     class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
-            <a th:href="@{/admin/khach-hang}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-users"></i><span>Khách
+            <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách
                         hàng</span></a>
             <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
             <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
@@ -55,6 +57,7 @@
                         mãi</span></a>
             <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i
                     class="fas fa-ticket"></i><span>Voucher</span></a>
+            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
             <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
             <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <i class="fa-solid fa-gear"></i>
@@ -85,7 +88,7 @@
             </button>
         </header>
         <main class="content" id="adminContent" data-admin-fragment="root">
-            <div th:replace="~{${content != null ? content : 'admin/dashboard'} :: content}"></div>
+            <th:block th:replace="__${content != null ? content : 'admin/dashboard'}__ :: content"></th:block>
         </main>
         <footer class="footer">
             <span>© 2026 WatchAura Admin. All rights reserved.</span>
@@ -99,6 +102,10 @@
     var path = window.location.pathname;
     if (path && path.indexOf('/ban-hang') === 0) {
         var link = document.querySelector('.sidebar-link-banhang');
+        if (link) link.classList.add('sidebar__link--current');
+    }
+    if (path && path.indexOf('/hoan-tra') === 0) {
+        var link = document.querySelector('.sidebar-link-hoantra');
         if (link) link.classList.add('sidebar__link--current');
     }
 })();

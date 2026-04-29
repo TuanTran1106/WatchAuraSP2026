@@ -10,11 +10,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
@@ -90,7 +87,6 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
             spct.setChatLieuDay(chatLieuDay);
         }
 
-        spct.setSoLuongTon(request.getSoLuongTon());
         spct.setGiaBan(request.getGiaBan());
         spct.setDuongKinh(request.getDuongKinh());
         spct.setDoChiuNuoc(request.getDoChiuNuoc());
@@ -98,9 +94,29 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         spct.setTrongLuong(request.getTrongLuong());
         spct.setTrangThai(request.getTrangThai());
 
-        // Lưu vào database
+        List<String> serials = request.getSerials();
+        int soLuongSerial = (serials != null) ? serials.size() : 0;
+        int soLuongTon = (request.getSoLuongTon() != null) ? request.getSoLuongTon() : 0;
+        spct.setSoLuongTon(soLuongSerial > 0 ? soLuongSerial : soLuongTon);
+
+        // Lưu sản phẩm chi tiết trước để có ID
         SanPhamChiTiet savedSpct = sanPhamChiTietRepository.save(spct);
-        generateSerialsForDetail(savedSpct, request.getSoLuongTon());
+
+        // Import serial từ Excel nếu có
+        if (serials != null && !serials.isEmpty()) {
+            LocalDateTime now = LocalDateTime.now();
+            for (String serial : serials) {
+                if (serial != null && !serial.trim().isEmpty()) {
+                    SerialSanPham serialSanPham = new SerialSanPham();
+                    serialSanPham.setMaSerial(serial.trim());
+                    serialSanPham.setSanPhamChiTiet(savedSpct);
+                    serialSanPham.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                    serialSanPham.setNgayTao(now);
+                    serialSanPhamRepository.save(serialSanPham);
+                }
+            }
+        }
+
         return convertToDTO(savedSpct);
     }
 
@@ -112,7 +128,6 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         // Tìm sản phẩm chi tiết cần cập nhật
         SanPhamChiTiet spct = sanPhamChiTietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + id));
-        int oldQty = spct.getSoLuongTon() != null ? spct.getSoLuongTon() : 0;
 
         // Kiểm tra sản phẩm tồn tại
         SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
@@ -154,13 +169,8 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         spct.setTrangThai(request.getTrangThai());
 
         // Lưu vào database
-        SanPhamChiTiet updatedSpct = sanPhamChiTietRepository.save(spct);
-        int newQty = updatedSpct.getSoLuongTon() != null ? updatedSpct.getSoLuongTon() : 0;
-        int addQty = Math.max(0, newQty - oldQty);
-        if (addQty > 0) {
-            generateSerialsForDetail(updatedSpct, addQty);
-        }
-        return convertToDTO(updatedSpct);
+        SanPhamChiTiet savedSpct = sanPhamChiTietRepository.save(spct);
+        return convertToDTO(savedSpct);
     }
 
     /**
@@ -235,58 +245,14 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         return dto;
     }
 
-    private void generateSerialsForDetail(SanPhamChiTiet spct, Integer quantity) {
-        int qty = quantity != null ? quantity : 0;
-        if (spct == null || spct.getId() == null || qty <= 0) {
-            return;
-        }
-
-        String maSanPham = spct.getSanPham() != null ? spct.getSanPham().getMaSanPham() : "SP";
-        String mau = spct.getMauSac() != null ? spct.getMauSac().getTenMauSac() : null;
-        String size = spct.getKichThuoc() != null ? spct.getKichThuoc().getTenKichThuoc() : null;
-        String prefix = normalizeSerialToken(maSanPham) + "-" + normalizeSerialToken(mau) + "-" + normalizeSerialToken(size) + "-";
-
-        List<SerialSanPham> existing = spct.getSerialSanPhams() != null ? spct.getSerialSanPhams() : List.of();
-        Set<String> used = existing.stream()
-                .map(SerialSanPham::getMaSerial)
-                .filter(s -> s != null && !s.isBlank())
-                .map(String::trim)
-                .collect(Collectors.toCollection(HashSet::new));
-
-        int seq = 1;
-        List<SerialSanPham> toSave = new java.util.ArrayList<>();
-        for (int i = 0; i < qty; i++) {
-            String serial;
-            do {
-                serial = prefix + String.format("%04d", seq++);
-            } while (used.contains(serial));
-            used.add(serial);
-
-            SerialSanPham entity = new SerialSanPham();
-            entity.setSanPhamChiTiet(spct);
-            entity.setHoaDonChiTiet(null);
-            entity.setMaSerial(serial);
-            entity.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
-            toSave.add(entity);
-        }
-        if (!toSave.isEmpty()) {
-            serialSanPhamRepository.saveAll(toSave);
-        }
+    @Override
+    public boolean existsByVariant(Integer sanPhamId, Integer mauSacId, Integer kichThuocId, Integer chatLieuDayId, Integer excludeId) {
+        return sanPhamChiTietRepository.existsBySanPhamAndVariant(sanPhamId, mauSacId, kichThuocId, chatLieuDayId);
     }
 
-    private String normalizeSerialToken(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return "NA";
-        }
-        String viNormalized = raw.replace('Đ', 'D').replace('đ', 'd');
-        String normalized = Normalizer.normalize(viNormalized, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toUpperCase(Locale.ROOT)
-                .replaceAll("[^A-Z0-9]", "");
-        if (normalized.isBlank()) {
-            return "NA";
-        }
-        return normalized.length() > 12 ? normalized.substring(0, 12) : normalized;
+    @Override
+    public boolean existsBySanPhamAndVariant(Integer sanPhamId, Integer mauSacId, Integer kichThuocId, Integer chatLieuDayId) {
+        return sanPhamChiTietRepository.existsBySanPhamAndVariant(sanPhamId, mauSacId, kichThuocId, chatLieuDayId);
     }
 
 }

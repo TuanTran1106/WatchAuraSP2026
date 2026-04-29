@@ -1,0 +1,1498 @@
+ <div class="return-create-page" xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+    <div class="return-create-container">
+
+        <nav aria-label="breadcrumb" class="return-create-breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/nguoidung">Tài khoản</a></li>
+                <li class="breadcrumb-item"><a href="/khach-hang/hoan-tra">Hoàn trả</a></li>
+                <li class="breadcrumb-item active">Tạo yêu cầu hoàn trả</li>
+            </ol>
+        </nav>
+
+        <div class="return-create-header">
+            <h1 class="return-create-title">
+                <i class="fas fa-rotate-left"></i>
+                Yêu cầu hoàn trả sản phẩm
+            </h1>
+            <p class="return-create-subtitle">Chọn sản phẩm và serial bạn muốn hoàn trả</p>
+        </div>
+
+        <th:block th:if="${hoaDonInfo != null}">
+            <!-- Order Info -->
+            <div class="return-order-card">
+                <div class="return-order-card__header">
+                    <div class="return-order-card__header-left">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Đơn hàng <strong th:text="${hoaDonInfo.maDonHang}"></strong></span>
+                    </div>
+                    <span class="return-order-card__date"
+                          th:text="${#temporals.format(hoaDonInfo.ngayDat, 'dd/MM/yyyy HH:mm')}"></span>
+                </div>
+                <div class="return-order-card__body">
+                    <div class="return-order-card__info">
+                        <span>Tổng tiền: </span>
+                        <strong th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienThanhToan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</strong>
+                    </div>
+                </div>
+            </div>
+
+            <form id="returnForm" method="post" th:action="@{/khach-hang/hoan-tra/tao-moi}">
+                <input type="hidden" name="idHoaDon" th:value="${hoaDonInfo.id}">
+                <input type="hidden" name="chiTietJson" id="chiTietJson" value="">
+
+                <!-- Products to return -->
+                <div class="return-products-section">
+                    <h2 class="return-products-section__title">
+                        <i class="fas fa-box-open"></i>
+                        Chọn sản phẩm hoàn trả
+                    </h2>
+
+                    <th:block th:if="${not #lists.isEmpty(hoaDonInfo.chiTietList)}">
+                        <th:block th:each="item, itemStat : ${hoaDonInfo.chiTietList}">
+                            <div class="return-product-card"
+                                 th:classappend="${item.soLuongConLai > 0 ? '' : 'return-product-card--disabled'}"
+                                 th:attr="data-item-index=${itemStat.index}">
+
+                                <div class="return-product-card__header">
+                                    <th:block th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}">
+                                        <div class="return-product-card__image">
+                                            <img th:src="${item.hinhAnh}" th:alt="${item.tenSanPham}" 
+                                                 onerror="this.parentElement.style.display='none'">
+                                        </div>
+                                    </th:block>
+                                    <div class="return-product-card__product-info">
+                                        <div class="return-product-card__name">Tên SP:
+                                        <span th:text="${item.tenSanPham}"></span>
+                                        </div>
+                                        <div class="return-product-card__variant"
+                                             th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}">Mô Tả Biến Thể:
+                                        <span th:text="${item.tenBienThe}"></span>
+                                        </div>
+                                        <div class="return-product-card__sku">Mã SP: <span th:text="${item.maSanPham}"></span></div>
+                                    </div>
+                                    <div class="return-product-card__price-info">
+                                        <div class="return-product-card__price-label">Đơn giá</div>
+                                        <div class="return-product-card__price-value"
+                                             th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></div>
+                                    </div>
+                                </div>
+
+                                <div class="return-product-card__stats">
+                                    <div class="return-product-card__stat">
+                                        <span class="return-product-card__stat-label">Đã mua</span>
+                                        <span class="return-product-card__stat-value" th:text="${item.soLuongMua}">2</span>
+                                    </div>
+                                    <div class="return-product-card__stat">
+                                        <span class="return-product-card__stat-label">Đã hoàn</span>
+                                        <span class="return-product-card__stat-value" th:text="${item.soLuongDaHoanTra}">0</span>
+                                    </div>
+                                    <div class="return-product-card__stat return-product-card__stat--highlight">
+                                        <span class="return-product-card__stat-label">Có thể hoàn</span>
+                                        <span class="return-product-card__stat-value" th:text="${item.soLuongConLai}">2</span>
+                                    </div>
+                                </div>
+
+                                <th:block th:if="${item.soLuongConLai > 0}">
+                                    <th:block th:if="${not #lists.isEmpty(item.serials)}">
+                                        <div class="return-product-card__serials-section">
+                                            <div class="return-product-card__serials-header">
+                                                <i class="fas fa-barcode"></i>
+                                                <span>Chọn serial hoàn trả</span>
+                                                <span class="return-product-card__serials-selected"
+                                                      th:id="'selected-count-' + ${itemStat.index}">0 đã chọn</span>
+                                            </div>
+                                            <div class="return-product-card__serial-grid">
+                                                <th:block th:each="serial : ${item.serials}">
+                                                    <label class="return-serial-checkbox"
+                                                           th:classappend="${serial.coTheChon ? '' : 'return-serial-checkbox--disabled'}"
+                                                           th:if="${serial.coTheChon}">
+                                                        <input type="checkbox"
+                                                               class="return-serial-checkbox__input"
+                                                               th:attr="data-item-index=${itemStat.index},
+                                                                        data-hdct-id=${item.id},
+                                                                        data-spt-id=${item.idSanPhamChiTiet},
+                                                                        data-serial=${serial.maSerial},
+                                                                        data-don-gia=${item.donGia}"
+                                                               onchange="updateSelection()">
+                                                        <span class="return-serial-checkbox__box">
+                                                            <i class="fas fa-check"></i>
+                                                        </span>
+                                                        <span class="return-serial-checkbox__label">
+                                                            <span class="return-serial-checkbox__code" th:text="${serial.maSerial}">SR001</span>
+                                                            <span class="return-serial-checkbox__status return-serial-checkbox__status--sold"
+                                                                  th:text="${serial.trangThaiHienThi}">Đã bán</span>
+                                                        </span>
+                                                    </label>
+                                                    <div class="return-serial-checkbox return-serial-checkbox--disabled"
+                                                         th:if="${!serial.coTheChon}">
+                                                        <span class="return-serial-checkbox__box">
+                                                            <i class="fas fa-lock"></i>
+                                                        </span>
+                                                        <span class="return-serial-checkbox__label">
+                                                            <span class="return-serial-checkbox__code" th:text="${serial.maSerial}">SR002</span>
+                                                            <span class="return-serial-checkbox__status return-serial-checkbox__status--returned"
+                                                                  th:text="${serial.trangThaiHienThi}">Đã hoàn</span>
+                                                        </span>
+                                                    </div>
+                                                </th:block>
+                                            </div>
+                                        </div>
+                                    </th:block>
+
+                                    <th:block th:if="${#lists.isEmpty(item.serials)}">
+                                        <div class="return-product-card__no-serial">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>Không có serial riêng cho sản phẩm này. Số lượng hoàn: </span>
+                                            <input type="number"
+                                                   class="return-qty-input"
+                                                   min="1"
+                                                   max="1"
+                                                   value="1"
+                                                   th:attr="data-item-index=${itemStat.index},
+                                                            data-hdct-id=${item.id},
+                                                            data-spt-id=${item.idSanPhamChiTiet},
+                                                            data-don-gia=${item.donGia}"
+                                                   onchange="updateQtySelection(this)">
+                                        </div>
+                                    </th:block>
+                                </th:block>
+
+                                <th:block th:if="${item.soLuongConLai == 0}">
+                                    <div class="return-product-card__fully-returned">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Đã hoàn đủ số lượng mua</span>
+                                    </div>
+                                </th:block>
+
+                                <div class="return-product-card__item-total" th:id="'item-total-' + ${itemStat.index}">
+                                    <span class="return-product-card__item-total-label">Thành tiền hoàn:</span>
+                                    <span class="return-product-card__item-total-value">0 ₫</span>
+                                </div>
+                            </div>
+                        </th:block>
+                    </th:block>
+                </div>
+
+                <!-- Type Selection -->
+                <div class="return-type-section">
+                    <h2 class="return-type-section__title">
+                        <i class="fas fa-exchange-alt"></i>
+                        Chọn loại yêu cầu
+                    </h2>
+                    <div class="return-type-options">
+                        <label class="return-type-option">
+                            <input type="radio" name="loaiHoanTra" value="TRA_HANG" checked
+                                   onchange="setLoaiHoanTra(this.value)">
+                            <div class="return-type-card">
+                                <div class="return-type-icon">
+                                    <i class="fas fa-undo"></i>
+                                </div>
+                                <div class="return-type-info">
+                                    <div class="return-type-title">Trả hàng</div>
+                                    <div class="return-type-desc">Hoàn lại sản phẩm và nhận tiền hoàn</div>
+                                </div>
+                                <div class="return-type-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="return-type-option">
+                            <input type="radio" name="loaiHoanTra" value="DOI_HANG"
+                                   onchange="setLoaiHoanTra(this.value)">
+                            <div class="return-type-card">
+                                <div class="return-type-icon">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div class="return-type-info">
+                                    <div class="return-type-title">Đổi hàng</div>
+                                    <div class="return-type-desc">Đổi sang sản phẩm khác</div>
+                                </div>
+                                <div class="return-type-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div class="return-reason-section">
+                    <h2 class="return-reason-section__title">
+                        <i class="fas fa-comment-alt"></i>
+                        Lý do hoàn trả
+                    </h2>
+                    <div class="return-reason-section__content">
+                        <div class="return-reason-presets">
+                            <label class="return-reason-preset">
+                                <input type="radio" name="lyDoPreset" value="Sản phẩm bị lỗi, hỏng" checked
+                                       onchange="setLyDo(this.value)">
+                                <span class="return-reason-preset__label">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Sản phẩm bị lỗi, hỏng,
+                                </span>
+                            </label>
+                            <label class="return-reason-preset">
+                                <input type="radio" name="lyDoPreset" value="Sản phẩm không đúng với mô tả"
+                                       onchange="setLyDo(this.value)">
+                                <span class="return-reason-preset__label">
+                                    <i class="fas fa-question-circle"></i>
+                                    Không đúng mô tả
+                                </span>
+                            </label>
+                            <label class="return-reason-preset">
+                                <input type="radio" name="lyDoPreset" value="Giao sai sản phẩm"
+                                       onchange="setLyDo(this.value)">
+                                <span class="return-reason-preset__label">
+                                    <i class="fas fa-truck"></i>
+                                    Giao sai sản phẩm
+                                </span>
+                            </label>
+                            <label class="return-reason-preset">
+                                <input type="radio" name="lyDoPreset" value="Khác"
+                                       onchange="setLyDo(this.value)">
+                                <span class="return-reason-preset__label">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                    Lý do khác
+                                </span>
+                            </label>
+                        </div>
+                        <textarea name="lyDo" id="lyDoInput" class="return-reason-textarea"
+                                  placeholder="Nhập lý do hoàn trả của bạn..." required
+                                  oninput="updateLyDoInput()">Sản phẩm bị lỗi, hỏng</textarea>
+                    </div>
+                </div>
+
+                <!-- Image Upload -->
+                <div class="return-image-section">
+                    <h2 class="return-image-section__title">
+                        <i class="fas fa-camera"></i>
+                        Hình ảnh lỗi (nếu có)
+                    </h2>
+                    <div class="return-image-section__content">
+                        <div class="return-image-upload-area" id="imageUploadArea">
+                            <input type="file" id="imageInput" name="hinhAnhFiles" accept="image/*" multiple
+                                   style="display: none;">
+                            <div class="return-image-upload-placeholder" id="uploadPlaceholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click để tải lên hình ảnh lỗi của sản phẩm</p>
+                                <span>Hỗ trợ: JPG, PNG, GIF, WEBP (tối đa 5 ảnh)</span>
+                            </div>
+                        </div>
+                        <div class="return-image-preview-list" id="imagePreviewList"></div>
+                        <input type="hidden" name="hinhAnhJson" id="hinhAnhJson" value="">
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="return-summary-card">
+                    <div class="return-summary-card__row">
+                        <span class="return-summary-card__label">Loại yêu cầu</span>
+                        <span class="return-summary-card__value" id="loaiHienThi">Trả hàng</span>
+                    </div>
+                    <div class="return-summary-card__row">
+                        <span class="return-summary-card__label">Số serial hoàn trả</span>
+                        <span class="return-summary-card__value" id="totalSerialsSelected">0</span>
+                    </div>
+                    <div class="return-summary-card__row return-summary-card__row--total">
+                        <span class="return-summary-card__label">Tổng tiền hoàn</span>
+                        <span class="return-summary-card__value" id="totalRefundAmount"
+                              th:data-tong-tien="${hoaDonInfo.tongTienThanhToan}">
+                            <span th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienThanhToan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="return-actions">
+                    <a href="/khach-hang/hoan-tra" class="btn-return-action btn-return-action--cancel">
+                        <i class="fas fa-times"></i>
+                        Hủy
+                    </a>
+                    <button type="submit" class="btn-return-action btn-return-action--submit" id="btnSubmit">
+                        <i class="fas fa-paper-plane"></i>
+                        Gửi yêu cầu hoàn trả
+                    </button>
+                </div>
+            </form>
+        </th:block>
+
+        <th:block th:if="${hoaDonInfo == null}">
+            <div class="return-error-card">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Không thể tạo yêu cầu hoàn trả</h3>
+                <p>Đơn hàng không tồn tại hoặc không thể hoàn trả.</p>
+                <a href="/don-hang" class="btn-return-back">
+                    <i class="fas fa-arrow-left"></i>
+                    Quay lại đơn hàng
+                </a>
+            </div>
+        </th:block>
+
+    </div>
+
+    <script th:inline="javascript">
+        var uploadedImages = [];
+        var currentLoaiHoanTra = 'TRA_HANG';
+
+        function formatCurrency(value) {
+            if (!value) return '0 ₫';
+            return Number(value).toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function setLoaiHoanTra(value) {
+            currentLoaiHoanTra = value;
+            var loaiHienThi = value === 'DOI_HANG' ? 'Đổi hàng' : 'Trả hàng';
+            document.getElementById('loaiHienThi').textContent = loaiHienThi;
+            updateSummary();
+        }
+
+        function setLyDo(value) {
+            document.getElementById('lyDoInput').value = value;
+        }
+
+        function updateLyDoInput() {
+            document.querySelectorAll('input[name="lyDoPreset"]').forEach(radio => radio.checked = false);
+        }
+
+        function initImageUpload() {
+            var placeholder = document.getElementById('uploadPlaceholder');
+            var input = document.getElementById('imageInput');
+
+            if (placeholder && input) {
+                placeholder.addEventListener('click', function() {
+                    input.click();
+                });
+
+                input.addEventListener('change', function() {
+                    handleImageUpload(this);
+                });
+            }
+        }
+
+        function handleImageUpload(input) {
+            var files = input.files;
+            if (!files || files.length === 0) return;
+
+            if (uploadedImages.length >= 5) {
+                alert('Tối đa chỉ được upload 5 hình ảnh');
+                return;
+            }
+
+            for (var i = 0; i < files.length && uploadedImages.length < 5; i++) {
+                var file = files[i];
+                if (!file.type.startsWith('image/')) {
+                    alert('Chỉ chấp nhận file hình ảnh');
+                    continue;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Kích thước file không được vượt quá 5MB');
+                    continue;
+                }
+
+                uploadImage(file);
+            }
+
+            input.value = '';
+        }
+
+        function uploadImage(file) {
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/api/hoan-tra/upload-image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    uploadedImages.push(data.filePath);
+                    renderImagePreviews();
+                    updateHinhAnhJson();
+                } else {
+                    alert('Lỗi upload: ' + data.message);
+                }
+            })
+            .catch(function(error) {
+                alert('Lỗi khi upload ảnh: ' + error.message);
+            });
+        }
+
+        function renderImagePreviews() {
+            var previewList = document.getElementById('imagePreviewList');
+            previewList.innerHTML = '';
+
+            uploadedImages.forEach(function(path, index) {
+                var div = document.createElement('div');
+                div.className = 'return-image-preview-item';
+
+                var img = document.createElement('img');
+                var imgSrc = path.startsWith('/') ? path : '/uploads/' + path;
+                img.src = imgSrc;
+                img.alt = 'Hình ảnh ' + (index + 1);
+
+                var deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'return-image-preview-delete';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.onclick = function() { removeImage(index); };
+
+                div.appendChild(img);
+                div.appendChild(deleteBtn);
+                previewList.appendChild(div);
+            });
+
+            var uploadArea = document.getElementById('imageUploadArea');
+            if (uploadedImages.length >= 5) {
+                uploadArea.querySelector('.return-image-upload-placeholder').style.display = 'none';
+            } else {
+                uploadArea.querySelector('.return-image-upload-placeholder').style.display = 'block';
+            }
+        }
+
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            renderImagePreviews();
+            updateHinhAnhJson();
+        }
+
+        function updateHinhAnhJson() {
+            document.getElementById('hinhAnhJson').value = JSON.stringify(uploadedImages);
+        }
+
+        function updateQtySelection(input) {
+            var itemIndex = input.getAttribute('data-item-index');
+            var donGia = parseFloat(input.getAttribute('data-don-gia')) || 0;
+            var qty = parseInt(input.value) || 0;
+            var max = parseInt(input.max) || 1;
+            if (qty > max) {
+                input.value = max;
+                qty = max;
+            }
+            if (qty < 1) {
+                input.value = 1;
+                qty = 1;
+            }
+            var total = donGia * qty;
+            var totalEl = document.getElementById('item-total-' + itemIndex);
+            if (totalEl) {
+                totalEl.querySelector('.return-product-card__item-total-value').textContent = formatCurrency(total);
+            }
+            updateSummary();
+        }
+
+        function updateSelection() {
+            document.querySelectorAll('.return-product-card').forEach(function(card) {
+                var itemIndex = card.getAttribute('data-item-index');
+                var selected = 0;
+                var totalAmount = 0;
+
+                card.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function(cb) {
+                    selected++;
+                    var donGia = parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                    totalAmount += donGia;
+                });
+
+                var qtyInput = card.querySelector('.return-qty-input');
+                if (qtyInput && !qtyInput.disabled) {
+                    var qty = parseInt(qtyInput.value) || 0;
+                    var donGia = parseFloat(qtyInput.getAttribute('data-don-gia')) || 0;
+                    selected = qty;
+                    totalAmount = donGia * qty;
+                }
+
+                var countEl = document.getElementById('selected-count-' + itemIndex);
+                if (countEl) {
+                    countEl.textContent = selected + ' đã chọn';
+                }
+
+                var totalEl = document.getElementById('item-total-' + itemIndex);
+                if (totalEl) {
+                    totalEl.querySelector('.return-product-card__item-total-value').textContent = formatCurrency(totalAmount);
+                }
+            });
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            var totalSerials = 0;
+            var totalAmount = 0;
+
+            document.querySelectorAll('.return-product-card').forEach(function(card) {
+                var hasChecked = false;
+                card.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function(cb) {
+                    totalSerials++;
+                    totalAmount += parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                    hasChecked = true;
+                });
+
+                var qtyInput = card.querySelector('.return-qty-input');
+                if (qtyInput && !qtyInput.disabled && !hasChecked) {
+                    var qty = parseInt(qtyInput.value) || 0;
+                    if (qty > 0) {
+                        totalSerials += qty;
+                        totalAmount += (parseFloat(qtyInput.getAttribute('data-don-gia')) || 0) * qty;
+                    }
+                }
+            });
+
+            document.getElementById('totalSerialsSelected').textContent = totalSerials;
+            
+            // Nếu chưa chọn sản phẩm nào thì hiển thị tổng tiền đơn hàng
+            var totalRefundEl = document.getElementById('totalRefundAmount');
+            if (totalSerials === 0) {
+                // Hiển thị tổng tiền đơn hàng từ data attribute
+                var tongTienDonHang = parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 0;
+                totalRefundEl.innerHTML = '<span>' + formatCurrency(tongTienDonHang) + '</span>';
+            } else {
+                // Hiển thị tổng tiền hoàn dựa trên các sản phẩm đã chọn
+                totalRefundEl.innerHTML = '<span>' + formatCurrency(totalAmount) + '</span>';
+            }
+        }
+
+        // Chỉ gọi updateSummary khi có sự kiện thay đổi (không cần gọi khi load trang
+        // vì giá trị đã được render đúng từ Thymeleaf)
+
+        document.getElementById('returnForm').addEventListener('submit', function(e) {
+            var totalSerials = 0;
+            document.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function() {
+                totalSerials++;
+            });
+            document.querySelectorAll('.return-product-card .return-qty-input').forEach(function(input) {
+                if (!input.disabled) {
+                    var qty = parseInt(input.value) || 0;
+                    totalSerials += qty;
+                }
+            });
+
+            if (totalSerials === 0) {
+                e.preventDefault();
+                alert('Vui lòng chọn ít nhất một sản phẩm để hoàn trả.');
+                return false;
+            }
+
+            var lyDo = document.getElementById('lyDoInput').value.trim();
+            if (!lyDo) {
+                e.preventDefault();
+                alert('Vui lòng nhập lý do hoàn trả.');
+                return false;
+            }
+
+            var chiTietList = [];
+            var seenItems = {};
+
+            document.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function(cb) {
+                var hdctId = cb.getAttribute('data-hdct-id');
+                var spctId = cb.getAttribute('data-spt-id');
+                var serial = cb.getAttribute('data-serial');
+                var donGia = parseFloat(cb.getAttribute('data-don-gia')) || 0;
+
+                var key = hdctId + '-' + spctId;
+                if (!seenItems[key]) {
+                    seenItems[key] = {
+                        idHoaDonChiTiet: parseInt(hdctId),
+                        idSanPhamChiTiet: parseInt(spctId),
+                        soLuongHoanTra: 0,
+                        donGia: donGia,
+                        serials: [],
+                        hinhAnh: uploadedImages.length > 0 ? uploadedImages[0] : null
+                    };
+                }
+                seenItems[key].soLuongHoanTra++;
+                seenItems[key].serials.push(serial);
+            });
+
+            document.querySelectorAll('.return-product-card .return-qty-input').forEach(function(input) {
+                if (!input.disabled) {
+                    var qty = parseInt(input.value) || 0;
+                    if (qty > 0) {
+                        var hdctId = input.getAttribute('data-hdct-id');
+                        var spctId = input.getAttribute('data-spt-id');
+                        var donGia = parseFloat(input.getAttribute('data-don-gia')) || 0;
+                        var key = hdctId + '-' + spctId;
+                        if (!seenItems[key]) {
+                            seenItems[key] = {
+                                idHoaDonChiTiet: parseInt(hdctId),
+                                idSanPhamChiTiet: parseInt(spctId),
+                                soLuongHoanTra: qty,
+                                donGia: donGia,
+                                serials: [],
+                                hinhAnh: uploadedImages.length > 0 ? uploadedImages[0] : null
+                            };
+                        } else {
+                            seenItems[key].soLuongHoanTra += qty;
+                        }
+                    }
+                }
+            });
+
+            Object.values(seenItems).forEach(function(item) {
+                chiTietList.push(item);
+            });
+
+            document.getElementById('chiTietJson').value = JSON.stringify(chiTietList);
+
+            return true;
+        });
+
+        setLoaiHoanTra('TRA_HANG');
+        initImageUpload();
+    </script>
+
+    <style>
+        .return-create-page {
+            padding-bottom: 3rem;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .return-create-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        /* Breadcrumb */
+        .return-create-breadcrumb {
+            margin-bottom: 1.5rem;
+        }
+
+        .return-create-breadcrumb .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+
+        .return-create-breadcrumb .breadcrumb-item a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .return-create-breadcrumb .breadcrumb-item a:hover {
+            color: #c9a227;
+        }
+
+        .return-create-breadcrumb .breadcrumb-item.active {
+            color: #1a1a1a;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Header */
+        .return-create-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .return-create-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-create-title i {
+            color: #c9a227;
+        }
+
+        .return-create-subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Order Card */
+        .return-order-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .return-order-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+        }
+
+        .return-order-card__header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .return-order-card__header-left i {
+            color: #c9a227;
+        }
+
+        .return-order-card__date {
+            font-size: 0.82rem;
+            color: #888;
+        }
+
+        .return-order-card__body {
+            padding: 1rem 1.25rem;
+        }
+
+        .return-order-card__info {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .return-order-card__info strong {
+            color: #dc3545;
+            font-size: 1rem;
+        }
+
+        /* Products Section */
+        .return-products-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .return-products-section__title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-products-section__title i {
+            color: #c9a227;
+        }
+
+        /* Product Card */
+        .return-product-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .return-product-card:hover {
+            border-color: #c9a227;
+        }
+
+        .return-product-card--disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .return-product-card__header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .return-product-card__image {
+            width: 72px;
+            height: 72px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .return-product-card__image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .return-product-card__product-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .return-product-card__name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+
+        .return-product-card__variant {
+            font-size: 0.82rem;
+            color: #888;
+            margin-top: 0.15rem;
+        }
+
+        .return-product-card__sku {
+            font-size: 0.78rem;
+            color: #aaa;
+            margin-top: 0.15rem;
+        }
+
+        .return-product-card__price-info {
+            text-align: right;
+        }
+
+        .return-product-card__price-label {
+            font-size: 0.72rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .return-product-card__price-value {
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .return-product-card__stats {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 1.25rem;
+            background: #fafafa;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .return-product-card__stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .return-product-card__stat-label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .return-product-card__stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .return-product-card__stat--highlight .return-product-card__stat-value {
+            color: #c9a227;
+        }
+
+        /* Serial Section */
+        .return-product-card__serials-section {
+            padding: 1rem 1.25rem;
+        }
+
+        .return-product-card__serials-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .return-product-card__serials-header i {
+            color: #c9a227;
+        }
+
+        .return-product-card__serials-selected {
+            margin-left: auto;
+            background: #c9a227;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        .return-product-card__serial-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        /* Serial Checkbox */
+        .return-serial-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .return-serial-checkbox:hover:not(.return-serial-checkbox--disabled) {
+            border-color: #c9a227;
+            background: #fef9e7;
+        }
+
+        .return-serial-checkbox--disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .return-serial-checkbox__input {
+            display: none;
+        }
+
+        .return-serial-checkbox__box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: transparent;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .return-serial-checkbox__input:checked + .return-serial-checkbox__box {
+            background: #c9a227;
+            border-color: #c9a227;
+            color: #fff;
+        }
+
+        .return-serial-checkbox__label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .return-serial-checkbox__code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .return-serial-checkbox__status {
+            font-size: 0.68rem;
+        }
+
+        .return-serial-checkbox__status--sold {
+            color: #059669;
+        }
+
+        .return-serial-checkbox__status--returned {
+            color: #ef4444;
+        }
+
+        /* No Serial */
+        .return-product-card__no-serial {
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #666;
+            background: #fafafa;
+        }
+
+        .return-product-card__no-serial i {
+            color: #c9a227;
+        }
+
+        .return-qty-input {
+            width: 60px;
+            padding: 0.3rem 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        /* Fully Returned */
+        .return-product-card__fully-returned {
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #059669;
+            background: #f0fdf4;
+        }
+
+        .return-product-card__item-total {
+            padding: 0.75rem 1.25rem;
+            background: #fafafa;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .return-product-card__item-total-label {
+            font-size: 0.82rem;
+            color: #888;
+        }
+
+        .return-product-card__item-total-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #dc3545;
+        }
+
+        /* Reason Section */
+        .return-reason-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Type Selection Section */
+        .return-type-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .return-type-section__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-type-section__title i {
+            color: #c9a227;
+        }
+
+        .return-type-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .return-type-option {
+            cursor: pointer;
+        }
+
+        .return-type-option input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .return-type-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .return-type-option input:checked + .return-type-card {
+            border-color: #c9a227;
+            background: linear-gradient(135deg, #fef9e7 0%, #fdf3d0 100%);
+        }
+
+        .return-type-card:hover {
+            border-color: #c9a227;
+        }
+
+        .return-type-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .return-type-option input:checked + .return-type-card .return-type-icon {
+            background: #c9a227;
+            color: #fff;
+        }
+
+        .return-type-info {
+            flex: 1;
+        }
+
+        .return-type-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.25rem;
+        }
+
+        .return-type-desc {
+            font-size: 0.82rem;
+            color: #666;
+        }
+
+        .return-type-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: transparent;
+            flex-shrink: 0;
+        }
+
+        .return-type-option input:checked + .return-type-card .return-type-check {
+            background: #c9a227;
+            border-color: #c9a227;
+            color: #fff;
+        }
+
+        /* Image Upload Section */
+        .return-image-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .return-image-section__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-image-section__title i {
+            color: #c9a227;
+        }
+
+        .return-image-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: #fafafa;
+        }
+
+        .return-image-upload-area:hover {
+            border-color: #c9a227;
+            background: #fef9e7;
+        }
+
+        .return-image-upload-placeholder i {
+            font-size: 2.5rem;
+            color: #c9a227;
+            margin-bottom: 0.75rem;
+        }
+
+        .return-image-upload-placeholder p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.95rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .return-image-upload-placeholder span {
+            font-size: 0.78rem;
+            color: #888;
+        }
+
+        .return-image-preview-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .return-image-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #eee;
+        }
+
+        .return-image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .return-image-preview-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .return-image-preview-delete:hover {
+            background: #ef4444;
+        }
+
+        .return-reason-section__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-reason-section__title i {
+            color: #c9a227;
+        }
+
+        .return-reason-presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .return-reason-preset {
+            cursor: pointer;
+        }
+
+        .return-reason-preset input {
+            display: none;
+        }
+
+        .return-reason-preset__label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .return-reason-preset__label i {
+            color: #c9a227;
+            font-size: 0.85rem;
+        }
+
+        .return-reason-preset input:checked + .return-reason-preset__label {
+            border-color: #c9a227;
+            background: #fef9e7;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .return-reason-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .return-reason-textarea:focus {
+            outline: none;
+            border-color: #c9a227;
+        }
+
+        /* Summary */
+        .return-summary-card {
+            background: linear-gradient(135deg, #c9a227 0%, #a07d1c 100%);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+
+        .return-summary-card__row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+        }
+
+        .return-summary-card__row--total {
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+        }
+
+        .return-summary-card__label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .return-summary-card__value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .return-summary-card__row--total .return-summary-card__label {
+            font-size: 1rem;
+            font-weight: 600;
+            opacity: 1;
+        }
+
+        .return-summary-card__row--total .return-summary-card__value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Actions */
+        .return-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-return-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-return-action--cancel {
+            background: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-return-action--cancel:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-return-action--submit {
+            background: linear-gradient(135deg, #c9a227 0%, #a07d1c 100%);
+            color: #fff;
+        }
+
+        .btn-return-action--submit:hover {
+            background: linear-gradient(135deg, #b8921f 0%, #8a6d17 100%);
+        }
+
+        /* Error */
+        .return-error-card {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+        }
+
+        .return-error-card i {
+            font-size: 3rem;
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
+
+        .return-error-card h3 {
+            font-size: 1.25rem;
+            color: #1a1a1a;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .return-error-card p {
+            color: #666;
+            margin: 0 0 1.5rem 0;
+        }
+
+        .btn-return-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.5rem;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            color: #555;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-return-back:hover {
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .return-reason-presets {
+                grid-template-columns: 1fr;
+            }
+
+            .return-product-card__header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .return-product-card__image {
+                width: 64px;
+                height: 64px;
+            }
+
+            .return-product-card__price-info {
+                text-align: left;
+            }
+        }
+    </style>
+</div>

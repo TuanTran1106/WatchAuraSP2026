@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Hoàn trả - WatchAura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/admin/admin.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
+    <link rel="stylesheet" href="/css/hoan-tra-admin.css">
+</head>
+<body>
+<div class="admin-layout" id="hoanTraAdminLayout">
+    <!-- Sidebar -->
+    <aside class="sidebar" th:if="${laQuanLy || laNhanVien}">
+        <div class="sidebar__brand">
+            <span class="sidebar__logo">WA</span>
+            <span class="sidebar__title" th:text="${laQuanLy} ? 'WatchAura Admin' : 'WatchAura Staff'">WatchAura Admin</span>
+        </div>
+        <nav class="sidebar__nav" id="adminSidebarNav">
+            <a th:href="@{/admin}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
+            <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách hàng</span></a>
+            <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
+            <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
+                <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
+                        aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
+                    <i class="fas fa-box-open"></i>
+                    <span>Sản phẩm</span>
+                    <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                </button>
+                <div class="sidebar__dropdown-menu" id="sidebarProductMenu" role="menu">
+                    <a th:href="@{/admin/san-pham}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-box"></i><span>Sản phẩm</span></a>
+                    <a th:href="@{/admin/danh-muc}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-folder"></i><span>Danh mục</span></a>
+                    <a th:href="@{/admin/thuong-hieu}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-building"></i><span>Thương hiệu</span></a>
+                    <a th:href="@{/admin/mau-sac}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-palette"></i><span>Màu sắc</span></a>
+                    <a th:href="@{/admin/kich-thuoc}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-ruler-combined"></i><span>Kích thước</span></a>
+                    <a th:href="@{/admin/loai-may}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-cogs"></i><span>Loại máy</span></a>
+                    <a th:href="@{/admin/chat-lieu-day}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-link"></i><span>Chất liệu dây</span></a>
+                </div>
+            </div>
+            <a th:href="@{/admin/khuyen-mai}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-percent"></i><span>Khuyến mãi</span></a>
+            <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i
+                    class="fas fa-ticket"></i><span>Voucher</span></a>
+            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra sidebar__link--current"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+            <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
+            <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
+            <a href="#" class="sidebar__link sidebar__link--logout" th:unless="${laQuanLy}" onclick="event.preventDefault(); confirmLogout();">
+                <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></a>
+        </nav>
+    </aside>
+    
+    <div class="main">
+        <header class="header">
+            <button class="header__menu-btn" id="sidebarToggle" type="button" aria-label="Đóng mở menu" title="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="header__title">Quản lý Hoàn trả</h1>
+            <div class="header__user-info" th:if="${currentUser != null}">
+                <span class="header__user-badge" th:classappend="${laQuanLy} ? 'badge--admin' : 'badge--staff'">
+                    <i th:class="${laQuanLy} ? 'fas fa-crown' : 'fas fa-user-shield'"></i>
+                    <span th:text="${laQuanLy} ? 'Admin' : 'WatchAura Staff'">Vai trò</span>
+                </span>
+                <span class="header__user-name" th:text="${currentUser.tenNguoiDung}">Tên NV</span>
+            </div>
+            <button class="header__theme-toggle" id="adminThemeToggle" type="button" aria-label="Chuyển giao diện" title="Chuyển giao diện">
+                <i class="fas fa-moon theme-icon theme-icon--dark"></i>
+                <i class="fas fa-sun theme-icon theme-icon--light"></i>
+            </button>
+        </header>
+        
+        <main class="content" id="adminContent">
+            <div th:fragment="content">
+                <link rel="stylesheet" href="/css/hoan-tra-admin.css">
+
+                <div th:if="${message}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
+                <div th:if="${error}" class="admin-toast-payload" th:attr="data-admin-toast-message=${error}, data-admin-toast-type='error'" aria-hidden="true"></div>
+
+                <!-- Page Header -->
+                <div class="ht-page-header">
+                    <div class="ht-page-header__left">
+                        <div class="ht-page-header__title-wrap">
+                            <h1 class="ht-page-header__title">
+                                <i class="fas fa-rotate-left"></i>
+                                Quản lý hoàn trả
+                            </h1>
+                            <p class="ht-page-header__subtitle">Theo dõi và xử lý yêu cầu hoàn trả sản phẩm</p>
+                        </div>
+                    </div>
+                    <div class="ht-page-header__actions">
+                        <button class="ht-btn ht-btn--export" onclick="exportExcel()">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Export Excel</span>
+                        </button>
+                        <button class="ht-btn ht-btn--import" onclick="openImportModal()">
+                            <i class="fas fa-file-import"></i>
+                            <span>Import Excel</span>
+                        </button>
+                        <a th:href="@{/admin/hoan-tra/tao-moi}" class="ht-btn ht-btn--primary">
+                            <i class="fas fa-plus"></i>
+                            <span>Tạo hoàn trả</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Stats Bar -->
+                <div class="ht-stats-bar" id="htStatsBar">
+                    <div class="ht-stat-item ht-stat-item--pending">
+                        <div class="ht-stat-item__icon"><i class="fas fa-clock"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statChoXuLy}">0</span>
+                            <span class="ht-stat-item__label">Chờ xử lý</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--processing">
+                        <div class="ht-stat-item__icon"><i class="fas fa-spinner"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statDangXuLy}">0</span>
+                            <span class="ht-stat-item__label">Đang xử lý</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--approved">
+                        <div class="ht-stat-item__icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statDaXuLy}">0</span>
+                            <span class="ht-stat-item__label">Đã xử lý</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--rejected">
+                        <div class="ht-stat-item__icon"><i class="fas fa-times-circle"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statTuChoi}">0</span>
+                            <span class="ht-stat-item__label">Từ chối</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--doi-pending">
+                        <div class="ht-stat-item__icon"><i class="fas fa-clock"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statChoDuyetDoi}">0</span>
+                            <span class="ht-stat-item__label">Chờ duyệt đổi</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--doi-approved">
+                        <div class="ht-stat-item__icon"><i class="fas fa-check"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statDaDuyetDoi}">0</span>
+                            <span class="ht-stat-item__label">Đã duyệt đổi</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--doi-serial">
+                        <div class="ht-stat-item__icon"><i class="fas fa-barcode"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statChonSerialMoi}">0</span>
+                            <span class="ht-stat-item__label">Chọn serial</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--doi-done">
+                        <div class="ht-stat-item__icon"><i class="fas fa-exchange-alt"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statDaDoi}">0</span>
+                            <span class="ht-stat-item__label">Đã đổi</span>
+                        </div>
+                    </div>
+                    <div class="ht-stat-item ht-stat-item--total">
+                        <div class="ht-stat-item__icon"><i class="fas fa-list"></i></div>
+                        <div class="ht-stat-item__info">
+                            <span class="ht-stat-item__value" th:text="${statTongSo}">0</span>
+                            <span class="ht-stat-item__label">Tổng số</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="ht-filter-bar">
+                    <div class="ht-filter-form">
+                        <div class="ht-filter-group">
+                            <div class="ht-search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="searchInput" placeholder="Tìm mã hoàn trả, mã hóa đơn, khách hàng..." class="ht-search-input" />
+                            </div>
+                            <select id="trangThaiFilter" class="ht-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <optgroup label="Trả hàng">
+                                    <option value="CHO_XU_LY">Chờ xử lý</option>
+                                    <option value="DA_DUYET">Đã duyệt</option>
+                                    <option value="DA_NHAN_HANG">Đã nhận hàng</option>
+                                    <option value="DA_HOAN_TIEN">Đã hoàn tiền</option>
+                                    <option value="DA_XU_LY">Đã xử lý</option>
+                                    <option value="TU_CHOI">Từ chối</option>
+                                </optgroup>
+                                <optgroup label="Đổi hàng">
+                                    <option value="CHO_DUYET_DOI">Chờ duyệt đổi</option>
+                                    <option value="DA_DUYET_DOI">Đã duyệt đổi</option>
+                                    <option value="DA_NHAN_HANG_DOI">Đã nhận hàng đổi</option>
+                                    <option value="CHON_SERIAL_MOI">Chọn serial mới</option>
+                                    <option value="DA_DOI">Đã đổi</option>
+                                    <option value="KET_THUC">Kết thúc</option>
+                                </optgroup>
+                            </select>
+                            <input type="date" id="tuNgayFilter" class="ht-date-input" />
+                            <input type="date" id="denNgayFilter" class="ht-date-input" />
+                        </div>
+                        <div class="ht-filter-actions">
+                            <button type="button" class="ht-btn ht-btn--search" onclick="searchHoanTra()"><i class="fas fa-search"></i> Tìm kiếm</button>
+                            <button type="button" class="ht-btn ht-btn--reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> Đặt lại</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Table Card -->
+                <div class="ht-card">
+                    <div class="ht-card__header">
+                        <div class="ht-card__header-left">
+                            <h2 class="ht-card__title"><i class="fas fa-list"></i> Danh sách hoàn trả</h2>
+                            <span class="ht-card__count" id="totalCount">(0 yêu cầu)</span>
+                        </div>
+                        <div class="ht-card__header-right">
+                            <button class="ht-btn-icon" onclick="loadHoanTra()" title="Làm mới"><i class="fas fa-rotate"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="ht-table-responsive">
+                        <table class="ht-table" id="hoanTraTable">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Mã hoàn trả</th>
+                                    <th>Loại</th>
+                                    <th>Mã hóa đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Số tiền hoàn</th>
+                                    <th>Ngày yêu cầu</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hoanTraTableBody">
+                                <!-- Dữ liệu sẽ được load qua AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ht-empty" id="emptyState" style="display: none;">
+                        <div class="ht-empty__icon"><i class="fas fa-inbox"></i></div>
+                        <h3 class="ht-empty__title">Chưa có yêu cầu hoàn trả nào</h3>
+                        <p class="ht-empty__text">Danh sách hoàn trả trống hoặc không tìm thấy kết quả phù hợp.</p>
+                        <a th:href="@{/admin/hoan-tra/tao-moi}" class="ht-btn ht-btn--primary"><i class="fas fa-plus"></i> Tạo hoàn trả mới</a>
+                    </div>
+
+                    <nav class="ht-pagination" id="paginationNav" aria-label="Phân trang">
+                        <ul class="ht-pagination__list" id="paginationList">
+                            <!-- Pagination sẽ được load qua AJAX -->
+                        </ul>
+                    </nav>
+                </div>
+
+                <!-- Import Modal -->
+                <div class="ht-modal-overlay" id="importModal">
+                    <div class="ht-modal">
+                        <div class="ht-modal__header">
+                            <h3 class="ht-modal__title"><i class="fas fa-file-import"></i> Import Serial hoàn trả</h3>
+                            <button class="ht-modal__close" onclick="closeImportModal()" type="button"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="ht-modal__body">
+                            <div class="ht-upload-area" id="uploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <h3>Kéo thả file Excel vào đây</h3>
+                                <p>hoặc click để chọn file (.xlsx, .xls)</p>
+                                <input type="file" id="fileInput" accept=".xlsx,.xls" />
+                                <a href="/api/hoan-tra/import/template" class="ht-upload-link"><i class="fas fa-download"></i> Tải file mẫu</a>
+                            </div>
+                            <div class="ht-preview" id="previewSection">
+                                <div class="ht-preview__header">
+                                    <h4><i class="fas fa-clipboard-check"></i> Kết quả kiểm tra</h4>
+                                    <button class="ht-btn ht-btn--secondary" onclick="clearFile()"><i class="fas fa-times"></i> Chọn file khác</button>
+                                </div>
+                                <div class="ht-preview__stats" id="previewStats"></div>
+                                <div id="previewSerials" class="ht-serial-list"></div>
+                                <div id="errorSection" style="display: none;">
+                                    <h4 style="color: #dc2626; margin: 1rem 0 0.5rem;"><i class="fas fa-exclamation-triangle"></i> Lỗi</h4>
+                                    <div id="errorList" class="ht-error-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ht-modal__footer">
+                            <button class="ht-btn ht-btn--secondary" onclick="closeImportModal()"><i class="fas fa-times"></i> Đóng</button>
+                            <button class="ht-btn ht-btn--primary" id="btnImport" onclick="doImport()" disabled><i class="fas fa-upload"></i> Import</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirm Modal -->
+                <div class="ht-modal-overlay" id="confirmModal">
+                    <div class="ht-modal ht-modal--confirm">
+                        <div class="ht-modal__header">
+                            <h3 class="ht-modal__title" id="confirmTitle"><i class="fas fa-question-circle"></i> Xác nhận</h3>
+                        </div>
+                        <div class="ht-modal__body">
+                            <p id="confirmMessage">Bạn có chắc chắn muốn thực hiện?</p>
+                        </div>
+                        <div class="ht-modal__footer">
+                            <button class="ht-btn ht-btn--secondary" onclick="closeConfirmModal()"><i class="fas fa-times"></i> Hủy</button>
+                            <button class="ht-btn ht-btn--primary" id="confirmAction"><i class="fas fa-check"></i> Xác nhận</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toast Notification -->
+                <div class="ht-toast" id="toast"></div>
+
+                <!-- Loading Overlay -->
+                <div class="ht-loading-overlay" id="loadingOverlay">
+                    <div class="ht-loading-spinner"><i class="fas fa-spinner"></i><p>Đang xử lý...</p></div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <span>© 2026 WatchAura Admin. All rights reserved.</span>
+        </footer>
+    </div>
+</div>
+
+<script src="/js/confirm-modal.js"></script>
+<script th:src="@{/admin/admin.js}"></script>
+<script>
+// AJAX Pagination Variables
+var currentPage = 0;
+var pageSize = 10;
+var currentFilters = {
+    keyword: '',
+    trangThai: '',
+    tuNgay: '',
+    denNgay: ''
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial filter values from URL if any
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('q')) {
+        document.getElementById('searchInput').value = urlParams.get('q');
+        currentFilters.keyword = urlParams.get('q');
+    }
+    if (urlParams.get('trangThai')) {
+        document.getElementById('trangThaiFilter').value = urlParams.get('trangThai');
+        currentFilters.trangThai = urlParams.get('trangThai');
+    }
+    
+    // Load initial data
+    loadHoanTra();
+    
+    // Enter key for search
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchHoanTra();
+    });
+});
+
+async function loadHoanTra(page = 0) {
+    currentPage = page;
+    showLoading();
+    
+    try {
+        let url = '/api/hoan-tra/paged?page=' + page + '&size=' + pageSize;
+        if (currentFilters.trangThai) {
+            url += '&trangThai=' + encodeURIComponent(currentFilters.trangThai);
+        }
+        if (currentFilters.keyword) {
+            url += '&keyword=' + encodeURIComponent(currentFilters.keyword);
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.content) {
+            renderTable(data.content, page);
+            renderPagination(data);
+            renderStats(data.stats);
+            updateUrl(page);
+        }
+    } catch (error) {
+        showToast('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderTable(items, page) {
+    const tbody = document.getElementById('hoanTraTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const table = document.getElementById('hoanTraTable');
+    const paginationNav = document.getElementById('paginationNav');
+    
+    if (!items || items.length === 0) {
+        tbody.innerHTML = '';
+        table.style.display = 'none';
+        emptyState.style.display = 'block';
+        paginationNav.style.display = 'none';
+        document.getElementById('totalCount').textContent = '(0 yêu cầu)';
+        return;
+    }
+    
+    table.style.display = 'table';
+    emptyState.style.display = 'none';
+    paginationNav.style.display = 'flex';
+    document.getElementById('totalCount').textContent = '(' + items.length + ' yêu cầu)';
+    
+    const startIndex = page * pageSize + 1;
+    tbody.innerHTML = items.map((item, index) => {
+        const stt = startIndex + index;
+        const ngayYeuCau = formatDate(item.ngayYeuCau);
+        const soTien = formatCurrency(item.soTienHoanTra);
+        const trangThaiClass = getStatusClass(item.trangThai);
+        const loaiBadge = item.loaiHoanTra === 'DOI_HANG'
+            ? '<span class="ht-loai-badge ht-loai-badge--doi">Đổi hàng</span>'
+            : '<span class="ht-loai-badge ht-loai-badge--tra">Trả hàng</span>';
+
+        let actionButtons = '<a href="/admin/hoan-tra/chi-tiet/' + item.id + '" class="ht-action-btn ht-action-btn--view" title="Xem chi tiết"><i class="fas fa-eye"></i></a>';
+
+        // === DOI_HANG workflow buttons ===
+        if (item.loaiHoanTra === 'DOI_HANG') {
+            if (item.trangThai === 'CHO_DUYET_DOI') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-action="DUYET_DOI" onclick="xuLyDoiHangByData(this)" title="Duyệt đổi hàng"><i class="fas fa-check"></i></button>';
+                actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
+            } else if (item.trangThai === 'DA_DUYET_DOI') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-action="NHAN_HANG_DOI" onclick="xuLyDoiHangByData(this)" title="Xác nhận nhận hàng"><i class="fas fa-truck"></i></button>';
+                actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
+            } else if (item.trangThai === 'DA_NHAN_HANG_DOI') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-action="CHON_SERIAL" onclick="xuLyDoiHangByData(this)" title="Chọn serial mới"><i class="fas fa-barcode"></i></button>';
+                actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
+            } else if (item.trangThai === 'CHON_SERIAL_MOI') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-action="HOAN_TAT_DOI" onclick="xuLyDoiHangByData(this)" title="Hoàn tất đổi hàng"><i class="fas fa-check-double"></i></button>';
+            } else if (item.trangThai === 'DA_DOI') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-action="KET_THUC" onclick="xuLyDoiHangByData(this)" title="Kết thúc đổi hàng"><i class="fas fa-flag-checkered"></i></button>';
+            }
+        } else {
+            // === TRA_HANG workflow buttons ===
+            if (item.trangThai === 'CHO_XU_LY') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-trangthai="DUYET" onclick="xuLyHoanTraByData(this)" title="Duyệt đơn"><i class="fas fa-check"></i></button>';
+                actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
+            } else if (item.trangThai === 'DA_DUYET') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="nhanHangByData(this)" title="Xác nhận nhận hàng"><i class="fas fa-truck"></i></button>';
+                actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
+            } else if (item.trangThai === 'DA_NHAN_HANG') {
+                actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-trangthai="HOAN_TIEN" onclick="xuLyHoanTraByData(this)" title="Hoàn tiền"><i class="fas fa-coins"></i></button>';
+            }
+        }
+        actionButtons += '<button class="ht-action-btn ht-action-btn--print" data-id="' + item.id + '" onclick="printHoanTraByData(this)" title="In phiếu"><i class="fas fa-print"></i></button>';
+
+        return '<tr data-id="' + item.id + '">' +
+            '<td class="ht-table__td--center"><span class="ht-stt">' + stt + '</span></td>' +
+            '<td><a href="/admin/hoan-tra/chi-tiet/' + item.id + '" class="ht-ma-link">' + item.maHoanTra + '</a></td>' +
+            '<td>' + loaiBadge + '</td>' +
+            '<td><span class="ht-invoice-code">' + (item.maDonHang || '') + '</span></td>' +
+            '<td><div class="ht-customer"><span class="ht-customer__name"><i class="fas fa-user"></i>' + (item.tenKhachHang || '') + '</span><span class="ht-customer__phone"><i class="fas fa-phone"></i>' + (item.sdtKhachHang || '') + '</span></div></td>' +
+            '<td class="ht-table__td--money"><span class="ht-money">' + soTien + '</span></td>' +
+            '<td class="ht-table__td--date"><span>' + ngayYeuCau.date + '</span><span class="ht-time">' + ngayYeuCau.time + '</span></td>' +
+            '<td class="ht-table__td--status"><span class="ht-status ' + trangThaiClass + '">' + item.trangThaiHienThi + '</span></td>' +
+            '<td class="ht-table__td--actions"><div class="ht-action-group">' + actionButtons + '</div></td>' +
+            '</tr>';
+    }).join('');
+}
+
+function renderPagination(data) {
+    const paginationList = document.getElementById('paginationList');
+    const totalPages = data.totalPages || 1;
+    const current = data.currentPage || 0;
+    
+    if (totalPages <= 1) {
+        paginationList.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // First & Prev
+    if (current === 0) {
+        html += '<li><span class="ht-pagination__link ht-pagination__link--disabled"><i class="fas fa-angles-left"></i></span></li>';
+        html += '<li><span class="ht-pagination__link ht-pagination__link--disabled"><i class="fas fa-chevron-left"></i></span></li>';
+    } else {
+        html += '<li><a class="ht-pagination__link" href="javascript:loadHoanTra(0)"><i class="fas fa-angles-left"></i></a></li>';
+        html += '<li><a class="ht-pagination__link" href="javascript:loadHoanTra(' + (current - 1) + ')"><i class="fas fa-chevron-left"></i></a></li>';
+    }
+    
+    // Pages
+    const start = Math.max(0, current - 2);
+    const end = Math.min(totalPages - 1, current + 2);
+    
+    if (start > 0) {
+        html += '<li><a class="ht-pagination__link" href="javascript:loadHoanTra(0)">1</a></li>';
+        if (start > 1) html += '<li><span class="ht-pagination__link ht-pagination__link--disabled">...</span></li>';
+    }
+    
+    for (let i = start; i <= end; i++) {
+        const active = i === current ? ' ht-pagination__link--active' : '';
+        html += '<li><a class="ht-pagination__link' + active + '" href="javascript:loadHoanTra(' + i + ')">' + (i + 1) + '</a></li>';
+    }
+    
+    if (end < totalPages - 1) {
+        if (end < totalPages - 2) html += '<li><span class="ht-pagination__link ht-pagination__link--disabled">...</span></li>';
+        html += '<li><a class="ht-pagination__link" href="javascript:loadHoanTra(' + (totalPages - 1) + ')">' + totalPages + '</a></li>';
+    }
+    
+    // Next & Last
+    if (current === totalPages - 1) {
+        html += '<li><span class="ht-pagination__link ht-pagination__link--disabled"><i class="fas fa-chevron-right"></i></span></li>';
+        html += '<li><span class="ht-pagination__link ht-pagination__link--disabled"><i class="fas fa-angles-right"></i></span></li>';
+    } else {
+        html += '<li><a class="ht-pagination__link" href="javascript:loadHoanTra(' + (current + 1) + ')"><i class="fas fa-chevron-right"></i></a></li>';
+        html += '<li><a class="ht-pagination__link" href="javascript:loadHoanTra(' + (totalPages - 1) + ')"><i class="fas fa-angles-right"></i></a></li>';
+    }
+    
+    paginationList.innerHTML = html;
+}
+
+function renderStats(stats) {
+    if (!stats) return;
+
+    // TRA_HANG stats
+    document.querySelector('.ht-stat-item--pending .ht-stat-item__value').textContent = stats.totalChoXuLy || 0;
+    document.querySelector('.ht-stat-item--processing .ht-stat-item__value').textContent = stats.totalDangXuLy || 0;
+    document.querySelector('.ht-stat-item--approved .ht-stat-item__value').textContent = stats.totalDaXuLy || 0;
+    document.querySelector('.ht-stat-item--rejected .ht-stat-item__value').textContent = stats.totalTuChoi || 0;
+
+    // DOI_HANG stats
+    document.querySelector('.ht-stat-item--doi-pending .ht-stat-item__value').textContent = stats.totalChoDuyetDoi || 0;
+    document.querySelector('.ht-stat-item--doi-approved .ht-stat-item__value').textContent = stats.totalDaDuyetDoi || 0;
+    document.querySelector('.ht-stat-item--doi-serial .ht-stat-item__value').textContent = stats.totalChonSerialMoi || 0;
+    document.querySelector('.ht-stat-item--doi-done .ht-stat-item__value').textContent = stats.totalDaDoi || 0;
+
+    document.querySelector('.ht-stat-item--total .ht-stat-item__value').textContent = stats.tongSo || 0;
+}
+
+function searchHoanTra() {
+    currentFilters.keyword = document.getElementById('searchInput').value.trim();
+    currentFilters.trangThai = document.getElementById('trangThaiFilter').value;
+    currentFilters.tuNgay = document.getElementById('tuNgayFilter').value;
+    currentFilters.denNgay = document.getElementById('denNgayFilter').value;
+    loadHoanTra(0);
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('trangThaiFilter').value = '';
+    document.getElementById('tuNgayFilter').value = '';
+    document.getElementById('denNgayFilter').value = '';
+    currentFilters = { keyword: '', trangThai: '', tuNgay: '', denNgay: '' };
+    loadHoanTra(0);
+}
+
+function updateUrl(page) {
+    const params = new URLSearchParams();
+    params.set('page', page);
+    if (currentFilters.keyword) params.set('q', currentFilters.keyword);
+    if (currentFilters.trangThai) params.set('trangThai', currentFilters.trangThai);
+    if (currentFilters.tuNgay) params.set('tuNgay', currentFilters.tuNgay);
+    if (currentFilters.denNgay) params.set('denNgay', currentFilters.denNgay);
+    
+    const newUrl = window.location.pathname + '?' + params.toString();
+    window.history.replaceState({}, '', newUrl);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return { date: '', time: '' };
+    const date = new Date(dateStr);
+    const day = ('0' + date.getDate()).slice(-2);
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const year = date.getFullYear();
+    const hours = ('0' + date.getHours()).slice(-2);
+    const minutes = ('0' + date.getMinutes()).slice(-2);
+    return {
+        date: day + '/' + month + '/' + year,
+        time: hours + ':' + minutes
+    };
+}
+
+function formatCurrency(amount) {
+    if (amount == null) return '0đ';
+    return Number(amount).toLocaleString('vi-VN') + 'đ';
+}
+
+function getStatusClass(status) {
+    const statusMap = {
+        // TRA_HANG statuses
+        'CHO_XU_LY': 'CHO_XU_LY',
+        'DANG_XU_LY': 'DANG_XU_LY',
+        'DA_DUYET': 'DA_DUYET',
+        'DA_NHAN_HANG': 'DA_NHAN_HANG',
+        'DA_HOAN_TIEN': 'DA_HOAN_TIEN',
+        'DA_XU_LY': 'DA_XU_LY',
+        'TU_CHOI': 'TU_CHOI',
+        // DOI_HANG statuses
+        'CHO_DUYET_DOI': 'CHO_DUYET_DOI',
+        'DA_DUYET_DOI': 'DA_DUYET_DOI',
+        'DA_NHAN_HANG_DOI': 'DA_NHAN_HANG_DOI',
+        'CHON_SERIAL_MOI': 'CHON_SERIAL_MOI',
+        'DA_DOI': 'DA_DOI',
+        'KET_THUC': 'KET_THUC'
+    };
+    return statusMap[status] || '';
+}
+
+// File Import Functions
+var selectedFile = null;
+var previewData = null;
+
+function showToast(message, type) {
+    var toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'ht-toast ht-toast--' + (type || 'info');
+    toast.style.display = 'block';
+    toast.style.animation = 'slideInRight 0.3s ease';
+    setTimeout(function() { 
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(function() { toast.style.display = 'none'; }, 300);
+    }, 3000);
+}
+
+function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+function openImportModal() {
+    document.getElementById('importModal').classList.add('active');
+    clearFile();
+}
+
+function closeImportModal() {
+    document.getElementById('importModal').classList.remove('active');
+    clearFile();
+}
+
+function clearFile() {
+    selectedFile = null;
+    previewData = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('previewSection').classList.remove('active');
+    document.getElementById('btnImport').disabled = true;
+}
+
+document.getElementById('uploadArea').addEventListener('click', function() { document.getElementById('fileInput').click(); });
+document.getElementById('uploadArea').addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
+document.getElementById('uploadArea').addEventListener('dragleave', function() { this.classList.remove('dragover'); });
+document.getElementById('uploadArea').addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+document.getElementById('fileInput').addEventListener('change', function() {
+    if (this.files.length > 0) handleFile(this.files[0]);
+});
+
+async function handleFile(file) {
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        showToast('Chỉ chấp nhận file .xlsx hoặc .xls', 'error');
+        return;
+    }
+    selectedFile = file;
+    var formData = new FormData();
+    formData.append('file', file);
+    showLoading();
+    try {
+        var response = await fetch('/api/hoan-tra/import/preview', { method: 'POST', body: formData });
+        previewData = await response.json();
+        document.getElementById('previewSection').classList.add('active');
+        var statsHtml = '<div class="ht-preview-stat"><i class="fas fa-file-alt"></i><span>Tổng: <strong>' + previewData.totalSerials + '</strong></span></div>' +
+            '<div class="ht-preview-stat ht-preview-stat--success"><i class="fas fa-check-circle"></i><span>Hợp lệ: <strong>' + previewData.successCount + '</strong></span></div>';
+        if (previewData.errorCount > 0) statsHtml += '<div class="ht-preview-stat ht-preview-stat--error"><i class="fas fa-times-circle"></i><span>Lỗi: <strong>' + previewData.errorCount + '</strong></span></div>';
+        document.getElementById('previewStats').innerHTML = statsHtml;
+        if (previewData.previewSerials && previewData.previewSerials.length > 0) {
+            var serialHtml = previewData.previewSerials.slice(0, 50).map(function(s) { return '<span class="ht-serial-item"><i class="fas fa-barcode"></i> ' + escapeHtml(s) + '</span>'; }).join('');
+            if (previewData.previewSerials.length > 50) serialHtml += '<span class="ht-serial-item">... và ' + (previewData.previewSerials.length - 50) + ' serial khác</span>';
+            document.getElementById('previewSerials').innerHTML = serialHtml;
+        } else {
+            document.getElementById('previewSerials').innerHTML = '<span style="color: #64748b;"><i class="fas fa-info-circle"></i> Không có serial nào</span>';
+        }
+        if (previewData.errorSerials && previewData.errorSerials.length > 0) {
+            document.getElementById('errorSection').style.display = 'block';
+            document.getElementById('errorList').innerHTML = previewData.errorSerials.map(function(e) { return '<div class="ht-error-item"><i class="fas fa-exclamation-circle"></i> ' + escapeHtml(e) + '</div>'; }).join('');
+        } else {
+            document.getElementById('errorSection').style.display = 'none';
+        }
+        document.getElementById('btnImport').disabled = !previewData.success || previewData.successCount === 0;
+    } catch (error) {
+        showToast('Lỗi khi đọc file: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function doImport() {
+    if (!selectedFile || !previewData || previewData.successCount === 0) {
+        showToast('Không có serial nào hợp lệ để import', 'error');
+        return;
+    }
+    if (!confirm('Bạn có chắc chắn muốn import ' + previewData.successCount + ' serial?')) return;
+    var formData = new FormData();
+    formData.append('file', selectedFile);
+    showLoading();
+    closeImportModal();
+    try {
+        var response = await fetch('/api/hoan-tra/import', { method: 'POST', body: formData });
+        var result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(function() { window.location.reload(); }, 1500);
+        } else {
+            showToast(result.message, 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi khi import: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function exportExcel() {
+    var params = new URLSearchParams(window.location.search);
+    window.location.href = '/api/hoan-tra/export?' + params.toString();
+}
+
+function refreshTable() { loadHoanTra(currentPage); }
+
+function printHoanTra(id) { window.open('/admin/hoan-tra/chi-tiet/' + id + '/in', '_blank'); }
+
+function printHoanTraByData(btn) {
+    var id = btn.getAttribute('data-id');
+    window.open('/admin/hoan-tra/chi-tiet/' + id + '/in', '_blank');
+}
+
+function xuLyHoanTraByData(btn) {
+    var id = btn.getAttribute('data-id');
+    var maHoanTra = btn.getAttribute('data-ma');
+    var trangThai = btn.getAttribute('data-trangthai');
+    xuLyHoanTra(id, maHoanTra, trangThai);
+}
+
+function tuChoiHoanTraByData(btn) {
+    var id = btn.getAttribute('data-id');
+    var maHoanTra = btn.getAttribute('data-ma');
+    tuChoiHoanTra(id, maHoanTra);
+}
+
+async function nhanHangByData(btn) {
+    var id = btn.getAttribute('data-id');
+    var maHoanTra = btn.getAttribute('data-ma');
+
+    closeConfirmModal();
+    showLoading();
+
+    try {
+        var response = await fetch('/api/hoan-tra/' + id + '/duyet?themVaoKho=false', {
+            method: 'POST'
+        });
+        var result = await response.json();
+        if (result.success) {
+            showToast('Xác nhận nhận hàng thành công!', 'success');
+            loadHoanTra(currentPage);
+        } else {
+            showToast(result.message || 'Có lỗi xảy ra', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi khi xác nhận nhận hàng', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// === DOI_HANG Workflow Functions ===
+
+async function xuLyDoiHangByData(btn) {
+    var id = btn.getAttribute('data-id');
+    var maHoanTra = btn.getAttribute('data-ma');
+    var action = btn.getAttribute('data-action');
+
+    closeConfirmModal();
+
+    try {
+        var response, result;
+
+        if (action === 'DUYET_DOI' || action === 'NHAN_HANG_DOI' || action === 'CHON_SERIAL') {
+            // Các bước 1, 2, 3 gọi API /duyet
+            showLoading();
+            response = await fetch('/api/hoan-tra/' + id + '/duyet?themVaoKho=false', {
+                method: 'POST'
+            });
+            result = await response.json();
+
+            if (result.success) {
+                var message = '';
+                if (action === 'DUYET_DOI') {
+                    message = 'Duyệt đổi hàng thành công!';
+                } else if (action === 'NHAN_HANG_DOI') {
+                    message = 'Xác nhận nhận hàng thành công!';
+                } else if (action === 'CHON_SERIAL') {
+                    message = 'Chuyển sang bước chọn serial mới!';
+                }
+                showToast(message, 'success');
+                loadHoanTra(currentPage);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+            }
+            hideLoading();
+
+        } else if (action === 'HOAN_TAT_DOI') {
+            // Bước 4: Mở modal chọn serial
+            openChonSerialModal(id);
+
+        } else if (action === 'KET_THUC') {
+            // Bước 5: Hoàn tất đổi hàng - gọi API trực tiếp
+            showLoading();
+            try {
+                var response = await fetch('/api/hoan-tra/' + id + '/doi-hang/ket-thuc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ serialCuLoi: {}, ghiChuXuLy: '' })
+                });
+                var result = await response.json();
+                if (result.success) {
+                    showToast('Hoàn tất đổi hàng thành công!', 'success');
+                    loadHoanTra(currentPage);
+                } else {
+                    showToast(result.message || 'Có lỗi xảy ra', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+    } catch (error) {
+        showToast('Lỗi khi xử lý đổi hàng: ' + error.message, 'error');
+        hideLoading();
+    }
+}
+
+// Modal chọn serial mới cho đổi hàng
+async function openChonSerialModal(hoanTraId) {
+    var modal = document.getElementById('chonSerialModal');
+    if (!modal) {
+        // Tạo modal nếu chưa có
+        createChonSerialModal();
+        modal = document.getElementById('chonSerialModal');
+    }
+
+    // Load thông tin chi tiết phiếu đổi hàng
+    showLoading();
+    try {
+        var response = await fetch('/api/hoan-tra/' + hoanTraId);
+        var hoanTra = await response.json();
+
+        renderChonSerialContent(hoanTra);
+        modal.classList.add('active');
+    } catch (error) {
+        showToast('Lỗi khi tải thông tin đổi hàng', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function createChonSerialModal() {
+    var modalHtml = `
+    <div class="ht-modal-overlay" id="chonSerialModal">
+        <div class="ht-modal" style="max-width: 800px; width: 95%;">
+            <div class="ht-modal__header">
+                <h3><i class="fas fa-barcode" style="color:#059669;"></i> Chọn Serial Mới - Đổi Hàng</h3>
+                <button class="ht-modal__close" onclick="closeChonSerialModal()" type="button"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="ht-modal__body" id="chonSerialContent">
+                <!-- Content will be rendered here -->
+            </div>
+            <div class="ht-modal__footer">
+                <button class="ht-btn ht-btn--secondary" onclick="closeChonSerialModal()"><i class="fas fa-times"></i> Hủy</button>
+                <button class="ht-btn ht-btn--success" onclick="confirmChonSerial()"><i class="fas fa-check"></i> Xác nhận đổi hàng</button>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeChonSerialModal() {
+    var modal = document.getElementById('chonSerialModal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function renderChonSerialContent(hoanTra) {
+    var content = document.getElementById('chonSerialContent');
+    var html = `
+        <p style="margin-bottom:1rem; color:#666;">
+            <i class="fas fa-info-circle"></i>
+            <strong>Phiếu đổi hàng:</strong> ${hoanTra.maHoanTra} -
+            <strong>Loại:</strong> ${hoanTra.loaiHoanTraHienThi}
+        </p>
+        <div id="serialItemsContainer">`;
+
+    if (hoanTra.chiTietList && hoanTra.chiTietList.length > 0) {
+        for (var i = 0; i < hoanTra.chiTietList.length; i++) {
+            var ct = hoanTra.chiTietList[i];
+            html += `
+            <div class="ht-chon-serial-item" style="border:1px solid #e5e7eb; border-radius:8px; padding:1rem; margin-bottom:1rem; background:#fafafa;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <div>
+                        <strong>${ct.tenSanPham || ''}</strong>
+                        <span style="color:#666; font-size:0.85rem;"> - ${ct.tenBienThe || ''}</span>
+                    </div>
+                    <span style="font-size:0.85rem; color:#666;">SL: ${ct.soLuongHoanTra}</span>
+                </div>
+
+                <!-- Serial cũ -->
+                <div style="margin-bottom:1rem;">
+                    <label style="font-weight:600; font-size:0.9rem; color:#374151; display:block; margin-bottom:0.5rem;">
+                        <i class="fas fa-exclamation-circle" style="color:#dc2626;"></i>
+                        Serial cũ (đã trả về):
+                    </label>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">`;
+            if (ct.serialsHoanTra && ct.serialsHoanTra.length > 0) {
+                ct.serialsHoanTra.forEach(function(serial) {
+                    html += `<span class="ht-serial-tag ht-serial-tag--old"><i class="fas fa-barcode"></i> ${serial}</span>`;
+                });
+            } else {
+                html += `<span style="color:#999; font-size:0.85rem;">Không có serial</span>`;
+            }
+            html += `</div>
+                </div>
+
+                <!-- Chọn serial mới -->
+                <div style="margin-top:1rem;">
+                    <label style="font-weight:600; font-size:0.9rem; color:#374151; display:block; margin-bottom:0.5rem;">
+                        <i class="fas fa-barcode" style="color:#059669;"></i>
+                        Chọn serial mới (cùng loại sản phẩm):
+                    </label>
+                    <select class="ht-select" id="serialMoi_${ct.id}" style="width:100%;" onchange="onSelectSerialMoi('${ct.id}')">
+                        <option value="">-- Chọn serial mới --</option>
+                    </select>
+                    <div id="serialMoiList_${ct.id}" style="margin-top:0.5rem;"></div>
+                </div>
+
+                <input type="hidden" id="selectedSerialMoi_${ct.id}" value="">
+            </div>`;
+        }
+    }
+
+    html += `
+        </div>
+        <div style="margin-top:1rem;">
+            <label style="font-weight:600; font-size:0.9rem; color:#374151; display:block; margin-bottom:0.5rem;">
+                <i class="fas fa-sticky-note"></i> Ghi chú xử lý (tùy chọn)
+            </label>
+            <textarea id="ghiChuDoiHang" style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px; font-size:0.9rem; resize:vertical; min-height:80px;" placeholder="Nhập ghi chú nếu có..."></textarea>
+        </div>
+        <input type="hidden" id="currentHoanTraId" value="${hoanTra.id}">
+    `;
+
+    content.innerHTML = html;
+
+    // Load serial options for each chi tiết
+    if (hoanTra.chiTietList && hoanTra.chiTietList.length > 0) {
+        for (var i = 0; i < hoanTra.chiTietList.length; i++) {
+            var ct = hoanTra.chiTietList[i];
+            await loadSerialOptions(ct, hoanTra.idHoaDon);
+        }
+    }
+}
+
+async function loadSerialOptions(chiTiet, hoaDonId) {
+    try {
+        var response = await fetch('/api/hoan-tra/serial/doi/' + hoaDonId + '/' + chiTiet.idSanPhamChiTiet);
+        var result = await response.json();
+
+        var select = document.getElementById('serialMoi_' + chiTiet.id);
+        if (select && result.serialList && result.serialList.length > 0) {
+            select.innerHTML = '<option value="">-- Chọn serial mới --</option>';
+            result.serialList.forEach(function(serial) {
+                select.innerHTML += `<option value="${serial.maSerial}">${serial.maSerial}</option>`;
+            });
+        } else if (select) {
+            select.innerHTML = '<option value="">-- Không có serial trong kho --</option>';
+        }
+    } catch (error) {
+        console.error('Lỗi khi load serial options:', error);
+    }
+}
+
+function toggleSerialMoiSection(chiTietId, isLoi) {
+    var section = document.getElementById('serialMoiSection_' + chiTietId);
+    var selectedSerial = document.getElementById('selectedSerialMoi_' + chiTietId);
+
+    if (isLoi) {
+        section.style.display = 'none';
+        selectedSerial.value = '';
+    } else {
+        section.style.display = 'block';
+    }
+}
+
+function onSelectSerialMoi(chiTietId) {
+    var select = document.getElementById('serialMoi_' + chiTietId);
+    var selectedSerial = document.getElementById('selectedSerialMoi_' + chiTietId);
+    var listDiv = document.getElementById('serialMoiList_' + chiTietId);
+
+    selectedSerial.value = select.value;
+
+    if (select.value) {
+        listDiv.innerHTML = `<span class="ht-serial-tag ht-serial-tag--new"><i class="fas fa-check-circle"></i> Đã chọn: <strong>${select.value}</strong></span>`;
+    } else {
+        listDiv.innerHTML = '';
+    }
+}
+
+async function confirmChonSerial() {
+    var hoanTraId = document.getElementById('currentHoanTraId').value;
+    var ghiChu = document.getElementById('ghiChuDoiHang').value;
+
+    // Collect serial mới từ tất cả các select có id bắt đầu với "serialMoi_"
+    var serialsMoi = {};
+    var hasError = false;
+
+    var selects = document.querySelectorAll('select[id^="serialMoi_"]');
+    selects.forEach(function(select) {
+        var chiTietId = select.id.replace('serialMoi_', '');
+        if (!select.value) {
+            showToast('Vui lòng chọn serial mới cho tất cả sản phẩm', 'error');
+            hasError = true;
+            return;
+        }
+        serialsMoi[chiTietId] = select.value;
+    });
+
+    if (hasError) return;
+
+    console.log('serialsMoi collected:', serialsMoi);
+
+    closeChonSerialModal();
+    showLoading();
+
+    try {
+        var requestBody = {
+            serialsMoi: serialsMoi,
+            ghiChuXuLy: ghiChu
+        };
+
+        console.log('Sending request body:', requestBody);
+
+        var response = await fetch('/api/hoan-tra/' + hoanTraId + '/doi-hang/hoan-tat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        var result = await response.json();
+        if (result.success) {
+            showToast('Đã cấp serial mới cho khách!', 'success');
+            loadHoanTra(currentPage);
+        } else {
+            showToast(result.message || 'Có lỗi xảy ra', 'error');
+            hideLoading();
+        }
+    } catch (error) {
+        showToast('Lỗi: ' + error.message, 'error');
+        hideLoading();
+    }
+}
+
+function xuLyHoanTra(id, maHoanTra, trangThai) {
+    var title = 'Xác nhận xử lý hoàn trả';
+    var message = 'Bạn có chắc chắn muốn xử lý hoàn trả "' + maHoanTra + '"?';
+
+    if (trangThai === 'HOAN_TIEN') {
+        title = '<i class="fas fa-boxes" style="color: #059669;"></i> Bước 3: Xác nhận thêm vào kho';
+        message = '<p style="margin-bottom:1rem; color:#78716c; font-size:0.9rem;"><i class="fas fa-info-circle"></i> Sau bước này sẽ chuyển sang <strong>Bước 4: Hoàn tiền</strong></p>' +
+            '<p style="margin-bottom:1rem; color:#92400e; font-weight:500;"><i class="fas fa-question-circle"></i> Bạn có muốn thêm sản phẩm này vào kho không?</p>' +
+            '<div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.5rem;">' +
+            '<label style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem; background:#ecfdf5; border:2px solid #10b981; border-radius:8px; cursor:pointer;">' +
+            '<input type="radio" name="themVaoKhoList" value="true" checked style="width:18px; height:18px; accent-color:#059669;">' +
+            '<div><strong style="color:#065f46;"><i class="fas fa-check-circle"></i> Có</strong> <span style="color:#047857;">— Thêm lại vào kho</span></div>' +
+            '</label>' +
+            '<label style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem; background:#fef2f2; border:2px solid #ef4444; border-radius:8px; cursor:pointer;">' +
+            '<input type="radio" name="themVaoKhoList" value="false" style="width:18px; height:18px; accent-color:#dc2626;">' +
+            '<div><strong style="color:#991b1b;"><i class="fas fa-exclamation-triangle"></i> Lỗi</strong> <span style="color:#b91c1c;">— Không thêm vào kho</span></div>' +
+            '</label>' +
+            '</div>';
+    }
+
+    document.getElementById('confirmTitle').innerHTML = '<i class="fas fa-question-circle" style="color: #10b981;"></i> ' + title;
+    document.getElementById('confirmMessage').innerHTML = message;
+
+    document.getElementById('confirmAction').className = 'ht-btn ht-btn--success';
+    document.getElementById('confirmAction').innerHTML = '<i class="fas fa-check"></i> Xác nhận';
+    document.getElementById('confirmAction').onclick = function() { confirmXuLyHoanTra(id, trangThai === 'HOAN_TIEN'); };
+
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+async function confirmXuLyHoanTra(id, isNhanHang) {
+    closeConfirmModal();
+    showLoading();
+
+    var themVaoKho = false;
+    if (isNhanHang) {
+        var radio = document.querySelector('input[name="themVaoKhoList"]:checked');
+        themVaoKho = radio && radio.value === 'true';
+    }
+
+    try {
+        var response = await fetch('/api/hoan-tra/' + id + '/duyet?themVaoKho=' + themVaoKho, {
+            method: 'POST'
+        });
+        var result = await response.json();
+        if (result.success) {
+            var message;
+            if (isNhanHang && themVaoKho) {
+                message = 'Xác nhận nhận hàng thành công! Sản phẩm đã được thêm vào kho và chuyển sang Đã hoàn tiền.';
+            } else if (isNhanHang) {
+                message = 'Xác nhận nhận hàng thành công! Sản phẩm không được thêm vào kho (Lỗi).';
+            } else {
+                message = 'Duyệt đơn thành công!';
+            }
+            showToast(message, 'success');
+            loadHoanTra(currentPage);
+        } else {
+            showToast(result.message || 'Có lỗi xảy ra', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi khi xử lý hoàn trả', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function tuChoiHoanTra(id, maHoanTra) {
+    document.getElementById('confirmTitle').innerHTML = '<i class="fas fa-times-circle" style="color: #dc2626;"></i> Từ chối hoàn trả';
+    document.getElementById('confirmMessage').innerHTML = 'Bạn có chắc chắn muốn từ chối hoàn trả <strong>"' + maHoanTra + '"</strong>?';
+    document.getElementById('confirmAction').className = 'ht-btn ht-btn--danger';
+    document.getElementById('confirmAction').innerHTML = '<i class="fas fa-times"></i> Từ chối';
+    document.getElementById('confirmAction').onclick = function() { confirmTuChoiHoanTra(id); };
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+async function confirmTuChoiHoanTra(id) {
+    closeConfirmModal();
+    showLoading();
+    try {
+        var response = await fetch('/api/hoan-tra/' + id + '/tu-choi', { method: 'PUT' });
+        var result = await response.json();
+        if (result.success !== false) {
+            showToast('Từ chối hoàn trả thành công!', 'success');
+            updateRowAfterAction(id, 'TU_CHOI', 'Từ chối');
+        } else {
+            showToast(result.message || 'Có lỗi xảy ra', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi khi từ chối hoàn trả', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function closeConfirmModal() { document.getElementById('confirmModal').classList.remove('active'); }
+
+function updateRowAfterAction(id, newStatus, statusText) {
+    var row = document.querySelector('tr[data-id="' + id + '"]');
+    if (!row) return;
+
+    var statusCell = row.querySelector('.ht-table__td--status');
+    if (statusCell) {
+        statusCell.innerHTML = '<span class="ht-status ' + newStatus + '">' + statusText + '</span>';
+    }
+
+    var actionsCell = row.querySelector('.ht-action-group');
+    if (actionsCell) {
+        actionsCell.innerHTML = '<a href="/admin/hoan-tra/chi-tiet/' + id + '" class="ht-action-btn ht-action-btn--view" title="Xem chi tiết"><i class="fas fa-eye"></i></a>' +
+                               '<button class="ht-action-btn ht-action-btn--print" data-id="' + id + '" onclick="printHoanTraByData(this)" title="In phiếu"><i class="fas fa-print"></i></button>';
+    }
+
+    row.style.backgroundColor = '#f0fdf4';
+    setTimeout(function() { row.style.backgroundColor = ''; }, 1000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('importModal').addEventListener('click', function(e) { if (e.target === this) closeImportModal(); });
+document.getElementById('confirmModal').addEventListener('click', function(e) { if (e.target === this) closeConfirmModal(); });
+</script>
+
+<style>
+/* Page header styles for this layout */
+.ht-page-header {
+    margin-bottom: 1.5rem;
+}
+
+.ht-page-header__left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ht-page-header__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ht-page-header__title i {
+    color: #1e3a5f;
+}
+
+.ht-page-header__subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.admin-layout.theme-dark .ht-page-header__title {
+    color: #f1f5f9;
+}
+
+.admin-layout.theme-dark .ht-page-header__title i {
+    color: #7dd3fc;
+}
+
+.admin-layout.theme-dark .ht-page-header__subtitle {
+    color: #94a3b8;
+}
+</style>
+
+</body>
+</html>

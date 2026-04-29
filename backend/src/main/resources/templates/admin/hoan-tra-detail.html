@@ -1,0 +1,858 @@
+<div class="ht-detail-container" xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+    
+    <!-- Back Link -->
+        <a th:href="@{/admin/hoan-tra}" class="ht-back-link">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách hoàn trả
+        </a>
+
+        <!-- Detail Header Card -->
+        <div class="ht-detail-header">
+            <div>
+                <h1 class="ht-detail-title">
+                    <i class="fas fa-rotate-left"></i> Hoàn trả <span th:text="${hoanTra.maHoanTra}">HT001</span>
+                </h1>
+                <p class="ht-detail-subtitle">
+                    <i class="fas fa-calendar-alt"></i> Ngày yêu cầu: <span th:text="${#temporals.format(hoanTra.ngayYeuCau, 'dd/MM/yyyy HH:mm')}">25/04/2026 10:00</span>
+                </p>
+                <p class="ht-detail-subtitle" th:if="${hoanTra.loaiHoanTra != null}">
+                    <i class="fas fa-tag"></i> Loại: 
+                    <span th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}" class="ht-loai-badge ht-loai-badge--doi">Đổi hàng</span>
+                    <span th:if="${hoanTra.loaiHoanTra == 'TRA_HANG'}" class="ht-loai-badge ht-loai-badge--tra">Trả hàng</span>
+                </p>
+            </div>
+            <div class="ht-detail-actions">
+                <span class="ht-status-badge" th:classappend="${hoanTra.trangThai}" th:text="${hoanTra.trangThaiHienThi}">Chờ xử lý</span>
+
+                <th:block th:if="${hoanTra.trangThai == 'CHO_XU_LY'}">
+                    <button class="ht-detail-btn ht-detail-btn--primary" onclick="openXuLyModal('DUYET')">
+                        <i class="fas fa-check"></i> Duyệt đơn
+                    </button>
+                    <button class="ht-detail-btn ht-detail-btn--danger" onclick="openTuChoiModal()">
+                        <i class="fas fa-times"></i> Từ chối
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.trangThai == 'DA_DUYET'}">
+                    <button class="ht-detail-btn ht-detail-btn--primary" onclick="confirmNhanHang()">
+                        <i class="fas fa-truck"></i> Xác nhận nhận hàng
+                    </button>
+                    <button class="ht-detail-btn ht-detail-btn--danger" onclick="openTuChoiModal()">
+                        <i class="fas fa-times"></i> Từ chối
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.trangThai == 'DA_NHAN_HANG'}">
+                    <button class="ht-detail-btn ht-detail-btn--success" onclick="openHoanTienModal()">
+                        <i class="fas fa-coins"></i> Hoàn tiền
+                    </button>
+                </th:block>
+
+                <a th:href="@{/admin/hoan-tra/chi-tiet/{id}/in(id=${hoanTra.id})}" class="ht-detail-btn ht-detail-btn--secondary" target="_blank">
+                    <i class="fas fa-print"></i> In phiếu
+                </a>
+
+                <th:block th:if="${hoanTra.trangThai == 'DA_HOAN_TIEN' || hoanTra.trangThai == 'DA_XU_LY'}">
+                    <span class="ht-detail-status-text approved">
+                        <i class="fas fa-check-circle"></i> Đã hoàn tiền bởi <strong th:text="${hoanTra.tenNhanVienXuLy}">Nguyễn Văn B</strong>
+                    </span>
+                </th:block>
+
+                <th:block th:if="${hoanTra.trangThai == 'TU_CHOI'}">
+                    <span class="ht-detail-status-text rejected">
+                        <i class="fas fa-times-circle"></i> Đã từ chối bởi <strong th:text="${hoanTra.tenNhanVienXuLy}">Nguyễn Văn B</strong>
+                    </span>
+                </th:block>
+
+                <!-- === DOI_HANG Workflow Buttons === -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'CHO_DUYET_DOI'}">
+                    <button class="ht-detail-btn ht-detail-btn--doi" onclick="duyetDoiHang()">
+                        <i class="fas fa-check"></i> Duyệt đổi hàng
+                    </button>
+                    <button class="ht-detail-btn ht-detail-btn--danger" onclick="openTuChoiModal()">
+                        <i class="fas fa-times"></i> Từ chối
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_DUYET_DOI'}">
+                    <button class="ht-detail-btn ht-detail-btn--doi" onclick="nhanHangDoi()">
+                        <i class="fas fa-truck"></i> Xác nhận nhận hàng
+                    </button>
+                    <button class="ht-detail-btn ht-detail-btn--danger" onclick="openTuChoiModal()">
+                        <i class="fas fa-times"></i> Từ chối
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_NHAN_HANG_DOI'}">
+                    <button class="ht-detail-btn ht-detail-btn--doi" onclick="openChonSerialModal()">
+                        <i class="fas fa-barcode"></i> Chọn serial mới
+                    </button>
+                    <button class="ht-detail-btn ht-detail-btn--danger" onclick="openTuChoiModal()">
+                        <i class="fas fa-times"></i> Từ chối
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'CHON_SERIAL_MOI'}">
+                    <button class="ht-detail-btn ht-detail-btn--success-doi" onclick="openChonSerialModal()">
+                        <i class="fas fa-barcode"></i> Đổi serial
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_DOI'}">
+                    <button class="ht-detail-btn ht-detail-btn--success-doi" onclick="openKetThucDoiModal()">
+                        <i class="fas fa-flag-checkered"></i> Hoàn tất đổi hàng
+                    </button>
+                </th:block>
+
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'KET_THUC'}">
+                    <span class="ht-detail-status-text approved">
+                        <i class="fas fa-check-circle"></i> Hoàn tất đổi hàng bởi <strong th:text="${hoanTra.tenNhanVienXuLy}">Nguyễn Văn B</strong>
+                    </span>
+                </th:block>
+            </div>
+        </div>
+
+        <!-- Info Grid 2 Columns -->
+        <div class="ht-detail-grid-2col">
+            <!-- Left Column -->
+            <div>
+                <!-- Invoice Info -->
+                <div class="ht-info-card">
+                    <h3><i class="fas fa-file-invoice"></i> Thông tin hóa đơn</h3>
+                    <div class="ht-info-grid">
+                        <div class="ht-info-item">
+                            <label><i class="fas fa-hashtag"></i> Mã hóa đơn</label>
+                            <span th:text="${hoanTra.maDonHang}">HD001</span>
+                        </div>
+                        <div class="ht-info-item">
+                            <label><i class="fas fa-calendar"></i> Ngày đặt</label>
+                            <span>-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="ht-info-card">
+                    <h3><i class="fas fa-user"></i> Thông tin khách hàng</h3>
+                    <div class="ht-info-grid">
+                        <div class="ht-info-item">
+                            <label><i class="fas fa-user"></i> Tên khách hàng</label>
+                            <span th:text="${hoanTra.tenKhachHang}">Nguyễn Văn A</span>
+                        </div>
+                        <div class="ht-info-item">
+                            <label><i class="fas fa-phone"></i> Số điện thoại</label>
+                            <span th:text="${hoanTra.sdtKhachHang}">0123456789</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div class="ht-info-card">
+                    <h3><i class="fas fa-comment-alt"></i> Lý do hoàn trả</h3>
+                    <p class="ht-detail-reason" th:text="${hoanTra.lyDo}">Sản phẩm bị lỗi</p>
+                    
+                    <th:block th:if="${hoanTra.ghiChuXuLy != null}">
+                        <div class="ht-detail-note">
+                            <h4><i class="fas fa-sticky-note"></i> Ghi chú xử lý</h4>
+                            <p th:text="${hoanTra.ghiChuXuLy}">Đã kiểm tra</p>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+
+            <!-- Right Column - Timeline -->
+            <div>
+                <div class="ht-info-card">
+                    <h3><i class="fas fa-history"></i> Lịch sử xử lý</h3>
+                    <div class="ht-timeline">
+                        <div class="ht-timeline-item active">
+                            <div class="ht-timeline-date"><i class="fas fa-clock"></i> <span th:text="${#temporals.format(hoanTra.ngayYeuCau, 'dd/MM/yyyy HH:mm')}">25/04/2026 10:00</span></div>
+                            <div class="ht-timeline-title"><i class="fas fa-arrow-right"></i> Yêu cầu hoàn trả</div>
+                            <div class="ht-timeline-content">Khách hàng gửi yêu cầu hoàn trả</div>
+                        </div>
+                        
+                        <th:block th:if="${hoanTra.ngayXuLy != null}">
+                            <div class="ht-timeline-item active">
+                                <div class="ht-timeline-date"><i class="fas fa-clock"></i> <span th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</span></div>
+                                <div class="ht-timeline-title">
+                                    <th:block th:if="${hoanTra.trangThai == 'DA_XU_LY'}">
+                                        <i class="fas fa-check-circle" style="color:#059669;"></i> Đã xử lý
+                                    </th:block>
+                                    <th:block th:unless="${hoanTra.trangThai == 'DA_XU_LY'}">
+                                        <i class="fas fa-times-circle" style="color:#dc2626;"></i> Đã từ chối
+                                    </th:block>
+                                </div>
+                                <div class="ht-timeline-content">
+                                    <th:block th:if="${hoanTra.trangThai == 'DA_XU_LY'}">
+                                        <i class="fas fa-box"></i> Sản phẩm đã được hoàn về kho
+                                    </th:block>
+                                    <th:block th:unless="${hoanTra.trangThai == 'DA_XU_LY'}">
+                                        <i class="fas fa-ban"></i> Yêu cầu hoàn trả đã bị từ chối
+                                    </th:block>
+                                    <br><i class="fas fa-user"></i> Bởi: <strong th:text="${hoanTra.tenNhanVienXuLy}">Nguyễn Văn B</strong>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="ht-info-card">
+            <h3><i class="fas fa-box"></i> Sản phẩm hoàn trả</h3>
+            
+            <th:block th:if="${not #lists.isEmpty(hoanTra.chiTietList)}">
+                <th:block th:each="ct : ${hoanTra.chiTietList}">
+                    <div class="ht-product-item">
+                        <div class="ht-product-info">
+                            <div class="ht-product-name">
+                                <i class="fas fa-box"></i> <span th:text="${ct.tenSanPham}">Đồng hồ Rolex</span>
+                            </div>
+                            <div class="ht-product-sku"><i class="fas fa-barcode"></i> SKU: <span th:text="${ct.maSanPham}">ROL001</span></div>
+                            <div class="ht-product-details">
+                                <th:block th:if="${ct.mauSac != null}">
+                                    <i class="fas fa-palette"></i> <span th:text="${ct.mauSac}">Đen</span>
+                                </th:block>
+                                <th:block th:if="${ct.kichThuoc != null}">
+                                    | <i class="fas fa-ruler-combined"></i> <span th:text="${ct.kichThuoc}">42mm</span>
+                                </th:block>
+                                <th:block th:if="${ct.chatLieuDay != null}">
+                                    | <i class="fas fa-link"></i> <span th:text="${ct.chatLieuDay}">Da</span>
+                                </th:block>
+                            </div>
+                            
+                            <th:block th:if="${not #lists.isEmpty(ct.serialsHoanTra)}">
+                                <div class="ht-product-serial-list">
+                                    <span class="ht-product-serial-label"><i class="fas fa-barcode"></i> Serial cũ:</span>
+                                    <th:block th:each="serial : ${ct.serialsHoanTra}">
+                                        <span class="ht-product-serial-tag ht-serial-tag--old" th:text="${serial}">SR001</span>
+                                    </th:block>
+                                </div>
+                            </th:block>
+
+                            <!-- DOI_HANG: Serial mới -->
+                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and ct.serialMoi != null}">
+                                <div class="ht-product-serial-list" style="margin-top: 0.5rem;">
+                                    <span class="ht-product-serial-label"><i class="fas fa-barcode"></i> Serial mới:</span>
+                                    <span class="ht-product-serial-tag ht-serial-tag--new" th:text="${ct.serialMoi}">SR002</span>
+                                </div>
+                            </th:block>
+
+                            <!-- DOI_HANG: Tình trạng serial cũ -->
+                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and ct.serialCuLoiHienThi != null}">
+                                <div class="ht-doi-info" style="margin-top: 0.5rem; padding: 0.5rem;">
+                                    <span style="font-size: 0.8rem; color: #64748b;">
+                                        <i class="fas fa-info-circle"></i> <span th:text="${ct.serialCuLoiHienThi}">Serial cũ: LỖI</span>
+                                    </span>
+                                </div>
+                            </th:block>
+                        </div>
+                        <div class="ht-product-qty">
+                            <div class="qty" th:text="${ct.soLuongHoanTra}">1</div>
+                            <div class="label">sản phẩm</div>
+                        </div>
+                        <div class="ht-product-price">
+                            <div class="price" th:text="${#numbers.formatDecimal(ct.soTienHoan, 0, 'POINT', 0, 'COMMA')} + 'đ'">5,000,000đ</div>
+                            <div class="unit"><i class="fas fa-coins"></i> @ <span th:text="${#numbers.formatDecimal(ct.donGiaTaiThoiDiemMua, 0, 'POINT', 0, 'COMMA')} + 'đ'">5,000,000đ</span></div>
+                        </div>
+                    </div>
+                </th:block>
+            </th:block>
+            
+            <th:block th:if="${#lists.isEmpty(hoanTra.chiTietList)}">
+                <div class="ht-empty">
+                    <i class="fas fa-inbox"></i>
+                    <p>Chưa có thông tin sản phẩm</p>
+                </div>
+            </th:block>
+        </div>
+
+        <!-- Total -->
+        <div class="ht-total-section">
+            <div>
+                <div class="ht-total-label"><i class="fas fa-receipt"></i> Tổng số tiền hoàn trả</div>
+                <div class="ht-total-count" th:text="|${hoanTra.chiTietList != null ? hoanTra.chiTietList.size() : 0} sản phẩm|">1 sản phẩm</div>
+            </div>
+            <div class="ht-total-amount" th:text="${#numbers.formatDecimal(hoanTra.soTienHoanTra, 0, 'POINT', 0, 'COMMA')} + 'đ'">5,000,000đ</div>
+        </div>
+    </div>
+
+    <!-- Hoan Tien Modal (Bước 3: Xác nhận thêm vào kho) -->
+    <div class="ht-modal-overlay" id="hoanTienModal">
+        <div class="ht-modal">
+            <div class="ht-modal-header">
+                <h3><i class="fas fa-boxes" style="color:#059669;"></i> Bước 3: Xác nhận thêm vào kho</h3>
+                <button class="ht-modal-close" onclick="closeHoanTienModal()">&times;</button>
+            </div>
+            <div class="ht-modal-body">
+                <div style="background:#fffbeb; border:1px solid #f59e0b; border-radius:8px; padding:1rem; margin-bottom:1rem;">
+                    <p style="margin:0 0 0.5rem; color:#92400e; font-weight:500; font-size:1rem;">
+                        <i class="fas fa-question-circle"></i> Bạn có muốn thêm sản phẩm này vào kho không?
+                    </p>
+                    <p style="margin:0; color:#78716c; font-size:0.85rem;">Sau bước này sẽ chuyển sang <strong>Bước 4: Hoàn tiền</strong></p>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem;">
+                        <label style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem; background:#ecfdf5; border:2px solid #10b981; border-radius:8px; cursor:pointer; transition:all 0.2s;">
+                            <input type="radio" name="themVaoKho" value="true" id="radioCo" checked style="width:18px; height:18px; accent-color:#059669;">
+                            <div style="flex:1;">
+                                <strong style="color:#065f46; font-size:0.95rem;"><i class="fas fa-check-circle"></i> Có</strong>
+                                <span style="color:#047857; font-size:0.85rem;"> — Thêm lại vào kho</span>
+                            </div>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem; background:#fef2f2; border:2px solid #ef4444; border-radius:8px; cursor:pointer; transition:all 0.2s;">
+                            <input type="radio" name="themVaoKho" value="false" id="radioLoi" style="width:18px; height:18px; accent-color:#dc2626;">
+                            <div style="flex:1;">
+                                <strong style="color:#991b1b; font-size:0.95rem;"><i class="fas fa-exclamation-triangle"></i> Lỗi</strong>
+                                <span style="color:#b91c1c; font-size:0.85rem;"> — Không thêm vào kho</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.4rem; font-weight:500; color:#374151; font-size:0.9rem;">
+                        <i class="fas fa-sticky-note"></i> Ghi chú xử lý (tùy chọn)
+                    </label>
+                    <textarea id="ghiChuHoanTien" style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px; font-size:0.9rem; resize:vertical; min-height:80px;" placeholder="Nhập ghi chú nếu có..."></textarea>
+                </div>
+            </div>
+            <div class="ht-modal-footer">
+                <button class="ht-detail-btn ht-detail-btn--secondary" onclick="closeHoanTienModal()"><i class="fas fa-times"></i> Hủy</button>
+                <button class="ht-detail-btn ht-detail-btn--success" onclick="confirmHoanTien()">
+                    <i class="fas fa-check"></i> Xác nhận & Hoàn tiền
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tu Choi Modal -->
+    <div class="ht-modal-overlay" id="tuChoiModal">
+        <div class="ht-modal">
+            <div class="ht-modal-header">
+                <h3><i class="fas fa-times-circle" style="color:#dc2626;"></i> Từ chối hoàn trả</h3>
+                <button class="ht-modal-close" onclick="closeTuChoiModal()">&times;</button>
+            </div>
+            <div class="ht-modal-body">
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.4rem; font-weight:500; color:#374151; font-size:0.9rem;">
+                        <i class="fas fa-comment-alt"></i> Lý do từ chối <span style="color:#dc2626;">*</span>
+                    </label>
+                    <textarea id="ghiChuTuChoi" style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px; font-size:0.9rem; resize:vertical; min-height:80px;" placeholder="Nhập lý do từ chối..."></textarea>
+                </div>
+            </div>
+            <div class="ht-modal-footer">
+                <button class="ht-detail-btn ht-detail-btn--secondary" onclick="closeTuChoiModal()"><i class="fas fa-times"></i> Hủy</button>
+                <button class="ht-detail-btn ht-detail-btn--danger" onclick="confirmTuChoi()">
+                    <i class="fas fa-ban"></i> Xác nhận từ chối
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="ht-toast" id="toast"></div>
+
+    <div class="ht-loading-overlay" id="loadingOverlay">
+        <div class="ht-loading-spinner">
+            <i class="fas fa-spinner"></i>
+            <p>Đang xử lý...</p>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+    var hoanTraId = /*[[${hoanTra.id}]]*/ 0;
+    var currentTrangThai = /*[[${hoanTra.trangThai}]]*/ 'CHO_XU_LY';
+
+    function showToast(message, type) {
+        type = type || 'info';
+        var toast = document.getElementById('toast');
+        if (toast) {
+            toast.textContent = message;
+            toast.className = 'ht-toast ' + type;
+            toast.style.display = 'block';
+            setTimeout(function() { toast.style.display = 'none'; }, 3000);
+        }
+    }
+
+    function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+    function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+    async function confirmNhanHang() {
+        showLoading();
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/duyet?themVaoKho=false', {
+                method: 'POST'
+            });
+            var result = await response.json();
+            if (result.success) {
+                showToast('Xác nhận nhận hàng thành công!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    function openHoanTienModal() {
+        document.getElementById('hoanTienModal').classList.add('active');
+        document.getElementById('ghiChuHoanTien').value = '';
+        document.getElementById('radioCo').checked = true;
+    }
+    function closeHoanTienModal() { document.getElementById('hoanTienModal').classList.remove('active'); }
+    function openTuChoiModal() { document.getElementById('tuChoiModal').classList.add('active'); }
+    function closeTuChoiModal() { document.getElementById('tuChoiModal').classList.remove('active'); }
+
+    async function confirmHoanTien() {
+        var themVaoKho = document.querySelector('input[name="themVaoKho"]:checked').value === 'true';
+        var ghiChu = document.getElementById('ghiChuHoanTien').value;
+
+        showLoading();
+        closeHoanTienModal();
+
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/duyet?themVaoKho=' + themVaoKho + '&ghiChuXuLy=' + encodeURIComponent(ghiChu), {
+                method: 'POST'
+            });
+
+            var result = await response.json();
+            if (result.success) {
+                var message = themVaoKho
+                    ? 'Xác nhận nhận hàng thành công! Sản phẩm đã được thêm vào kho và chuyển sang Đã hoàn tiền.'
+                    : 'Xác nhận nhận hàng thành công! (Lưu ý: Sản phẩm không được thêm vào kho)';
+                showToast(message, 'success');
+                setTimeout(function() { window.location.reload(); }, 2000);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    async function confirmTuChoi() {
+        var ghiChu = document.getElementById('ghiChuTuChoi').value;
+        if (!ghiChu.trim()) {
+            showToast('Vui lòng nhập lý do từ chối', 'error');
+            return;
+        }
+        
+        showLoading();
+        closeTuChoiModal();
+        
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/tu-choi?ghiChuXuLy=' + encodeURIComponent(ghiChu), {
+                method: 'PUT'
+            });
+            
+            var result = await response.json();
+            if (result.success !== false) {
+                showToast('Từ chối hoàn trả thành công!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    document.querySelectorAll('.ht-modal-overlay').forEach(function(modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    });
+
+    // ========================================
+    // DOI_HANG - ĐỔI HÀNG WORKFLOW FUNCTIONS
+    // ========================================
+
+    var loaiHoanTra = /*[[${hoanTra.loaiHoanTra}]]*/ 'TRA_HANG';
+
+    async function duyetDoiHang() {
+        showLoading();
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/duyet', {
+                method: 'POST'
+            });
+            var result = await response.json();
+            if (result.success) {
+                showToast('Duyệt đổi hàng thành công!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    async function nhanHangDoi() {
+        showLoading();
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/duyet', {
+                method: 'POST'
+            });
+            var result = await response.json();
+            if (result.success) {
+                showToast('Xác nhận nhận hàng đổi thành công!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    async function ketThucDoiHang() {
+        showLoading();
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/doi-hang/ket-thuc', {
+                method: 'POST'
+            });
+            var result = await response.json();
+            if (result.success) {
+                showToast('Kết thúc đổi hàng thành công!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    // Chon Serial Modal
+    async function openChonSerialModal() {
+        var modal = document.getElementById('chonSerialModal');
+        if (!modal) {
+            createChonSerialModal();
+            modal = document.getElementById('chonSerialModal');
+        }
+
+        var chiTietList = /*[[${hoanTra.chiTietList}]]*/ [];
+        var hoaDonId = /*[[${hoanTra.hoaDonId}]]*/ 0;
+
+        modal.classList.add('active');
+
+        var content = document.getElementById('chonSerialContent');
+        content.innerHTML = '<div class="ht-loading"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId);
+            var hoanTra = await response.json();
+
+            var html = '<div class="ht-doi-info">';
+            html += '<div class="ht-doi-info__title"><i class="fas fa-barcode"></i> Chọn Serial Mới</div>';
+            html += '<div class="ht-doi-info__content">';
+            html += '<p style="margin:0 0 0.5rem;">Đối với mỗi sản phẩm, hãy chọn:</p>';
+            html += '<ul style="margin:0; padding-left:1.2rem;">';
+            html += '<li><strong>Serial cũ → LỖI:</strong> Sản phẩm bị lỗi, không cấp serial mới</li>';
+            html += '<li><strong>Serial mới:</strong> Cấp serial mới cùng loại (trạng thái ĐÃ BÁN)</li>';
+            html += '</ul>';
+            html += '</div></div>';
+
+            hoanTra.chiTietList.forEach(function(ct) {
+                html += '<div class="ht-chon-serial-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; margin-bottom:1rem;">';
+                html += '<div style="font-weight:600; margin-bottom:0.75rem; color:#1e293b;">';
+                html += '<i class="fas fa-box"></i> ' + escapeHtml(ct.tenSanPham);
+                html += '</div>';
+
+                // Serial cũ
+                html += '<div style="margin-bottom:0.75rem;">';
+                html += '<span style="font-size:0.85rem; color:#64748b;">Serial cũ: </span>';
+                if (ct.serialsHoanTra && ct.serialsHoanTra.length > 0) {
+                    ct.serialsHoanTra.forEach(function(s) {
+                        html += '<span class="ht-product-serial-tag ht-serial-tag--old" style="margin-left:0.25rem;">' + escapeHtml(s) + '</span>';
+                    });
+                }
+                html += '</div>';
+
+                // Radio buttons
+                html += '<div style="display:flex; gap:1rem; margin-bottom:0.75rem;">';
+                html += '<label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer;">';
+                html += '<input type="radio" name="serialCuLoi_' + ct.id + '" value="true" onclick="toggleSerialMoiSection(\'' + ct.id + '\', true)">';
+                html += '<span style="font-size:0.85rem;">Serial cũ <strong style="color:#dc2626;">LỖI</strong> (không đổi)</span>';
+                html += '</label>';
+                html += '<label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer;">';
+                html += '<input type="radio" name="serialCuLoi_' + ct.id + '" value="false" checked onclick="toggleSerialMoiSection(\'' + ct.id + '\', false)">';
+                html += '<span style="font-size:0.85rem;">Đổi <strong style="color:#059669;">SERIAL MỚI</strong></span>';
+                html += '</label>';
+                html += '</div>';
+
+                // Serial mới dropdown
+                html += '<div id="serialMoiSection_' + ct.id + '" class="serial-moi-section">';
+                html += '<label style="font-size:0.85rem; color:#64748b; display:block; margin-bottom:0.35rem;">Chọn serial mới:</label>';
+                html += '<select id="serialMoi_' + ct.id + '" class="ht-input" style="width:100%; padding:0.5rem; border-radius:6px; border:1px solid #e2e8f0;">';
+                html += '<option value="">-- Đang tải serial... --</option>';
+                html += '</select>';
+                html += '<div id="selectedSerial_' + ct.id + '" style="margin-top:0.5rem; font-size:0.85rem; color:#059669;"></div>';
+                html += '</div>';
+
+                html += '</div>';
+
+                // Load serial options
+                loadSerialOptions(ct.sanPhamChiTietId, ct.id, hoaDonId);
+            });
+
+            content.innerHTML = html;
+
+        } catch (error) {
+            content.innerHTML = '<div style="color:#dc2626; text-align:center; padding:2rem;"><i class="fas fa-exclamation-triangle"></i> Lỗi tải dữ liệu</div>';
+        }
+    }
+
+    function createChonSerialModal() {
+        var modalHtml = '<div class="ht-modal-overlay" id="chonSerialModal">';
+        modalHtml += '<div class="ht-modal ht-modal--serial">';
+        modalHtml += '<div class="ht-modal-header">';
+        modalHtml += '<h3><i class="fas fa-barcode" style="color:#7c3aed;"></i> Đổi Serial Sản Phẩm</h3>';
+        modalHtml += '<button class="ht-modal-close" onclick="closeChonSerialModal()">&times;</button>';
+        modalHtml += '</div>';
+        modalHtml += '<div class="ht-modal-body" id="chonSerialContent"></div>';
+        modalHtml += '<div class="ht-modal-footer">';
+        modalHtml += '<button class="ht-detail-btn ht-detail-btn--secondary" onclick="closeChonSerialModal()">Hủy</button>';
+        modalHtml += '<button class="ht-detail-btn ht-detail-btn--success-doi" onclick="confirmChonSerial()"><i class="fas fa-check"></i> Xác nhận đổi serial</button>';
+        modalHtml += '</div>';
+        modalHtml += '</div></div>';
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    function closeChonSerialModal() {
+        var modal = document.getElementById('chonSerialModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    async function loadSerialOptions(sanPhamChiTietId, chiTietId, hoaDonId) {
+        try {
+            var response = await fetch('/api/hoan-tra/serial/doi/' + hoaDonId + '/' + sanPhamChiTietId);
+            var data = await response.json();
+
+            var select = document.getElementById('serialMoi_' + chiTietId);
+            if (!select) return;
+
+            if (data.success && data.serials && data.serials.length > 0) {
+                select.innerHTML = '<option value="">-- Chọn serial mới --</option>';
+                data.serials.forEach(function(s) {
+                    select.innerHTML += '<option value="' + s.maSerial + '">' + s.maSerial + '</option>';
+                });
+            } else {
+                select.innerHTML = '<option value="">-- Không có serial trong kho --</option>';
+            }
+
+            select.addEventListener('change', function() {
+                onSelectSerialMoi(chiTietId);
+            });
+
+        } catch (error) {
+            var select = document.getElementById('serialMoi_' + chiTietId);
+            if (select) select.innerHTML = '<option value="">-- Lỗi tải serial --</option>';
+        }
+    }
+
+    function toggleSerialMoiSection(chiTietId, isLoi) {
+        var section = document.getElementById('serialMoiSection_' + chiTietId);
+        if (section) {
+            section.style.display = isLoi ? 'none' : 'block';
+        }
+    }
+
+    function onSelectSerialMoi(chiTietId) {
+        var select = document.getElementById('serialMoi_' + chiTietId);
+        var selectedDiv = document.getElementById('selectedSerial_' + chiTietId);
+        if (select && selectedDiv) {
+            var value = select.value;
+            if (value) {
+                selectedDiv.innerHTML = '<i class="fas fa-check-circle"></i> Đã chọn: <strong>' + value + '</strong>';
+            } else {
+                selectedDiv.innerHTML = '';
+            }
+        }
+    }
+
+    async function confirmChonSerial() {
+        var chiTietList = /*[[${hoanTra.chiTietList}]]*/ [];
+        var serialsMoi = {};
+
+        var hasError = false;
+
+        chiTietList.forEach(function(ct) {
+            var serialMoiValue = document.getElementById('serialMoi_' + ct.id)?.value;
+            if (!serialMoiValue) {
+                hasError = true;
+            } else {
+                serialsMoi[ct.id] = serialMoiValue;
+            }
+        });
+
+        if (hasError) {
+            showToast('Vui lòng chọn serial mới cho tất cả sản phẩm!', 'error');
+            return;
+        }
+
+        showLoading();
+        closeChonSerialModal();
+
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/doi-hang/hoan-tat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serialsMoi: serialsMoi })
+            });
+
+            var result = await response.json();
+            if (result.success) {
+                showToast('Đã cấp serial mới cho khách!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    // Modal Hoàn tất đổi hàng - Xử lý serial cũ
+    function openKetThucDoiModal() {
+        var modal = document.getElementById('ketThucDoiModal');
+        if (!modal) {
+            createKetThucDoiModal();
+            modal = document.getElementById('ketThucDoiModal');
+        }
+
+        var chiTietList = /*[[${hoanTra.chiTietList}]]*/ [];
+
+        modal.classList.add('active');
+
+        var content = document.getElementById('ketThucDoiContent');
+        var html = '<div class="ht-doi-info">';
+        html += '<div class="ht-doi-info__title"><i class="fas fa-question-circle"></i> Xử lý Serial Cũ</div>';
+        html += '<div class="ht-doi-info__content">';
+        html += '<p style="margin:0 0 0.5rem;">Đối với mỗi sản phẩm, hãy quyết định:</p>';
+        html += '<ul style="margin:0; padding-left:1.2rem;">';
+        html += '<li><strong>Lưu kho:</strong> Serial cũ còn tốt → đưa về kho bán tiếp</li>';
+        html += '<li><strong>LỖI:</strong> Serial cũ bị lỗi → không bán nữa</li>';
+        html += '</ul>';
+        html += '</div></div>';
+
+        chiTietList.forEach(function(ct) {
+            html += '<div class="ht-chon-serial-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; margin-bottom:1rem;">';
+            html += '<div style="font-weight:600; margin-bottom:0.75rem; color:#1e293b;">';
+            html += '<i class="fas fa-box"></i> ' + escapeHtml(ct.tenSanPham);
+            html += '</div>';
+
+            // Serial cũ
+            html += '<div style="margin-bottom:0.75rem;">';
+            html += '<span style="font-size:0.85rem; color:#64748b;">Serial cũ: </span>';
+            if (ct.serialsHoanTra && ct.serialsHoanTra.length > 0) {
+                ct.serialsHoanTra.forEach(function(s) {
+                    html += '<span class="ht-product-serial-tag ht-serial-tag--old" style="margin-left:0.25rem;">' + escapeHtml(s) + '</span>';
+                });
+            }
+            html += '</div>';
+
+            // Serial mới đã đổi
+            if (ct.serialMoi) {
+                html += '<div style="margin-bottom:0.75rem;">';
+                html += '<span style="font-size:0.85rem; color:#64748b;">Serial mới đã đổi: </span>';
+                html += '<span class="ht-product-serial-tag ht-serial-tag--new" style="margin-left:0.25rem;">' + escapeHtml(ct.serialMoi) + '</span>';
+                html += '</div>';
+            }
+
+            // Radio buttons
+            html += '<div style="display:flex; gap:1rem;">';
+            html += '<label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; padding:0.5rem; background:#dcfce7; border-radius:6px;">';
+            html += '<input type="radio" name="luuKho_' + ct.id + '" value="true" checked>';
+            html += '<span style="font-size:0.85rem;"><i class="fas fa-warehouse" style="color:#059669;"></i> <strong style="color:#047857;">Lưu kho</strong> (hàng tốt)</span>';
+            html += '</label>';
+            html += '<label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; padding:0.5rem; background:#fee2e2; border-radius:6px;">';
+            html += '<input type="radio" name="luuKho_' + ct.id + '" value="false">';
+            html += '<span style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i> <strong style="color:#991b1b;">LỖI</strong> (không bán)</span>';
+            html += '</label>';
+            html += '</div>';
+
+            html += '</div>';
+        });
+
+        content.innerHTML = html;
+    }
+
+    function createKetThucDoiModal() {
+        var modalHtml = '<div class="ht-modal-overlay" id="ketThucDoiModal">';
+        modalHtml += '<div class="ht-modal">';
+        modalHtml += '<div class="ht-modal-header">';
+        modalHtml += '<h3><i class="fas fa-flag-checkered" style="color:#10b981;"></i> Hoàn tất đổi hàng</h3>';
+        modalHtml += '<button class="ht-modal-close" onclick="closeKetThucDoiModal()">&times;</button>';
+        modalHtml += '</div>';
+        modalHtml += '<div class="ht-modal-body" id="ketThucDoiContent"></div>';
+        modalHtml += '<div class="ht-modal-footer">';
+        modalHtml += '<button class="ht-detail-btn ht-detail-btn--secondary" onclick="closeKetThucDoiModal()">Hủy</button>';
+        modalHtml += '<button class="ht-detail-btn ht-detail-btn--success-doi" onclick="confirmKetThucDoi()"><i class="fas fa-check"></i> Xác nhận hoàn tất</button>';
+        modalHtml += '</div>';
+        modalHtml += '</div></div>';
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    function closeKetThucDoiModal() {
+        var modal = document.getElementById('ketThucDoiModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    async function confirmKetThucDoi() {
+        var chiTietList = /*[[${hoanTra.chiTietList}]]*/ [];
+        var serialCuLoi = {};
+
+        chiTietList.forEach(function(ct) {
+            var luuKho = document.querySelector('input[name="luuKho_' + ct.id + '"]:checked')?.value === 'true';
+            serialCuLoi[ct.id] = luuKho;
+        });
+
+        showLoading();
+        closeKetThucDoiModal();
+
+        try {
+            var response = await fetch('/api/hoan-tra/' + hoanTraId + '/doi-hang/ket-thuc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serialCuLoi: serialCuLoi })
+            });
+
+            var result = await response.json();
+            if (result.success) {
+                showToast('Hoàn tất đổi hàng thành công!', 'success');
+                setTimeout(function() { window.location.reload(); }, 1500);
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+                hideLoading();
+            }
+        } catch (error) {
+            showToast('Lỗi: ' + error.message, 'error');
+            hideLoading();
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    </script>
+</div>

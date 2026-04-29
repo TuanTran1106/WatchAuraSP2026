@@ -84,6 +84,7 @@
     }
     setCollapsedPersist(false);
     if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { collapsed: false } }));
   }
 
   function closeSidebar() {
@@ -93,6 +94,7 @@
     sidebarOverlay.classList.remove('is-active');
     setCollapsedPersist(true);
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { collapsed: true } }));
   }
 
   function toggleSidebar() {

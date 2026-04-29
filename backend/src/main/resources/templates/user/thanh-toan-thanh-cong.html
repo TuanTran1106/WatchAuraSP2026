@@ -458,7 +458,7 @@
                         <div class="order-info__row">
                             <span class="order-info__label">Trạng thái</span>
                             <span class="order-info__value order-info__value--success"
-                                th:text="${hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN' ? 'Chờ xác nhận' : hoaDon.trangThaiDonHang}">--</span>
+                                th:text="${hoaDon.trangThaiDonHang == 'DA_THANH_TOAN_ONL' ? 'TT Vn Pay thành công' : (hoaDon.trangThaiDonHang == 'CHO_XAC_NHAN' ? 'Chờ xác nhận' : hoaDon.trangThaiDonHang)}">--</span>
                         </div>
                         <div class="order-info__row" th:if="${hoaDon.tenKhachHang != null}">
                             <span class="order-info__label">Người nhận</span>

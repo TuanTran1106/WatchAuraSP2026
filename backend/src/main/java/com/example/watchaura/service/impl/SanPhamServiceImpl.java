@@ -227,6 +227,7 @@ public class SanPhamServiceImpl implements SanPhamService {
         dto.setHinhAnh(sanPham.getHinhAnh());
         dto.setPhongCach(sanPham.getPhongCach());
         dto.setTrangThai(sanPham.getTrangThai());
+        dto.setNgayTao(sanPham.getNgayTao());
 
         if (sanPham.getThuongHieu() != null) {
             dto.setIdThuongHieu(sanPham.getThuongHieu().getId());

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trả hàng (Refund) - WatchAura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/admin/admin.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
+    <link rel="stylesheet" href="/css/tra-hang.css">
+</head>
+<body>
+<div class="admin-layout" id="traHangAdminLayout">
+    <!-- Sidebar -->
+    <aside class="sidebar" th:if="${laQuanLy || laNhanVien}">
+        <div class="sidebar__brand">
+            <span class="sidebar__logo">WA</span>
+            <span class="sidebar__title" th:text="${laQuanLy} ? 'WatchAura Admin' : 'WatchAura Staff'">WatchAura Admin</span>
+        </div>
+        <nav class="sidebar__nav" id="adminSidebarNav">
+            <a th:href="@{/admin}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
+            <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách hàng</span></a>
+            <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
+            <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
+                <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
+                        aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
+                    <i class="fas fa-box-open"></i>
+                    <span>Sản phẩm</span>
+                    <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                </button>
+                <div class="sidebar__dropdown-menu" id="sidebarProductMenu" role="menu">
+                    <a th:href="@{/admin/san-pham}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-box"></i><span>Sản phẩm</span></a>
+                    <a th:href="@{/admin/danh-muc}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-folder"></i><span>Danh mục</span></a>
+                    <a th:href="@{/admin/thuong-hieu}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-building"></i><span>Thương hiệu</span></a>
+                    <a th:href="@{/admin/mau-sac}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-palette"></i><span>Màu sắc</span></a>
+                    <a th:href="@{/admin/kich-thuoc}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-ruler-combined"></i><span>Kích thước</span></a>
+                    <a th:href="@{/admin/loai-may}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-cogs"></i><span>Loại máy</span></a>
+                    <a th:href="@{/admin/chat-lieu-day}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-link"></i><span>Chất liệu dây</span></a>
+                </div>
+            </div>
+            <a th:href="@{/admin/khuyen-mai}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-percent"></i><span>Khuyến mãi</span></a>
+            <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i
+                    class="fas fa-ticket"></i><span>Voucher</span></a>
+            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+            <a th:href="@{/admin/tra-hang}" class="sidebar__link sidebar-link-trahang sidebar__link--current"><i class="fas fa-undo-alt"></i><span>Trả hàng</span></a>
+            <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
+            <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
+            <a href="#" class="sidebar__link sidebar__link--logout" th:unless="${laQuanLy}" onclick="event.preventDefault(); confirmLogout();">
+                <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></a>
+        </nav>
+    </aside>
+
+    <div class="main">
+        <header class="header">
+            <button class="header__menu-btn" id="sidebarToggle" type="button" aria-label="Đóng mở menu" title="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="header__title">Trả hàng (Refund)</h1>
+            <div class="header__user-info" th:if="${currentUser != null}">
+                <span class="header__user-badge" th:classappend="${laQuanLy} ? 'badge--admin' : 'badge--staff'">
+                    <i th:class="${laQuanLy} ? 'fas fa-crown' : 'fas fa-user-shield'"></i>
+                    <span th:text="${laQuanLy} ? 'Admin' : 'WatchAura Staff'">Vai trò</span>
+                </span>
+                <span class="header__user-name" th:text="${currentUser.tenNguoiDung}">Tên NV</span>
+            </div>
+            <button class="header__theme-toggle" id="adminThemeToggle" type="button" aria-label="Chuyển giao diện" title="Chuyển giao diện">
+                <i class="fas fa-moon theme-icon theme-icon--dark"></i>
+                <i class="fas fa-sun theme-icon theme-icon--light"></i>
+            </button>
+        </header>
+
+        <main class="content" id="adminContent">
+            <div th:fragment="content">
+                <div th:if="${successMessage}" class="admin-toast-payload" th:attr="data-admin-toast-message=${successMessage}, data-admin-toast-type='success'" aria-hidden="true"></div>
+                <div th:if="${errorMessage}" class="admin-toast-payload" th:attr="data-admin-toast-message=${errorMessage}, data-admin-toast-type='error'" aria-hidden="true"></div>
+
+                <!-- Page Header -->
+                <div class="th-page-header">
+                    <div class="th-page-header__left">
+                        <div class="th-page-header__title-wrap">
+                            <h1 class="th-page-header__title">
+                                <i class="fas fa-undo-alt"></i>
+                                Trả hàng (Refund)
+                            </h1>
+                            <p class="th-page-header__subtitle">Kiểm tra serial và xác nhận hoàn tiền cho khách hàng</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Serial Check Section -->
+                <div class="th-card th-card--primary">
+                    <div class="th-card__header">
+                        <i class="fas fa-barcode"></i>
+                        <h2>Kiểm tra Serial</h2>
+                    </div>
+                    <div class="th-card__body">
+                        <form id="serialCheckForm" class="th-form">
+                            <div class="th-form__group">
+                                <label for="serialInput" class="th-form__label">
+                                    <i class="fas fa-qrcode"></i>
+                                    Nhập mã Serial sản phẩm
+                                </label>
+                                <div class="th-form__input-group">
+                                    <input type="text" 
+                                           id="serialInput" 
+                                           class="th-form__input" 
+                                           placeholder="Ví dụ: SERIAL001, 123456789..."
+                                           autocomplete="off"
+                                           autofocus>
+                                    <button type="button" class="th-btn th-btn--primary" onclick="checkSerial()">
+                                        <i class="fas fa-search"></i>
+                                        Kiểm tra
+                                    </button>
+                                </div>
+                                <p class="th-form__hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    Serial phải: <strong>Đã bán</strong>, <strong>Đúng đơn</strong>, và <strong>Chưa hoàn trả</strong>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Result Section -->
+                <div id="resultSection" class="th-result-section" style="display: none;">
+                    <!-- Loading State -->
+                    <div id="resultLoading" class="th-loading" style="display: none;">
+                        <div class="th-loading__spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Đang kiểm tra serial...</p>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="resultError" class="th-card th-card--danger" style="display: none;">
+                        <div class="th-card__header">
+                            <i class="fas fa-times-circle"></i>
+                            <h2>Lỗi</h2>
+                        </div>
+                        <div class="th-card__body">
+                            <p id="errorMessage" class="th-error-message"></p>
+                            <button class="th-btn th-btn--secondary" onclick="resetForm()">
+                                <i class="fas fa-redo"></i>
+                                Thử lại
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Valid Serial - Show Product Info -->
+                    <div id="resultValid" class="th-result-valid" style="display: none;">
+                        <!-- Product Info Card -->
+                        <div class="th-card th-card--success">
+                            <div class="th-card__header">
+                                <i class="fas fa-check-circle"></i>
+                                <h2>Serial hợp lệ</h2>
+                            </div>
+                            <div class="th-card__body">
+                                <!-- Serial Info -->
+                                <div class="th-info-grid">
+                                    <div class="th-info-item">
+                                        <label><i class="fas fa-barcode"></i> Mã Serial</label>
+                                        <span id="displayMaSerial" class="th-mono">-</span>
+                                    </div>
+                                    <div class="th-info-item">
+                                        <label><i class="fas fa-file-invoice"></i> Mã đơn hàng</label>
+                                        <span id="displayMaDonHang">-</span>
+                                    </div>
+                                    <div class="th-info-item">
+                                        <label><i class="fas fa-box"></i> Sản phẩm</label>
+                                        <span id="displayTenSanPham">-</span>
+                                    </div>
+                                    <div class="th-info-item">
+                                        <label><i class="fas fa-tag"></i> Biến thể</label>
+                                        <span id="displayBienThe">-</span>
+                                    </div>
+                                    <div class="th-info-item">
+                                        <label><i class="fas fa-coins"></i> Đơn giá</label>
+                                        <span id="displayDonGia" class="th-money">-</span>
+                                    </div>
+                                    <div class="th-info-item">
+                                        <label><i class="fas fa-flag"></i> Trạng thái</label>
+                                        <span id="displayTrangThai" class="th-status th-status--sold">-</span>
+                                    </div>
+                                </div>
+
+                                <!-- Refund Amount Section -->
+                                <div class="th-refund-section">
+                                    <div class="th-refund-section__header">
+                                        <i class="fas fa-coins"></i>
+                                        <h3>Số tiền hoàn</h3>
+                                    </div>
+                                    <div class="th-refund-amount">
+                                        <span id="displaySoTienHoan" class="th-refund-amount__value">0</span>
+                                        <span class="th-refund-amount__currency">VND</span>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden data for form submission -->
+                                <input type="hidden" id="hiddenHoaDonId" value="">
+                                <input type="hidden" id="hiddenSanPhamChiTietId" value="">
+                                <input type="hidden" id="hiddenHoaDonChiTietId" value="">
+                                <input type="hidden" id="hiddenDonGia" value="">
+                                <input type="hidden" id="hiddenSoTienHoan" value="">
+
+                                <!-- Refund Form -->
+                                <form id="refundForm" class="th-form th-form--refund">
+                                    <div class="th-form__section">
+                                        <h4 class="th-form__section-title">
+                                            <i class="fas fa-wallet"></i>
+                                            Chọn phương thức hoàn tiền
+                                        </h4>
+                                        <div class="th-payment-methods">
+                                            <label class="th-payment-option th-payment-option--selected">
+                                                <input type="radio" name="phuongThucHoanTien" value="TIEN_MAT" checked>
+                                                <div class="th-payment-option__content">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                    <span class="th-payment-option__label">Tiền mặt</span>
+                                                    <span class="th-payment-option__check"><i class="fas fa-check"></i></span>
+                                                </div>
+                                            </label>
+                                            <label class="th-payment-option">
+                                                <input type="radio" name="phuongThucHoanTien" value="CHUYEN_KHOAN">
+                                                <div class="th-payment-option__content">
+                                                    <i class="fas fa-university"></i>
+                                                    <span class="th-payment-option__label">Chuyển khoản</span>
+                                                    <span class="th-payment-option__check"><i class="fas fa-check"></i></span>
+                                                </div>
+                                            </label>
+                                            <label class="th-payment-option">
+                                                <input type="radio" name="phuongThucHoanTien" value="VI_DIEN_TU">
+                                                <div class="th-payment-option__content">
+                                                    <i class="fas fa-wallet"></i>
+                                                    <span class="th-payment-option__label">Ví điện tử</span>
+                                                    <span class="th-payment-option__check"><i class="fas fa-check"></i></span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="th-form__section">
+                                        <h4 class="th-form__section-title">
+                                            <i class="fas fa-comment-alt"></i>
+                                            Ghi chú (tùy chọn)
+                                        </h4>
+                                        <textarea id="refundNote" class="th-form__textarea" 
+                                                  placeholder="Nhập ghi chú nếu có..." rows="3"></textarea>
+                                    </div>
+
+                                    <div class="th-form__actions">
+                                        <button type="button" class="th-btn th-btn--secondary" onclick="resetForm()">
+                                            <i class="fas fa-times"></i>
+                                            Hủy
+                                        </button>
+                                        <button type="button" class="th-btn th-btn--success" id="btnXacNhanHoanTien" onclick="confirmRefund()">
+                                            <i class="fas fa-check"></i>
+                                            Xác nhận hoàn tiền
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="th-card th-card--info">
+                    <div class="th-card__header">
+                        <i class="fas fa-lightbulb"></i>
+                        <h2>Hướng dẫn</h2>
+                    </div>
+                    <div class="th-card__body">
+                        <div class="th-steps">
+                            <div class="th-step">
+                                <div class="th-step__number">1</div>
+                                <div class="th-step__content">
+                                    <h4>Nhập mã Serial</h4>
+                                    <p>Nhập mã serial của sản phẩm khách hàng muốn trả vào ô kiểm tra</p>
+                                </div>
+                            </div>
+                            <div class="th-step">
+                                <div class="th-step__number">2</div>
+                                <div class="th-step__content">
+                                    <h4>Kiểm tra thông tin</h4>
+                                    <p>Hệ thống sẽ kiểm tra serial: đã bán, đúng đơn, và chưa hoàn trả</p>
+                                </div>
+                            </div>
+                            <div class="th-step">
+                                <div class="th-step__number">3</div>
+                                <div class="th-step__content">
+                                    <h4>Xác nhận hoàn tiền</h4>
+                                    <p>Chọn phương thức hoàn tiền (tiền mặt/chuyển khoản/ví điện tử) và xác nhận</p>
+                                </div>
+                            </div>
+                            <div class="th-step">
+                                <div class="th-step__number">4</div>
+                                <div class="th-step__content">
+                                    <h4>Hoàn tất</h4>
+                                    <p>Hệ thống tự động cập nhật serial về kho và tạo phiếu nhập kho</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <span>© 2026 WatchAura Admin. All rights reserved.</span>
+        </footer>
+    </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="th-modal-overlay" id="confirmModal">
+    <div class="th-modal th-modal--confirm">
+        <div class="th-modal__header">
+            <h3><i class="fas fa-question-circle" style="color: #10b981;"></i> Xác nhận hoàn tiền</h3>
+            <button class="th-modal__close" onclick="closeConfirmModal()">&times;</button>
+        </div>
+        <div class="th-modal__body">
+            <div class="th-confirm-summary">
+                <div class="th-confirm-row">
+                    <span class="th-confirm-label">Mã Serial</span>
+                    <span class="th-confirm-value" id="confirmMaSerial">-</span>
+                </div>
+                <div class="th-confirm-row">
+                    <span class="th-confirm-label">Sản phẩm</span>
+                    <span class="th-confirm-value" id="confirmTenSanPham">-</span>
+                </div>
+                <div class="th-confirm-row">
+                    <span class="th-confirm-label">Số tiền hoàn</span>
+                    <span class="th-confirm-value th-confirm-value--money" id="confirmSoTien">-</span>
+                </div>
+                <div class="th-confirm-row">
+                    <span class="th-confirm-label">Phương thức</span>
+                    <span class="th-confirm-value" id="confirmPhuongThuc">-</span>
+                </div>
+            </div>
+            <p class="th-confirm-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Sau khi xác nhận, serial sẽ được cập nhật về kho và phiếu nhập kho sẽ được tạo tự động.
+            </p>
+        </div>
+        <div class="th-modal__footer">
+            <button class="th-btn th-btn--secondary" onclick="closeConfirmModal()">
+                <i class="fas fa-times"></i> Hủy
+            </button>
+            <button class="th-btn th-btn--success" id="btnConfirmRefund">
+                <i class="fas fa-check"></i> Xác nhận hoàn tiền
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="th-modal-overlay" id="successModal">
+    <div class="th-modal th-modal--success">
+        <div class="th-modal__icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h3>Hoàn tiền thành công!</h3>
+        <p>Số tiền <strong id="successSoTien">0 VND</strong> đã được hoàn cho khách hàng.</p>
+        <p class="th-success-detail" id="successDetail"></p>
+        <div class="th-modal__footer">
+            <button class="th-btn th-btn--primary" onclick="closeSuccessModal()">
+                <i class="fas fa-check"></i> Đồng ý
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="th-toast" id="toast"></div>
+
+<!-- Loading Overlay -->
+<div class="th-loading-overlay" id="loadingOverlay">
+    <div class="th-loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Đang xử lý...</p>
+    </div>
+</div>
+
+<script src="/js/confirm-modal.js"></script>
+<script th:src="@{/admin/admin.js}"></script>
+<script>
+var currentData = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Enter key on serial input
+    document.getElementById('serialInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            checkSerial();
+        }
+    });
+
+    // Handle payment method selection
+    document.querySelectorAll('input[name="phuongThucHoanTien"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.th-payment-option').forEach(function(opt) {
+                opt.classList.remove('th-payment-option--selected');
+            });
+            if (this.checked) {
+                this.closest('.th-payment-option').classList.add('th-payment-option--selected');
+            }
+        });
+    });
+
+    // Show toast if there's a message from server
+    var toastPayload = document.querySelector('.admin-toast-payload');
+    if (toastPayload) {
+        var message = toastPayload.getAttribute('data-admin-toast-message');
+        var type = toastPayload.getAttribute('data-admin-toast-type') || 'info';
+        showToast(message, type);
+    }
+});
+
+async function checkSerial() {
+    var serial = document.getElementById('serialInput').value.trim();
+    if (!serial) {
+        showToast('Vui lòng nhập mã serial', 'error');
+        return;
+    }
+
+    showLoading();
+    hideResults();
+
+    try {
+        var response = await fetch('/api/refund/serial/check?maSerial=' + encodeURIComponent(serial));
+        var result = await response.json();
+
+        if (result.valid) {
+            currentData = result;
+            showValidResult(result);
+        } else {
+            showErrorResult(result.errorMessage || 'Serial không hợp lệ');
+        }
+    } catch (error) {
+        showErrorResult('Lỗi kết nối: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+function showValidResult(data) {
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('resultError').style.display = 'none';
+    document.getElementById('resultValid').style.display = 'block';
+
+    document.getElementById('displayMaSerial').textContent = data.maSerial || '-';
+    document.getElementById('displayMaDonHang').textContent = data.maDonHang || '-';
+    document.getElementById('displayTenSanPham').textContent = data.tenSanPham || '-';
+    document.getElementById('displayBienThe').textContent = data.tenBienThe || '-';
+    document.getElementById('displayDonGia').textContent = formatCurrency(data.donGia);
+    document.getElementById('displayTrangThai').textContent = data.trangThaiHienThi || '-';
+    
+    var soTienHoan = data.donGia || 0;
+    document.getElementById('displaySoTienHoan').textContent = formatCurrency(soTienHoan);
+
+    // Set hidden values
+    document.getElementById('hiddenHoaDonId').value = data.hoaDonId || '';
+    document.getElementById('hiddenSanPhamChiTietId').value = data.sanPhamChiTietId || '';
+    document.getElementById('hiddenHoaDonChiTietId').value = data.hoaDonChiTietId || '';
+    document.getElementById('hiddenDonGia').value = data.donGia || '0';
+    document.getElementById('hiddenSoTienHoan').value = soTienHoan;
+
+    document.getElementById('serialInput').focus();
+}
+
+function showErrorResult(message) {
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('resultValid').style.display = 'none';
+    document.getElementById('resultError').style.display = 'block';
+    document.getElementById('errorMessage').textContent = message;
+}
+
+function hideResults() {
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('resultValid').style.display = 'none';
+    document.getElementById('resultError').style.display = 'none';
+}
+
+function resetForm() {
+    document.getElementById('serialInput').value = '';
+    document.getElementById('refundNote').value = '';
+    document.querySelector('input[name="phuongThucHoanTien"][value="TIEN_MAT"]').checked = true;
+    document.querySelectorAll('.th-payment-option').forEach(function(opt) {
+        opt.classList.remove('th-payment-option--selected');
+    });
+    document.querySelector('.th-payment-option').classList.add('th-payment-option--selected');
+    currentData = null;
+    hideResults();
+    document.getElementById('serialInput').focus();
+}
+
+function confirmRefund() {
+    if (!currentData) {
+        showToast('Vui lòng kiểm tra serial trước', 'error');
+        return;
+    }
+
+    var phuongThuc = document.querySelector('input[name="phuongThucHoanTien"]:checked').value;
+    var phuongThucText = getPhuongThucText(phuongThuc);
+    var soTienHoan = parseFloat(document.getElementById('hiddenSoTienHoan').value) || 0;
+
+    document.getElementById('confirmMaSerial').textContent = currentData.maSerial;
+    document.getElementById('confirmTenSanPham').textContent = currentData.tenSanPham;
+    document.getElementById('confirmSoTien').textContent = formatCurrency(soTienHoan);
+    document.getElementById('confirmPhuongThuc').textContent = phuongThucText;
+
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+async function executeRefund() {
+    if (!currentData) {
+        showToast('Không có dữ liệu để hoàn tiền', 'error');
+        return;
+    }
+
+    closeConfirmModal();
+    showLoading();
+
+    var request = {
+        hoanTraId: currentData.hoanTraId,
+        soTienHoan: parseFloat(document.getElementById('hiddenSoTienHoan').value) || 0,
+        phuongThucHoanTien: document.querySelector('input[name="phuongThucHoanTien"]:checked').value,
+        ghiChu: document.getElementById('refundNote').value.trim()
+    };
+
+    try {
+        var response = await fetch('/api/refund/hoan-tien', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(request)
+        });
+
+        var result = await response.json();
+
+        if (result.success) {
+            var soTienHoan = request.soTienHoan;
+            document.getElementById('successSoTien').textContent = formatCurrency(soTienHoan) + ' VND';
+            document.getElementById('successDetail').textContent = 
+                'Serial ' + currentData.maSerial + ' đã được cập nhật về kho.';
+            document.getElementById('successModal').classList.add('active');
+        } else {
+            showToast(result.message || 'Có lỗi xảy ra', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi kết nối: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('active');
+}
+
+function closeSuccessModal() {
+    document.getElementById('successModal').classList.remove('active');
+    resetForm();
+}
+
+function getPhuongThucText(phuongThuc) {
+    switch (phuongThuc) {
+        case 'TIEN_MAT': return 'Tiền mặt';
+        case 'CHUYEN_KHOAN': return 'Chuyển khoản';
+        case 'VI_DIEN_TU': return 'Ví điện tử';
+        default: return phuongThuc;
+    }
+}
+
+function formatCurrency(amount) {
+    if (amount == null || isNaN(amount)) return '0đ';
+    return Number(amount).toLocaleString('vi-VN') + 'đ';
+}
+
+function showToast(message, type) {
+    var toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'th-toast th-toast--' + (type || 'info');
+    toast.style.display = 'block';
+    setTimeout(function() {
+        toast.style.display = 'none';
+    }, 4000);
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.add('active');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// Modal click outside to close
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmModal();
+});
+
+document.getElementById('successModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSuccessModal();
+});
+
+document.getElementById('btnConfirmRefund').addEventListener('click', executeRefund);
+</script>
+</div>
+</body>
+</html>

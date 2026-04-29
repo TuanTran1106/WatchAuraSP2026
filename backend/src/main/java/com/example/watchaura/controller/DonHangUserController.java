@@ -3,10 +3,12 @@ package com.example.watchaura.controller;
 import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.GioHangChiTietRequest;
 import com.example.watchaura.dto.HoaDonDTO;
+import com.example.watchaura.dto.HoanTraDTO;
 import com.example.watchaura.service.DanhGiaService;
 import com.example.watchaura.service.GioHangChiTietService;
 import com.example.watchaura.service.GioHangService;
 import com.example.watchaura.service.HoaDonService;
+import com.example.watchaura.service.HoanTraService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class DonHangUserController {
     private final GioHangService gioHangService;
     private final GioHangChiTietService gioHangChiTietService;
     private final DanhGiaService danhGiaService;
+    private final HoanTraService hoanTraService;
 
     /**
      * Trang theo dõi đơn hàng - KHÔNG yêu cầu đăng nhập
@@ -172,6 +175,7 @@ public class DonHangUserController {
 
             // Batch check đánh giá - chỉ 1 query thay vì N+1
             Map<Integer, Boolean> daDanhGiaMap = new HashMap<>();
+            Map<Integer, HoanTraDTO> hoanTraMap = new HashMap<>();
             if (pageHoaDon.hasContent()) {
                 Set<Integer> allSpctIds = pageHoaDon.getContent().stream()
                         .filter(hd -> hd.getItems() != null)
@@ -193,11 +197,18 @@ public class DonHangUserController {
                         }
                     }
                     daDanhGiaMap.put(hoaDon.getId(), daDanhGia);
+
+                    // Check hoan tra
+                    if (hoanTraService.existsByHoaDonId(hoaDon.getId())) {
+                        HoanTraDTO hoanTra = hoanTraService.getFirstHoanTraByHoaDonId(hoaDon.getId());
+                        hoanTraMap.put(hoaDon.getId(), hoanTra);
+                    }
                 }
             }
 
             model.addAttribute("pageHoaDon", pageHoaDon);
             model.addAttribute("daDanhGiaMap", daDanhGiaMap);
+            model.addAttribute("hoanTraMap", hoanTraMap);
             model.addAttribute("trangThai", trangThai);
             model.addAttribute("thanhToan", thanhToan);
             model.addAttribute("ngay", ngay);
@@ -209,6 +220,7 @@ public class DonHangUserController {
             // Log lỗi nhưng vẫn hiển thị trang
             model.addAttribute("pageHoaDon", null);
             model.addAttribute("daDanhGiaMap", new HashMap<>());
+            model.addAttribute("hoanTraMap", new HashMap<>());
             model.addAttribute("trangThai", trangThai);
             model.addAttribute("thanhToan", thanhToan);
             model.addAttribute("ngay", ngay);
@@ -306,6 +318,7 @@ public class DonHangUserController {
 
             // Batch check đánh giá - chỉ 1 query thay vì N+1
             Map<Integer, Boolean> daDanhGiaMapApi = new HashMap<>();
+            Map<Integer, Map<String, Object>> hoanTraMapApi = new HashMap<>();
             if (pageHoaDon.hasContent()) {
                 Set<Integer> allSpctIds = pageHoaDon.getContent().stream()
                         .filter(hd -> hd.getItems() != null)
@@ -327,11 +340,23 @@ public class DonHangUserController {
                         }
                     }
                     daDanhGiaMapApi.put(hoaDon.getId(), daDanhGia);
+
+                    // Check hoan tra
+                    if (hoanTraService.existsByHoaDonId(hoaDon.getId())) {
+                        HoanTraDTO hoanTra = hoanTraService.getFirstHoanTraByHoaDonId(hoaDon.getId());
+                        if (hoanTra != null) {
+                            Map<String, Object> hoanTraInfo = new HashMap<>();
+                            hoanTraInfo.put("id", hoanTra.getId());
+                            hoanTraInfo.put("maHoanTra", hoanTra.getMaHoanTra());
+                            hoanTraInfo.put("trangThai", hoanTra.getTrangThai());
+                            hoanTraMapApi.put(hoaDon.getId(), hoanTraInfo);
+                        }
+                    }
                 }
             }
 
             List<Map<String, Object>> items = pageHoaDon.getContent().stream()
-                    .map(hoaDon -> convertHoaDonToMap(hoaDon, daDanhGiaMapApi.get(hoaDon.getId())))
+                    .map(hoaDon -> convertHoaDonToMap(hoaDon, daDanhGiaMapApi.get(hoaDon.getId()), hoanTraMapApi.get(hoaDon.getId())))
                     .collect(Collectors.toList());
 
             result.put("success", true);
@@ -351,7 +376,7 @@ public class DonHangUserController {
         return result;
     }
 
-    private Map<String, Object> convertHoaDonToMap(HoaDonDTO hoaDon, boolean daDanhGia) {
+    private Map<String, Object> convertHoaDonToMap(HoaDonDTO hoaDon, boolean daDanhGia, Map<String, Object> hoanTraInfo) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", hoaDon.getId());
         map.put("maDonHang", hoaDon.getMaDonHang());
@@ -362,6 +387,7 @@ public class DonHangUserController {
         map.put("phuongThucThanhToan", hoaDon.getPhuongThucThanhToan());
         map.put("tenTrangThai", getTenTrangThai(hoaDon.getTrangThaiDonHang()));
         map.put("daDanhGia", daDanhGia);
+        map.put("hoanTra", hoanTraInfo);
         if (hoaDon.getItems() != null) {
             map.put("items", hoaDon.getItems().stream()
                     .map(item -> {
@@ -381,6 +407,7 @@ public class DonHangUserController {
             case "CAN_XU_LY" -> "Cần xử lý";
             case "CHO_THANH_TOAN" -> "Chờ thanh toán";
             case "CHO_XAC_NHAN" -> "Chờ xác nhận";
+            case "DA_THANH_TOAN_ONL" -> "TT Vn Pay thành công";
             case "DA_THANH_TOAN", "DA THANH TOAN" -> "Đã thanh toán";
             case "DA_XAC_NHAN" -> "Đã xác nhận";
             case "DANG_GIAO" -> "Đang giao";
@@ -407,7 +434,14 @@ public class DonHangUserController {
             return "redirect:/don-hang";
         }
 
+        // Check hoan tra
+        HoanTraDTO hoanTra = null;
+        if (hoanTraService.existsByHoaDonId(hoaDon.getId())) {
+            hoanTra = hoanTraService.getFirstHoanTraByHoaDonId(hoaDon.getId());
+        }
+
         model.addAttribute("hoaDon", hoaDon);
+        model.addAttribute("hoanTra", hoanTra);
         model.addAttribute("title", "Chi tiết đơn hàng");
         model.addAttribute("content", "user/don-hang-user-detail");
 
@@ -568,6 +602,12 @@ public class DonHangUserController {
             return result;
         }
 
+        // Check hoan tra
+        HoanTraDTO hoanTra = null;
+        if (hoanTraService.existsByHoaDonId(hoaDon.getId())) {
+            hoanTra = hoanTraService.getFirstHoanTraByHoaDonId(hoaDon.getId());
+        }
+
         result.put("success", true);
         result.put("id", hoaDon.getId());
         result.put("maDonHang", hoaDon.getMaDonHang());
@@ -589,6 +629,16 @@ public class DonHangUserController {
         result.put("tenTrangThai", getTenTrangThai(hoaDon.getTrangThaiDonHang()));
         result.put("phuongThucThanhToan", hoaDon.getPhuongThucThanhToan());
         result.put("tenPhuongThuc", hoaDon.getPhuongThucThanhToan() != null && hoaDon.getPhuongThucThanhToan().equals("COD") ? "Thanh toán khi nhận hàng (COD)" : "VNPay");
+
+        // Add hoan tra info
+        if (hoanTra != null) {
+            Map<String, Object> hoanTraInfo = new HashMap<>();
+            hoanTraInfo.put("id", hoanTra.getId());
+            hoanTraInfo.put("maHoanTra", hoanTra.getMaHoanTra());
+            hoanTraInfo.put("trangThai", hoanTra.getTrangThai());
+            hoanTraInfo.put("trangThaiHienThi", hoanTra.getTrangThaiHienThi());
+            result.put("hoanTra", hoanTraInfo);
+        }
 
         if (hoaDon.getItems() != null) {
             result.put("items", hoaDon.getItems().stream()

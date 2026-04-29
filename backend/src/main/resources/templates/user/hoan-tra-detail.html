@@ -1,0 +1,877 @@
+<div class="return-detail-page" xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+    <div class="return-detail-container">
+
+        <nav aria-label="breadcrumb" class="return-detail-breadcrumb">
+            <ol class="breadcrumb">
+<!--                <li class="breadcrumb-item"><a href="/nguoidung">Tài khoản</a></li>-->
+<!--                <li class="breadcrumb-item"><a href="/khach-hang/hoan-tra">Hoàn trả</a></li>-->
+<!--                <li class="breadcrumb-item active" th:text="${hoanTra.maHoanTra}">HT001</li>-->
+            </ol>
+        </nav>
+
+        <!-- Thông tin hoàn trả -->
+        <div class="return-detail-card">
+            <div class="return-detail-card__header">
+                <div class="return-detail-card__header-left">
+                    <h5 class="return-detail-card__title">
+                        <i class="fas fa-rotate-left"></i>
+                        Yêu cầu hoàn trả
+                    </h5>
+                    <span class="return-detail-card__code" th:text="${hoanTra.maHoanTra}">HT001</span>
+                </div>
+                <span class="return-status-badge"
+                      th:classappend="${hoanTra.trangThai == 'CHO_XU_LY' ? 'return-status--pending' :
+                                      hoanTra.trangThai == 'DA_XU_LY' ? 'return-status--approved' :
+                                      hoanTra.trangThai == 'TU_CHOI' ? 'return-status--rejected' : ''}"
+                      th:text="${hoanTra.trangThaiHienThi}">Chờ xử lý</span>
+            </div>
+
+            <div class="return-detail-grid">
+                <div class="return-info-item">
+                    <div class="return-info__label">Mã đơn hàng gốc</div>
+                    <p class="return-info__value return-info__value--link" th:text="${hoanTra.maDonHang}">HD001</p>
+                </div>
+                <div class="return-info-item">
+                    <div class="return-info__label">Loại yêu cầu</div>
+                    <p class="return-info__value">
+                        <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
+                            <i class="fas fa-exchange-alt" style="color: #c9a227;"></i> Đổi hàng
+                        </th:block>
+                        <th:block th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
+                            <i class="fas fa-undo" style="color: #c9a227;"></i> Trả hàng
+                        </th:block>
+                    </p>
+                </div>
+                <div class="return-info-item">
+                    <div class="return-info__label">Ngày yêu cầu</div>
+                    <p class="return-info__value" th:text="${#temporals.format(hoanTra.ngayYeuCau, 'dd/MM/yyyy HH:mm')}">25/04/2026 10:00</p>
+                </div>
+                <div class="return-info-item return-info-item--full">
+                    <div class="return-info__label">Lý do hoàn trả</div>
+                    <p class="return-info__value" th:text="${hoanTra.lyDo}">Sản phẩm bị lỗi</p>
+                </div>
+                <div class="return-info-item return-info-item--full return-info-item--highlight">
+                    <div class="return-info__label">Số tiền hoàn</div>
+                    <p class="return-info__value return-info__value--highlight"
+                       th:text="${#numbers.formatDecimal(hoanTra.soTienHoanTra, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sản phẩm hoàn trả -->
+        <th:block th:if="${not #lists.isEmpty(hoanTra.chiTietList)}">
+            <div class="return-products-card">
+                <h6 class="return-products-card__title">
+                    <i class="fas fa-box-open"></i>
+                    Sản phẩm hoàn trả
+                    <span class="return-products-card__count" th:text="${hoanTra.chiTietList.size()}">1</span>
+                </h6>
+
+                <th:block th:each="item : ${hoanTra.chiTietList}">
+                    <div class="return-product-item">
+                        <div class="return-product-item__header">
+                            <div class="return-product-item__name" th:text="${item.tenSanPham}"></div>
+                            <div class="return-product-item__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}"
+                                 th:text="${item.tenBienThe}"></div>
+                        </div>
+
+                        <div class="return-product-item__detail">
+                            <div class="return-product-item__info">
+                                <div class="return-product-item__info-row">
+                                    <span class="return-product-item__label">Mã Sản Phẩm</span>
+                                    <span class="return-product-item__value" th:text="${item.maSanPham}"></span>
+                                </div>
+                                <th:block th:if="${item.mauSac != null}">
+                                    <div class="return-product-item__info-row">
+                                        <span class="return-product-item__label">Màu sắc</span>
+                                        <span class="return-product-item__value" th:text="${item.mauSac}"></span>
+                                    </div>
+                                </th:block>
+                                <th:block th:if="${item.kichThuoc != null}">
+                                    <div class="return-product-item__info-row">
+                                        <span class="return-product-item__label">Kích thước</span>
+                                        <span class="return-product-item__value" th:text="${item.kichThuoc}"></span>
+                                    </div>
+                                </th:block>
+                                <th:block th:if="${item.chatLieuDay != null}">
+                                    <div class="return-product-item__info-row">
+                                        <span class="return-product-item__label">Chất liệu dây</span>
+                                        <span class="return-product-item__value" th:text="${item.chatLieuDay}"></span>
+                                    </div>
+                                </th:block>
+                            </div>
+
+                            <div class="return-product-item__price-section">
+                                <div class="return-product-item__qty-price">
+                                    <div class="return-product-item__qty">
+                                        <span class="return-product-item__qty-num" th:text="${item.soLuongHoanTra}"></span>
+                                        <span class="return-product-item__qty-label">sản phẩm</span>
+                                    </div>
+                                    <div class="return-product-item__price">
+                                        <div class="return-product-item__price-row">
+                                            <span class="return-product-item__price-label">Đơn giá</span>
+                                            <span class="return-product-item__price-value"
+                                                  th:text="${#numbers.formatDecimal(item.donGiaTaiThoiDiemMua, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</span>
+                                        </div>
+                                        <div class="return-product-item__price-row return-product-item__price-row--total">
+                                            <span class="return-product-item__price-label">Thành tiền</span>
+                                            <span class="return-product-item__price-total"
+                                                  th:text="${#numbers.formatDecimal(item.soTienHoan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Serial hoàn trả -->
+                        <th:block th:if="${not #lists.isEmpty(item.serialsChiTiet)}">
+                            <div class="return-product-item__serials">
+                                <div class="return-product-item__serials-header">
+                                    <i class="fas fa-barcode"></i>
+                                    <span>Serial sản phẩm</span>
+                                    <span class="return-product-item__serials-count"
+                                          th:text="${item.serialsChiTiet.size()} + ' serial'">2 serial</span>
+                                </div>
+                                <div class="return-product-item__serial-tags">
+                                    <th:block th:each="serial : ${item.serialsChiTiet}">
+                                        <span class="return-serial-tag"
+                                              th:classappend="${serial.daDuocChon ? 'return-serial-tag--returned' : 'return-serial-tag--sold'}"
+                                              th:title="${serial.trangThaiHienThi}"
+                                              th:text="${serial.maSerial}"></span>
+                                    </th:block>
+                                </div>
+                            </div>
+                        </th:block>
+
+                        <!-- Hình ảnh lỗi -->
+                        <th:block th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}">
+                            <div class="return-product-item__images">
+                                <div class="return-product-item__images-header">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Hình ảnh lỗi</span>
+                                </div>
+                                <div class="return-product-item__images-list">
+                                    <th:block th:if="${item.hinhAnh.startsWith('[')}">
+                                        <th:block th:each="img : ${T(com.fasterxml.jackson.databind.ObjectMapper)@readValue(item.hinhAnh, T(java.util.List))}">
+                                            <img th:src="${img.startsWith('/') ? img : '/uploads/' + img}"
+                                                 class="return-product-item__image"
+                                                 alt="Hình ảnh lỗi">
+                                        </th:block>
+                                    </th:block>
+                                    <th:block th:unless="${item.hinhAnh.startsWith('[')}">
+                                        <img th:src="${item.hinhAnh.startsWith('/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}"
+                                             class="return-product-item__image"
+                                             alt="Hình ảnh lỗi">
+                                    </th:block>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </th:block>
+            </div>
+        </th:block>
+
+        <!-- Thông tin xử lý -->
+        <th:block th:if="${hoanTra.trangThai != 'CHO_XU_LY'}">
+            <div class="return-processing-card">
+                <h6 class="return-processing-card__title">
+                    <i class="fas fa-clipboard-check"></i>
+                    Thông tin xử lý
+                </h6>
+                <div class="return-detail-grid">
+                    <div class="return-info-item">
+                        <div class="return-info__label">Nhân viên xử lý</div>
+                        <p class="return-info__value" th:text="${hoanTra.tenNhanVienXuLy != null ? hoanTra.tenNhanVienXuLy : '—'}">Admin</p>
+                    </div>
+                    <div class="return-info-item">
+                        <div class="return-info__label">Ngày xử lý</div>
+                        <p class="return-info__value"
+                           th:text="${hoanTra.ngayXuLy != null ? #temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm') : '—'}">25/04/2026 14:00</p>
+                    </div>
+                    <th:block th:if="${hoanTra.ghiChuXuLy != null and !hoanTra.ghiChuXuLy.isEmpty()}">
+                        <div class="return-info-item return-info-item--full">
+                            <div class="return-info__label">Ghi chú xử lý</div>
+                            <p class="return-info__value" th:text="${hoanTra.ghiChuXuLy}">Đã hoàn tiền</p>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </th:block>
+
+        <!-- Trạng thái timeline -->
+        <div class="return-timeline-card">
+            <h6 class="return-timeline-card__title">
+                <i class="fas fa-history"></i>
+                Tiến trình xử lý
+            </h6>
+            <div class="return-timeline">
+                <div class="return-timeline__item return-timeline__item--done">
+                    <div class="return-timeline__dot">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="return-timeline__content">
+                        <div class="return-timeline__title">Gửi yêu cầu hoàn trả</div>
+                        <div class="return-timeline__desc">Bạn đã gửi yêu cầu hoàn trả sản phẩm</div>
+                        <div class="return-timeline__time"
+                             th:text="${#temporals.format(hoanTra.ngayYeuCau, 'dd/MM/yyyy HH:mm')}">25/04/2026 10:00</div>
+                    </div>
+                </div>
+
+                <th:block th:if="${hoanTra.trangThai == 'CHO_XU_LY'}">
+                    <div class="return-timeline__item return-timeline__item--active">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Đang chờ xử lý</div>
+                            <div class="return-timeline__desc">Yêu cầu của bạn đang chờ nhân viên xử lý</div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <th:block th:if="${hoanTra.trangThai == 'DA_XU_LY'}">
+                    <div class="return-timeline__item return-timeline__item--done">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Đã xác nhận hoàn trả</div>
+                            <div class="return-timeline__desc">Sản phẩm đã được xác nhận hoàn và tiền sẽ được hoàn cho bạn</div>
+                            <th:block th:if="${hoanTra.ngayXuLy != null}">
+                                <div class="return-timeline__time"
+                                     th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                            </th:block>
+                        </div>
+                    </div>
+                </th:block>
+
+                <th:block th:if="${hoanTra.trangThai == 'TU_CHOI'}">
+                    <div class="return-timeline__item return-timeline__item--rejected">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Yêu cầu bị từ chối</div>
+                            <th:block th:if="${hoanTra.ghiChuXuLy != null and !hoanTra.ghiChuXuLy.isEmpty()}">
+                                <div class="return-timeline__desc" th:text="${hoanTra.ghiChuXuLy}">Lý do từ chối</div>
+                            </th:block>
+                            <th:block th:if="${hoanTra.ngayXuLy != null}">
+                                <div class="return-timeline__time"
+                                     th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                            </th:block>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+
+        <div class="return-detail-back">
+            <a href="/khach-hang/hoan-tra" class="btn-return-back">
+                <i class="fas fa-arrow-left"></i>
+                Quay lại danh sách
+            </a>
+            <a th:href="@{/don-hang/chi-tiet/{id}(id=${hoanTra.idHoaDon})}" class="btn-return-back btn-return-back--secondary">
+                <i class="fas fa-eye"></i>
+                Xem đơn hàng
+            </a>
+        </div>
+    </div>
+
+    <style>
+        .return-detail-page {
+            padding-bottom: 3rem;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .return-detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        /* Breadcrumb */
+        .return-detail-breadcrumb {
+            margin-bottom: 1.5rem;
+        }
+
+        .return-detail-breadcrumb .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+
+        .return-detail-breadcrumb .breadcrumb-item a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .return-detail-breadcrumb .breadcrumb-item a:hover {
+            color: #c9a227;
+        }
+
+        .return-detail-breadcrumb .breadcrumb-item.active {
+            color: #1a1a1a;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Card thông tin */
+        .return-detail-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .return-detail-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .return-detail-card__header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .return-detail-card__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-detail-card__title i {
+            color: #c9a227;
+        }
+
+        .return-detail-card__code {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Status Badge */
+        .return-status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .return-status--pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .return-status--approved {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .return-status--rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Grid info */
+        .return-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem 2rem;
+        }
+
+        .return-info-item {
+            padding: 0.5rem 0;
+        }
+
+        .return-info-item--full {
+            grid-column: 1 / -1;
+        }
+
+        .return-info-item--highlight {
+            padding-top: 1rem;
+            border-top: 1px dashed #eee;
+            margin-top: 0.5rem;
+        }
+
+        .return-info__label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.25rem;
+        }
+
+        .return-info__value {
+            font-weight: 500;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .return-info__value--link {
+            color: #c9a227;
+        }
+
+        .return-info__value--highlight {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #dc3545;
+        }
+
+        /* Products Card */
+        .return-products-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .return-products-card__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-products-card__title i {
+            color: #c9a227;
+        }
+
+        .return-products-card__count {
+            margin-left: auto;
+            background: #f0f0f0;
+            color: #666;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        /* Product Item */
+        .return-product-item {
+            padding: 1rem;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-bottom: 0.75rem;
+        }
+
+        .return-product-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .return-product-item__header {
+            margin-bottom: 0.75rem;
+        }
+
+        .return-product-item__name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+
+        .return-product-item__variant {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.15rem;
+        }
+
+        .return-product-item__detail {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .return-product-item__info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .return-product-item__info-row {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+        }
+
+        .return-product-item__label {
+            color: #888;
+            min-width: 80px;
+        }
+
+        .return-product-item__value {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .return-product-item__price-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .return-product-item__qty-price {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .return-product-item__qty {
+            text-align: center;
+        }
+
+        .return-product-item__qty-num {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #c9a227;
+            line-height: 1;
+        }
+
+        .return-product-item__qty-label {
+            font-size: 0.72rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .return-product-item__price {
+            text-align: right;
+        }
+
+        .return-product-item__price-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 0.82rem;
+        }
+
+        .return-product-item__price-label {
+            color: #888;
+        }
+
+        .return-product-item__price-value {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .return-product-item__price-row--total {
+            margin-top: 0.25rem;
+            padding-top: 0.25rem;
+            border-top: 1px dashed #ddd;
+        }
+
+        .return-product-item__price-total {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        /* Serial */
+        .return-product-item__serials {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #eee;
+        }
+
+        .return-product-item__serials-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .return-product-item__serials-header i {
+            color: #c9a227;
+        }
+
+        .return-product-item__serials-count {
+            margin-left: auto;
+            background: #f0f0f0;
+            color: #666;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .return-product-item__serial-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .return-serial-tag {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .return-serial-tag--returned {
+            background: #d1fae5;
+            color: #047857;
+            border: 1px solid #10b981;
+        }
+
+        .return-serial-tag--sold {
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        /* Images */
+        .return-product-item__images {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #eee;
+        }
+
+        .return-product-item__images-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .return-product-item__images-header i {
+            color: #c9a227;
+        }
+
+        .return-product-item__images-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .return-product-item__image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .return-product-item__image:hover {
+            transform: scale(1.05);
+            border-color: #c9a227;
+        }
+
+        /* Processing Card */
+        .return-processing-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .return-processing-card__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-processing-card__title i {
+            color: #10b981;
+        }
+
+        /* Timeline */
+        .return-timeline-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .return-timeline-card__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .return-timeline-card__title i {
+            color: #c9a227;
+        }
+
+        .return-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .return-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            bottom: 0.5rem;
+            width: 2px;
+            background: #eee;
+        }
+
+        .return-timeline__item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .return-timeline__item:last-child {
+            padding-bottom: 0;
+        }
+
+        .return-timeline__dot {
+            position: absolute;
+            left: -1.5rem;
+            top: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            border: 2px solid #fff;
+        }
+
+        .return-timeline__item--done .return-timeline__dot {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .return-timeline__item--active .return-timeline__dot {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .return-timeline__item--rejected .return-timeline__dot {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .return-timeline__title {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.9rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .return-timeline__desc {
+            font-size: 0.82rem;
+            color: #666;
+        }
+
+        .return-timeline__time {
+            font-size: 0.78rem;
+            color: #888;
+            margin-top: 0.15rem;
+        }
+
+        /* Back button */
+        .return-detail-back {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-return-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #fff;
+            text-decoration: none;
+            background: linear-gradient(135deg, #c9a227 0%, #a07d1c 100%);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-return-back:hover {
+            color: #fff;
+            background: linear-gradient(135deg, #b8921f 0%, #8a6d17 100%);
+        }
+
+        .btn-return-back--secondary {
+            background: #fff;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+
+        .btn-return-back--secondary:hover {
+            color: #1a1a1a;
+            background: #f5f5f5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .return-detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .return-product-item__detail {
+                flex-direction: column;
+            }
+
+            .return-product-item__price-section {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .return-product-item__qty-price {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</div>

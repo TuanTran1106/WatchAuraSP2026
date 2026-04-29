@@ -1,0 +1,633 @@
+/* ========================================
+   HOÀN TRẢ ADMIN - TẠO MỚI TRANG
+   ======================================== */
+
+/* ===== Page Container ===== */
+.htc-page {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ===== Header ===== */
+.htc-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.htc-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.htc-back-btn:hover {
+    background: #f1f5f9;
+    color: #1e3a5f;
+    text-decoration: none;
+}
+
+.htc-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.htc-title i {
+    color: #1e3a5f;
+}
+
+/* ===== Card ===== */
+.htc-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.htc-card__header {
+    background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.htc-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.htc-card__title i {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.htc-card__body {
+    padding: 1.5rem;
+}
+
+/* ===== Search Section ===== */
+.htc-search-section {
+    margin-bottom: 1.5rem;
+}
+
+.htc-search-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.htc-search-box {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ===== Inputs ===== */
+.htc-input {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.25s;
+}
+
+.htc-input:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.htc-qty-input {
+    width: 60px;
+    padding: 0.4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* ===== Buttons ===== */
+.htc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-decoration: none;
+}
+
+.htc-btn--primary {
+    background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+    color: #fff;
+}
+
+.htc-btn--primary:hover {
+    background: linear-gradient(135deg, #2d5a87, #3d6a97);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+}
+
+.htc-btn--secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.htc-btn--secondary:hover {
+    background: #e2e8f0;
+    color: #1e3a5f;
+}
+
+/* ===== Order List ===== */
+.htc-order-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.htc-order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+}
+
+.htc-order-item:hover {
+    border-color: #1e3a5f;
+    background: #f8fafc;
+}
+
+.htc-order-item.selected {
+    border-color: #1e3a5f;
+    background: #eff6ff;
+}
+
+.htc-order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.htc-order-code {
+    font-weight: 700;
+    color: #1e3a5f;
+}
+
+.htc-order-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.htc-order-amount {
+    font-weight: 700;
+    color: #059669;
+}
+
+/* ===== Product Section ===== */
+.htc-product-section {
+    display: none;
+}
+
+.htc-product-section.active {
+    display: block;
+}
+
+.htc-selected-order {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #eff6ff;
+    border: 1px solid #1e3a5f;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.htc-selected-order-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.htc-selected-order-code {
+    font-weight: 700;
+    color: #1e3a5f;
+}
+
+.htc-selected-order-customer {
+    color: #64748b;
+}
+
+.htc-selected-order-change {
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* ===== Type Options ===== */
+.htc-type-options {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.htc-type-option {
+    flex: 1;
+    cursor: pointer;
+}
+
+.htc-type-option input {
+    display: none;
+}
+
+.htc-type-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.htc-type-option input:checked + .htc-type-card {
+    border-color: #1e3a5f;
+    background: #f0f7ff;
+}
+
+.htc-type-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.25rem;
+}
+
+.htc-type-card--return .htc-type-icon {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.htc-type-card--exchange .htc-type-icon {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.htc-type-info {
+    flex: 1;
+}
+
+.htc-type-title {
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 0.25rem;
+}
+
+.htc-type-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.htc-type-check {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s;
+}
+
+.htc-type-option input:checked + .htc-type-card .htc-type-check {
+    background: #1e3a5f;
+    border-color: #1e3a5f;
+    color: #fff;
+}
+
+/* ===== Product Card ===== */
+.htc-product-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.htc-product-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.htc-product-image {
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.htc-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.htc-product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #cbd5e1;
+}
+
+.htc-product-image-placeholder i {
+    font-size: 1.5rem;
+}
+
+.htc-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.htc-product-name {
+    font-weight: 600;
+    color: #1e3a5f;
+    font-size: 0.95rem;
+}
+
+.htc-product-variant {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+}
+
+.htc-product-price {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.htc-product-price-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.htc-product-price-value {
+    font-weight: 700;
+    color: #1e3a5f;
+}
+
+.htc-product-stats {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.htc-product-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.htc-product-stat-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.htc-product-stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e3a5f;
+}
+
+.htc-product-stat-value.highlight {
+    color: #059669;
+}
+
+/* ===== Serial Grid ===== */
+.htc-serial-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.htc-serial-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.htc-serial-checkbox:hover {
+    border-color: #1e3a5f;
+}
+
+.htc-serial-checkbox.selected {
+    background: #eff6ff;
+    border-color: #1e3a5f;
+}
+
+.htc-serial-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: transparent;
+    transition: all 0.2s;
+}
+
+.htc-serial-checkbox.selected .htc-serial-box {
+    background: #1e3a5f;
+    border-color: #1e3a5f;
+    color: #fff;
+}
+
+.htc-serial-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* ===== Reason Section ===== */
+.htc-reason-section {
+    margin-bottom: 1.5rem;
+}
+
+.htc-reason-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.htc-reason-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.htc-reason-preset {
+    padding: 0.4rem 0.75rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.htc-reason-preset:hover {
+    background: #e2e8f0;
+}
+
+.htc-reason-preset.selected {
+    background: #1e3a5f;
+    color: #fff;
+    border-color: #1e3a5f;
+}
+
+.htc-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    resize: vertical;
+    outline: none;
+}
+
+.htc-textarea:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+/* ===== Summary ===== */
+.htc-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.htc-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.htc-summary-row:not(:last-child) {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.htc-summary-label {
+    color: #64748b;
+}
+
+.htc-summary-value {
+    font-weight: 600;
+    color: #1e3a5f;
+}
+
+.htc-summary-value.highlight {
+    color: #059669;
+    font-size: 1.1rem;
+}
+
+/* ===== Actions ===== */
+.htc-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* ===== Loading & Empty ===== */
+.htc-loading,
+.htc-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.htc-loading i {
+    font-size: 1.5rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .htc-page {
+        padding: 1rem;
+    }
+    
+    .htc-type-options {
+        flex-direction: column;
+    }
+    
+    .htc-search-box {
+        flex-direction: column;
+    }
+}

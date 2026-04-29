@@ -91,5 +91,33 @@ public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT spct FROM SanPhamChiTiet spct WHERE spct.id = :id")
     Optional<SanPhamChiTiet> findByIdWithLock(@Param("id") Integer id);
+
+    /**
+     * Kiểm tra biến thể đã tồn tại theo Màu sắc + Kích thước + Chất liệu dây
+     */
+    @Query("SELECT spct FROM SanPhamChiTiet spct " +
+            "WHERE spct.sanPham.id = :sanPhamId " +
+            "AND spct.mauSac.id = :mauSacId " +
+            "AND spct.kichThuoc.id = :kichThuocId " +
+            "AND spct.chatLieuDay.id = :chatLieuDayId")
+    Optional<SanPhamChiTiet> findBySanPhamAndVariant(
+            @Param("sanPhamId") Integer sanPhamId,
+            @Param("mauSacId") Integer mauSacId,
+            @Param("kichThuocId") Integer kichThuocId,
+            @Param("chatLieuDayId") Integer chatLieuDayId);
+
+    /**
+     * Kiểm tra biến thể đã tồn tại (không cần điều kiện null)
+     */
+    @Query("SELECT CASE WHEN COUNT(spct) > 0 THEN true ELSE false END FROM SanPhamChiTiet spct " +
+            "WHERE spct.sanPham.id = :sanPhamId " +
+            "AND (:mauSacId IS NULL OR spct.mauSac.id = :mauSacId) " +
+            "AND (:kichThuocId IS NULL OR spct.kichThuoc.id = :kichThuocId) " +
+            "AND (:chatLieuDayId IS NULL OR spct.chatLieuDay.id = :chatLieuDayId)")
+    boolean existsBySanPhamAndVariant(
+            @Param("sanPhamId") Integer sanPhamId,
+            @Param("mauSacId") Integer mauSacId,
+            @Param("kichThuocId") Integer kichThuocId,
+            @Param("chatLieuDayId") Integer chatLieuDayId);
 }
 

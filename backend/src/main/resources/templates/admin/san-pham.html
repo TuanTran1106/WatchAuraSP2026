@@ -878,6 +878,127 @@
                 word-break: break-word;
             }
 
+            .serial-upload-section {
+                margin-top: 8px;
+            }
+
+            .serial-upload-row {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .btn-upload-serial {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 16px;
+                background: #10b981;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+
+            .btn-upload-serial:hover {
+                background: #059669;
+            }
+
+            .btn-download-template {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 16px;
+                background: #6366f1;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+            .btn-download-template:hover {
+                background: #4f46e5;
+            }
+
+            .serial-preview-area {
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                background: #fafbfc;
+                overflow: hidden;
+            }
+
+            .serial-preview-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 12px;
+                background: #f1f5f9;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .serial-count {
+                font-size: 12px;
+                font-weight: 600;
+                color: #475569;
+            }
+
+            .btn-clear-serial {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                background: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 500;
+            }
+
+            .btn-clear-serial:hover {
+                background: #dc2626;
+            }
+
+            .serial-list {
+                padding: 10px 12px;
+                max-height: 150px;
+                overflow-y: auto;
+                font-size: 12px;
+                color: #64748b;
+            }
+
+            .serial-item {
+                display: inline-block;
+                padding: 3px 8px;
+                margin: 2px;
+                background: #e0f2fe;
+                color: #0369a1;
+                border-radius: 4px;
+                font-family: monospace;
+            }
+
+            .serial-error {
+                color: #dc2626;
+                font-size: 12px;
+                padding: 8px;
+            }
+
+            .serial-loading {
+                color: #64748b;
+                font-size: 12px;
+                padding: 8px;
+                text-align: center;
+            }
+
             /* Toggle Switch CSS */
             .toggle-switch {
                 display: inline-block;
@@ -1480,8 +1601,27 @@
                 </div>
 
                 <div class="modal-form-group" style="grid-column: 1 / -1;">
-                    <label>Serial hiện có</label>
-                    <div class="variant-serial-preview">Tự sinh serial theo số lượng tồn khi lưu biến thể mới.</div>
+                    <label>Serial sản phẩm</label>
+                    <div class="serial-upload-section">
+                        <div class="serial-upload-row">
+                            <input type="file" class="variant-serial-file" accept=".xlsx,.xls" style="display: none;" onchange="handleSerialFileUpload(this)">
+                            <button type="button" class="btn-upload-serial" onclick="this.previousElementSibling.click()">
+                                <i class="fas fa-file-excel"></i> Chọn file Excel
+                            </button>
+                            <a href="/api/san-pham-chi-tiet/serial/template" class="btn-download-template" download>
+                                <i class="fas fa-download"></i> Tải template
+                            </a>
+                        </div>
+                        <div class="serial-preview-area">
+                            <div class="serial-preview-header">
+                                <span class="serial-count">Chưa chọn file</span>
+                                <button type="button" class="btn-clear-serial" onclick="clearSerialFile(this)" style="display: none;">
+                                    <i class="fas fa-times"></i> Xóa
+                                </button>
+                            </div>
+                            <div class="serial-list"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="button" class="variant-remove" onclick="removeVariantRow(this)">
@@ -1569,6 +1709,144 @@
                         chatLieuSelect.appendChild(option);
                     });
                 }).catch(error => console.error('Lỗi load dữ liệu:', error));
+            }
+
+            // Xử lý upload file Excel chứa serial
+            async function handleSerialFileUpload(fileInput) {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                const variantRow = fileInput.closest('.variant-row');
+                const serialCount = variantRow.querySelector('.serial-count');
+                const serialList = variantRow.querySelector('.serial-list');
+                const btnClear = variantRow.querySelector('.btn-clear-serial');
+
+                // Hiển thị loading
+                serialCount.textContent = 'Đang đọc file...';
+                serialList.innerHTML = '<div class="serial-loading"><i class="fas fa-spinner fa-spin"></i> Đang xử lý...</div>';
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch(`${API_URL}/san-pham-chi-tiet/serial/preview`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success === false && result.errorSerials && result.errorSerials.length > 0) {
+                        // Có lỗi trong file
+                        serialCount.textContent = `${result.totalSerials} serial (${result.errorCount} lỗi)`;
+                        serialCount.style.color = '#dc2626';
+                        serialList.innerHTML = result.errorSerials.slice(0, 20).map(err =>
+                            `<div class="serial-error">${err}</div>`
+                        ).join('');
+                        if (result.errorSerials.length > 20) {
+                            serialList.innerHTML += `<div class="serial-error">... và ${result.errorSerials.length - 20} lỗi khác</div>`;
+                        }
+                    } else if (result.totalSerials > 0) {
+                        // Thành công
+                        serialCount.textContent = `${result.totalSerials} serial hợp lệ`;
+                        serialCount.style.color = '#10b981';
+
+                        // Lưu số serial hợp lệ vào hidden field
+                        let hiddenValidCount = variantRow.querySelector('.variant-valid-serial-count');
+                        if (!hiddenValidCount) {
+                            hiddenValidCount = document.createElement('input');
+                            hiddenValidCount.type = 'hidden';
+                            hiddenValidCount.className = 'variant-valid-serial-count';
+                            fileInput.parentElement.appendChild(hiddenValidCount);
+                        }
+                        hiddenValidCount.value = result.totalSerials;
+
+                        // Hiển thị tất cả serial (hoặc giới hạn hiển thị)
+                        const allSerials = result.previewSerials || result.serials || [];
+                        const displaySerials = allSerials.slice(0, 50); // Hiển thị tối đa 50 serial
+                        serialList.innerHTML = displaySerials.map(s =>
+                            `<span class="serial-item">${escapeHtml(s)}</span>`
+                        ).join('');
+
+                        if (result.totalSerials > 50) {
+                            serialList.innerHTML += `<div style="margin-top: 8px; color: #64748b;">... và ${result.totalSerials - 50} serial khác</div>`;
+                        }
+
+                        // Lưu serial vào hidden field
+                        let hiddenSerials = variantRow.querySelector('.variant-serialized-serials');
+                        if (!hiddenSerials) {
+                            hiddenSerials = document.createElement('input');
+                            hiddenSerials.type = 'hidden';
+                            hiddenSerials.className = 'variant-serialized-serials';
+                            fileInput.parentElement.appendChild(hiddenSerials);
+                        }
+                        hiddenSerials.value = JSON.stringify(result.serials || allSerials);
+                    } else {
+                        serialCount.textContent = 'Không có serial trong file';
+                        serialCount.style.color = '#64748b';
+                        serialList.innerHTML = '';
+                    }
+
+                    btnClear.style.display = 'inline-flex';
+
+                } catch (error) {
+                    console.error('Lỗi đọc file serial:', error);
+                    serialCount.textContent = 'Lỗi đọc file';
+                    serialCount.style.color = '#dc2626';
+                    serialList.innerHTML = '<div class="serial-error">Không thể đọc file Excel. Vui lòng thử lại.</div>';
+                }
+            }
+
+            // Xóa file serial đã chọn
+            function clearSerialFile(btn) {
+                const variantRow = btn.closest('.variant-row');
+                const fileInput = variantRow.querySelector('.variant-serial-file');
+                const hiddenSerials = variantRow.querySelector('.variant-serialized-serials');
+                const serialCount = variantRow.querySelector('.serial-count');
+                const serialList = variantRow.querySelector('.serial-list');
+
+                fileInput.value = '';
+                if (hiddenSerials) hiddenSerials.remove();
+                serialCount.textContent = 'Chưa chọn file';
+                serialCount.style.color = '#475569';
+                serialList.innerHTML = '';
+                btn.style.display = 'none';
+            }
+
+            // Validate số serial so với số lượng tồn
+            // Nếu serial ít hơn số lượng, vẫn cho lưu và lấy đủ serial
+            function validateSerialCount(variantRow) {
+                const soLuongTonInput = variantRow.querySelector('.variant-soLuongTon');
+                const hiddenValidCount = variantRow.querySelector('.variant-valid-serial-count');
+                const hiddenSerials = variantRow.querySelector('.variant-serialized-serials');
+
+                if (!soLuongTonInput || !hiddenValidCount) return { valid: true };
+
+                const soLuongTon = parseInt(soLuongTonInput.value) || 0;
+                const validSerials = parseInt(hiddenValidCount.value) || 0;
+
+                if (soLuongTon > validSerials) {
+                    // Cảnh báo nhưng vẫn cho lưu, sẽ lấy đủ serial
+                    return {
+                        valid: true,
+                        warning: `Số lượng tồn (${soLuongTon}) lớn hơn số serial trong file (${validSerials}). Sẽ chỉ lưu ${validSerials} serial.`,
+                        usedSerials: validSerials
+                    };
+                }
+                return { valid: true, usedSerials: soLuongTon };
+            }
+
+            // Escape HTML để tránh XSS
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Lấy giá trị an toàn từ element trong variantRow
+            function getVariantValue(variantRow, selector, defaultValue = '') {
+                const el = variantRow.querySelector(selector);
+                return el ? (el.value || defaultValue) : defaultValue;
             }
 
             // Lắng nghe sự kiện thay đổi file input
@@ -1903,6 +2181,21 @@
                     return;
                 }
 
+                // Validate số serial so với số lượng tồn
+                const variantRows = document.querySelectorAll('.variant-row');
+                for (let i = 0; i < variantRows.length; i++) {
+                    const row = variantRows[i];
+                    const fileInput = row.querySelector('.variant-serial-file');
+                    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+                    if (hasFile) {
+                        const validation = validateSerialCount(row);
+                        if (validation.warning) {
+                            showToast(`Biến thể hàng ${i + 1}: ${validation.warning}`, 'warning', 'Cảnh báo serial!');
+                        }
+                    }
+                }
+
                 const id = document.getElementById('productId').value;
                 const fileInput = document.getElementById('hinhAnhFile');
 
@@ -2003,41 +2296,125 @@
                     const variantRows = document.querySelectorAll('.variant-row');
                     for (const variantRow of variantRows) {
                         const variantId = variantRow.querySelector('.variant-id').value;
+                        const fileInput = variantRow.querySelector('.variant-serial-file');
+                        const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
 
-                        const variantData = {
-                            idSanPham: parseInt(productId),
-                            idMauSac: parseInt(variantRow.querySelector('.variant-mauSac').value) || null,
-                            idKichThuoc: parseInt(variantRow.querySelector('.variant-kichThuoc').value) || null,
-                            idChatLieuDay: parseInt(variantRow.querySelector('.variant-chatLieuDay').value) || null,
-                            giaBan: parseFloat(variantRow.querySelector('.variant-giaBan').value),
-                            soLuongTon: parseInt(variantRow.querySelector('.variant-soLuongTon').value),
-                            duongKinh: parseFloat(variantRow.querySelector('.variant-duongKinh').value) || null,
-                            doChiuNuoc: parseInt(variantRow.querySelector('.variant-doChiuNuoc').value) || null,
-                            beRongDay: parseFloat(variantRow.querySelector('.variant-beRongDay').value) || null,
-                            trongLuong: parseFloat(variantRow.querySelector('.variant-trongLuong').value) || null,
-                            trangThai: variantRow.querySelector('input[name^="trangThaiChiTiet"]:checked').value === 'true'
-                        };
+                        if (hasFile) {
+                            const mauSac = getVariantValue(variantRow, '.variant-mauSac');
+                            const kichThuoc = getVariantValue(variantRow, '.variant-kichThuoc');
+                            const chatLieuDay = getVariantValue(variantRow, '.variant-chatLieuDay');
+                            const duongKinh = getVariantValue(variantRow, '.variant-duongKinh');
+                            const doChiuNuoc = getVariantValue(variantRow, '.variant-doChiuNuoc');
+                            const beRongDay = getVariantValue(variantRow, '.variant-beRongDay');
+                            const trongLuong = getVariantValue(variantRow, '.variant-trongLuong');
+                            const trangThaiChecked = variantRow.querySelector('input[name^="trangThaiChiTiet"]:checked');
 
-                        let variantResponse;
-                        if (variantId) {
-                            // Update variant cũ
-                            variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(variantData)
-                            });
+                            if (variantId) {
+                                // 1. Update variant cũ trước (không cần soLuongTon vì sẽ cập nhật từ serial)
+                                const updateResponse = await fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        idSanPham: parseInt(productId),
+                                        idMauSac: parseInt(mauSac) || null,
+                                        idKichThuoc: parseInt(kichThuoc) || null,
+                                        idChatLieuDay: parseInt(chatLieuDay) || null,
+                                        giaBan: parseFloat(getVariantValue(variantRow, '.variant-giaBan', '0')),
+                                        duongKinh: parseFloat(duongKinh) || null,
+                                        doChiuNuoc: parseInt(doChiuNuoc) || null,
+                                        beRongDay: parseFloat(beRongDay) || null,
+                                        trongLuong: parseFloat(trongLuong) || null,
+                                        trangThai: trangThaiChecked ? (trangThaiChecked.value === 'true') : true
+                                    })
+                                });
+
+                                if (!updateResponse.ok) {
+                                    const err = await updateResponse.text();
+                                    console.warn('Lỗi cập nhật biến thể:', err);
+                                }
+
+                                // 2. Import serial từ file Excel
+                                const serialFormData = new FormData();
+                                serialFormData.append('idSanPhamChiTiet', variantId);
+                                serialFormData.append('file', fileInput.files[0]);
+
+                                const serialResponse = await fetch(`${API_URL}/san-pham-chi-tiet/serial/import`, {
+                                    method: 'POST',
+                                    body: serialFormData
+                                });
+
+                                const serialResult = await serialResponse.json();
+                                if (serialResult.success) {
+                                    showToast(`Đã import ${serialResult.successCount} serial cho biến thể`, 'success');
+                                } else if (serialResult.errorSerials && serialResult.errorSerials.length > 0) {
+                                    showToast(`Import ${serialResult.successCount} serial thành công, ${serialResult.errorCount} lỗi`, 'warning');
+                                }
+                            } else {
+                                // Thêm variant mới với file Excel
+                                const formData = new FormData();
+                                formData.append('idSanPham', productId);
+                                if (mauSac) formData.append('idMauSac', mauSac);
+                                if (kichThuoc) formData.append('idKichThuoc', kichThuoc);
+                                if (chatLieuDay) formData.append('idChatLieuDay', chatLieuDay);
+                                formData.append('giaBan', getVariantValue(variantRow, '.variant-giaBan', '0'));
+                                formData.append('soLuongTon', getVariantValue(variantRow, '.variant-soLuongTon', '0'));
+                                formData.append('trangThai', trangThaiChecked ? (trangThaiChecked.value === 'true') : true);
+                                formData.append('file', fileInput.files[0]);
+                                if (duongKinh) formData.append('duongKinh', duongKinh);
+                                if (doChiuNuoc) formData.append('doChiuNuoc', doChiuNuoc);
+                                if (beRongDay) formData.append('beRongDay', beRongDay);
+                                if (trongLuong) formData.append('trongLuong', trongLuong);
+
+                                const variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/create-with-excel`, {
+                                    method: 'POST',
+                                    body: formData
+                                });
+
+                                if (!variantResponse.ok) {
+                                    const error = await variantResponse.text();
+                                    console.warn('Lỗi lưu biến thể:', error);
+                                }
+                            }
                         } else {
-                            // Thêm variant mới
-                            variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(variantData)
-                            });
-                        }
+                            // Gửi JSON không có file (như cũ)
+                            const variantData = {
+                                idSanPham: parseInt(productId),
+                                idMauSac: parseInt(getVariantValue(variantRow, '.variant-mauSac')) || null,
+                                idKichThuoc: parseInt(getVariantValue(variantRow, '.variant-kichThuoc')) || null,
+                                idChatLieuDay: parseInt(getVariantValue(variantRow, '.variant-chatLieuDay')) || null,
+                                giaBan: parseFloat(getVariantValue(variantRow, '.variant-giaBan', '0')),
+                                soLuongTon: parseInt(getVariantValue(variantRow, '.variant-soLuongTon', '0')),
+                                duongKinh: parseFloat(getVariantValue(variantRow, '.variant-duongKinh')) || null,
+                                doChiuNuoc: parseInt(getVariantValue(variantRow, '.variant-doChiuNuoc')) || null,
+                                beRongDay: parseFloat(getVariantValue(variantRow, '.variant-beRongDay')) || null,
+                                trongLuong: parseFloat(getVariantValue(variantRow, '.variant-trongLuong')) || null,
+                                trangThai: (() => {
+                                    const checked = variantRow.querySelector('input[name^="trangThaiChiTiet"]:checked');
+                                    return checked ? checked.value === 'true' : true;
+                                })()
+                            };
 
-                        if (!variantResponse.ok) {
-                            const error = await variantResponse.text();
-                            console.warn('Lỗi lưu biến thể:', error);
+                            let variantResponse;
+                            if (variantId) {
+                                // Update variant cũ
+                                variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/${variantId}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(variantData)
+                                });
+                            } else {
+                                // Thêm variant mới
+                                variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(variantData)
+                                });
+                            }
+
+                            if (!variantResponse.ok) {
+                                const error = await variantResponse.text();
+                                console.warn('Lỗi lưu biến thể:', error);
+                            }
                         }
                     }
 
@@ -2183,6 +2560,30 @@
                             <div class="modal-form-group" style="grid-column: 1 / -1;">
                                 <label>Serial hiện có</label>
                                 <div class="variant-serial-preview"></div>
+                            </div>
+
+                            <div class="modal-form-group" style="grid-column: 1 / -1;">
+                                <label>Thêm serial từ Excel</label>
+                                <div class="serial-upload-section">
+                                    <div class="serial-upload-row">
+                                        <input type="file" class="variant-serial-file" accept=".xlsx,.xls" style="display: none;" onchange="handleSerialFileUpload(this)">
+                                        <button type="button" class="btn-upload-serial" onclick="this.previousElementSibling.click()">
+                                            <i class="fas fa-file-excel"></i> Chọn file Excel
+                                        </button>
+                                        <a href="/api/san-pham-chi-tiet/serial/template" class="btn-download-template" download>
+                                            <i class="fas fa-download"></i> Tải template
+                                        </a>
+                                    </div>
+                                    <div class="serial-preview-area">
+                                        <div class="serial-preview-header">
+                                            <span class="serial-count">Chưa chọn file</span>
+                                            <button type="button" class="btn-clear-serial" onclick="clearSerialFile(this)" style="display: none;">
+                                                <i class="fas fa-times"></i> Xóa
+                                            </button>
+                                        </div>
+                                        <div class="serial-list"></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <button type="button" class="variant-remove" onclick="removeVariantRow(this)">

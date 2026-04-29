@@ -438,7 +438,7 @@ public class UserCheckoutController {
             Integer pendingCartId = (Integer) session.getAttribute("pendingVnPayCartId");
 
             if (vnPayService.verifyReturn(request)) {
-                hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "CHO_XAC_NHAN");
+                hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "DA_THANH_TOAN_ONL");
                 if (pendingCartId != null && userId != null) {
                     GioHangDTO cart = gioHangService.getOrCreateCart(userId);
                     if (cart.getId().equals(pendingCartId)) {
