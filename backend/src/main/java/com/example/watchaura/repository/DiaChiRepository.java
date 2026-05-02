@@ -13,6 +13,8 @@ public interface DiaChiRepository extends JpaRepository<DiaChi, Integer> {
     List<DiaChi> findByKhachHangId(Integer khachHangId);
 
     Optional<DiaChi> findFirstByKhachHangIdAndMacDinhTrue(Integer khachHangId);
+
+    Optional<DiaChi> findByIdAndKhachHangIdAndIsDeletedFalse(Integer id, Integer khachHangId);
 }
 
 

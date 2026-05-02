@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content" class="user-page cart-page checkout-page">
+    <link rel="stylesheet" th:href="@{/css/address-checkout-premium.css}">
     <div class="container cart-container">
         <nav class="breadcrumb cart-breadcrumb">
             <a th:href="@{/}">Trang chủ</a>
@@ -19,28 +20,49 @@
         <div th:if="${stockWarning}" class="alert alert--warning" th:text="${stockWarning}">Cảnh báo tồn kho</div>
 
         <form th:action="@{/thanh-toan/dat-hang}" method="post" th:object="${checkoutForm}" id="checkoutForm" class="checkout-form">
+            <input type="hidden" id="selectedAddressIdInput" th:field="*{selectedAddressId}">
+            <input type="hidden" id="shippingProvinceIdInput" th:field="*{shippingProvinceId}">
+            <input type="hidden" id="shippingDistrictIdInput" th:field="*{shippingDistrictId}">
+            <input type="hidden" id="shippingWardCodeInput" th:field="*{shippingWardCode}">
             <div class="checkout-layout">
                 <div class="checkout-form__section">
                     <h2 class="checkout-section__title">Thông tin giao hàng</h2>
+                    <input type="hidden" id="tenKhachHang" th:field="*{tenKhachHang}">
+                    <input type="hidden" id="sdtKhachHang" th:field="*{sdtKhachHang}">
+                    <input type="hidden" id="email" th:field="*{email}">
+                    <textarea id="diaChi" th:field="*{diaChi}" style="display:none;"></textarea>
+
                     <div class="form-group">
-                        <label for="tenKhachHang">Họ tên người nhận <span class="required">*</span></label>
-                        <input type="text" id="tenKhachHang" th:field="*{tenKhachHang}" class="form-control" placeholder="Nguyễn Văn A" required maxlength="100">
-                        <span th:if="${#fields.hasErrors('tenKhachHang')}" th:errors="*{tenKhachHang}" class="field-error"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="sdtKhachHang">Số điện thoại <span class="required">*</span></label>
-                        <input type="tel" id="sdtKhachHang" th:field="*{sdtKhachHang}" class="form-control" placeholder="0901234567" required maxlength="20">
-                        <span th:if="${#fields.hasErrors('sdtKhachHang')}" th:errors="*{sdtKhachHang}" class="field-error"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email <span class="required">*</span></label>
-                        <input type="email" id="email" th:field="*{email}" class="form-control" placeholder="email@example.com" required maxlength="100">
-                        <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="field-error"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="diaChi">Địa chỉ giao hàng <span class="required">*</span></label>
-                        <textarea id="diaChi" th:field="*{diaChi}" class="form-control form-control--textarea" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" required rows="3" maxlength="500"></textarea>
-                        <span th:if="${#fields.hasErrors('diaChi')}" th:errors="*{diaChi}" class="field-error"></span>
+                        <div class="wa-shipping-header">
+                            <label>Chọn địa chỉ đã lưu</label>
+                            <a th:href="@{/nguoidung#dia-chi}" class="btn btn--primary btn--sm">+ Thêm địa chỉ</a>
+                        </div>
+                        <div class="wa-shipping-address-list" id="waShippingAddressList">
+                            <label class="wa-shipping-address-card"
+                                   th:each="dc : ${shippingAddresses}"
+                                   th:classappend="${selectedAddressId != null and selectedAddressId == dc.id} ? ' is-selected' : ''">
+                                <input type="radio" name="waShippingAddressChoice"
+                                       th:value="${dc.id}"
+                                       th:checked="${selectedAddressId != null and selectedAddressId == dc.id}">
+                                <span class="wa-shipping-address-content">
+                                    <strong th:text="${(dc.tenNguoiNhan != null and !dc.tenNguoiNhan.isBlank() ? dc.tenNguoiNhan : 'Người nhận') + (dc.sdtNguoiNhan != null and !dc.sdtNguoiNhan.isBlank() ? ' · ' + dc.sdtNguoiNhan : '')}"></strong>
+                                    <small th:text="${(dc.diaChiCuThe != null ? dc.diaChiCuThe : '') + (dc.phuongXa != null ? ', ' + dc.phuongXa : '') + (dc.quanHuyen != null ? ', ' + dc.quanHuyen : '') + (dc.tinhThanh != null ? ', ' + dc.tinhThanh : '')}"></small>
+                                    <em th:if="${dc.macDinh}">Mặc định</em>
+                                </span>
+                            </label>
+                        </div>
+                        <select id="shippingAddressSelect" class="form-control wa-hidden-legacy">
+                            <option value="">-- Chọn địa chỉ khác hoặc nhập tay --</option>
+                            <option th:each="dc : ${shippingAddresses}"
+                                    th:value="${dc.id}"
+                                    th:selected="${selectedAddressId != null and selectedAddressId == dc.id}"
+                                    th:attr="data-district-id=${dc.ghnDistrictId},data-ward-code=${dc.ghnWardCode},data-full-address=${(dc.diaChiCuThe != null ? dc.diaChiCuThe : '') + (dc.phuongXa != null ? ', ' + dc.phuongXa : '') + (dc.quanHuyen != null ? ', ' + dc.quanHuyen : '') + (dc.tinhThanh != null ? ', ' + dc.tinhThanh : '')}"
+                                    th:text="${(dc.macDinh ? '[Mặc định] ' : '') + (dc.diaChiCuThe != null ? dc.diaChiCuThe : '') + (dc.phuongXa != null ? ', ' + dc.phuongXa : '') + (dc.quanHuyen != null ? ', ' + dc.quanHuyen : '') + (dc.tinhThanh != null ? ', ' + dc.tinhThanh : '')}">
+                            </option>
+                        </select>
+                        <select id="shippingProvinceSelect" class="form-control wa-hidden-legacy"><option value="">-- Chọn tỉnh/thành --</option></select>
+                        <select id="shippingDistrictSelect" class="form-control wa-hidden-legacy" disabled><option value="">-- Chọn quận/huyện --</option></select>
+                        <select id="shippingWardSelect" class="form-control wa-hidden-legacy" disabled><option value="">-- Chọn phường/xã --</option></select>
                     </div>
                     <div class="form-group">
                         <label for="ghiChu">Ghi chú</label>
@@ -104,6 +126,7 @@
                             <span class="cart-summary__label">Phí giao hàng</span>
                             <span class="cart-summary__value" id="checkout-shipping-fee" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
                         </div>
+                        <p class="cart-summary__note" id="shipping-status-note" style="display:none;"></p>
                         <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 1.000.000₫ được miễn phí giao hàng</p>
                         <div class="cart-summary__row cart-summary__row--total">
                             <span class="cart-summary__label">Tổng thanh toán</span>
@@ -186,15 +209,43 @@
         .checkout-page .cart-summary__note--free-ship { color: #555; font-size: 0.85rem; font-weight: 500; margin-top: 0.5rem; margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
         .checkout-page #checkout-shipping-fee,
         .checkout-page .cart-summary__value--free-ship { color: #16a34a; font-weight: 600; }
+        .checkout-page .cart-summary__note--error { color: #c9302c; }
+        .checkout-page .cart-summary__note--loading { color: #666; }
+        .checkout-page .cart-summary__note--warning { color: #b26a00; }
+        .checkout-page .wa-hidden-legacy { display: none !important; }
+        .checkout-page .wa-shipping-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
+        .checkout-page .wa-shipping-address-list { display:grid; gap:.6rem; margin-bottom:.6rem; }
+        .checkout-page .wa-shipping-address-card { display:flex; gap:.7rem; padding:.75rem .85rem; border:1px solid #e9e9e9; border-radius:10px; background:#fff; cursor:pointer; transition:all .2s ease; }
+        .checkout-page .wa-shipping-address-card:hover { border-color:#cfc6a5; box-shadow:0 6px 14px rgba(0,0,0,.05); }
+        .checkout-page .wa-shipping-address-card.is-selected { border-color:#8d79ff; background:#f8f7ff; }
+        .checkout-page .wa-shipping-address-card input[type="radio"] { margin-top:.2rem; }
+        .checkout-page .wa-shipping-address-content { display:flex; flex-direction:column; gap:.2rem; }
+        .checkout-page .wa-shipping-address-content small { color:#666; }
+        .checkout-page .wa-shipping-address-content em { font-style:normal; color:#1976d2; font-size:.82rem; font-weight:600; }
         @media (max-width: 900px) {
             .checkout-page .checkout-layout { grid-template-columns: 1fr; }
             .checkout-page .checkout-summary { position: static; }
         }
     </style>
     <script th:inline="javascript">
+        window.__checkoutBaseTotal = Number(/*[[${cart.tongTien}]]*/ 0);
+    </script>
+    <script type="module" th:src="@{/js/address-checkout/page.entry.js}"></script>
+    <script th:inline="javascript">
         (function() {
             var form = document.getElementById('checkoutForm');
             var btn = document.getElementById('btnSubmitOrder');
+            var selectedVoucherInput = document.getElementById('selectedVoucherId');
+            var voucherListContainer = document.getElementById('voucher-list-container');
+            var selectedVoucherInfo = document.getElementById('selected-voucher-info');
+            var voucherMsg = document.getElementById('voucherMessage');
+            var voucherRow = document.getElementById('voucher-row');
+            var voucherDiscountEl = document.getElementById('checkout-voucher-discount');
+            var getVouchersUrl = /*[[@{/thanh-toan/vouchers}]]*/ '/thanh-toan/vouchers';
+            var applyVoucherUrl = /*[[@{/thanh-toan/apply-voucher-by-id}]]*/ '/thanh-toan/apply-voucher-by-id';
+            var baseTotal = Number(window.__checkoutBaseTotal || 0);
+            var currentDiscount = 0;
+
             if (form && btn) {
                 var radios = form.querySelectorAll('input[name="phuongThucThanhToan"]');
                 function updateBtn() {
@@ -205,47 +256,10 @@
                 updateBtn();
             }
 
-            var voucherListContainer = document.getElementById('voucher-list-container');
-            var selectedVoucherInfo = document.getElementById('selected-voucher-info');
-            var selectedVoucherInput = document.getElementById('selectedVoucherId');
-            var voucherMsg = document.getElementById('voucherMessage');
-            var tongTienEl = document.getElementById('checkout-tong-tien');
-            var voucherRow = document.getElementById('voucher-row');
-            var voucherDiscountEl = document.getElementById('checkout-voucher-discount');
-            var shippingFeeEl = document.getElementById('checkout-shipping-fee');
-            var shippingNoteEl = document.getElementById('shipping-note');
-            var baseTotal = /*[[${cart.tongTien}]]*/ 0;
-
-            var SHIPPING_FEE = 40000;
-            var FREE_SHIPPING_THRESHOLD = 1000000;
-
-            var getVouchersUrl = /*[[@{/thanh-toan/vouchers}]]*/ '/thanh-toan/vouchers';
-            var applyVoucherUrl = /*[[@{/thanh-toan/apply-voucher-by-id}]]*/ '/thanh-toan/apply-voucher-by-id';
-
             function formatCurrencyVnd(value) {
                 var num = Number(value || 0);
                 if (isNaN(num)) num = 0;
                 return num.toLocaleString('vi-VN') + ' ₫';
-            }
-
-            function calculateShippingFee(subtotal) {
-                return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-            }
-
-            function updateShippingDisplay(subtotal) {
-                var shippingFee = calculateShippingFee(subtotal);
-                if (shippingFeeEl) {
-                    shippingFeeEl.textContent = formatCurrencyVnd(shippingFee);
-                    if (shippingFee === 0 && subtotal > 0) {
-                        shippingFeeEl.classList.add('cart-summary__value--free-ship');
-                    } else {
-                        shippingFeeEl.classList.remove('cart-summary__value--free-ship');
-                    }
-                }
-                if (shippingNoteEl) {
-                    shippingNoteEl.style.display = shippingFee === 0 && subtotal > 0 ? '' : 'none';
-                }
-                return shippingFee;
             }
 
             function formatDiscount(voucher) {
@@ -374,16 +388,15 @@
                     if (radio) radio.checked = false;
                 });
 
-                var shippingFee = updateShippingDisplay(baseTotal);
-                var grandTotal = baseTotal + shippingFee;
-                if (tongTienEl) {
-                    tongTienEl.textContent = formatCurrencyVnd(grandTotal);
-                }
+                currentDiscount = 0;
                 if (voucherRow) {
                     voucherRow.style.display = 'none';
                 }
                 voucherMsg.textContent = '';
                 voucherMsg.className = 'voucher-message';
+                if (typeof window.__waCheckoutSetPricing === 'function') {
+                    window.__waCheckoutSetPricing({ merchandiseSubtotal: baseTotal, discount: 0 });
+                }
             };
 
             function applyVoucher(voucherId) {
@@ -403,12 +416,10 @@
                     voucherMsg.textContent = data.message || '';
                     if (data.success) {
                         voucherMsg.classList.add('voucher-message--success');
-                        var discount = typeof data.discount !== 'undefined' && data.discount !== null ? data.discount : 0;
-                        var finalTotal = typeof data.finalTotal !== 'undefined' && data.finalTotal !== null ? data.finalTotal : baseTotal;
-                        var shippingFee = updateShippingDisplay(finalTotal);
-                        var grandTotal = finalTotal + shippingFee;
-                        if (tongTienEl) {
-                            tongTienEl.textContent = formatCurrencyVnd(grandTotal);
+                        var discount = typeof data.discount !== 'undefined' && data.discount !== null ? Number(data.discount) : 0;
+                        currentDiscount = discount;
+                        if (typeof window.__waCheckoutSetPricing === 'function') {
+                            window.__waCheckoutSetPricing({ merchandiseSubtotal: baseTotal, discount: currentDiscount });
                         }
                         if (voucherRow && voucherDiscountEl) {
                             voucherRow.style.display = '';
@@ -426,11 +437,29 @@
 
             // Load vouchers on page load
             loadVouchers();
+            if (typeof window.__waCheckoutSetPricing === 'function') {
+                window.__waCheckoutSetPricing({ merchandiseSubtotal: baseTotal, discount: 0 });
+            }
 
-            // Đồng bộ tổng thanh toán = tiền hàng + phí ship (mặc định chưa có voucher)
-            var shippingFeeInit = updateShippingDisplay(baseTotal);
-            if (tongTienEl) {
-                tongTienEl.textContent = formatCurrencyVnd(Number(baseTotal) + shippingFeeInit);
+            var hiddenSelect = document.getElementById('shippingAddressSelect');
+            var radioAddressEls = document.querySelectorAll('input[name="waShippingAddressChoice"]');
+            function syncAddressCardActive() {
+                var activeId = hiddenSelect ? String(hiddenSelect.value || '') : '';
+                document.querySelectorAll('.wa-shipping-address-card').forEach(function(card) {
+                    var radio = card.querySelector('input[name="waShippingAddressChoice"]');
+                    card.classList.toggle('is-selected', !!radio && String(radio.value) === activeId);
+                });
+            }
+            if (hiddenSelect && radioAddressEls.length) {
+                radioAddressEls.forEach(function(radio) {
+                    radio.addEventListener('change', function() {
+                        hiddenSelect.value = this.value;
+                        hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        syncAddressCardActive();
+                    });
+                });
+                hiddenSelect.addEventListener('change', syncAddressCardActive);
+                syncAddressCardActive();
             }
         })();
     </script>

@@ -8,6 +8,8 @@ import com.example.watchaura.dto.StockWarningItem;
 import com.example.watchaura.dto.HoaDonChiTietRequest;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
+import com.example.watchaura.dto.ShippingFeeRequest;
+import com.example.watchaura.dto.ShippingFeeResponse;
 import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.service.GioHangChiTietService;
 import com.example.watchaura.service.GioHangService;
@@ -16,6 +18,7 @@ import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
 import com.example.watchaura.service.DiaChiService;
+import com.example.watchaura.service.ShippingService;
 import com.example.watchaura.util.ShippingFeeUtil;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.entity.Voucher;
@@ -55,6 +58,7 @@ public class UserCheckoutController {
     private final VNPayService vnPayService;
     private final VoucherService voucherService;
     private final DiaChiService diaChiService;
+    private final ShippingService shippingService;
     private final VNPayProperties vnPayProperties;
 
     @GetMapping
@@ -101,6 +105,7 @@ public class UserCheckoutController {
         model.addAttribute("cart", cart);
         addCheckoutPricingAttributes(model, cart);
         model.addAttribute("khachHang", khachHang);
+        addShippingAddressAttributes(model, userId);
         if (!model.containsAttribute("checkoutForm")) {
             CheckoutForm form = new CheckoutForm();
             form.setTenKhachHang(khachHang.getTenNguoiDung() != null ? khachHang.getTenNguoiDung() : "");
@@ -224,6 +229,7 @@ public class UserCheckoutController {
             model.addAttribute("cart", cart);
             addCheckoutPricingAttributes(model, cart);
             model.addAttribute("khachHang", khachHangService.getById(userId));
+            addShippingAddressAttributes(model, userId);
             return "layout/user-layout";
         }
 
@@ -264,6 +270,7 @@ public class UserCheckoutController {
             request.setGhiChu(form.getGhiChu() != null ? form.getGhiChu().trim() : null);
             request.setVoucherId(voucherId);
             request.setNhanVienId(null);
+            request.setPhiVanChuyen(recalculateShippingFeeForCheckout(form, userId, cart));
 
             List<HoaDonChiTietRequest> items = cart.getItems().stream()
                     .map(item -> new HoaDonChiTietRequest(item.getSanPhamChiTietId(), item.getSoLuong()))
@@ -475,6 +482,20 @@ public class UserCheckoutController {
         model.addAttribute("checkoutGrandTotal", sub.add(ship));
     }
 
+    private void addShippingAddressAttributes(Model model, Integer userId) {
+        List<DiaChi> shippingAddresses = diaChiService.getByKhachHang(userId).stream()
+                .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
+                .collect(Collectors.toList());
+        model.addAttribute("shippingAddresses", shippingAddresses);
+
+        Integer selectedAddressId = shippingAddresses.stream()
+                .filter(d -> Boolean.TRUE.equals(d.getMacDinh()))
+                .map(DiaChi::getId)
+                .findFirst()
+                .orElse(shippingAddresses.stream().findFirst().map(DiaChi::getId).orElse(null));
+        model.addAttribute("selectedAddressId", selectedAddressId);
+    }
+
     private static String getBaseUrl(HttpServletRequest request) {
         String scheme = request.getScheme();
         String serverName = request.getServerName();
@@ -553,5 +574,27 @@ public class UserCheckoutController {
         private String ghiChu;
         private String phuongThucThanhToan = "COD";
         private String maVoucher;
+        private Integer selectedAddressId;
+        private Integer shippingProvinceId;
+        private Integer shippingDistrictId;
+        private String shippingWardCode;
+    }
+
+    private BigDecimal recalculateShippingFeeForCheckout(CheckoutForm form, Integer userId, GioHangDTO cart) {
+        ShippingFeeRequest shippingRequest = new ShippingFeeRequest();
+        if (form.getSelectedAddressId() != null) {
+            shippingRequest.setAddressId(form.getSelectedAddressId());
+        } else {
+            shippingRequest.setToDistrictId(form.getShippingDistrictId());
+            shippingRequest.setToWardCode(form.getShippingWardCode());
+        }
+        long insuranceValue = cart != null && cart.getTongTien() != null ? cart.getTongTien().longValue() : 0L;
+        shippingRequest.setInsuranceValue(Math.max(insuranceValue, 0L));
+
+        ShippingFeeResponse shippingResponse = shippingService.calculateFee(shippingRequest, userId);
+        if (shippingResponse == null || shippingResponse.getShippingFee() < 0) {
+            throw new RuntimeException("Không thể tính phí vận chuyển ở bước xác nhận đơn.");
+        }
+        return BigDecimal.valueOf(shippingResponse.getShippingFee());
     }
 }

@@ -373,6 +373,21 @@
     margin-bottom: 1rem;
 }
 
+.wa-account-address-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.wa-account-address-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.wa-account-address-form {
+    margin-top: 0.75rem;
+}
+
 .account-form--address {
     max-width: 560px;
 }

@@ -1,6 +1,5 @@
 package com.example.watchaura.controller;
 
-import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.HoaDon;
@@ -65,8 +64,8 @@ public class CheckoutController {
 
         model.addAttribute("cart", cart);
         BigDecimal sub = cart.getTongTien() != null ? cart.getTongTien() : BigDecimal.ZERO;
-        model.addAttribute("checkoutShippingFee", ShippingFeeUtil.feeForMerchandiseSubtotal(sub));
-        model.addAttribute("checkoutGrandTotal", sub.add(ShippingFeeUtil.feeForMerchandiseSubtotal(sub)));
+        model.addAttribute("checkoutShippingFee", BigDecimal.ZERO);
+        model.addAttribute("checkoutGrandTotal", sub);
         model.addAttribute("title", "Thanh toán - WatchAura");
         model.addAttribute("content", "user/checkout :: content");
         return "layout/user-layout";
@@ -87,9 +86,18 @@ public class CheckoutController {
             return "redirect:/thanh-toan";
         }
 
-        Map<Integer, Integer> cart = (Map<Integer, Integer>) session.getAttribute("cart");
+        Object cartRaw = session.getAttribute("cart");
+        if (!(cartRaw instanceof Map<?, ?> rawMap) || rawMap.isEmpty()) {
+            return "redirect:/gio-hang";
+        }
+        Map<Integer, Integer> cart = new java.util.LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            if (entry.getKey() instanceof Integer key && entry.getValue() instanceof Integer value) {
+                cart.put(key, value);
+            }
+        }
 
-        if (cart == null || cart.isEmpty()) {
+        if (cart.isEmpty()) {
             return "redirect:/gio-hang";
         }
 
