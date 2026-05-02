@@ -1,0 +1,190 @@
+.wa-address-empty {
+    padding: 16px;
+    border: 1px dashed #d8d8d8;
+    border-radius: 12px;
+    color: #555;
+    background: #fff;
+}
+
+.wa-address-card {
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.wa-address-card:hover {
+    border-color: #d7c08a;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.wa-address-card.is-selected {
+    border-color: #b9932f;
+    box-shadow: 0 8px 20px rgba(185, 147, 47, 0.18);
+}
+
+.wa-address-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.wa-address-card__pick {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 600;
+    color: #1d1d1d;
+}
+
+.wa-address-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6d4c03;
+    background: #fff7df;
+    border: 1px solid #ead9aa;
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.wa-address-card__line {
+    margin: 0 0 6px;
+    color: #2d2d2d;
+}
+
+.wa-address-card__meta {
+    margin: 0 0 10px;
+    color: #6a6a6a;
+    font-size: 13px;
+}
+
+.wa-address-card__actions {
+    display: flex;
+    gap: 14px;
+}
+
+.wa-link-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #1f4ba5;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.wa-link-btn--danger {
+    color: #b42318;
+}
+
+.wa-icon-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #dde1e7;
+    border-radius: 8px;
+    background: #fff;
+    color: #5e6674;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+.wa-icon-btn:hover {
+    border-color: #b9932f;
+    color: #b9932f;
+}
+
+.wa-icon-btn--danger:hover {
+    border-color: #d92d20;
+    color: #d92d20;
+}
+
+.wa-address-form-shell {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: waFadeIn .22s ease forwards;
+}
+
+@keyframes waFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.wa-address-form {
+    border: 1px solid #ece7d6;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 18px 44px rgba(24, 24, 24, 0.1);
+    padding: 16px;
+}
+
+.wa-address-form__title {
+    margin: 0 0 12px;
+    font-size: 17px;
+}
+
+.wa-address-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+}
+
+.wa-address-form__grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: #333;
+}
+
+.wa-address-form__grid label.full {
+    grid-column: 1 / -1;
+}
+
+.wa-address-form__grid input {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px 11px;
+}
+
+.wa-address-form__grid select {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px 11px;
+    background: #fff;
+}
+
+.wa-address-form__error {
+    min-height: 20px;
+    margin: 10px 0 0;
+    color: #b42318;
+    font-size: 13px;
+}
+
+.wa-address-form__actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.wa-btn {
+    border: 1px solid #d4d4d4;
+    border-radius: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+}
+
+.wa-btn--primary {
+    border-color: #b9932f;
+    background: #b9932f;
+    color: #fff;
+}
+
+.wa-btn--ghost {
+    background: #fff;
+}

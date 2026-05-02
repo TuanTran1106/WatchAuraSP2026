@@ -12,10 +12,13 @@
         .guest-checkout-page .form-group { margin-bottom: 15px; }
         .guest-checkout-page .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 5px; }
         .guest-checkout-page .form-group input,
-        .guest-checkout-page .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .guest-checkout-page .form-group textarea,
+        .guest-checkout-page .form-group select { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
         .guest-checkout-page .form-group input:focus,
-        .guest-checkout-page .form-group textarea:focus { outline: none; border-color: #1a1a2e; }
+        .guest-checkout-page .form-group textarea:focus,
+        .guest-checkout-page .form-group select:focus { outline: none; border-color: #1a1a2e; }
         .guest-checkout-page .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .guest-checkout-page .btn-submit[disabled] { opacity: .65; cursor: not-allowed; }
         .guest-checkout-page .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(26, 26, 46, 0.3); }
         .guest-checkout-page .order-summary { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
         .guest-checkout-page .order-summary h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1a1a2e; }
@@ -34,6 +37,10 @@
         .guest-checkout-page .total-row.final .summary-amount { font-weight: 700; }
         .guest-checkout-page .payment-method { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center; }
         .guest-checkout-page .payment-method span { font-weight: 600; color: #27ae60; }
+        .guest-checkout-page .checkout-status { margin-top: 12px; font-size: 13px; color: #64748b; }
+        .guest-checkout-page .inline-msg { margin: 12px 0; padding: 10px 12px; border-radius: 8px; font-size: 13px; }
+        .guest-checkout-page .inline-msg--error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .guest-checkout-page .inline-msg--success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         @media (max-width: 768px) {
             .guest-checkout-page .checkout-grid { grid-template-columns: 1fr; }
             .guest-checkout-page .order-summary { position: static; }
@@ -56,8 +63,7 @@
 
         <div class="checkout-grid">
             <div class="checkout-form">
-                <form th:action="@{/checkout}"
-                      method="post"
+                <form id="guestCheckoutForm"
                       data-confirm="Bạn có chắc chắn muốn đặt đơn hàng (COD) không?"
                       data-confirm-title="Xác nhận đặt hàng"
                       data-confirm-ok="Đặt hàng"
@@ -66,31 +72,50 @@
                     <div class="form-section">
                         <h3>Thông tin khách hàng</h3>
                         <div class="form-group">
-                            <label for="tenKhachHang">Họ tên *</label>
-                            <input type="text" id="tenKhachHang" name="tenKhachHang" required maxlength="100" placeholder="Người nhận hàng">
+                            <label for="hoTen">Họ tên *</label>
+                            <input type="text" id="hoTen" required maxlength="100" placeholder="Người nhận hàng">
                         </div>
                         <div class="form-group">
                             <label for="email">Email *</label>
-                            <input type="email" id="email" name="email" required placeholder="Để gửi xác nhận đơn hàng">
+                            <input type="email" id="email" required placeholder="Để gửi xác nhận đơn hàng">
                         </div>
                         <div class="form-group">
                             <label for="sdt">Số điện thoại *</label>
-                            <input type="text" id="sdt" name="sdt" required placeholder="Số liên hệ giao hàng">
+                            <input type="text" id="sdt" required placeholder="Số liên hệ giao hàng">
                         </div>
                     </div>
 
                     <div class="form-section">
                         <h3>Địa chỉ giao hàng</h3>
                         <div class="form-group">
-                            <label for="diaChi">Địa chỉ *</label>
-                            <input type="text" id="diaChi" name="diaChi" required placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố">
+                            <label for="ghnProvinceId">Tỉnh/Thành phố *</label>
+                            <select id="ghnProvinceId" required>
+                                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label for="ghiChu">Ghi chú (tùy chọn)</label>
-                            <textarea id="ghiChu" name="ghiChu" rows="3" placeholder="Ghi chú thêm cho đơn hàng"></textarea>
+                            <label for="ghnDistrictId">Quận/Huyện *</label>
+                            <select id="ghnDistrictId" required disabled>
+                                <option value="">-- Chọn Quận/Huyện --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ghnWardCode">Phường/Xã *</label>
+                            <select id="ghnWardCode" required disabled>
+                                <option value="">-- Chọn Phường/Xã --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="diaChiCuThe">Địa chỉ cụ thể *</label>
+                            <input type="text" id="diaChiCuThe" required placeholder="Số nhà, tên đường...">
+                        </div>
+                        <div class="form-group">
+                            <label for="ghiChu">Ghi chú</label>
+                            <textarea id="ghiChu" rows="3" placeholder="Ghi chú thêm cho đơn hàng"></textarea>
                         </div>
                     </div>
-
+                    <div id="guestCheckoutError" class="inline-msg inline-msg--error" style="display:none;"></div>
+                    <div id="guestCheckoutSuccess" class="inline-msg inline-msg--success" style="display:none;"></div>
                     <button type="submit" class="btn-submit">Đặt hàng (COD)</button>
                 </form>
             </div>
@@ -122,13 +147,16 @@
                     </div>
                     <div class="total-row">
                         <span>Phí giao hàng</span>
-                        <span class="summary-amount" th:if="${checkoutShippingFee != null and checkoutShippingFee == 0}" style="color:#16a34a;font-weight:600;">Miễn phí</span>
-                        <span class="summary-amount" th:if="${checkoutShippingFee == null or checkoutShippingFee != 0}" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
+                        <span id="guestShippingFee" class="summary-amount">Tính khi chọn địa chỉ</span>
                     </div>
                     <div class="total-row final">
                         <span>Tổng cộng</span>
-                        <span class="summary-amount" th:if="${checkoutGrandTotal != null}" th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
+                        <span id="guestGrandTotal"
+                              class="summary-amount"
+                              th:attr="data-subtotal=${cart != null && cart.tongTien != null ? cart.tongTien : 0}"
+                              th:text="|${#numbers.formatDecimal(checkoutGrandTotal, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                     </div>
+                    <p id="guestCheckoutStatus" class="checkout-status">Phí giao hàng sẽ được tính realtime theo GHN khi chọn đủ địa chỉ.</p>
                 </div>
 
                 <div class="payment-method">
@@ -137,6 +165,226 @@
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            const form = document.getElementById('guestCheckoutForm');
+            if (!form) return;
+
+            const els = {
+                hoTen: document.getElementById('hoTen'),
+                email: document.getElementById('email'),
+                sdt: document.getElementById('sdt'),
+                diaChiCuThe: document.getElementById('diaChiCuThe'),
+                ghiChu: document.getElementById('ghiChu'),
+                province: document.getElementById('ghnProvinceId'),
+                district: document.getElementById('ghnDistrictId'),
+                ward: document.getElementById('ghnWardCode'),
+                shippingFee: document.getElementById('guestShippingFee'),
+                grandTotal: document.getElementById('guestGrandTotal'),
+                status: document.getElementById('guestCheckoutStatus'),
+                err: document.getElementById('guestCheckoutError'),
+                ok: document.getElementById('guestCheckoutSuccess')
+            };
+
+            let shippingFeeValue = null;
+            let requestNo = 0;
+
+            function num(v) {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : 0;
+            }
+
+            function formatVnd(v) {
+                return new Intl.NumberFormat('vi-VN').format(num(v)) + ' ₫';
+            }
+
+            function currentSubtotal() {
+                return num(els.grandTotal && els.grandTotal.dataset ? els.grandTotal.dataset.subtotal : 0);
+            }
+
+            function setMsg(type, text) {
+                els.err.style.display = 'none';
+                els.ok.style.display = 'none';
+                if (!text) return;
+                if (type === 'error') {
+                    els.err.textContent = text;
+                    els.err.style.display = 'block';
+                    return;
+                }
+                els.ok.textContent = text;
+                els.ok.style.display = 'block';
+            }
+
+            function fillSelect(select, items, placeholder) {
+                select.innerHTML = '';
+                const first = document.createElement('option');
+                first.value = '';
+                first.textContent = placeholder;
+                select.appendChild(first);
+                items.forEach(it => {
+                    const op = document.createElement('option');
+                    op.value = it.id;
+                    op.textContent = it.name;
+                    select.appendChild(op);
+                });
+                select.disabled = false;
+            }
+
+            async function fetchJson(url) {
+                const res = await fetch(url, {headers: {'Accept': 'application/json'}});
+                const body = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(body.message || 'Yêu cầu thất bại.');
+                return body;
+            }
+
+            function selectedText(selectEl) {
+                const idx = selectEl.selectedIndex;
+                if (idx < 0) return '';
+                return (selectEl.options[idx] && selectEl.options[idx].textContent || '').trim();
+            }
+
+            function buildPayload() {
+                return {
+                    hoTen: (els.hoTen.value || '').trim(),
+                    email: (els.email.value || '').trim(),
+                    sdt: (els.sdt.value || '').trim(),
+                    diaChiCuThe: (els.diaChiCuThe.value || '').trim(),
+                    phuongXa: selectedText(els.ward),
+                    quanHuyen: selectedText(els.district),
+                    tinhThanh: selectedText(els.province),
+                    ghnProvinceId: els.province.value ? Number(els.province.value) : null,
+                    ghnDistrictId: els.district.value ? Number(els.district.value) : null,
+                    ghnWardCode: (els.ward.value || '').trim(),
+                    ghiChu: (els.ghiChu.value || '').trim(),
+                    phuongThucThanhToan: 'COD'
+                };
+            }
+
+            function payloadReadyForPreview(payload) {
+                return !!(payload.hoTen && payload.email && payload.sdt && payload.diaChiCuThe && payload.ghnDistrictId && payload.ghnWardCode && payload.quanHuyen && payload.phuongXa && payload.tinhThanh);
+            }
+
+            function updateTotals() {
+                const sub = currentSubtotal();
+                const ship = shippingFeeValue == null ? 0 : num(shippingFeeValue);
+                if (shippingFeeValue == null) {
+                    els.shippingFee.textContent = 'Tính khi chọn địa chỉ';
+                } else {
+                    els.shippingFee.textContent = formatVnd(ship);
+                }
+                els.grandTotal.textContent = formatVnd(sub + ship);
+            }
+
+            async function loadProvinces() {
+                try {
+                    const res = await fetchJson('/api/shipping/provinces');
+                    fillSelect(els.province, res.items || [], '-- Chọn Tỉnh/Thành phố --');
+                } catch (e) {
+                    setMsg('error', e.message || 'Không tải được danh sách tỉnh/thành.');
+                }
+            }
+
+            async function previewShipping() {
+                const payload = buildPayload();
+                if (!payloadReadyForPreview(payload)) {
+                    shippingFeeValue = null;
+                    updateTotals();
+                    return;
+                }
+                const myNo = ++requestNo;
+                els.status.textContent = 'Đang tính phí GHN...';
+                try {
+                    const res = await fetch('/api/guest-checkout/preview', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const body = await res.json().catch(() => ({}));
+                    if (myNo !== requestNo) return;
+                    if (!res.ok) throw new Error(body.message || 'Không thể preview phí giao hàng.');
+                    shippingFeeValue = num(body.shippingFee);
+                    updateTotals();
+                    if (body.fallbackApplied) {
+                        els.status.textContent = 'Đang dùng phí dự phòng GHN: ' + (body.message || 'Không có chi tiết.');
+                    } else {
+                        els.status.textContent = 'Phí GHN đã được cập nhật realtime.';
+                    }
+                } catch (e) {
+                    if (myNo !== requestNo) return;
+                    shippingFeeValue = null;
+                    updateTotals();
+                    els.status.textContent = e.message || 'Không thể tính phí GHN.';
+                }
+            }
+
+            let previewTimer = null;
+            function schedulePreview() {
+                clearTimeout(previewTimer);
+                previewTimer = setTimeout(previewShipping, 250);
+            }
+
+            els.province.addEventListener('change', async () => {
+                shippingFeeValue = null;
+                updateTotals();
+                els.district.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
+                els.ward.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                els.district.disabled = true;
+                els.ward.disabled = true;
+                if (!els.province.value) return;
+                try {
+                    const res = await fetchJson('/api/shipping/districts?provinceId=' + encodeURIComponent(els.province.value));
+                    fillSelect(els.district, res.items || [], '-- Chọn Quận/Huyện --');
+                } catch (e) {
+                    setMsg('error', e.message || 'Không tải được quận/huyện.');
+                }
+            });
+
+            els.district.addEventListener('change', async () => {
+                shippingFeeValue = null;
+                updateTotals();
+                els.ward.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                els.ward.disabled = true;
+                if (!els.district.value) return;
+                try {
+                    const res = await fetchJson('/api/shipping/wards?districtId=' + encodeURIComponent(els.district.value));
+                    fillSelect(els.ward, res.items || [], '-- Chọn Phường/Xã --');
+                } catch (e) {
+                    setMsg('error', e.message || 'Không tải được phường/xã.');
+                }
+            });
+
+            [els.ward, els.hoTen, els.email, els.sdt, els.diaChiCuThe].forEach(el => {
+                el.addEventListener('change', schedulePreview);
+                el.addEventListener('input', schedulePreview);
+            });
+
+            form.addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                setMsg(null, '');
+                const payload = buildPayload();
+                form.querySelector('.btn-submit').disabled = true;
+                try {
+                    const res = await fetch('/api/guest-checkout/place-order', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const body = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(body.message || 'Đặt hàng thất bại.');
+                    const msg = 'Đặt hàng thành công. Mã đơn: ' + body.orderCode + '. Token: ' + body.trackingToken;
+                    setMsg('success', msg);
+                    if (window.showToast) window.showToast('Đặt hàng thành công: ' + (body.orderCode || ''), 'success');
+                } catch (e) {
+                    setMsg('error', e.message || 'Đặt hàng thất bại.');
+                } finally {
+                    form.querySelector('.btn-submit').disabled = false;
+                }
+            });
+
+            updateTotals();
+            loadProvinces();
+        })();
+    </script>
 </div>
 </body>
 </html>

@@ -428,7 +428,9 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         }
 
-        BigDecimal phiVanChuyen = ShippingFeeUtil.feeForMerchandiseSubtotal(tienHangSauGiam);
+        BigDecimal phiVanChuyen = request.getPhiVanChuyen() != null && request.getPhiVanChuyen().compareTo(BigDecimal.ZERO) >= 0
+                ? request.getPhiVanChuyen()
+                : ShippingFeeUtil.feeForMerchandiseSubtotal(tienHangSauGiam);
 
         BigDecimal tongTienThanhToan = tienHangSauGiam.add(phiVanChuyen);
 

@@ -132,8 +132,8 @@
                         <span class="cart-summary__value" id="cart-tong-tien-base" th:text="|${#numbers.formatDecimal(cart.tongTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</span>
                     </div>
                     <div class="cart-summary__row cart-summary__row--compact" id="shipping-fee-row">
-                        <span class="cart-summary__label">Phí giao hàng</span>
-                        <span class="cart-summary__value" id="cart-shipping-fee">40.000 ₫</span>
+                        <span class="cart-summary__label">Phí giao hàng : </span>
+                        <span class="cart-summary__value" id="cart-shipping-fee">Sẽ tính theo địa chỉ ở bước thanh toán</span>
                     </div>
                     <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 1.000.000₫ được miễn phí giao hàng</p>
                     <div class="cart-summary__row" style="border-top: 1px solid #eee; padding-top: 0.75rem; margin-top: 0.75rem;">
@@ -152,16 +152,9 @@
     </div>
     <script th:if="${cart != null and cart.items != null and !cart.items.isEmpty()}">
 (function() {
-    var SHIPPING_FEE = 40000;
-    var FREE_SHIPPING_THRESHOLD = 1000000;
-
     function formatVnd(num) {
         if (num == null) return '0 ₫';
         return Number(num).toLocaleString('vi-VN') + ' ₫';
-    }
-
-    function calculateShippingFee(subtotal) {
-        return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
     }
 
     function updateCartTotals() {
@@ -178,26 +171,17 @@
             subtotal += parseInt(text, 10) || 0;
         });
 
-        var shippingFee = calculateShippingFee(subtotal);
-        var total = subtotal + shippingFee;
+        var total = subtotal;
 
         baseTotalEl.textContent = formatVnd(subtotal);
         if (shippingFeeEl) {
-            shippingFeeEl.textContent = formatVnd(shippingFee);
-            if (shippingFee === 0 && subtotal > 0) {
-                shippingFeeEl.classList.add('cart-summary__value--free-ship');
-            } else {
-                shippingFeeEl.classList.remove('cart-summary__value--free-ship');
-            }
+            shippingFeeEl.textContent = 'Tính khi thanh toán';
+            shippingFeeEl.classList.remove('cart-summary__value--free-ship');
         }
         totalEl.textContent = formatVnd(total);
 
         if (shippingNoteEl) {
-            if (shippingFee === 0 && subtotal > 0) {
-                shippingNoteEl.style.display = '';
-            } else {
-                shippingNoteEl.style.display = 'none';
-            }
+            shippingNoteEl.style.display = 'none';
         }
     }
 
