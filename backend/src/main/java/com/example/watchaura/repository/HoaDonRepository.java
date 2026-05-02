@@ -232,9 +232,29 @@ ORDER BY h.ngayDat DESC
 
 
 
+    // === Lọc theo loại đơn (OFFLINE / ONLINE) ===
 
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND h.loaiHoaDon = :loaiHoaDon")
+    Page<HoaDon> findActiveOrdersByLoai(@Param("loaiHoaDon") String loaiHoaDon, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND h.loaiHoaDon = :loaiHoaDon AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findActiveByLoaiAndKeyword(@Param("loaiHoaDon") String loaiHoaDon, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon")
+    Page<HoaDon> findByTrangThaiAndLoai(@Param("trangThai") String trangThaiDonHang, @Param("loaiHoaDon") String loaiHoaDon, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiAndLoaiAndKeyword(@Param("trangThai") String trangThai, @Param("loaiHoaDon") String loaiHoaDon, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon")
+    Page<HoaDon> findByTrangThaiInAndLoai(@Param("trangThaiList") Collection<String> trangThaiList, @Param("loaiHoaDon") String loaiHoaDon, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiInAndLoaiAndKeyword(@Param("trangThaiList") Collection<String> trangThaiList, @Param("loaiHoaDon") String loaiHoaDon, @Param("q") String q, Pageable pageable);
 
 }
+
+
 
 
 

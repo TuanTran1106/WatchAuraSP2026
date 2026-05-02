@@ -210,7 +210,10 @@ public class HoanTraServiceImpl implements HoanTraService {
 
         hoanTra = hoanTraRepository.save(hoanTra);
 
-        BigDecimal tongTienHoan = BigDecimal.ZERO;
+        // Số tiền hoàn = tổng tiền thanh toán của hóa đơn gốc
+        BigDecimal tongTienHoan = hoaDon.getTongTienThanhToan() != null 
+                ? hoaDon.getTongTienThanhToan() 
+                : BigDecimal.ZERO;
 
         if (request.getChiTietList() != null && !request.getChiTietList().isEmpty()) {
             for (HoanTraRequest.HoanTraChiTietRequest chiTietRequest : request.getChiTietList()) {
@@ -220,9 +223,11 @@ public class HoanTraServiceImpl implements HoanTraService {
                 SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(chiTietRequest.getIdSanPhamChiTiet())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + chiTietRequest.getIdSanPhamChiTiet()));
 
-                BigDecimal donGia = chiTietRequest.getDonGiaTaiThoiDiemMua() != null 
-                        ? chiTietRequest.getDonGiaTaiThoiDiemMua() 
-                        : hoaDonChiTiet.getDonGia();
+                // Lấy đơn giá gốc từ SanPhamChiTiet (chưa trừ khuyến mãi)
+                BigDecimal donGia = sanPhamChiTiet.getGiaBan();
+                if (donGia == null) {
+                    donGia = BigDecimal.ZERO;
+                }
                 BigDecimal soTienHoan = donGia.multiply(BigDecimal.valueOf(chiTietRequest.getSoLuongHoanTra()));
 
                 HoanTraChiTiet chiTiet = new HoanTraChiTiet();
@@ -235,10 +240,6 @@ public class HoanTraServiceImpl implements HoanTraService {
                 chiTiet.setHinhAnh(chiTietRequest.getHinhAnh());
 
                 hoanTraChiTietRepository.save(chiTiet);
-                
-                if (HoanTra.LOAI_TRA_HANG.equals(request.getLoaiHoanTra())) {
-                    tongTienHoan = tongTienHoan.add(soTienHoan);
-                }
 
                 if (chiTietRequest.getSerialsHoanTra() != null && !chiTietRequest.getSerialsHoanTra().isEmpty()) {
                     for (String serial : chiTietRequest.getSerialsHoanTra()) {
@@ -328,7 +329,8 @@ public class HoanTraServiceImpl implements HoanTraService {
         } else {
             coTheTuChoi = HoanTra.TRANG_THAI_CHO_XU_LY.equals(trangThaiHienTai)
                     || HoanTra.TRANG_THAI_DANG_XU_LY.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_DA_DUYET.equals(trangThaiHienTai);
+                    || HoanTra.TRANG_THAI_DA_DUYET.equals(trangThaiHienTai)
+                    || HoanTra.TRANG_THAI_DA_NHAN_HANG.equals(trangThaiHienTai);
         }
 
         if (!coTheTuChoi) {
@@ -482,7 +484,6 @@ public class HoanTraServiceImpl implements HoanTraService {
 
             BigDecimal tongTienHoan = BigDecimal.ZERO;
             Map<Integer, Integer> soLuongByHoaDonChiTiet = new HashMap<>();
-            Map<Integer, BigDecimal> donGiaByHoaDonChiTiet = new HashMap<>();
 
             for (HoanTraExcelRow row : entry.getValue()) {
                 SerialSanPham serial = serialSanPhamRepository.findByMaSerial(row.getMaSerial()).orElse(null);
@@ -493,7 +494,6 @@ public class HoanTraServiceImpl implements HoanTraService {
                     serialSanPhamRepository.save(serial);
 
                     soLuongByHoaDonChiTiet.merge(hoaDonChiTiet.getId(), 1, Integer::sum);
-                    donGiaByHoaDonChiTiet.putIfAbsent(hoaDonChiTiet.getId(), hoaDonChiTiet.getDonGia());
                     importedSerials.add(row.getMaSerial());
                 }
             }
@@ -501,12 +501,16 @@ public class HoanTraServiceImpl implements HoanTraService {
             for (Map.Entry<Integer, Integer> soLuongEntry : soLuongByHoaDonChiTiet.entrySet()) {
                 Integer idHoaDonChiTiet = soLuongEntry.getKey();
                 Integer soLuong = soLuongEntry.getValue();
-                BigDecimal donGia = donGiaByHoaDonChiTiet.get(idHoaDonChiTiet);
 
                 HoaDonChiTiet hoaDonChiTiet = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn chi tiết"));
                 SanPhamChiTiet sanPhamChiTiet = hoaDonChiTiet.getSanPhamChiTiet();
 
+                // Lấy đơn giá gốc từ SanPhamChiTiet (chưa trừ khuyến mãi)
+                BigDecimal donGia = sanPhamChiTiet.getGiaBan();
+                if (donGia == null) {
+                    donGia = BigDecimal.ZERO;
+                }
                 BigDecimal soTienHoan = donGia.multiply(BigDecimal.valueOf(soLuong));
 
                 HoanTraChiTiet chiTiet = new HoanTraChiTiet();
@@ -710,7 +714,25 @@ public class HoanTraServiceImpl implements HoanTraService {
         List<String> serialsHoanTra = new ArrayList<>();
         List<HoanTraChiTietDTO.SerialInfo> serialsChiTiet = new ArrayList<>();
 
-        if (chiTiet.getHoaDonChiTiet() != null && chiTiet.getHoaDonChiTiet().getSerialSanPhams() != null) {
+        // Kiểm tra xem có đơn đổi hàng không - nếu có, chỉ hiển thị serial mới
+        HoanTra hoanTraEntity = chiTiet.getHoanTra();
+        boolean coDonDoiHangDaHoanTat = hoanTraEntity != null 
+                && HoanTra.LOAI_DOI_HANG.equals(hoanTraEntity.getLoaiHoanTra())
+                && (HoanTra.TRANG_THAI_DA_DOI.equals(hoanTraEntity.getTrangThai())
+                    || HoanTra.TRANG_THAI_KET_THUC.equals(hoanTraEntity.getTrangThai()));
+
+        // Nếu có serial mới từ đổi hàng và trạng thái đã đổi/kết thúc → chỉ hiển thị serial mới
+        if (coDonDoiHangDaHoanTat && chiTiet.getSerialMoi() != null && !chiTiet.getSerialMoi().isEmpty()) {
+            serialsHoanTra.add(chiTiet.getSerialMoi());
+            HoanTraChiTietDTO.SerialInfo siMoi = HoanTraChiTietDTO.SerialInfo.builder()
+                    .maSerial(chiTiet.getSerialMoi())
+                    .trangThai(String.valueOf(SerialSanPham.TRANG_THAI_DA_BAN))
+                    .trangThaiHienThi("Serial mới đã đổi")
+                    .daDuocChon(true)
+                    .build();
+            serialsChiTiet.add(siMoi);
+        } else if (chiTiet.getHoaDonChiTiet() != null && chiTiet.getHoaDonChiTiet().getSerialSanPhams() != null) {
+            // Không có đổi hàng hoặc chưa hoàn tất → hiển thị serials theo logic cũ
             for (SerialSanPham sp : chiTiet.getHoaDonChiTiet().getSerialSanPhams()) {
                 if (sp.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
                     serialsHoanTra.add(sp.getMaSerial());
@@ -1044,7 +1066,10 @@ public class HoanTraServiceImpl implements HoanTraService {
 
         hoanTra = hoanTraRepository.save(hoanTra);
 
-        BigDecimal tongTienHoan = BigDecimal.ZERO;
+        // Số tiền hoàn = tổng tiền thanh toán của hóa đơn gốc
+        BigDecimal tongTienHoan = hoaDon.getTongTienThanhToan() != null 
+                ? hoaDon.getTongTienThanhToan() 
+                : BigDecimal.ZERO;
 
         if (request.getChiTietList() != null && !request.getChiTietList().isEmpty()) {
             for (HoanTraRequest.HoanTraChiTietRequest chiTietRequest : request.getChiTietList()) {
@@ -1064,9 +1089,11 @@ public class HoanTraServiceImpl implements HoanTraService {
                             + sanPhamChiTiet.getSanPham().getTenSanPham());
                 }
 
-                BigDecimal donGia = chiTietRequest.getDonGiaTaiThoiDiemMua() != null 
-                        ? chiTietRequest.getDonGiaTaiThoiDiemMua() 
-                        : hoaDonChiTiet.getDonGia();
+                // Lấy đơn giá gốc từ SanPhamChiTiet (chưa trừ khuyến mãi)
+                BigDecimal donGia = sanPhamChiTiet.getGiaBan();
+                if (donGia == null) {
+                    donGia = BigDecimal.ZERO;
+                }
                 BigDecimal soTienHoan = donGia.multiply(BigDecimal.valueOf(soLuongYeuCau));
 
                 HoanTraChiTiet chiTiet = new HoanTraChiTiet();
@@ -1079,7 +1106,6 @@ public class HoanTraServiceImpl implements HoanTraService {
                 chiTiet.setHinhAnh(chiTietRequest.getHinhAnh());
 
                 hoanTraChiTietRepository.save(chiTiet);
-                tongTienHoan = tongTienHoan.add(soTienHoan);
 
                 if (chiTietRequest.getSerialsHoanTra() != null && !chiTietRequest.getSerialsHoanTra().isEmpty()) {
                     for (String serial : chiTietRequest.getSerialsHoanTra()) {

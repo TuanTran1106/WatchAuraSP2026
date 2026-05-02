@@ -1,29 +1,32 @@
 <div class="return-detail-page" xmlns:th="http://www.thymeleaf.org" th:fragment="content">
     <div class="return-detail-container">
 
-        <nav aria-label="breadcrumb" class="return-detail-breadcrumb">
-            <ol class="breadcrumb">
-<!--                <li class="breadcrumb-item"><a href="/nguoidung">Tài khoản</a></li>-->
-<!--                <li class="breadcrumb-item"><a href="/khach-hang/hoan-tra">Hoàn trả</a></li>-->
-<!--                <li class="breadcrumb-item active" th:text="${hoanTra.maHoanTra}">HT001</li>-->
-            </ol>
-        </nav>
-
         <!-- Thông tin hoàn trả -->
         <div class="return-detail-card">
             <div class="return-detail-card__header">
                 <div class="return-detail-card__header-left">
                     <h5 class="return-detail-card__title">
                         <i class="fas fa-rotate-left"></i>
-                        Yêu cầu hoàn trả
+                        <span th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Yêu cầu đổi hàng</span>
+                        <span th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Yêu cầu hoàn trả</span>
                     </h5>
                     <span class="return-detail-card__code" th:text="${hoanTra.maHoanTra}">HT001</span>
                 </div>
-                <span class="return-status-badge"
-                      th:classappend="${hoanTra.trangThai == 'CHO_XU_LY' ? 'return-status--pending' :
-                                      hoanTra.trangThai == 'DA_XU_LY' ? 'return-status--approved' :
-                                      hoanTra.trangThai == 'TU_CHOI' ? 'return-status--rejected' : ''}"
-                      th:text="${hoanTra.trangThaiHienThi}">Chờ xử lý</span>
+                <div class="return-detail-card__header-right">
+                    <span class="return-status-badge return-status-badge--lg"
+                          th:classappend="${hoanTra.trangThai == 'CHO_XU_LY' ? 'return-status--cho-xu-ly' : ''}
+                                          + ${hoanTra.trangThai == 'DA_DUYET' ? 'return-status--da-duyet' : ''}
+                                          + ${hoanTra.trangThai == 'DA_NHAN_HANG' ? 'return-status--da-nhan-hang' : ''}
+                                          + ${hoanTra.trangThai == 'DA_HOAN_TIEN' ? 'return-status--da-hoan-tien' : ''}
+                                          + ${hoanTra.trangThai == 'TU_CHOI' ? 'return-status--tu-choi' : ''}
+                                          + ${hoanTra.trangThai == 'CHO_DUYET_DOI' ? 'return-status--cho-duyet-doi' : ''}
+                                          + ${hoanTra.trangThai == 'DA_DUYET_DOI' ? 'return-status--da-duyet-doi' : ''}
+                                          + ${hoanTra.trangThai == 'DA_NHAN_HANG_DOI' ? 'return-status--da-nhan-hang-doi' : ''}
+                                          + ${hoanTra.trangThai == 'CHON_SERIAL_MOI' ? 'return-status--cho-serial-moi' : ''}
+                                          + ${hoanTra.trangThai == 'DA_DOI' ? 'return-status--da-doi' : ''}
+                                          + ${hoanTra.trangThai == 'KET_THUC' ? 'return-status--ket-thuc' : ''}"
+                          th:text="${hoanTra.trangThaiHienThi}">Chờ xử lý</span>
+                </div>
             </div>
 
             <div class="return-detail-grid">
@@ -71,8 +74,6 @@
                     <div class="return-product-item">
                         <div class="return-product-item__header">
                             <div class="return-product-item__name" th:text="${item.tenSanPham}"></div>
-                            <div class="return-product-item__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}"
-                                 th:text="${item.tenBienThe}"></div>
                         </div>
 
                         <div class="return-product-item__detail">
@@ -81,30 +82,20 @@
                                     <span class="return-product-item__label">Mã Sản Phẩm</span>
                                     <span class="return-product-item__value" th:text="${item.maSanPham}"></span>
                                 </div>
-                                <th:block th:if="${item.mauSac != null}">
-                                    <div class="return-product-item__info-row">
-                                        <span class="return-product-item__label">Màu sắc</span>
-                                        <span class="return-product-item__value" th:text="${item.mauSac}"></span>
-                                    </div>
-                                </th:block>
-                                <th:block th:if="${item.kichThuoc != null}">
-                                    <div class="return-product-item__info-row">
-                                        <span class="return-product-item__label">Kích thước</span>
-                                        <span class="return-product-item__value" th:text="${item.kichThuoc}"></span>
-                                    </div>
-                                </th:block>
-                                <th:block th:if="${item.chatLieuDay != null}">
-                                    <div class="return-product-item__info-row">
-                                        <span class="return-product-item__label">Chất liệu dây</span>
-                                        <span class="return-product-item__value" th:text="${item.chatLieuDay}"></span>
-                                    </div>
-                                </th:block>
+                                <div class="return-product-item__info-row" th:if="${item.mauSac != null}">
+                                    <span class="return-product-item__label">Màu sắc</span>
+                                    <span class="return-product-item__value" th:text="${item.mauSac}"></span>
+                                </div>
+                                <div class="return-product-item__info-row" th:if="${item.kichThuoc != null}">
+                                    <span class="return-product-item__label">Kích thước</span>
+                                    <span class="return-product-item__value" th:text="${item.kichThuoc}"></span>
+                                </div>
                             </div>
 
                             <div class="return-product-item__price-section">
                                 <div class="return-product-item__qty-price">
                                     <div class="return-product-item__qty">
-                                        <span class="return-product-item__qty-num" th:text="${item.soLuongHoanTra}"></span>
+                                        <span class="return-product-item__qty-num" th:text="${item.soLuongHoanTra}">1</span>
                                         <span class="return-product-item__qty-label">sản phẩm</span>
                                     </div>
                                     <div class="return-product-item__price">
@@ -134,34 +125,8 @@
                                 </div>
                                 <div class="return-product-item__serial-tags">
                                     <th:block th:each="serial : ${item.serialsChiTiet}">
-                                        <span class="return-serial-tag"
-                                              th:classappend="${serial.daDuocChon ? 'return-serial-tag--returned' : 'return-serial-tag--sold'}"
-                                              th:title="${serial.trangThaiHienThi}"
+                                        <span class="return-serial-tag return-serial-tag--sold"
                                               th:text="${serial.maSerial}"></span>
-                                    </th:block>
-                                </div>
-                            </div>
-                        </th:block>
-
-                        <!-- Hình ảnh lỗi -->
-                        <th:block th:if="${item.hinhAnh != null and !item.hinhAnh.isEmpty()}">
-                            <div class="return-product-item__images">
-                                <div class="return-product-item__images-header">
-                                    <i class="fas fa-camera"></i>
-                                    <span>Hình ảnh lỗi</span>
-                                </div>
-                                <div class="return-product-item__images-list">
-                                    <th:block th:if="${item.hinhAnh.startsWith('[')}">
-                                        <th:block th:each="img : ${T(com.fasterxml.jackson.databind.ObjectMapper)@readValue(item.hinhAnh, T(java.util.List))}">
-                                            <img th:src="${img.startsWith('/') ? img : '/uploads/' + img}"
-                                                 class="return-product-item__image"
-                                                 alt="Hình ảnh lỗi">
-                                        </th:block>
-                                    </th:block>
-                                    <th:block th:unless="${item.hinhAnh.startsWith('[')}">
-                                        <img th:src="${item.hinhAnh.startsWith('/') ? item.hinhAnh : '/uploads/' + item.hinhAnh}"
-                                             class="return-product-item__image"
-                                             alt="Hình ảnh lỗi">
                                     </th:block>
                                 </div>
                             </div>
@@ -172,7 +137,7 @@
         </th:block>
 
         <!-- Thông tin xử lý -->
-        <th:block th:if="${hoanTra.trangThai != 'CHO_XU_LY'}">
+        <th:block th:if="${hoanTra.tenNhanVienXuLy != null}">
             <div class="return-processing-card">
                 <h6 class="return-processing-card__title">
                     <i class="fas fa-clipboard-check"></i>
@@ -180,15 +145,15 @@
                 </h6>
                 <div class="return-detail-grid">
                     <div class="return-info-item">
-                        <div class="return-info__label">Nhân viên xử lý</div>
-                        <p class="return-info__value" th:text="${hoanTra.tenNhanVienXuLy != null ? hoanTra.tenNhanVienXuLy : '—'}">Admin</p>
+                        <div class="return-info__label">Người xử lý</div>
+                        <p class="return-info__value" th:text="${hoanTra.tenNhanVienXuLy}">Admin</p>
                     </div>
                     <div class="return-info-item">
                         <div class="return-info__label">Ngày xử lý</div>
                         <p class="return-info__value"
                            th:text="${hoanTra.ngayXuLy != null ? #temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm') : '—'}">25/04/2026 14:00</p>
                     </div>
-                    <th:block th:if="${hoanTra.ghiChuXuLy != null and !hoanTra.ghiChuXuLy.isEmpty()}">
+                    <th:block th:if="${hoanTra.ghiChuXuLy != null and !hoanTra.ghiChuXuLy.empty}">
                         <div class="return-info-item return-info-item--full">
                             <div class="return-info__label">Ghi chú xử lý</div>
                             <p class="return-info__value" th:text="${hoanTra.ghiChuXuLy}">Đã hoàn tiền</p>
@@ -198,70 +163,254 @@
             </div>
         </th:block>
 
-        <!-- Trạng thái timeline -->
+        <!-- Timeline tiến trình xử lý -->
         <div class="return-timeline-card">
             <h6 class="return-timeline-card__title">
                 <i class="fas fa-history"></i>
                 Tiến trình xử lý
             </h6>
             <div class="return-timeline">
+
+                <!-- Bước 1: Gửi yêu cầu - LUÔN HIỂN THỊ -->
                 <div class="return-timeline__item return-timeline__item--done">
                     <div class="return-timeline__dot">
                         <i class="fas fa-check"></i>
                     </div>
                     <div class="return-timeline__content">
-                        <div class="return-timeline__title">Gửi yêu cầu hoàn trả</div>
-                        <div class="return-timeline__desc">Bạn đã gửi yêu cầu hoàn trả sản phẩm</div>
+                        <div class="return-timeline__title">
+                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Gửi yêu cầu đổi hàng</th:block>
+                            <th:block th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Gửi yêu cầu hoàn trả</th:block>
+                        </div>
+                        <div class="return-timeline__desc">
+                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Bạn đã gửi yêu cầu đổi sản phẩm</th:block>
+                            <th:block th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Bạn đã gửi yêu cầu hoàn trả sản phẩm</th:block>
+                        </div>
                         <div class="return-timeline__time"
                              th:text="${#temporals.format(hoanTra.ngayYeuCau, 'dd/MM/yyyy HH:mm')}">25/04/2026 10:00</div>
                     </div>
                 </div>
 
-                <th:block th:if="${hoanTra.trangThai == 'CHO_XU_LY'}">
+                <!-- TRẢ HÀNG: Bước 2 -->
+                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG'}">
+                    <th:block th:if="${hoanTra.trangThai == 'CHO_XU_LY'}">
+                        <div class="return-timeline__item return-timeline__item--active">
+                            <div class="return-timeline__dot">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="return-timeline__content">
+                                <div class="return-timeline__title">Chờ nhân viên xử lý</div>
+                                <div class="return-timeline__desc">Yêu cầu của bạn đang chờ nhân viên kiểm tra và duyệt</div>
+                            </div>
+                        </div>
+                    </th:block>
+                    <th:block th:if="${hoanTra.trangThai != 'CHO_XU_LY'}">
+                        <div class="return-timeline__item return-timeline__item--done">
+                            <div class="return-timeline__dot">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="return-timeline__content">
+                                <div class="return-timeline__title">Chờ nhân viên xử lý</div>
+                                <div class="return-timeline__desc">Nhân viên đã tiếp nhận yêu cầu</div>
+                                <th:block th:if="${hoanTra.ngayXuLy != null}">
+                                    <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                                </th:block>
+                            </div>
+                        </div>
+                    </th:block>
+                </th:block>
+
+                <!-- TRẢ HÀNG: Bước 3 - Đã duyệt -->
+                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'DA_DUYET'}">
                     <div class="return-timeline__item return-timeline__item--active">
                         <div class="return-timeline__dot">
-                            <i class="fas fa-hourglass-half"></i>
+                            <i class="fas fa-check"></i>
                         </div>
                         <div class="return-timeline__content">
-                            <div class="return-timeline__title">Đang chờ xử lý</div>
-                            <div class="return-timeline__desc">Yêu cầu của bạn đang chờ nhân viên xử lý</div>
+                            <div class="return-timeline__title">Đã duyệt yêu cầu</div>
+                            <div class="return-timeline__desc">Yêu cầu hoàn trả đã được duyệt. Vui lòng gửi sản phẩm về cho chúng tôi.</div>
                         </div>
                     </div>
                 </th:block>
 
-                <th:block th:if="${hoanTra.trangThai == 'DA_XU_LY'}">
+                <!-- TRẢ HÀNG: Bước 3 - Đã nhận hàng -->
+                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'DA_NHAN_HANG'}">
+                    <div class="return-timeline__item return-timeline__item--active">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Đã nhận sản phẩm hoàn trả</div>
+                            <div class="return-timeline__desc">Chúng tôi đã nhận được sản phẩm và kiểm tra sản phẩm hoàn trả từ bạn</div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- TRẢ HÀNG: Bước 4 - Đã hoàn tiền -->
+                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'DA_HOAN_TIEN'}">
                     <div class="return-timeline__item return-timeline__item--done">
                         <div class="return-timeline__dot">
                             <i class="fas fa-check"></i>
                         </div>
                         <div class="return-timeline__content">
-                            <div class="return-timeline__title">Đã xác nhận hoàn trả</div>
-                            <div class="return-timeline__desc">Sản phẩm đã được xác nhận hoàn và tiền sẽ được hoàn cho bạn</div>
-                            <th:block th:if="${hoanTra.ngayXuLy != null}">
-                                <div class="return-timeline__time"
-                                     th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                            <div class="return-timeline__title">Đã hoàn tiền</div>
+                            <div class="return-timeline__desc">
+                                <th:block th:if="${hoanTra.phuongThucHoanTienHienThi != null}">
+                                    Đã hoàn tiền qua ngân hàng cá nhân 
+                                </th:block>
+                                <th:block th:unless="${hoanTra.phuongThucHoanTienHienThi != null}">
+                                    Đã hoàn tiền qua ngân hàng cá nhân
+                                </th:block>
+                            </div>
+                            <th:block th:if="${hoanTra.soTienHoanThucTe != null}">
+                                <div class="return-timeline__amount" th:text="${#numbers.formatDecimal(hoanTra.soTienHoanThucTe, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</div>
+                            </th:block>
+                            <th:block th:if="${hoanTra.ngayHoanTien != null}">
+                                <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayHoanTien, 'dd/MM/yyyy HH:mm')}">26/04/2026 10:00</div>
                             </th:block>
                         </div>
                     </div>
                 </th:block>
 
-                <th:block th:if="${hoanTra.trangThai == 'TU_CHOI'}">
+                <!-- TRẢ HÀNG: Bước Từ chối -->
+                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'TU_CHOI'}">
                     <div class="return-timeline__item return-timeline__item--rejected">
                         <div class="return-timeline__dot">
                             <i class="fas fa-times"></i>
                         </div>
                         <div class="return-timeline__content">
                             <div class="return-timeline__title">Yêu cầu bị từ chối</div>
-                            <th:block th:if="${hoanTra.ghiChuXuLy != null and !hoanTra.ghiChuXuLy.isEmpty()}">
-                                <div class="return-timeline__desc" th:text="${hoanTra.ghiChuXuLy}">Lý do từ chối</div>
-                            </th:block>
+                            <div class="return-timeline__desc" th:text="${hoanTra.ghiChuXuLy != null ? hoanTra.ghiChuXuLy : 'Yêu cầu không được duyệt'}">Lý do từ chối</div>
                             <th:block th:if="${hoanTra.ngayXuLy != null}">
-                                <div class="return-timeline__time"
-                                     th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                                <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
                             </th:block>
                         </div>
                     </div>
                 </th:block>
+
+                <!-- ========== ĐỔI HÀNG WORKFLOW ========== -->
+
+                <!-- ĐỔI HÀNG: Bước 2 - Chờ duyệt đổi -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
+                    <th:block th:if="${hoanTra.trangThai == 'CHO_DUYET_DOI'}">
+                        <div class="return-timeline__item return-timeline__item--active">
+                            <div class="return-timeline__dot">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="return-timeline__content">
+                                <div class="return-timeline__title">Chờ duyệt đổi hàng</div>
+                                <div class="return-timeline__desc">Yêu cầu đổi hàng đang chờ được xem xét</div>
+                            </div>
+                        </div>
+                    </th:block>
+                    <th:block th:if="${hoanTra.trangThai != 'CHO_DUYET_DOI' and hoanTra.trangThai != 'TU_CHOI'}">
+                        <div class="return-timeline__item return-timeline__item--done">
+                            <div class="return-timeline__dot">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="return-timeline__content">
+                                <div class="return-timeline__title">Chờ duyệt đổi hàng</div>
+                                <div class="return-timeline__desc">Yêu cầu đổi hàng đã được tiếp nhận</div>
+                                <th:block th:if="${hoanTra.ngayXuLy != null}">
+                                    <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                                </th:block>
+                            </div>
+                        </div>
+                    </th:block>
+                </th:block>
+
+                <!-- ĐỔI HÀNG: Từ chối -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'TU_CHOI'}">
+                    <div class="return-timeline__item return-timeline__item--rejected">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Yêu cầu đổi hàng bị từ chối</div>
+                            <div class="return-timeline__desc" th:text="${hoanTra.ghiChuXuLy != null ? hoanTra.ghiChuXuLy : 'Yêu cầu không được duyệt'}">Lý do từ chối</div>
+                            <th:block th:if="${hoanTra.ngayXuLy != null}">
+                                <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
+                            </th:block>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- ĐỔI HÀNG: Bước 3 - Đã duyệt đổi -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_DUYET_DOI'}">
+                    <div class="return-timeline__item return-timeline__item--active">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Đã duyệt đổi hàng</div>
+                            <div class="return-timeline__desc">Yêu cầu đổi đã được duyệt. Vui lòng gửi sản phẩm về cho chúng tôi.</div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- ĐỔI HÀNG: Bước 4 - Đã nhận hàng đổi -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_NHAN_HANG_DOI'}">
+                    <div class="return-timeline__item return-timeline__item--active">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Đã nhận sản phẩm cần đổi</div>
+                            <div class="return-timeline__desc">Chúng tôi đã nhận được sản phẩm từ bạn. Đang kiểm tra...</div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- ĐỔI HÀNG: Bước 5 - Chọn serial mới -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'CHON_SERIAL_MOI'}">
+                    <div class="return-timeline__item return-timeline__item--active">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-barcode"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Chọn sản phẩm đổi mới</div>
+                            <div class="return-timeline__desc">Đang chuẩn bị sản phẩm thay thế cho bạn</div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- ĐỔI HÀNG: Bước 6 - Đã đổi hàng -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and (hoanTra.trangThai == 'DA_DOI' or hoanTra.trangThai == 'KET_THUC')}">
+                    <div class="return-timeline__item return-timeline__item--done">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Đã đổi sản phẩm</div>
+                            <div class="return-timeline__desc">Sản phẩm đổi mới đã được xác nhận</div>
+                            <!-- Hiển thị serial mới nếu có -->
+                            <th:block th:if="${not #lists.isEmpty(hoanTra.serialsMoiList)}">
+                                <div class="return-timeline__serials">
+                                    <span class="return-timeline__serial-label">Serial mới:</span>
+                                    <th:block th:each="serial : ${hoanTra.serialsMoiList}">
+                                        <span class="return-timeline__serial-tag" th:text="${serial}"></span>
+                                    </th:block>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- ĐỔI HÀNG: Bước 7 - Hoàn tất đổi hàng -->
+                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'KET_THUC'}">
+                    <div class="return-timeline__item return-timeline__item--completed">
+                        <div class="return-timeline__dot">
+                            <i class="fas fa-flag-checkered"></i>
+                        </div>
+                        <div class="return-timeline__content">
+                            <div class="return-timeline__title">Hoàn tất đổi hàng</div>
+                            <div class="return-timeline__desc">Đơn đổi hàng đã được xử lý thành công</div>
+                            <th:block th:if="${hoanTra.ngayXuLy != null}">
+                                <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">26/04/2026 10:00</div>
+                            </th:block>
+                        </div>
+                    </div>
+                </th:block>
+
             </div>
         </div>
 
@@ -290,35 +439,6 @@
             padding: 1.5rem 1rem;
         }
 
-        /* Breadcrumb */
-        .return-detail-breadcrumb {
-            margin-bottom: 1.5rem;
-        }
-
-        .return-detail-breadcrumb .breadcrumb {
-            background: transparent;
-            padding: 0;
-            margin: 0;
-        }
-
-        .return-detail-breadcrumb .breadcrumb-item a {
-            color: #666;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-
-        .return-detail-breadcrumb .breadcrumb-item a:hover {
-            color: #c9a227;
-        }
-
-        .return-detail-breadcrumb .breadcrumb-item.active {
-            color: #1a1a1a;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        /* Card thông tin */
         .return-detail-card {
             background: #fff;
             border-radius: 12px;
@@ -335,6 +455,11 @@
             margin-bottom: 1.25rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid #f0f0f0;
+        }
+
+        .return-detail-card__header-right {
+            flex-shrink: 0;
+            margin-left: 1rem;
         }
 
         .return-detail-card__header-left {
@@ -363,32 +488,264 @@
             font-weight: 500;
         }
 
-        /* Status Badge */
         .return-status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 0.4rem 0.85rem;
+            justify-content: center;
+            padding: 0.4rem 0.9rem;
             border-radius: 999px;
             font-size: 0.8rem;
             font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
         }
 
-        .return-status--pending {
-            background: #fef3c7;
+        .return-status-badge--sm {
+            font-size: 0.72rem;
+            padding: 0.25rem 0.6rem;
+        }
+
+        .return-status-badge--lg {
+            font-size: 0.9rem;
+            padding: 0.5rem 1.1rem;
+        }
+
+        /* === TRẠNG THÁI CHỜ XỬ LÝ === */
+        .return-status--pending,
+        .return-status--cho-xu-ly,
+        .return-status--cho-duyet-doi {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             color: #92400e;
+            border: 1px solid #fbbf24;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
         }
 
-        .return-status--approved {
-            background: #d1fae5;
+        .return-status--pending::before,
+        .return-status--cho-xu-ly::before,
+        .return-status--cho-duyet-doi::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #f59e0b;
+        }
+
+        /* === TRẠNG THÁI ĐANG XỬ LÝ === */
+        .return-status--processing {
+            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+            color: #9a3412;
+            border: 1px solid #fb923c;
+            box-shadow: 0 2px 8px rgba(251, 146, 60, 0.2);
+        }
+
+        .return-status--processing::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #f97316;
+        }
+
+        /* === TRẠNG THÁI ĐÃ DUYỆT === */
+        .return-status--da-duyet {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border: 1px solid #60a5fa;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .return-status--da-duyet::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #3b82f6;
+        }
+
+        /* === TRẠNG THÁI ĐÃ NHẬN HÀNG === */
+        .return-status--received,
+        .return-status--da-nhan-hang,
+        .return-status--da-nhan-hang-doi {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #4338ca;
+            border: 1px solid #818cf8;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        .return-status--received::before,
+        .return-status--da-nhan-hang::before,
+        .return-status--da-nhan-hang-doi::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #6366f1;
+        }
+
+        /* === TRẠNG THÁI CHỌN SERIAL MỚI === */
+        .return-status--cho-serial-moi {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            color: #7c3aed;
+            border: 1px solid #a78bfa;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+        }
+
+        .return-status--cho-serial-moi::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #8b5cf6;
+        }
+
+        /* === TRẠNG THÁI ĐÃ HOÀN TIỀN === */
+        .return-status--refunded,
+        .return-status--da-hoan-tien {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
             color: #047857;
+            border: 1px solid #34d399;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
         }
 
-        .return-status--rejected {
-            background: #fee2e2;
+        .return-status--refunded::before,
+        .return-status--da-hoan-tien::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #10b981;
+        }
+
+        /* === TRẠNG THÁI ĐÃ ĐỔI === */
+        .return-status--exchanged,
+        .return-status--da-doi {
+            background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+            color: #0d9488;
+            border: 1px solid #2dd4bf;
+            box-shadow: 0 2px 8px rgba(20, 184, 166, 0.2);
+        }
+
+        .return-status--exchanged::before,
+        .return-status--da-doi::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #14b8a6;
+        }
+
+        /* === TRẠNG THÁI ĐÃ DUYỆT HOÀN TẤT === */
+        .return-status--approved {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1d4ed8;
+            border: 1px solid #93c5fd;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .return-status--approved::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #2563eb;
+        }
+
+        /* === TRẠNG THÁI ĐÃ DUYỆT ĐỔI HOÀN TẤT === */
+        .return-status--approved-done {
+            background: linear-gradient(135deg, #e0c8ff 0%, #d8b4fe 100%);
+            color: #6b21a8;
+            border: 1px solid #c084fc;
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.2);
+        }
+
+        .return-status--approved-done::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #a855f7;
+        }
+
+        /* === TRẠNG THÁI TỪ CHỐI === */
+        .return-status--rejected,
+        .return-status--tu-choi {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
             color: #991b1b;
+            border: 1px solid #fca5a5;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
         }
 
-        /* Grid info */
+        .return-status--rejected::before,
+        .return-status--tu-choi::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #ef4444;
+        }
+
+        /* === TRẠNG THÁI HOÀN TẤT === */
+        .return-status--completed,
+        .return-status--ket-thuc {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #166534;
+            border: 1px solid #4ade80;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+            font-weight: 700;
+        }
+
+        .return-status--completed::before,
+        .return-status--ket-thuc::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #22c55e, #16a34a);
+        }
+
+        /* Status badge hover effect */
+        .return-status-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Pulse animation for pending status */
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.75; }
+        }
+
+        .return-status--pending,
+        .return-status--cho-xu-ly,
+        .return-status--cho-duyet-doi,
+        .return-status--processing {
+            animation: statusPulse 2.5s ease-in-out infinite;
+        }
+
         .return-detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -434,7 +791,6 @@
             color: #dc3545;
         }
 
-        /* Products Card */
         .return-products-card {
             background: #fff;
             border-radius: 12px;
@@ -470,7 +826,6 @@
             border-radius: 999px;
         }
 
-        /* Product Item */
         .return-product-item {
             padding: 1rem;
             background: #fafafa;
@@ -491,12 +846,6 @@
             font-weight: 600;
             color: #1a1a1a;
             font-size: 0.95rem;
-        }
-
-        .return-product-item__variant {
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 0.15rem;
         }
 
         .return-product-item__detail {
@@ -590,7 +939,6 @@
             font-weight: 700;
         }
 
-        /* Serial */
         .return-product-item__serials {
             margin-top: 0.75rem;
             padding-top: 0.75rem;
@@ -636,62 +984,12 @@
             font-weight: 600;
         }
 
-        .return-serial-tag--returned {
-            background: #d1fae5;
-            color: #047857;
-            border: 1px solid #10b981;
-        }
-
         .return-serial-tag--sold {
             background: #f0f0f0;
             color: #666;
             border: 1px solid #ddd;
         }
 
-        /* Images */
-        .return-product-item__images {
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid #eee;
-        }
-
-        .return-product-item__images-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
-        .return-product-item__images-header i {
-            color: #c9a227;
-        }
-
-        .return-product-item__images-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .return-product-item__image {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px solid #eee;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .return-product-item__image:hover {
-            transform: scale(1.05);
-            border-color: #c9a227;
-        }
-
-        /* Processing Card */
         .return-processing-card {
             background: #fff;
             border-radius: 12px;
@@ -717,7 +1015,6 @@
             color: #10b981;
         }
 
-        /* Timeline */
         .return-timeline-card {
             background: #fff;
             border-radius: 12px;
@@ -745,22 +1042,23 @@
 
         .return-timeline {
             position: relative;
-            padding-left: 2rem;
+            padding-left: 2.5rem;
         }
 
         .return-timeline::before {
             content: '';
             position: absolute;
-            left: 0.5rem;
+            left: 0.6rem;
             top: 0.5rem;
             bottom: 0.5rem;
-            width: 2px;
-            background: #eee;
+            width: 3px;
+            background: linear-gradient(180deg, #e5e7eb 0%, #d1d5db 100%);
+            border-radius: 2px;
         }
 
         .return-timeline__item {
             position: relative;
-            padding-bottom: 1.5rem;
+            padding-bottom: 2rem;
         }
 
         .return-timeline__item:last-child {
@@ -769,52 +1067,135 @@
 
         .return-timeline__dot {
             position: absolute;
-            left: -1.5rem;
+            left: -2rem;
             top: 0;
-            width: 1.25rem;
-            height: 1.25rem;
+            width: 1.5rem;
+            height: 1.5rem;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.6rem;
-            border: 2px solid #fff;
+            font-size: 0.65rem;
+            border: 3px solid #fff;
+            z-index: 1;
         }
 
+        /* Timeline Item States */
         .return-timeline__item--done .return-timeline__dot {
-            background: #10b981;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: #fff;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
         }
 
         .return-timeline__item--active .return-timeline__dot {
-            background: #f59e0b;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: #fff;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+            animation: timelinePulse 2s ease-in-out infinite;
         }
 
         .return-timeline__item--rejected .return-timeline__dot {
-            background: #ef4444;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: #fff;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .return-timeline__item--completed .return-timeline__dot {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.5);
+        }
+
+        @keyframes timelinePulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 4px 16px rgba(245, 158, 11, 0.6);
+            }
         }
 
         .return-timeline__title {
             font-weight: 600;
             color: #1a1a1a;
-            font-size: 0.9rem;
-            margin-bottom: 0.15rem;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .return-timeline__item--completed .return-timeline__title {
+            color: #166534;
+        }
+
+        .return-timeline__item--rejected .return-timeline__title {
+            color: #991b1b;
         }
 
         .return-timeline__desc {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             color: #666;
+            line-height: 1.5;
         }
 
         .return-timeline__time {
             font-size: 0.78rem;
             color: #888;
-            margin-top: 0.15rem;
+            margin-top: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
         }
 
-        /* Back button */
+        .return-timeline__time::before {
+            content: '\f017';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 400;
+            font-size: 0.7rem;
+        }
+
+        .return-timeline__amount {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #059669;
+            margin-top: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #34d399;
+        }
+
+        .return-timeline__serials {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 8px;
+            border: 1px solid #7dd3fc;
+        }
+
+        .return-timeline__serial-label {
+            font-size: 0.8rem;
+            color: #0369a1;
+            font-weight: 600;
+        }
+
+        .return-timeline__serial-tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
+        }
+
         .return-detail-back {
             margin-top: 1.5rem;
             display: flex;
@@ -853,7 +1234,6 @@
             background: #f5f5f5;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .return-detail-grid {
                 grid-template-columns: 1fr;

@@ -164,10 +164,10 @@
                                     </div>
                                 </th:block>
 
-                                <div class="return-product-card__item-total" th:id="'item-total-' + ${itemStat.index}">
-                                    <span class="return-product-card__item-total-label">Thành tiền hoàn:</span>
-                                    <span class="return-product-card__item-total-value">0 ₫</span>
-                                </div>
+<!--                                <div class="return-product-card__item-total" th:id="'item-total-' + ${itemStat.index}">-->
+<!--                                    <span class="return-product-card__item-total-label">Thành tiền hoàn:</span>-->
+<!--                                    <span class="return-product-card__item-total-value">0 ₫</span>-->
+<!--                                </div>-->
                             </div>
                         </th:block>
                     </th:block>
@@ -262,7 +262,6 @@
                     </div>
                 </div>
 
-                <!-- Image Upload -->
                 <div class="return-image-section">
                     <h2 class="return-image-section__title">
                         <i class="fas fa-camera"></i>
@@ -539,16 +538,10 @@
 
             document.getElementById('totalSerialsSelected').textContent = totalSerials;
             
-            // Nếu chưa chọn sản phẩm nào thì hiển thị tổng tiền đơn hàng
+            // Luôn hiển thị tổng tiền đơn hàng gốc (số tiền hoàn = tổng tiền hóa đơn)
             var totalRefundEl = document.getElementById('totalRefundAmount');
-            if (totalSerials === 0) {
-                // Hiển thị tổng tiền đơn hàng từ data attribute
-                var tongTienDonHang = parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 0;
-                totalRefundEl.innerHTML = '<span>' + formatCurrency(tongTienDonHang) + '</span>';
-            } else {
-                // Hiển thị tổng tiền hoàn dựa trên các sản phẩm đã chọn
-                totalRefundEl.innerHTML = '<span>' + formatCurrency(totalAmount) + '</span>';
-            }
+            var tongTienDonHang = parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 0;
+            totalRefundEl.innerHTML = '<span>' + formatCurrency(tongTienDonHang) + '</span>';
         }
 
         // Chỉ gọi updateSummary khi có sự kiện thay đổi (không cần gọi khi load trang

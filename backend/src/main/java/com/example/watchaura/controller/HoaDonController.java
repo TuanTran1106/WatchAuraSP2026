@@ -82,6 +82,8 @@ public class HoaDonController {
 
                       @RequestParam(required = false) String trangThai,
 
+                      @RequestParam(required = false) String loaiDon,
+
                       @RequestParam(defaultValue = "0") int page,
 
                       Model model,
@@ -90,7 +92,7 @@ public class HoaDonController {
 
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
 
-        Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThai, pageable);
+        Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThai, pageable, loaiDon);
 
         model.addAttribute("title", "Hóa đơn");
 
@@ -105,6 +107,8 @@ public class HoaDonController {
         model.addAttribute("searchKeyword", q != null ? q : "");
 
         model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
+
+        model.addAttribute("filterLoaiDon", loaiDon != null ? loaiDon : "");
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
 
@@ -246,6 +250,8 @@ public class HoaDonController {
 
             model.addAttribute("voucherList", voucherPage.getContent());
 
+
+
             model.addAttribute("formAction", "/admin/hoa-don/" + id);
 
             return "layout/admin-layout";
@@ -364,6 +370,8 @@ public class HoaDonController {
 
                                   @RequestParam(required = false) String trangThaiFilter,
 
+                                  @RequestParam(required = false) String loaiDon,
+
                                   @RequestParam(defaultValue = "0") int page,
 
                                   @RequestParam(required = false) String tuChiTiet,
@@ -430,7 +438,7 @@ public class HoaDonController {
 
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
 
-                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable);
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
 
                 model.addAttribute("title", "Hóa đơn");
 
@@ -445,6 +453,8 @@ public class HoaDonController {
                 model.addAttribute("searchKeyword", q != null ? q : "");
 
                 model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
+
+                model.addAttribute("filterLoaiDon", loaiDon != null ? loaiDon : "");
 
                 model.addAttribute(chuyenCanXuLy ? "warning" : "message", msg);
 
@@ -484,7 +494,7 @@ public class HoaDonController {
 
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
 
-                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable);
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
 
                 model.addAttribute("title", "Hóa đơn");
 
@@ -500,6 +510,8 @@ public class HoaDonController {
 
                 model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
 
+                model.addAttribute("filterLoaiDon", loaiDon != null ? loaiDon : "");
+
                 model.addAttribute("error", errorMsg);
 
                 return "admin/hoadon-list :: content";
@@ -513,6 +525,8 @@ public class HoaDonController {
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
 
         if (trangThaiFilter != null && !trangThaiFilter.isBlank()) redirect.addAttribute("trangThai", trangThaiFilter);
+
+        if (loaiDon != null && !loaiDon.isBlank()) redirect.addAttribute("loaiDon", loaiDon);
 
         redirect.addAttribute("page", page);
 
@@ -530,6 +544,8 @@ public class HoaDonController {
 
                         @RequestParam(required = false) String trangThai,
 
+                        @RequestParam(required = false) String loaiDon,
+
                         @RequestParam(defaultValue = "0") int page,
 
                         RedirectAttributes redirect) {
@@ -542,11 +558,14 @@ public class HoaDonController {
 
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);
 
+        if (loaiDon != null && !loaiDon.isBlank()) redirect.addAttribute("loaiDon", loaiDon);
+
         redirect.addAttribute("page", page);
 
         return "redirect:/admin/hoa-don";
 
     }
 
-}
 
+
+}

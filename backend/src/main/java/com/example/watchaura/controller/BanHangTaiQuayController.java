@@ -7,6 +7,7 @@ import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.*;
 import com.example.watchaura.repository.*;
+import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -520,6 +521,31 @@ public class BanHangTaiQuayController {
             return "CART_EMPTY";
         }
 
+        updateTongTien(hoaDonId);
+
+        return "OK";
+
+    }
+
+    @PostMapping("/xoa-tat-ca-san-pham")
+    @ResponseBody
+    @Transactional
+    public String xoaTatCaSanPham(Integer hoaDonId) {
+        if (hoaDonId == null || hoaDonId == 0) {
+            return "INVALID";
+        }
+
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId).orElse(null);
+        if (hoaDon == null) {
+            return "NOT_FOUND";
+        }
+
+        String trangThai = hoaDon.getTrangThaiDonHang();
+        if (!TRANG_THAI_GIO_QUAY.equals(trangThai) && !"CHO_THANH_TOAN".equals(trangThai)) {
+            return "HOA_DON_DA_CHOT";
+        }
+
+        hoaDonChiTietRepository.deleteByHoaDonId(hoaDonId);
         updateTongTien(hoaDonId);
 
         return "OK";

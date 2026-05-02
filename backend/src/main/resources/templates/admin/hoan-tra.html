@@ -450,6 +450,7 @@ function renderTable(items, page) {
                 actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
             } else if (item.trangThai === 'DA_NHAN_HANG') {
                 actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-trangthai="HOAN_TIEN" onclick="xuLyHoanTraByData(this)" title="Hoàn tiền"><i class="fas fa-coins"></i></button>';
+                actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
             }
         }
         actionButtons += '<button class="ht-action-btn ht-action-btn--print" data-id="' + item.id + '" onclick="printHoanTraByData(this)" title="In phiếu"><i class="fas fa-print"></i></button>';

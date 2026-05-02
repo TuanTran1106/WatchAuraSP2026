@@ -23,58 +23,48 @@
         <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
 
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
-
             <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-
             <label class="toolbar__label">Trạng thái:</label>
 
             <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
 
-                <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
+                <option value="">Tất cả</option>
+                <option value="CAN_XU_LY" th:text="'Cần xử lý'">Cần xử lý</option>
+                <option value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
+                <option value="DA_THANH_TOAN_ONL" th:text="'TT VnPay thành công'">TT VnPay thành công</option>
+                <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                <option value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
+                <option value="DA_GIAO" th:text="'Đã giao'">Đã giao</option>
+                <option value="DA_THANH_TOAN" th:text="'Hoàn thành'">Hoàn thành</option>
+                <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
+            </select>
 
-                <option value="CAN_XU_LY" th:selected="${filterTrangThai == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
+            <label class="toolbar__label">Loại đơn:</label>
 
-                <option value="CHO_XAC_NHAN" th:selected="${filterTrangThai == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
+            <select name="loaiDon" class="toolbar__select" onchange="this.form.submit()">
 
-                <option value="DA_THANH_TOAN_ONL" th:selected="${filterTrangThai == 'DA_THANH_TOAN_ONL'}" th:text="'TT Vn Pay thành công'">TT Vn Pay thành công</option>
-
-                <option value="DA_XAC_NHAN" th:selected="${filterTrangThai == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
-
-                <option value="DANG_GIAO" th:selected="${filterTrangThai == 'DANG_GIAO'}" th:text="'Đang giao'">Đang giao</option>
-
-                <option value="DA_GIAO" th:selected="${filterTrangThai == 'DA_GIAO'}" th:text="'Đã giao'">Đã giao</option>
-
-                <option value="DA_THANH_TOAN" th:selected="${filterTrangThai == 'DA_THANH_TOAN'}" th:text="'Hoàn thành'">Hoàn thành</option>
-
-                <option value="DA_HUY" th:selected="${filterTrangThai == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
+                <option value="">Tất cả</option>
+                <option value="OFFLINE">Tại quầy</option>
+                <option value="ONLINE">Online</option>
 
             </select>
 
         </form>
 
 
-
         <table class="table">
 
             <thead>
 
-                <tr>
-
-                    <th>ID</th>
-
-                    <th>Mã đơn</th>
-
-                    <th>Khách hàng</th>
-
-                    <th>Ngày đặt</th>
-
-                    <th>Tổng thanh toán</th>
-
-                    <th>Trạng thái</th>
-
-                    <th>Thao tác</th>
-
-                </tr>
+            <tr>
+                <th>ID</th>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Ngày đặt</th>
+                <th>Tổng thanh toán</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
 
             </thead>
 
@@ -86,36 +76,25 @@
 
                     <td th:text="${item.maDonHang}"></td>
 
-                    <td th:text="${item.tenKhachHang != null ? item.tenKhachHang : '—'}"></td>
+                    <td th:text="${item.tenKhachHang != null ? item.tenKhachHang : 'â€”'}"></td>
 
-                    <td th:text="${item.ngayDat != null ? #temporals.format(item.ngayDat, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                    <td th:text="${item.ngayDat != null ? #temporals.format(item.ngayDat, 'dd/MM/yyyy HH:mm') : 'â€”'}"></td>
 
-                    <td th:text="${item.tongTienThanhToan != null ? #numbers.formatDecimal(item.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : '—'}"></td>
+                    <td th:text="${item.tongTienThanhToan != null ? #numbers.formatDecimal(item.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : 'â€”'}"></td>
 
                     <td>
 
-                        <!-- Bán tại quầy (OFFLINE): chờ thanh toán / đã thanh toán / đã hủy -->
-
+                        <!-- OFFLINE -->
                         <form th:if="${item.loaiHoaDon == 'OFFLINE'}"
-
                               th:action="@{/admin/hoa-don/{id}/trang-thai(id=${item.id})}"
-
                               method="post"
-
                               style="display:inline;"
-
                               class="status-form js-admin-ajax-form"
-
                               data-ajax="true"
-
                               data-confirm="Bạn có chắc chắn muốn đổi trạng thái hóa đơn này?"
-
                               data-confirm-title="Đổi trạng thái hóa đơn"
-
                               data-confirm-ok="Đổi trạng thái"
-
                               data-confirm-cancel="Hủy"
-
                               data-confirm-tone="info">
 
                             <input type="hidden" name="page" th:value="${page != null ? page.number : 0}" />
@@ -123,6 +102,8 @@
                             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
 
                             <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
+
+                            <input type="hidden" name="loaiDon" th:value="${filterLoaiDon != null ? filterLoaiDon : ''}" />
 
                             <select name="trangThai" class="form__select form__select--sm table-status-select"
 
@@ -168,9 +149,9 @@
 
                                 <th:block th:if="${isCanXuLy}">
 
-                                    <option value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lý'">Cần xử lý</option>
+                                    <option value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lí'">Cần xử lí</option>
 
-                                    <option value="DA_THANH_TOAN" th:text="'Hoàn thành'">Hoàn thành</option>
+                                    <option value="DA_THANH_TOAN" th:text="'Đã thanh toán'">Đã thanh toán</option>
 
                                     <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
 
@@ -180,7 +161,7 @@
 
                         </form>
 
-                        <!-- Đơn online / giao hàng -->
+
 
                         <form th:unless="${item.loaiHoaDon == 'OFFLINE'}"
 
@@ -210,6 +191,8 @@
 
                             <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
 
+                            <input type="hidden" name="loaiDon" th:value="${filterLoaiDon != null ? filterLoaiDon : ''}" />
+
                             <select name="trangThai" class="form__select form__select--sm table-status-select"
 
                                     th:with="cur=${item.trangThaiDonHang != null and !#strings.isEmpty(item.trangThaiDonHang) ? item.trangThaiDonHang : 'CHO_XAC_NHAN'}"
@@ -222,7 +205,7 @@
 
                                 <option th:if="${cur == 'DA_HUY'}" th:value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
 
-                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lý'">Cần xử lý</option>
+                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lí'">Cần xử lí</option>
 
                                 <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
 
@@ -274,11 +257,11 @@
 
                 <li th:if="${page.first}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.first}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=0, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Trang đầu"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.first}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=0, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Trang Đầu"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></a></li>
 
                 <li th:if="${page.first}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.first}"><a class="pagination__link pagination__link--prev" th:href="@{/admin/hoa-don(page=${page.number - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Trước"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.first}"><a class="pagination__link pagination__link--prev" th:href="@{/admin/hoa-don(page=${page.number - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Trang Trước"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
 
                 <li th:each="pi : ${paginationItems}">
 
@@ -290,7 +273,7 @@
 
                        th:classappend="${pi.pageIndex == page.number} ? 'pagination__link--active'"
 
-                       th:href="@{/admin/hoa-don(page=${pi.pageIndex}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
+                       th:href="@{/admin/hoa-don(page=${pi.pageIndex}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}"
 
                        th:text="${pi.pageIndex + 1}">1</a>
 
@@ -298,11 +281,11 @@
 
                 <li th:if="${page.last}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.last}"><a class="pagination__link pagination__link--next" th:href="@{/admin/hoa-don(page=${page.number + 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.last}"><a class="pagination__link pagination__link--next" th:href="@{/admin/hoa-don(page=${page.number + 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
 
                 <li th:if="${page.last}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.last}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=${page.totalPages - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Trang cuối"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.last}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=${page.totalPages - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Trang Cuối"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></a></li>
 
             </ul>
 
@@ -361,8 +344,6 @@
                 var doc = parser.parseFromString(html, 'text/html');
 
 
-
-                // Xử lý tất cả toast messages (success, warning, error)
 
                 var toastPayloads = doc.querySelectorAll('[data-admin-toast-message]');
 
@@ -506,14 +487,13 @@
 
                                 .map(function (i) {
 
-                                    return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
+                                    return i.tenSanPham + ': cáº§n ' + i.soLuongCan + ', cÃ²n ' + i.soLuongTon;
 
                                 });
 
 
 
                             var msg = 'Tồn kho không đủ:\n' + missingItems.join('\n') +
-
                                 '\n\nĐơn hàng sẽ chuyển sang trạng thái "Cần xử lý" và ghi chú cho khách. Tiếp tục?';
 
 
@@ -635,4 +615,6 @@
 </body>
 
 </html>
+
+
 

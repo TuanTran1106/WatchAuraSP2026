@@ -124,6 +124,9 @@
                                             <span class="order-card__product-line">
                                                 <span th:text="${item.tenSanPham}"></span>
                                                 <span class="order-card__variant" th:if="${item.tenBienThe != null and !item.tenBienThe.isEmpty()}" th:text="| — ${item.tenBienThe}|"></span>
+                                                <th:block th:if="${(don.trangThaiDonHang == 'DANG_GIAO' or don.trangThaiDonHang == 'DA_GIAO' or don.trangThaiDonHang == 'HOAN_THANH' or don.trangThaiDonHang == 'DA_THANH_TOAN' or don.trangThaiDonHang == 'DA THANH TOAN') and item.maSerials != null and !item.maSerials.isEmpty()}">
+                                                    <span class="order-card__serial"> · Serial: <th:block th:each="serial, sIter : ${item.maSerials}"><th:block th:text="${serial}"/><th:block th:if="${!sIter.last}">, </th:block></th:block></span>
+                                                </th:block>
                                             </span><th:block th:if="${!iterStat.last}">, </th:block>
                                         </th:block>
                                     </span>
@@ -357,6 +360,10 @@
                             don.items.map(function(item) {
                                 var s = item.tenSanPham || '';
                                 if (item.tenBienThe) s += '<span class="order-card__variant"> — ' + item.tenBienThe + '</span>';
+                                var showSerial = (don.trangThaiDonHang === 'DANG_GIAO' || don.trangThaiDonHang === 'DA_GIAO' || don.trangThaiDonHang === 'HOAN_THANH' || don.trangThaiDonHang === 'DA_THANH_TOAN' || don.trangThaiDonHang === 'DA THANH TOAN');
+                                if (showSerial && item.maSerials && item.maSerials.length > 0) {
+                                    s += '<span class="order-card__serial"> · Serial: ' + item.maSerials.join(', ') + '</span>';
+                                }
                                 return '<span class="order-card__product-line">' + s + '</span>';
                             }).join(', ') +
                             '</span></div>';

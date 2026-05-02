@@ -176,6 +176,14 @@ public class UserHoanTraController {
             result.put("ngayYeuCau", hoanTra.getNgayYeuCau());
             result.put("ngayXuLy", hoanTra.getNgayXuLy());
             result.put("tenNhanVienXuLy", hoanTra.getTenNhanVienXuLy());
+            
+            // Các trường cần thiết cho Timeline
+            result.put("loaiHoanTra", hoanTra.getLoaiHoanTra());
+            result.put("loaiHoanTraHienThi", hoanTra.getLoaiHoanTraHienThi());
+            result.put("phuongThucHoanTienHienThi", hoanTra.getPhuongThucHoanTienHienThi());
+            result.put("soTienHoanThucTe", hoanTra.getSoTienHoanThucTe());
+            result.put("ngayHoanTien", hoanTra.getNgayHoanTien());
+            result.put("serialsMoiList", hoanTra.getSerialsMoiList());
 
             if (hoanTra.getChiTietList() != null) {
                 List<Map<String, Object>> chiTietList = hoanTra.getChiTietList().stream()
@@ -192,6 +200,8 @@ public class UserHoanTraController {
                             item.put("donGiaTaiThoiDiemMua", ct.getDonGiaTaiThoiDiemMua());
                             item.put("soTienHoan", ct.getSoTienHoan());
                             item.put("serialsHoanTra", ct.getSerialsHoanTra());
+                            // Serial mới cho đổi hàng
+                            item.put("serialMoi", ct.getSerialMoi());
                             if (ct.getSerialsChiTiet() != null) {
                                 item.put("serialsChiTiet", ct.getSerialsChiTiet().stream()
                                         .map(s -> {

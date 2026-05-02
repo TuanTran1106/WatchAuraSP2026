@@ -3,6 +3,7 @@ package com.example.watchaura.controller;
 import com.example.watchaura.dto.HoanTraDTO;
 import com.example.watchaura.dto.HoanTraRequest;
 import com.example.watchaura.service.HoanTraService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.example.watchaura.controller.AuthController.SESSION_CURRENT_USER_ID;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -178,9 +181,15 @@ public class HoanTraController {
     public String xuLyHoanTra(
             @PathVariable Integer id,
             @RequestParam(required = false) String ghiChuXuLy,
+            HttpSession session,
             RedirectAttributes redirectAttributes) {
         try {
-            hoanTraService.xuLyHoanTra(id, ghiChuXuLy, 1);
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+            if (nhanVienId == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa đăng nhập!");
+                return "redirect:/auth/login";
+            }
+            hoanTraService.xuLyHoanTra(id, ghiChuXuLy, nhanVienId);
             redirectAttributes.addFlashAttribute("successMessage", "Xử lý hoàn trả thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
@@ -192,9 +201,15 @@ public class HoanTraController {
     public String tuChoiHoanTra(
             @PathVariable Integer id,
             @RequestParam(required = false) String ghiChuXuLy,
+            HttpSession session,
             RedirectAttributes redirectAttributes) {
         try {
-            hoanTraService.tuChoiHoanTra(id, ghiChuXuLy, 1);
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+            if (nhanVienId == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Bạn chưa đăng nhập!");
+                return "redirect:/auth/login";
+            }
+            hoanTraService.tuChoiHoanTra(id, ghiChuXuLy, nhanVienId);
             redirectAttributes.addFlashAttribute("successMessage", "Từ chối hoàn trả thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());

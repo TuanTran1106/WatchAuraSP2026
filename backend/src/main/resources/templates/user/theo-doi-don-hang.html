@@ -260,6 +260,17 @@
             color: #888;
         }
 
+        .item-serial {
+            font-size: 11px;
+            color: #667eea;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .item-serial i {
+            margin-right: 4px;
+        }
+
         .item-price {
             font-weight: 600;
             color: #333;
@@ -466,15 +477,23 @@
                 resultContainer.classList.add('show');
 
                 const itemsHtml = data.items && data.items.length > 0
-                    ? data.items.map(item => `
+                    ? data.items.map(item => {
+                        var serialHtml = '';
+                        var status = data.trangThaiDonHang || '';
+                        var showSerial = status === 'DANG_GIAO' || status === 'DA_GIAO' || status === 'HOAN_THANH' || status === 'DA_THANH_TOAN' || status === 'DA THANH TOAN';
+                        if (showSerial && item.maSerials && item.maSerials.length > 0) {
+                            serialHtml = '<div class="item-serial"><i class="fas fa-barcode"></i> Serial: ' + item.maSerials.join(', ') + '</div>';
+                        }
+                        return `
                         <div class="item-row">
                             <div>
                                 <div class="item-name">${item.tenSanPham || ''}</div>
                                 <div class="item-variant">${item.tenBienThe || ''}</div>
+                                ${serialHtml}
                             </div>
                             <div class="item-price">${formatCurrency(item.donGia)}</div>
                         </div>
-                    `).join('')
+                    `}).join('')
                     : '<p style="color: #888; text-align: center;">Không có thông tin sản phẩm</p>';
 
                 let noteHtml = '';

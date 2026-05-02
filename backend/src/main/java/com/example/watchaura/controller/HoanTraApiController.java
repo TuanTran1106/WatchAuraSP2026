@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.watchaura.controller.AuthController.SESSION_CURRENT_USER_ID;
+
 @RestController
 @RequestMapping("/api/hoan-tra")
 @RequiredArgsConstructor
@@ -82,7 +84,6 @@ public class HoanTraApiController {
             @Valid @RequestBody HoanTraRequest request,
             HttpSession session) {
         try {
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
             HoanTraDTO created = hoanTraService.createHoanTra(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
@@ -118,9 +119,14 @@ public class HoanTraApiController {
             @RequestParam(required = false) String ghiChuXuLy,
             HttpSession session) {
         try {
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
             if (nhanVienId == null) {
-                nhanVienId = 1;
+                return ResponseEntity.badRequest().body(
+                        ImportHoanTraResponse.builder()
+                                .success(false)
+                                .message("Bạn chưa đăng nhập!")
+                                .build()
+                );
             }
             HoanTraDTO updated = hoanTraService.xuLyHoanTra(id, ghiChuXuLy, nhanVienId);
             return ResponseEntity.ok(updated);
@@ -140,9 +146,14 @@ public class HoanTraApiController {
             @RequestParam(required = false) String ghiChuXuLy,
             HttpSession session) {
         try {
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
             if (nhanVienId == null) {
-                nhanVienId = 1;
+                return ResponseEntity.badRequest().body(
+                        ImportHoanTraResponse.builder()
+                                .success(false)
+                                .message("Bạn chưa đăng nhập!")
+                                .build()
+                );
             }
             HoanTraDTO updated = hoanTraService.tuChoiHoanTra(id, ghiChuXuLy, nhanVienId);
             return ResponseEntity.ok(updated);
@@ -229,9 +240,14 @@ public class HoanTraApiController {
                 );
             }
 
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
             if (nhanVienId == null) {
-                nhanVienId = 1;
+                return ResponseEntity.badRequest().body(
+                        ImportHoanTraResponse.builder()
+                                .success(false)
+                                .message("Bạn chưa đăng nhập!")
+                                .build()
+                );
             }
 
             ImportHoanTraResponse response = hoanTraService.importFromExcel(file, nhanVienId);
@@ -360,9 +376,12 @@ public class HoanTraApiController {
             @RequestParam(required = false) String ghiChuXuLy,
             HttpSession session) {
         try {
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
             if (nhanVienId == null) {
-                nhanVienId = 1;
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Bạn chưa đăng nhập!");
+                return ResponseEntity.badRequest().body(error);
             }
             HoanTraDTO result = hoanTraService.duyetDonTraHang(id, themVaoKho, nhanVienId, ghiChuXuLy);
             Map<String, Object> response = new HashMap<>();
@@ -388,9 +407,12 @@ public class HoanTraApiController {
             @RequestBody Map<String, Object> requestBody,
             HttpSession session) {
         try {
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
             if (nhanVienId == null) {
-                nhanVienId = 1;
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Bạn chưa đăng nhập!");
+                return ResponseEntity.badRequest().body(error);
             }
 
             // Parse serialsMoi Map<String, String> -> Map<Integer, String>
@@ -442,9 +464,12 @@ public class HoanTraApiController {
             @RequestBody Map<String, Object> requestBody,
             HttpSession session) {
         try {
-            Integer nhanVienId = (Integer) session.getAttribute("nhanVienId");
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
             if (nhanVienId == null) {
-                nhanVienId = 1;
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Bạn chưa đăng nhập!");
+                return ResponseEntity.badRequest().body(error);
             }
 
             // Parse serialCuLoi Map<String, Boolean> -> Map<Integer, Boolean>

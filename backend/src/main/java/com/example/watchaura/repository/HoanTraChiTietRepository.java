@@ -13,6 +13,8 @@ public interface HoanTraChiTietRepository extends JpaRepository<HoanTraChiTiet, 
 
     List<HoanTraChiTiet> findByHoanTraId(Integer hoanTraId);
 
+    HoanTraChiTiet findByHoaDonChiTietId(Integer hoaDonChiTietId);
+
     @Query("SELECT h FROM HoanTraChiTiet h WHERE h.hoanTra.id = :hoanTraId")
     List<HoanTraChiTiet> findByHoanTraIdWithDetails(@Param("hoanTraId") Integer hoanTraId);
 

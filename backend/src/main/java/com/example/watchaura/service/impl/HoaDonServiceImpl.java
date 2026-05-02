@@ -258,58 +258,62 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     @Transactional(readOnly = true)
 
-    public Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable) {
+    public Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable, String loaiDon) {
 
         String q = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
         String status = (trangThai == null || trangThai.isBlank()) ? null : trangThai.trim();
 
+        String loai = (loaiDon == null || loaiDon.isBlank()) ? null : loaiDon.trim();
+
 
 
         Page<HoaDon> page;
 
-        if (status != null) {
+        if (status != null && loai != null) {
 
-            // UI dùng DA_THANH_TOAN; DB bán tại quầy / sau cập nhật có thể lưu "DA THANH TOAN"
-
+            // Lọc theo cả trạng thái và loại hóa đơn
             if ("DA_THANH_TOAN".equals(status)) {
-
                 List<String> paidCodes = List.of("DA_THANH_TOAN", "DA THANH TOAN");
-
                 if (q != null) {
-
-                    page = hoaDonRepository.findByTrangThaiInAndKeyword(paidCodes, q, pageable);
-
+                    page = hoaDonRepository.findByTrangThaiInAndLoaiAndKeyword(paidCodes, loai, q, pageable);
                 } else {
-
-                    page = hoaDonRepository.findByTrangThaiDonHangInAndTrangThai(paidCodes, pageable);
-
+                    page = hoaDonRepository.findByTrangThaiInAndLoai(paidCodes, loai, pageable);
                 }
-
             } else if (q != null) {
-
+                page = hoaDonRepository.findByTrangThaiAndLoaiAndKeyword(status, loai, q, pageable);
+            } else {
+                page = hoaDonRepository.findByTrangThaiAndLoai(status, loai, pageable);
+            }
+        } else if (status != null) {
+            // Chỉ lọc theo trạng thái
+            if ("DA_THANH_TOAN".equals(status)) {
+                List<String> paidCodes = List.of("DA_THANH_TOAN", "DA THANH TOAN");
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiInAndKeyword(paidCodes, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiDonHangInAndTrangThai(paidCodes, pageable);
+                }
+            } else if (q != null) {
                 page = hoaDonRepository.findByTrangThaiAndKeyword(status, q, pageable);
-
             } else {
-
                 page = hoaDonRepository.findByTrangThaiDonHangAndTrangThai(status, pageable);
-
             }
-
-        } else {
-
+        } else if (loai != null) {
+            // Chỉ lọc theo loại hóa đơn
             if (q != null) {
-
-                page = hoaDonRepository
-
-                        .findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCaseAndTrangThai(q, q, pageable);
-
+                page = hoaDonRepository.findActiveByLoaiAndKeyword(loai, q, pageable);
             } else {
-
-                page = hoaDonRepository.findActiveOrders(pageable);
-
+                page = hoaDonRepository.findActiveOrdersByLoai(loai, pageable);
             }
-
+        } else {
+            // Không lọc theo trạng thái hay loại
+            if (q != null) {
+                page = hoaDonRepository
+                        .findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCaseAndTrangThai(q, q, pageable);
+            } else {
+                page = hoaDonRepository.findActiveOrders(pageable);
+            }
         }
 
         return page.map(this::convertToDTO);
@@ -2363,4 +2367,5 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
 }
+
 
