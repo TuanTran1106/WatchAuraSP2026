@@ -31,6 +31,16 @@ public class HoanTraRequest {
 
     private List<HoanTraChiTietRequest> chiTietList;
 
+    // Thông tin tài khoản ngân hàng để hoàn tiền
+    @NotBlank(message = "Số tài khoản không được để trống")
+    private String soTaiKhoan;
+
+    @NotBlank(message = "Tên ngân hàng không được để trống")
+    private String tenNganHang;
+
+    @NotBlank(message = "Tên chủ tài khoản không được để trống")
+    private String tenChuTaiKhoan;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

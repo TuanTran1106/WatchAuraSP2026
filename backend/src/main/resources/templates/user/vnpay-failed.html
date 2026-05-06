@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout/user-layout :: content">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh toán thất bại - WatchAura</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+        .message {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .order-code {
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 15px 0;
+        }
+        .order-code span {
+            font-weight: bold;
+            color: #1a1a2e;
+            font-size: 18px;
+        }
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #856404;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(26, 26, 46, 0.3);
+        }
+        .btn-outline {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #1a1a2e;
+        }
+        .btn-outline:hover {
+            background: #1a1a2e;
+            color: white;
+        }
+        .vnpay-logo {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div th:fragment="content">
+    <div class="container">
+        <div class="icon">❌</div>
+        <h1>Thanh toán thất bại</h1>
+        <p class="message">
+            Rất tiếc, thanh toán qua VNPay không thành công.<br>
+            Đơn hàng của bạn đã được hủy.
+        </p>
+
+        <div class="order-code" th:if="${maDonHang != null}">
+            Mã đơn hàng: <span th:text="${maDonHang}"></span>
+        </div>
+
+        <div class="note">
+            <strong>Lưu ý:</strong> Nếu tài khoản của bạn đã bị trừ tiền, vui lòng liên hệ hỗ trợ để được hoàn tiền trong vòng 3-5 ngày làm việc.
+        </div>
+
+        <div class="btn-group">
+            <a href="/checkout" class="btn btn-primary">
+                ← Đặt hàng lại
+            </a>
+            <a href="/" class="btn btn-outline">
+                Về trang chủ
+            </a>
+        </div>
+
+        <p class="vnpay-logo">Thanh toán qua VNPay</p>
+    </div>
+    </div>
+</body>
+</html>

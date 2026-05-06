@@ -86,4 +86,7 @@ public class HoaDon {
 
     @Column(name = "email", length = 100)
     private String email;
+
+    @Column(name = "phi_van_chuyen", precision = 18, scale = 2)
+    private BigDecimal phiVanChuyen;
 }

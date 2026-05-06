@@ -29,6 +29,7 @@
             <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách
                         hàng</span></a>
             <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
+            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
             <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
                         aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
@@ -57,7 +58,6 @@
                         mãi</span></a>
             <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i
                     class="fas fa-ticket"></i><span>Voucher</span></a>
-            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
             <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
             <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <i class="fa-solid fa-gear"></i>

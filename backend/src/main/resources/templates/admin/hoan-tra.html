@@ -22,6 +22,7 @@
             <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
             <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách hàng</span></a>
             <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
+            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra sidebar__link--current"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
             <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
                         aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
@@ -49,7 +50,6 @@
             <a th:href="@{/admin/khuyen-mai}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-percent"></i><span>Khuyến mãi</span></a>
             <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i
                     class="fas fa-ticket"></i><span>Voucher</span></a>
-            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra sidebar__link--current"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
             <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
             <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
             <a href="#" class="sidebar__link sidebar__link--logout" th:unless="${laQuanLy}" onclick="event.preventDefault(); confirmLogout();">
@@ -204,12 +204,11 @@
                                     <option value="KET_THUC">Kết thúc</option>
                                 </optgroup>
                             </select>
-                            <input type="date" id="tuNgayFilter" class="ht-date-input" />
-                            <input type="date" id="denNgayFilter" class="ht-date-input" />
+
                         </div>
                         <div class="ht-filter-actions">
                             <button type="button" class="ht-btn ht-btn--search" onclick="searchHoanTra()"><i class="fas fa-search"></i> Tìm kiếm</button>
-                            <button type="button" class="ht-btn ht-btn--reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> Đặt lại</button>
+<!--                            <button type="button" class="ht-btn ht-btn&#45;&#45;reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> Đặt lại</button>-->
                         </div>
                     </div>
                 </div>
@@ -222,7 +221,7 @@
                             <span class="ht-card__count" id="totalCount">(0 yêu cầu)</span>
                         </div>
                         <div class="ht-card__header-right">
-                            <button class="ht-btn-icon" onclick="loadHoanTra()" title="Làm mới"><i class="fas fa-rotate"></i></button>
+<!--                            <button class="ht-btn-icon" onclick="loadHoanTra()" title="Làm mới"><i class="fas fa-rotate"></i></button>-->
                         </div>
                     </div>
 
@@ -315,10 +314,6 @@
                 <!-- Toast Notification -->
                 <div class="ht-toast" id="toast"></div>
 
-                <!-- Loading Overlay -->
-                <div class="ht-loading-overlay" id="loadingOverlay">
-                    <div class="ht-loading-spinner"><i class="fas fa-spinner"></i><p>Đang xử lý...</p></div>
-                </div>
             </div>
         </main>
         
@@ -624,8 +619,8 @@ function showToast(message, type) {
     }, 3000);
 }
 
-function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
-function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+function showLoading() { }
+function hideLoading() { }
 
 function openImportModal() {
     document.getElementById('importModal').classList.add('active');

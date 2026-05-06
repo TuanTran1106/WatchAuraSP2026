@@ -97,6 +97,15 @@ public class HoanTra {
     @Column(name = "ngay_hoan_tien")
     private LocalDateTime ngayHoanTien;
 
+    @Column(name = "so_tai_khoan", length = 50)
+    private String soTaiKhoan;
+
+    @Column(name = "ten_ngan_hang", length = 100)
+    private String tenNganHang;
+
+    @Column(name = "ten_chu_tai_khoan", length = 100)
+    private String tenChuTaiKhoan;
+
     @OneToMany(mappedBy = "hoanTra", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoanTraChiTiet> chiTietList = new ArrayList<>();
 }

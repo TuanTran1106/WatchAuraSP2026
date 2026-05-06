@@ -22,4 +22,7 @@ public class VNPayProperties {
 
     /** URL redirect sau khi thanh toán (VN Pay sẽ redirect về URL này) */
     private String returnUrl = "http://localhost:8080/thanh-toan/vnpay/return";
+
+    /** URL redirect sau khi thanh toán cho guest checkout */
+    private String guestReturnUrl = "http://localhost:8080/api/guest-checkout/vnpay/return";
 }

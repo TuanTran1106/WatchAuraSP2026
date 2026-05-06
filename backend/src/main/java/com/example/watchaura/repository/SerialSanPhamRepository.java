@@ -41,5 +41,10 @@ public interface SerialSanPhamRepository extends JpaRepository<SerialSanPham, In
     @Query("DELETE FROM SerialSanPham s WHERE s.sanPhamChiTiet.id = :sanPhamChiTietId AND s.hoaDonChiTiet IS NULL")
     void deleteBySanPhamChiTietIdAndNotSold(@Param("sanPhamChiTietId") Integer sanPhamChiTietId);
 
+    // Set hoaDonChiTiet = null for serials linked to this product (so they can be deleted)
+    @Modifying
+    @Query("UPDATE SerialSanPham s SET s.hoaDonChiTiet = NULL WHERE s.sanPhamChiTiet.id = :sanPhamChiTietId")
+    void clearHoaDonChiTietBySanPhamChiTietId(@Param("sanPhamChiTietId") Integer sanPhamChiTietId);
+
     long countBySanPhamChiTietIdAndTrangThai(Integer sanPhamChiTietId, Integer trangThai);
 }

@@ -198,6 +198,13 @@ public class HoanTraServiceImpl implements HoanTraService {
         hoanTra.setLyDo(request.getLyDo());
         hoanTra.setLoaiHoanTra(request.getLoaiHoanTra());
 
+        // Set thông tin tài khoản ngân hàng để hoàn tiền
+        if (request.getSoTaiKhoan() != null && !request.getSoTaiKhoan().isEmpty()) {
+            hoanTra.setSoTaiKhoan(request.getSoTaiKhoan());
+            hoanTra.setTenNganHang(request.getTenNganHang());
+            hoanTra.setTenChuTaiKhoan(request.getTenChuTaiKhoan());
+        }
+
         // Set initial status based on type
         if (HoanTra.LOAI_DOI_HANG.equals(request.getLoaiHoanTra())) {
             hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_DUYET_DOI);
@@ -210,10 +217,8 @@ public class HoanTraServiceImpl implements HoanTraService {
 
         hoanTra = hoanTraRepository.save(hoanTra);
 
-        // Số tiền hoàn = tổng tiền thanh toán của hóa đơn gốc
-        BigDecimal tongTienHoan = hoaDon.getTongTienThanhToan() != null 
-                ? hoaDon.getTongTienThanhToan() 
-                : BigDecimal.ZERO;
+        // Tính tổng số tiền hoàn từ các chi tiết (không bao gồm phí ship)
+        BigDecimal tongTienTuChiTiet = BigDecimal.ZERO;
 
         if (request.getChiTietList() != null && !request.getChiTietList().isEmpty()) {
             for (HoanTraRequest.HoanTraChiTietRequest chiTietRequest : request.getChiTietList()) {
@@ -229,6 +234,7 @@ public class HoanTraServiceImpl implements HoanTraService {
                     donGia = BigDecimal.ZERO;
                 }
                 BigDecimal soTienHoan = donGia.multiply(BigDecimal.valueOf(chiTietRequest.getSoLuongHoanTra()));
+                tongTienTuChiTiet = tongTienTuChiTiet.add(soTienHoan);
 
                 HoanTraChiTiet chiTiet = new HoanTraChiTiet();
                 chiTiet.setHoanTra(hoanTra);
@@ -251,6 +257,22 @@ public class HoanTraServiceImpl implements HoanTraService {
                     }
                 }
             }
+        }
+
+        // Tính số tiền hoàn = tổng tiền từ chi tiết - tỷ lệ giảm giá (không cộng phí ship)
+        BigDecimal tongTienTamTinh = hoaDon.getTongTienTamTinh() != null
+                ? hoaDon.getTongTienTamTinh()
+                : BigDecimal.ZERO;
+        BigDecimal tienGiam = hoaDon.getTienGiam() != null
+                ? hoaDon.getTienGiam()
+                : BigDecimal.ZERO;
+
+        BigDecimal tongTienHoan = tongTienTuChiTiet;
+        // Áp dụng tỷ lệ giảm giá nếu có
+        if (tongTienTamTinh.compareTo(BigDecimal.ZERO) > 0 && tienGiam.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal tiLeGiam = tienGiam.divide(tongTienTamTinh, 4, java.math.RoundingMode.HALF_UP);
+            BigDecimal soTienDuocGiam = tongTienTuChiTiet.multiply(tiLeGiam).setScale(0, java.math.RoundingMode.HALF_UP);
+            tongTienHoan = tongTienTuChiTiet.subtract(soTienDuocGiam);
         }
 
         hoanTra.setSoTienHoanTra(tongTienHoan);
@@ -659,8 +681,16 @@ public class HoanTraServiceImpl implements HoanTraService {
                 .soTienHoanThucTe(hoanTra.getSoTienHoanThucTe())
                 .ghiChuHoanTien(hoanTra.getGhiChuHoanTien())
                 .ngayHoanTien(hoanTra.getNgayHoanTien())
+                // Thông tin tài khoản ngân hàng
+                .soTaiKhoan(hoanTra.getSoTaiKhoan())
+                .tenNganHang(hoanTra.getTenNganHang())
+                .tenChuTaiKhoan(hoanTra.getTenChuTaiKhoan())
                 // DOI_HANG fields
                 .serialCuLoiHienThi(getSerialCuLoiHienThi(hoanTra.getLoaiHoanTra(), hoanTra.getTrangThai()))
+                // Thông tin hóa đơn gốc
+                .tongTienHoaDon(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTongTienTamTinh() : null)
+                .phiGiaoHang(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getPhiVanChuyen() : null)
+                .voucherGiam(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTienGiam() : null)
                 .build();
 
         if (hoanTra.getChiTietList() != null && !hoanTra.getChiTietList().isEmpty()) {
@@ -894,6 +924,20 @@ public class HoanTraServiceImpl implements HoanTraService {
         result.put("tenKhachHang", hoaDon.getTenKhachHang());
         result.put("sdtKhachHang", hoaDon.getSdtKhachHang());
         result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
+        result.put("tongTienHoaDon", hoaDon.getTongTienTamTinh());
+        // Tính phí giao hàng: tongTienThanhToan - tongTienTamTinh + tienGiam
+        BigDecimal tienGiamVal = hoaDon.getTienGiam() != null ? hoaDon.getTienGiam() : BigDecimal.ZERO;
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen();
+        if (phiVanChuyen == null) {
+            phiVanChuyen = hoaDon.getTongTienThanhToan()
+                    .subtract(hoaDon.getTongTienTamTinh())
+                    .add(tienGiamVal);
+            if (phiVanChuyen.compareTo(BigDecimal.ZERO) < 0) {
+                phiVanChuyen = BigDecimal.ZERO;
+            }
+        }
+        result.put("phiGiaoHang", phiVanChuyen);
+        result.put("voucherGiam", tienGiamVal);
         result.put("coTheHoanTra", coTheHoanTra);
 
         List<Map<String, Object>> chiTietList = new ArrayList<>();
@@ -1055,6 +1099,13 @@ public class HoanTraServiceImpl implements HoanTraService {
         hoanTra.setLoaiHoanTra(request.getLoaiHoanTra() != null ? request.getLoaiHoanTra() : HoanTra.LOAI_TRA_HANG);
         hoanTra.setSoTienHoanTra(BigDecimal.ZERO);
 
+        // Set thông tin tài khoản ngân hàng để hoàn tiền
+        if (request.getSoTaiKhoan() != null && !request.getSoTaiKhoan().isEmpty()) {
+            hoanTra.setSoTaiKhoan(request.getSoTaiKhoan());
+            hoanTra.setTenNganHang(request.getTenNganHang());
+            hoanTra.setTenChuTaiKhoan(request.getTenChuTaiKhoan());
+        }
+
         // Set initial status based on type
         if (HoanTra.LOAI_DOI_HANG.equals(hoanTra.getLoaiHoanTra())) {
             hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_DUYET_DOI);
@@ -1066,10 +1117,8 @@ public class HoanTraServiceImpl implements HoanTraService {
 
         hoanTra = hoanTraRepository.save(hoanTra);
 
-        // Số tiền hoàn = tổng tiền thanh toán của hóa đơn gốc
-        BigDecimal tongTienHoan = hoaDon.getTongTienThanhToan() != null 
-                ? hoaDon.getTongTienThanhToan() 
-                : BigDecimal.ZERO;
+        // Tính tổng số tiền hoàn từ các chi tiết (không bao gồm phí ship)
+        BigDecimal tongTienTuChiTiet = BigDecimal.ZERO;
 
         if (request.getChiTietList() != null && !request.getChiTietList().isEmpty()) {
             for (HoanTraRequest.HoanTraChiTietRequest chiTietRequest : request.getChiTietList()) {
@@ -1095,6 +1144,7 @@ public class HoanTraServiceImpl implements HoanTraService {
                     donGia = BigDecimal.ZERO;
                 }
                 BigDecimal soTienHoan = donGia.multiply(BigDecimal.valueOf(soLuongYeuCau));
+                tongTienTuChiTiet = tongTienTuChiTiet.add(soTienHoan);
 
                 HoanTraChiTiet chiTiet = new HoanTraChiTiet();
                 chiTiet.setHoanTra(hoanTra);
@@ -1124,6 +1174,22 @@ public class HoanTraServiceImpl implements HoanTraService {
                     }
                 }
             }
+        }
+
+        // Tính số tiền hoàn = tổng tiền từ chi tiết - tỷ lệ giảm giá (không cộng phí ship)
+        BigDecimal tongTienTamTinh = hoaDon.getTongTienTamTinh() != null
+                ? hoaDon.getTongTienTamTinh()
+                : BigDecimal.ZERO;
+        BigDecimal tienGiam = hoaDon.getTienGiam() != null
+                ? hoaDon.getTienGiam()
+                : BigDecimal.ZERO;
+
+        BigDecimal tongTienHoan = tongTienTuChiTiet;
+        // Áp dụng tỷ lệ giảm giá nếu có
+        if (tongTienTamTinh.compareTo(BigDecimal.ZERO) > 0 && tienGiam.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal tiLeGiam = tienGiam.divide(tongTienTamTinh, 4, java.math.RoundingMode.HALF_UP);
+            BigDecimal soTienDuocGiam = tongTienTuChiTiet.multiply(tiLeGiam).setScale(0, java.math.RoundingMode.HALF_UP);
+            tongTienHoan = tongTienTuChiTiet.subtract(soTienDuocGiam);
         }
 
         hoanTra.setSoTienHoanTra(tongTienHoan);
@@ -1277,6 +1343,20 @@ public class HoanTraServiceImpl implements HoanTraService {
         result.put("tenKhachHang", hoaDon.getTenKhachHang());
         result.put("sdtKhachHang", hoaDon.getSdtKhachHang());
         result.put("tongTienThanhToan", hoaDon.getTongTienThanhToan());
+        result.put("tongTienHoaDon", hoaDon.getTongTienTamTinh());
+        // Tính phí giao hàng: tongTienThanhToan - tongTienTamTinh + tienGiam
+        BigDecimal tienGiamVal = hoaDon.getTienGiam() != null ? hoaDon.getTienGiam() : BigDecimal.ZERO;
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen();
+        if (phiVanChuyen == null) {
+            phiVanChuyen = hoaDon.getTongTienThanhToan()
+                    .subtract(hoaDon.getTongTienTamTinh())
+                    .add(tienGiamVal);
+            if (phiVanChuyen.compareTo(BigDecimal.ZERO) < 0) {
+                phiVanChuyen = BigDecimal.ZERO;
+            }
+        }
+        result.put("phiGiaoHang", phiVanChuyen);
+        result.put("voucherGiam", tienGiamVal);
         result.put("coTheHoanTra", coTheHoanTra);
         
         List<Map<String, Object>> chiTietList = new ArrayList<>();
@@ -1742,5 +1822,207 @@ public class HoanTraServiceImpl implements HoanTraService {
         result.put("trangThaiText", trangThaiText);
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public HoanTraDTO doiTrangThai(Integer id, String trangThaiMoi, Integer idNhanVienXuLy, Boolean themVaoKho, String ghiChuXuLy) {
+        HoanTra hoanTra = hoanTraRepository.findByIdWithChiTiet(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hoàn trả với ID: " + id));
+
+        String trangThaiHienTai = hoanTra.getTrangThai();
+        String loaiHoanTra = hoanTra.getLoaiHoanTra();
+
+        KhachHang nhanVien = khachHangRepository.findById(idNhanVienXuLy)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + idNhanVienXuLy));
+
+        // Validate transition
+        boolean validTransition = isValidTransition(loaiHoanTra, trangThaiHienTai, trangThaiMoi);
+        if (!validTransition) {
+            throw new RuntimeException("Không thể chuyển từ trạng thái '" + getTrangThaiHienThi(trangThaiHienTai) + 
+                    "' sang '" + getTrangThaiHienThi(trangThaiMoi) + "'");
+        }
+
+        // Execute the transition
+        hoanTra.setTrangThai(trangThaiMoi);
+        hoanTra.setNhanVienXuLy(nhanVien);
+        if (ghiChuXuLy != null && !ghiChuXuLy.isEmpty()) {
+            hoanTra.setGhiChuXuLy(ghiChuXuLy);
+        }
+        hoanTra.setNgayXuLy(LocalDateTime.now());
+
+        // Execute side effects based on transition
+        executeTransitionEffects(hoanTra, trangThaiHienTai, trangThaiMoi, themVaoKho);
+
+        hoanTra = hoanTraRepository.save(hoanTra);
+        return convertToDTO(hoanTra);
+    }
+
+    private boolean isValidTransition(String loaiHoanTra, String currentStatus, String newStatus) {
+        if (loaiHoanTra == null) return false;
+
+        if (HoanTra.LOAI_DOI_HANG.equals(loaiHoanTra)) {
+            // DOI_HANG workflow
+            switch (currentStatus) {
+                case HoanTra.TRANG_THAI_CHO_DUYET_DOI:
+                    return HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(newStatus) 
+                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+                case HoanTra.TRANG_THAI_DA_DUYET_DOI:
+                    return HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(newStatus)
+                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+                case HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI:
+                    return HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(newStatus)
+                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+                case HoanTra.TRANG_THAI_CHON_SERIAL_MOI:
+                    return HoanTra.TRANG_THAI_DA_DOI.equals(newStatus);
+                case HoanTra.TRANG_THAI_DA_DOI:
+                    return HoanTra.TRANG_THAI_KET_THUC.equals(newStatus);
+                default:
+                    return false;
+            }
+        } else {
+            // TRA_HANG workflow
+            switch (currentStatus) {
+                case HoanTra.TRANG_THAI_CHO_XU_LY:
+                    return HoanTra.TRANG_THAI_DA_DUYET.equals(newStatus)
+                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+                case HoanTra.TRANG_THAI_DA_DUYET:
+                    return HoanTra.TRANG_THAI_DA_NHAN_HANG.equals(newStatus)
+                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+                case HoanTra.TRANG_THAI_DA_NHAN_HANG:
+                    return HoanTra.TRANG_THAI_DA_HOAN_TIEN.equals(newStatus);
+                default:
+                    return false;
+            }
+        }
+    }
+
+    private void executeTransitionEffects(HoanTra hoanTra, String fromStatus, String toStatus, Boolean themVaoKho) {
+        // If rejected (TU_CHOI), restore serial status
+        if (HoanTra.TRANG_THAI_TU_CHOI.equals(toStatus)) {
+            List<HoanTraChiTiet> chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
+            for (HoanTraChiTiet chiTiet : chiTietList) {
+                if (chiTiet.getHoaDonChiTiet() != null) {
+                    List<SerialSanPham> serials = serialSanPhamRepository
+                            .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
+                    for (SerialSanPham serial : serials) {
+                        if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
+                            serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
+                            serial.setGhiChu("Từ chối đổi/trả hàng - Serial trả lại cho khách");
+                            serialSanPhamRepository.save(serial);
+                        }
+                    }
+                }
+            }
+        }
+
+        // If transitioning to DA_HOAN_TIEN and themVaoKho is true, add products back to stock
+        if (HoanTra.TRANG_THAI_DA_HOAN_TIEN.equals(toStatus) && Boolean.TRUE.equals(themVaoKho)) {
+            List<HoanTraChiTiet> chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
+            for (HoanTraChiTiet chiTiet : chiTietList) {
+                SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
+                int currentStock = sanPhamChiTiet.getSoLuongTon() != null ? sanPhamChiTiet.getSoLuongTon() : 0;
+                sanPhamChiTiet.setSoLuongTon(currentStock + chiTiet.getSoLuongHoanTra());
+                sanPhamChiTietRepository.save(sanPhamChiTiet);
+
+                // Also update serial status back to in-stock
+                if (chiTiet.getHoaDonChiTiet() != null) {
+                    List<SerialSanPham> serials = serialSanPhamRepository
+                            .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
+                    for (SerialSanPham serial : serials) {
+                        if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
+                            serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                            serial.setHoaDonChiTiet(null);
+                            serialSanPhamRepository.save(serial);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public HoanTraUocTinhDTO tinhSoTienHoanUocTinh(Integer hoaDonId, Integer khachHangId, List<Map<String, Object>> chiTietList) {
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElse(null);
+
+        if (hoaDon == null) {
+            return HoanTraUocTinhDTO.builder()
+                    .coTheHoanTra(false)
+                    .loiThuong("Không tìm thấy hóa đơn")
+                    .build();
+        }
+
+        // Kiểm tra khách hàng
+        if (khachHangId != null && !khachHangId.equals(hoaDon.getKhachHang().getId())) {
+            return HoanTraUocTinhDTO.builder()
+                    .coTheHoanTra(false)
+                    .loiThuong("Hóa đơn không thuộc về khách hàng này")
+                    .build();
+        }
+
+        // Lấy thông tin hóa đơn gốc
+        BigDecimal tongTienTamTinhGoc = hoaDon.getTongTienTamTinh() != null ? hoaDon.getTongTienTamTinh() : BigDecimal.ZERO;
+        BigDecimal tienGiamGoc = hoaDon.getTienGiam() != null ? hoaDon.getTienGiam() : BigDecimal.ZERO;
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() != null ? hoaDon.getPhiVanChuyen() : BigDecimal.ZERO;
+        BigDecimal tongTienThanhToanGoc = hoaDon.getTongTienThanhToan() != null ? hoaDon.getTongTienThanhToan() : BigDecimal.ZERO;
+
+        // Tính tổng tiền hàng hoàn và số lượng
+        BigDecimal tongTienMatHangHoan = BigDecimal.ZERO;
+        int soLuongHoan = 0;
+
+        if (chiTietList != null && !chiTietList.isEmpty()) {
+            for (Map<String, Object> chiTiet : chiTietList) {
+                BigDecimal donGia = BigDecimal.ZERO;
+                Integer soLuong = 0;
+
+                Object donGiaObj = chiTiet.get("donGia");
+                Object soLuongObj = chiTiet.get("soLuongHoanTra");
+
+                if (donGiaObj instanceof BigDecimal) {
+                    donGia = (BigDecimal) donGiaObj;
+                } else if (donGiaObj instanceof Number) {
+                    donGia = BigDecimal.valueOf(((Number) donGiaObj).doubleValue());
+                }
+
+                if (soLuongObj instanceof Number) {
+                    soLuong = ((Number) soLuongObj).intValue();
+                }
+
+                tongTienMatHangHoan = tongTienMatHangHoan.add(donGia.multiply(BigDecimal.valueOf(soLuong)));
+                soLuongHoan += soLuong;
+            }
+        }
+
+        // Tính voucher giảm theo tỷ lệ
+        BigDecimal tienVoucherGiam = BigDecimal.ZERO;
+        if (tongTienTamTinhGoc.compareTo(BigDecimal.ZERO) > 0 && tienGiamGoc.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal tiLe = tongTienMatHangHoan.divide(tongTienTamTinhGoc, 4, java.math.RoundingMode.HALF_UP);
+            tienVoucherGiam = tienGiamGoc.multiply(tiLe).setScale(0, java.math.RoundingMode.HALF_UP);
+        }
+
+        // Tính số tiền hoàn ước tính = tổng tiền hàng hoàn - voucher giảm (tỷ lệ) - phí vận chuyển
+        BigDecimal soTienHoanUocTinh = tongTienMatHangHoan.subtract(tienVoucherGiam);
+        if (phiVanChuyen.compareTo(BigDecimal.ZERO) > 0) {
+            soTienHoanUocTinh = soTienHoanUocTinh.subtract(phiVanChuyen);
+        }
+        if (soTienHoanUocTinh.compareTo(BigDecimal.ZERO) < 0) {
+            soTienHoanUocTinh = BigDecimal.ZERO;
+        }
+
+        return HoanTraUocTinhDTO.builder()
+                .idHoaDon(hoaDonId)
+                .maDonHang(hoaDon.getMaDonHang())
+                .tongTienMatHang(tongTienMatHangHoan)
+                .phiVanChuyen(phiVanChuyen)
+                .tienVoucherGiam(tienVoucherGiam)
+                .soTienHoanUocTinh(soTienHoanUocTinh)
+                .soLuongHoan(soLuongHoan)
+                .tongTienTamTinhGoc(tongTienTamTinhGoc)
+                .tienGiamGoc(tienGiamGoc)
+                .tongTienThanhToanGoc(tongTienThanhToanGoc)
+                .coTheHoanTra(true)
+                .loiThuong(null)
+                .build();
     }
 }

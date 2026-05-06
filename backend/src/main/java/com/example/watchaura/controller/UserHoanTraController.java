@@ -85,6 +85,9 @@ public class UserHoanTraController {
             @RequestParam(required = false) String chiTietJson,
             @RequestParam(required = false, defaultValue = "TRA_HANG") String loaiHoanTra,
             @RequestParam(required = false) String hinhAnhJson,
+            @RequestParam String soTaiKhoan,
+            @RequestParam String tenNganHang,
+            @RequestParam String tenChuTaiKhoan,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         
@@ -98,6 +101,9 @@ public class UserHoanTraController {
             request.setIdHoaDon(idHoaDon);
             request.setLyDo(lyDo);
             request.setLoaiHoanTra(loaiHoanTra);
+            request.setSoTaiKhoan(soTaiKhoan);
+            request.setTenNganHang(tenNganHang);
+            request.setTenChuTaiKhoan(tenChuTaiKhoan);
 
             if (chiTietJson != null && !chiTietJson.isEmpty()) {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

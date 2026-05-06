@@ -17,6 +17,7 @@
 
     <p><b>Mã đơn:</b> <span th:text="${hoaDon.maDonHang}"></span></p>
     <p><b>Ngày đặt:</b> <span th:text="${orderDate}"></span></p>
+    <p><b>Phương thức thanh toán:</b> <span th:text="${hoaDon.phuongThucThanhToan}">COD</span></p>
 
     <hr>
 
@@ -25,7 +26,9 @@
     <table width="100%" border="1" cellspacing="0" cellpadding="8">
         <thead>
         <tr style="background:#eee;">
-            <th>Tên</th>
+            <th>STT</th>
+            <th>Tên sản phẩm</th>
+            <th>Phân loại</th>
             <th>Số lượng</th>
             <th>Đơn giá</th>
             <th>Thành tiền</th>
@@ -33,30 +36,67 @@
         </thead>
 
         <tbody>
-        <tr th:each="item : ${hoaDon.chiTietList}">
-            <td th:text="${item.sanPhamChiTiet != null && item.sanPhamChiTiet.sanPham != null
-                ? item.sanPhamChiTiet.sanPham.tenSanPham
-                : 'Sản phẩm'}"></td>
-
-            <td th:text="${item.soLuong}">1</td>
-
-            <td th:text="${item.donGia != null
-                ? #numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT') + ' ₫'
-                : '0 ₫'}"></td>
-
-            <td th:text="${item.donGia != null && item.soLuong != null
-                ? #numbers.formatDecimal(item.donGia * item.soLuong,0,'COMMA',0,'POINT') + ' ₫'
-                : '0 ₫'}"></td>
-        </tr>
+        <th:block th:if="${hoaDon.chiTietList != null}">
+            <tr th:each="item, iterStat : ${hoaDon.chiTietList}">
+                <td th:text="${iterStat.count}" style="text-align:center;">1</td>
+                <td th:text="${item.sanPhamChiTiet != null && item.sanPhamChiTiet.sanPham != null
+                    ? item.sanPhamChiTiet.sanPham.tenSanPham
+                    : 'Sản phẩm'}"></td>
+                <td>
+                    <th:block th:if="${item.sanPhamChiTiet != null}">
+                        <th:block th:if="${item.sanPhamChiTiet.mauSac != null}" th:text="${item.sanPhamChiTiet.mauSac.tenMauSac}"></th:block>
+                        <th:block th:if="${item.sanPhamChiTiet.kichThuoc != null}">
+                            - <span th:text="${item.sanPhamChiTiet.kichThuoc.tenKichThuoc}"></span>
+                        </th:block>
+                        <th:block th:if="${item.sanPhamChiTiet.mauSac == null && item.sanPhamChiTiet.kichThuoc == null}">
+                            <span style="color:#999;">-</span>
+                        </th:block>
+                    </th:block>
+                </td>
+                <td th:text="${item.soLuong}" style="text-align:center;">1</td>
+                <td th:text="${item.donGia != null
+                    ? #numbers.formatDecimal(item.donGia,0,'COMMA',0,'POINT') + ' ₫'
+                    : '0 ₫'}"></td>
+                <td th:text="${item.donGia != null && item.soLuong != null
+                    ? #numbers.formatDecimal(item.donGia * item.soLuong,0,'COMMA',0,'POINT') + ' ₫'
+                    : '0 ₫'}"></td>
+            </tr>
+        </th:block>
+        <th:block th:unless="${hoaDon.chiTietList != null}">
+            <tr>
+                <td colspan="6" style="text-align:center;color:#999;">Không có sản phẩm</td>
+            </tr>
+        </th:block>
         </tbody>
     </table>
 
     <hr>
 
     <h3>Tổng tiền</h3>
-    <p style="font-size:18px;color:red;">
-        <b th:text="${totalFormatted}">0 ₫</b>
-    </p>
+    <table width="100%" border="0" cellpadding="5">
+        <tr>
+            <td style="width:70%;">Tạm tính:</td>
+            <td style="text-align:right;" th:text="${hoaDon.tongTienTamTinh != null
+                ? #numbers.formatDecimal(hoaDon.tongTienTamTinh,0,'COMMA',0,'POINT') + ' ₫'
+                : '0 ₫'}">0 ₫</td>
+        </tr>
+        <tr>
+            <td>Phí giao hàng:</td>
+            <td style="text-align:right;" th:text="${hoaDon.phiVanChuyen != null
+                ? #numbers.formatDecimal(hoaDon.phiVanChuyen,0,'COMMA',0,'POINT') + ' ₫'
+                : '0 ₫'}">0 ₫</td>
+        </tr>
+        <th:block th:if="${hoaDon.tienGiam != null && hoaDon.tienGiam > 0}">
+            <tr>
+                <td>Giảm giá:</td>
+                <td style="text-align:right;color:green;">-<span th:text="${#numbers.formatDecimal(hoaDon.tienGiam,0,'COMMA',0,'POINT')}">0</span> ₫</td>
+            </tr>
+        </th:block>
+        <tr style="font-size:18px;font-weight:bold;">
+            <td style="padding-top:10px;border-top:2px solid #333;">Tổng thanh toán:</td>
+            <td style="text-align:right;color:red;padding-top:10px;border-top:2px solid #333;" th:text="${totalFormatted}">0 ₫</td>
+        </tr>
+    </table>
 
     <hr>
 
@@ -66,6 +106,10 @@
         SĐT: <span th:text="${hoaDon.sdtKhachHang}"></span><br>
         Địa chỉ: <span th:text="${hoaDon.diaChi}"></span>
     </p>
+
+    <th:block th:if="${hoaDon.ghiChu != null && !hoaDon.ghiChu.isEmpty()}">
+        <p><b>Ghi chú:</b> <span th:text="${hoaDon.ghiChu}"></span></p>
+    </th:block>
 
     <hr>
 

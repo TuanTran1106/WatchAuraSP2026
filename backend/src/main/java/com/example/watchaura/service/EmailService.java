@@ -2,6 +2,7 @@ package com.example.watchaura.service;
 
 import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.HoaDonChiTiet;
+import com.example.watchaura.repository.HoaDonChiTietRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -25,12 +27,20 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final HoaDonChiTietRepository hoaDonChiTietRepository;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
 
     public void sendOrderConfirmation(HoaDon hoaDon) {
         try {
+            log.info("[EMAIL] Bắt đầu gửi email xác nhận cho: {}, mã đơn: {}", hoaDon.getEmail(), hoaDon.getMaDonHang());
+
+            // Load chi tiết đầy đủ từ repository
+            List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDon.getId());
+            hoaDon.setChiTietList(chiTietList);
+            log.info("[EMAIL] Đã load {} sản phẩm cho đơn {}", chiTietList.size(), hoaDon.getMaDonHang());
+
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -44,23 +54,30 @@ public class EmailService {
             mailSender.send(message);
             log.info("✅ Gửi email xác nhận thành công: {}", hoaDon.getEmail());
 
-        } catch (MessagingException e) {
-            log.error("❌ Lỗi gửi email xác nhận: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("❌ Lỗi gửi email xác nhận: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
         }
     }
 
     private String buildOrderConfirmationHtml(HoaDon hoaDon) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("hoaDon", hoaDon);
-        variables.put("orderDate", hoaDon.getNgayDat() != null
-                ? hoaDon.getNgayDat().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"))
-                : "");
-        variables.put("totalFormatted", formatCurrency(hoaDon.getTongTienThanhToan()));
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("hoaDon", hoaDon);
+            variables.put("orderDate", hoaDon.getNgayDat() != null
+                    ? hoaDon.getNgayDat().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"))
+                    : "");
+            variables.put("totalFormatted", formatCurrency(hoaDon.getTongTienThanhToan()));
 
-        Context context = new Context();
-        context.setVariables(variables);
+            Context context = new Context();
+            context.setVariables(variables);
 
-        return templateEngine.process("email/order-confirmation", context);
+            String html = templateEngine.process("email/order-confirmation", context);
+            log.info("[EMAIL] Template xử lý thành công, độ dài: {} ký tự", html.length());
+            return html;
+        } catch (Exception e) {
+            log.error("[EMAIL] Lỗi xử lý template: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
+            throw new RuntimeException("Không thể xử lý template email", e);
+        }
     }
 
     public void sendOrderConfirmationFallback(String toEmail, String tenKhachHang, String maDonHang,

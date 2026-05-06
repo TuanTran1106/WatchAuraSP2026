@@ -53,13 +53,40 @@
                     <div class="return-info__label">Lý do hoàn trả</div>
                     <p class="return-info__value" th:text="${hoanTra.lyDo}">Sản phẩm bị lỗi</p>
                 </div>
-                <div class="return-info-item return-info-item--full return-info-item--highlight">
-                    <div class="return-info__label">Số tiền hoàn</div>
-                    <p class="return-info__value return-info__value--highlight"
-                       th:text="${#numbers.formatDecimal(hoanTra.soTienHoanTra, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</p>
+            </div>
+
+
+        <!-- Số tiền hoàn trả -->
+        <div class="return-info-item return-info-item--full return-info-item--highlight">
+            <div class="return-info__label">Số tiền hoàn trả/đổi</div>
+            <p class="return-info__value return-info__value--highlight"
+               th:text="${#numbers.formatDecimal(hoanTra.soTienHoanTra, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</p>
+        </div>
+        </div>
+
+        <!-- Thông tin tài khoản ngân hàng -->
+        <th:block th:if="${hoanTra.soTaiKhoan != null or hoanTra.tenNganHang != null or hoanTra.tenChuTaiKhoan != null}">
+            <div class="return-detail-card">
+                <h6 class="return-products-card__title">
+                    <i class="fas fa-university"></i>
+                    Thông tin tài khoản nhận hoàn tiền
+                </h6>
+                <div class="return-detail-grid">
+                    <div class="return-info-item">
+                        <div class="return-info__label">Số tài khoản</div>
+                        <p class="return-info__value" th:text="${hoanTra.soTaiKhoan}">—</p>
+                    </div>
+                    <div class="return-info-item">
+                        <div class="return-info__label">Tên ngân hàng</div>
+                        <p class="return-info__value" th:text="${hoanTra.tenNganHang}">—</p>
+                    </div>
+                    <div class="return-info-item">
+                        <div class="return-info__label">Tên chủ tài khoản</div>
+                        <p class="return-info__value" th:text="${hoanTra.tenChuTaiKhoan}">—</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </th:block>
 
         <!-- Sản phẩm hoàn trả -->
         <th:block th:if="${not #lists.isEmpty(hoanTra.chiTietList)}">
@@ -415,13 +442,13 @@
         </div>
 
         <div class="return-detail-back">
-            <a href="/khach-hang/hoan-tra" class="btn-return-back">
+<!--            <a href="/khach-hang/hoan-tra" class="btn-return-back">-->
+<!--                <i class="fas fa-arrow-left"></i>-->
+<!--                Quay lại danh sách-->
+<!--            </a>-->
+            <a th:href="@{/don-hang}" class="btn-return-back btn-return-back--secondary">
                 <i class="fas fa-arrow-left"></i>
                 Quay lại danh sách
-            </a>
-            <a th:href="@{/don-hang/chi-tiet/{id}(id=${hoanTra.idHoaDon})}" class="btn-return-back btn-return-back--secondary">
-                <i class="fas fa-eye"></i>
-                Xem đơn hàng
             </a>
         </div>
     </div>
@@ -1202,17 +1229,18 @@
             gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
+
         }
 
         .btn-return-back {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none;
             padding: 0.6rem 1.5rem;
             font-size: 0.9rem;
             font-weight: 500;
             color: #fff;
-            text-decoration: none;
             background: linear-gradient(135deg, #c9a227 0%, #a07d1c 100%);
             border-radius: 8px;
             transition: background 0.2s;
@@ -1221,6 +1249,7 @@
         .btn-return-back:hover {
             color: #fff;
             background: linear-gradient(135deg, #b8921f 0%, #8a6d17 100%);
+            text-decoration: none !important;
         }
 
         .btn-return-back--secondary {
@@ -1232,6 +1261,7 @@
         .btn-return-back--secondary:hover {
             color: #1a1a1a;
             background: #f5f5f5;
+            text-decoration: none !important;
         }
 
         @media (max-width: 768px) {
@@ -1252,6 +1282,7 @@
                 width: 100%;
                 justify-content: space-between;
             }
+
         }
     </style>
 </div>

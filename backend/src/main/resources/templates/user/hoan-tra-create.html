@@ -29,9 +29,27 @@
                           th:text="${#temporals.format(hoaDonInfo.ngayDat, 'dd/MM/yyyy HH:mm')}"></span>
                 </div>
                 <div class="return-order-card__body">
-                    <div class="return-order-card__info">
-                        <span>Tổng tiền: </span>
-                        <strong th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienThanhToan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</strong>
+                    <div class="return-order-card__info-grid">
+                        <div class="return-order-card__info-item">
+                            <span class="return-order-card__info-label">Tổng tiền hàng</span>
+                            <span class="return-order-card__info-value"
+                                  th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienHoaDon, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                        </div>
+                        <div class="return-order-card__info-item">
+                            <span class="return-order-card__info-label">Voucher giảm</span>
+                            <span class="return-order-card__info-value return-order-card__info-value--discount"
+                                  th:text="${hoaDonInfo.voucherGiam != null and hoaDonInfo.voucherGiam > 0} ? '-' + ${#numbers.formatDecimal(hoaDonInfo.voucherGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫' : '0 ₫'">0 ₫</span>
+                        </div>
+                        <div class="return-order-card__info-item">
+                            <span class="return-order-card__info-label">Phí giao hàng</span>
+                            <span class="return-order-card__info-value"
+                                  th:text="${hoaDonInfo.phiGiaoHang != null and hoaDonInfo.phiGiaoHang > 0} ? ${#numbers.formatDecimal(hoaDonInfo.phiGiaoHang, 0, 'COMMA', 0, 'POINT')} + ' ₫' : 'Miễn phí'">Miễn phí</span>
+                        </div>
+                        <div class="return-order-card__info-item return-order-card__info-item--total">
+                            <span class="return-order-card__info-label">Tổng tiền thanh toán</span>
+                            <span class="return-order-card__info-value"
+                                  th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienThanhToan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -256,9 +274,46 @@
                                 </span>
                             </label>
                         </div>
+
                         <textarea name="lyDo" id="lyDoInput" class="return-reason-textarea"
                                   placeholder="Nhập lý do hoàn trả của bạn..." required
                                   oninput="updateLyDoInput()">Sản phẩm bị lỗi, hỏng</textarea>
+                    </div>
+                    <div class="return-bank-section">
+                        <label for="soTaiKhoan" class="return-bank-label">
+                            <i class="fas fa-university"></i>
+                            Số tài khoản ngân hàng
+                        </label>
+                        <input type="text"
+                               id="soTaiKhoan"
+                               name="soTaiKhoan"
+                               class="return-bank-input"
+                               placeholder="Nhập số tài khoản để nhận hoàn tiền..."
+                               required>
+                    </div>
+                    <div class="return-bank-section">
+                        <label for="tenNganHang" class="return-bank-label">
+                            <i class="fas fa-building-columns"></i>
+                            Tên ngân hàng
+                        </label>
+                        <input type="text"
+                               id="tenNganHang"
+                               name="tenNganHang"
+                               class="return-bank-input"
+                               placeholder="VD: Vietcombank, BIDV, Techcombank..."
+                               required>
+                    </div>
+                    <div class="return-bank-section">
+                        <label for="tenChuTaiKhoan" class="return-bank-label">
+                            <i class="fas fa-user"></i>
+                            Tên chủ tài khoản
+                        </label>
+                        <input type="text"
+                               id="tenChuTaiKhoan"
+                               name="tenChuTaiKhoan"
+                               class="return-bank-input"
+                               placeholder="Nhập tên chủ tài khoản..."
+                               required>
                     </div>
                 </div>
 
@@ -292,12 +347,34 @@
                         <span class="return-summary-card__label">Số serial hoàn trả</span>
                         <span class="return-summary-card__value" id="totalSerialsSelected">0</span>
                     </div>
+                    <div class="return-summary-card__row">
+                        <span class="return-summary-card__label">Tổng tiền hàng hoàn</span>
+                        <span class="return-summary-card__value" id="tongTienHangHoan"
+                              th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienHoaDon, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                    </div>
+                    <div class="return-summary-card__row" th:if="${hoaDonInfo.voucherGiam != null and hoaDonInfo.voucherGiam > 0}">
+                        <span class="return-summary-card__label">Trừ voucher giảm</span>
+                        <span class="return-summary-card__value" id="voucherGiamTru"
+                              th:text="${#numbers.formatDecimal(hoaDonInfo.voucherGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                    </div>
+                    <div class="return-summary-card__row" th:if="${hoaDonInfo.phiGiaoHang != null and hoaDonInfo.phiGiaoHang > 0}">
+                        <span class="return-summary-card__label">Trừ phí giao hàng</span>
+                        <span class="return-summary-card__value"
+                              th:text="${#numbers.formatDecimal(hoaDonInfo.phiGiaoHang, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                    </div>
                     <div class="return-summary-card__row return-summary-card__row--total">
-                        <span class="return-summary-card__label">Tổng tiền hoàn</span>
+                        <span class="return-summary-card__label">Số tiền hoàn (ước tính)</span>
                         <span class="return-summary-card__value" id="totalRefundAmount"
-                              th:data-tong-tien="${hoaDonInfo.tongTienThanhToan}">
+                              th:data-tong-tien="${hoaDonInfo.tongTienHoaDon}"
+                              th:data-phi-giao="${hoaDonInfo.phiGiaoHang != null ? hoaDonInfo.phiGiaoHang : 0}"
+                              th:data-voucher-giam="${hoaDonInfo.voucherGiam != null ? hoaDonInfo.voucherGiam : 0}"
+                              th:data-hoa-don-id="${hoaDonInfo.id}">
                             <span th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienThanhToan, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                         </span>
+                    </div>
+                    <div class="return-summary-card__note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Voucher được chia theo tỷ lệ giá trị sản phẩm hoàn</span>
                     </div>
                 </div>
 
@@ -516,36 +593,194 @@
 
         function updateSummary() {
             var totalSerials = 0;
-            var totalAmount = 0;
+            var totalTienHangHoan = 0;
+            var tongTienAllProducts = 0;
+            var chiTietList = [];  // Danh sách chi tiết hoàn để gửi lên API
 
             document.querySelectorAll('.return-product-card').forEach(function(card) {
+                var productTotal = 0;
+                var productSerials = 0;
                 var hasChecked = false;
+                var seenItems = {};  // Map để gom nhóm theo hdctId-spctId
+
+                // Tính tổng tiền và serial cho sản phẩm này (khi được chọn hoàn)
                 card.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function(cb) {
-                    totalSerials++;
-                    totalAmount += parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                    var donGia = parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                    productTotal += donGia;
+                    productSerials++;
                     hasChecked = true;
+
+                    // Gom nhóm theo hdctId-spctId
+                    var hdctId = cb.getAttribute('data-hdct-id');
+                    var spctId = cb.getAttribute('data-spt-id');
+                    var key = hdctId + '-' + spctId;
+                    if (!seenItems[key]) {
+                        seenItems[key] = {
+                            idHoaDonChiTiet: parseInt(hdctId),
+                            idSanPhamChiTiet: parseInt(spctId),
+                            soLuongHoanTra: 0,
+                            donGia: donGia
+                        };
+                    }
+                    seenItems[key].soLuongHoanTra++;
                 });
 
                 var qtyInput = card.querySelector('.return-qty-input');
                 if (qtyInput && !qtyInput.disabled && !hasChecked) {
                     var qty = parseInt(qtyInput.value) || 0;
+                    var donGia = parseFloat(qtyInput.getAttribute('data-don-gia')) || 0;
                     if (qty > 0) {
-                        totalSerials += qty;
-                        totalAmount += (parseFloat(qtyInput.getAttribute('data-don-gia')) || 0) * qty;
+                        productTotal += donGia * qty;
+                        productSerials += qty;
+
+                        // Gom nhóm
+                        var hdctId = qtyInput.getAttribute('data-hdct-id');
+                        var spctId = qtyInput.getAttribute('data-spt-id');
+                        var key = hdctId + '-' + spctId;
+                        if (!seenItems[key]) {
+                            seenItems[key] = {
+                                idHoaDonChiTiet: parseInt(hdctId),
+                                idSanPhamChiTiet: parseInt(spctId),
+                                soLuongHoanTra: qty,
+                                donGia: donGia
+                            };
+                        } else {
+                            seenItems[key].soLuongHoanTra += qty;
+                        }
                     }
+                }
+
+                // Thêm vào danh sách chi tiết hoàn
+                Object.values(seenItems).forEach(function(item) {
+                    chiTietList.push(item);
+                });
+
+                // Cộng vào tổng hàng hoàn nếu được chọn
+                if (productSerials > 0) {
+                    totalSerials += productSerials;
+                    totalTienHangHoan += productTotal;
+                }
+
+                // Tính tổng tất cả sản phẩm trong đơn (để tính tỷ lệ voucher)
+                var allSerials = 0;
+                var allDonGia = 0;
+                card.querySelectorAll('input.return-serial-checkbox__input').forEach(function(cb) {
+                    allSerials++;
+                    allDonGia = parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                });
+                var defaultQty = card.querySelector('.return-qty-input');
+                if (defaultQty && !defaultQty.disabled) {
+                    var maxQty = parseInt(defaultQty.getAttribute('max')) || 0;
+                    allSerials = maxQty;
+                    allDonGia = parseFloat(defaultQty.getAttribute('data-don-gia')) || 0;
+                }
+                if (allSerials > 0) {
+                    tongTienAllProducts += allDonGia * allSerials;
                 }
             });
 
             document.getElementById('totalSerialsSelected').textContent = totalSerials;
-            
-            // Luôn hiển thị tổng tiền đơn hàng gốc (số tiền hoàn = tổng tiền hóa đơn)
+
+            // Lấy thông tin từ data attribute
             var totalRefundEl = document.getElementById('totalRefundAmount');
             var tongTienDonHang = parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 0;
-            totalRefundEl.innerHTML = '<span>' + formatCurrency(tongTienDonHang) + '</span>';
+            var phiGiao = parseFloat(totalRefundEl.getAttribute('data-phi-giao')) || 0;
+            var voucherGiam = parseFloat(totalRefundEl.getAttribute('data-voucher-giam')) || 0;
+            var hoaDonId = totalRefundEl.getAttribute('data-hoa-don-id') || null;
+
+            // Cập nhật tổng tiền hàng hoàn
+            document.getElementById('tongTienHangHoan').textContent = formatCurrency(totalTienHangHoan);
+
+            // Nếu chưa tính được tongTienAllProducts từ JS, dùng tongTienDonHang
+            if (tongTienAllProducts <= 0) {
+                tongTienAllProducts = tongTienDonHang;
+            }
+
+            // Tính voucher giảm theo tỷ lệ: (tổng tiền hàng hoàn / tổng tiền tất cả sản phẩm) × voucher
+            var tyLeVoucher = tongTienAllProducts > 0 ? totalTienHangHoan / tongTienAllProducts : 0;
+            var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLeVoucher);
+
+            // Cập nhật voucher giảm theo tỷ lệ
+            var voucherGiamTruEl = document.getElementById('voucherGiamTru');
+            if (voucherGiamTruEl) {
+                voucherGiamTruEl.textContent = formatCurrency(voucherGiamTheoTyLe);
+            }
+
+            // Gọi API để tính số tiền hoàn chính xác từ backend
+            if (hoaDonId && chiTietList.length > 0) {
+                tinhTienHoanTuApi(hoaDonId, chiTietList, totalRefundEl);
+            } else {
+                // Nếu không có sản phẩm nào được chọn, hiển thị 0
+                var soTienHoan = totalTienHangHoan - voucherGiamTheoTyLe - phiGiao;
+                if (soTienHoan < 0) soTienHoan = 0;
+                totalRefundEl.innerHTML = '<span>' + formatCurrency(soTienHoan) + '</span>';
+            }
         }
 
-        // Chỉ gọi updateSummary khi có sự kiện thay đổi (không cần gọi khi load trang
-        // vì giá trị đã được render đúng từ Thymeleaf)
+        function tinhTienHoanTuApi(hoaDonId, chiTietList, totalRefundEl) {
+            var phiGiao = parseFloat(totalRefundEl.getAttribute('data-phi-giao')) || 0;
+            var voucherGiam = parseFloat(totalRefundEl.getAttribute('data-voucher-giam')) || 0;
+
+            fetch('/api/hoan-tra/tinh-tien-hoan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    hoaDonId: hoaDonId,
+                    chiTietList: chiTietList
+                })
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success && data.data) {
+                    var result = data.data;
+                    // Cập nhật tổng tiền hàng hoàn
+                    document.getElementById('tongTienHangHoan').textContent = formatCurrency(result.tongTienMatHang);
+                    // Cập nhật voucher giảm
+                    var voucherGiamTruEl = document.getElementById('voucherGiamTru');
+                    if (voucherGiamTruEl) {
+                        voucherGiamTruEl.textContent = formatCurrency(result.tienVoucherGiam);
+                    }
+                    // Hiển thị số tiền hoàn ước tính từ API
+                    totalRefundEl.innerHTML = '<span>' + formatCurrency(result.soTienHoanUocTinh) + '</span>';
+                } else {
+                    // Fallback: tính bằng JS
+                    var tongTienHangHoan = parseFloat(totalRefundEl.closest('.return-summary-card__row')
+                        .previousElementSibling.querySelector('#tongTienHangHoan').textContent.replace(/[^\d]/g, '')) || 0;
+                    var tyLeVoucher = tongTienHangHoan / (parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 1);
+                    var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLeVoucher);
+                    var soTienHoan = tongTienHangHoan - voucherGiamTheoTyLe - phiGiao;
+                    if (soTienHoan < 0) soTienHoan = 0;
+                    totalRefundEl.innerHTML = '<span>' + formatCurrency(soTienHoan) + '</span>';
+                }
+            })
+            .catch(function(error) {
+                console.log('Lỗi khi gọi API tính tiền hoàn:', error);
+                // Fallback: tính bằng JS
+                var tongTienHangHoan = 0;
+                document.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function(cb) {
+                    tongTienHangHoan += parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                });
+                var tyLeVoucher = tongTienHangHoan / (parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 1);
+                var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLeVoucher);
+                var soTienHoan = tongTienHangHoan - voucherGiamTheoTyLe - phiGiao;
+                if (soTienHoan < 0) soTienHoan = 0;
+                totalRefundEl.innerHTML = '<span>' + formatCurrency(soTienHoan) + '</span>';
+            });
+        }
+
+        // Gọi updateSummary khi có sự kiện thay đổi
+        document.querySelectorAll('input.return-serial-checkbox__input').forEach(function(cb) {
+            cb.addEventListener('change', updateSummary);
+        });
+        document.querySelectorAll('.return-qty-input').forEach(function(input) {
+            input.addEventListener('input', updateSummary);
+            input.addEventListener('change', updateSummary);
+        });
+
+        // Gọi updateSummary lần đầu để hiển thị đúng
+        updateSummary();
 
         document.getElementById('returnForm').addEventListener('submit', function(e) {
             var totalSerials = 0;
@@ -736,6 +971,50 @@
 
         .return-order-card__body {
             padding: 1rem 1.25rem;
+        }
+
+        .return-order-card__info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .return-order-card__info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .return-order-card__info-item--total {
+            border-top: 1px dashed #e0e0e0;
+            padding-top: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .return-order-card__info-label {
+            color: #666;
+        }
+
+        .return-order-card__info-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .return-order-card__info-value--discount {
+            color: #059669;
+        }
+
+        .return-order-card__info-item--total .return-order-card__info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .return-order-card__info-item--total .return-order-card__info-value {
+            font-weight: 700;
+            color: #dc3545;
+            font-size: 1.1rem;
         }
 
         .return-order-card__info {
@@ -1332,6 +1611,43 @@
             font-family: inherit;
         }
 
+        .return-bank-section {
+            margin-top: 1rem;
+        }
+
+        .return-bank-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        .return-bank-label i {
+            color: #c9a227;
+        }
+
+        .return-bank-input {
+            width: 100%;
+            padding: 0.7rem 0.85rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .return-bank-input:focus {
+            outline: none;
+            border-color: #c9a227;
+            box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
+        }
+
+        .return-bank-input::placeholder {
+            color: #aaa;
+        }
+
         .return-reason-textarea:focus {
             outline: none;
             border-color: #c9a227;
@@ -1378,6 +1694,22 @@
         .return-summary-card__row--total .return-summary-card__value {
             font-size: 1.5rem;
             font-weight: 700;
+        }
+
+        .return-summary-card__note {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.78rem;
+            opacity: 0.85;
+        }
+
+        .return-summary-card__note i {
+            flex-shrink: 0;
+            margin-top: 0.1rem;
         }
 
         /* Actions */

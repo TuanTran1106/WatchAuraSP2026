@@ -117,7 +117,10 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
             }
         }
 
-        return convertToDTO(savedSpct);
+        // Trả về DTO với thông tin số serial đã tạo
+        SanPhamChiTietDTO dto = convertToDTO(savedSpct);
+        dto.setSoLuongSerial(soLuongSerial);
+        return dto;
     }
 
     /**
@@ -174,13 +177,17 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
     }
 
     /**
-     * Xóa sản phẩm chi tiết
+     * Xóa sản phẩm chi tiết (xóa serial trước, rồi xóa sản phẩm chi tiết)
      */
     @Transactional
     public void deleteSanPhamChiTiet(Integer id) {
         if (!sanPhamChiTietRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + id);
         }
+        // Set hoaDonChiTiet = null cho serial đã bán (để có thể xóa)
+        serialSanPhamRepository.clearHoaDonChiTietBySanPhamChiTietId(id);
+        // Xóa tất cả serial
+        serialSanPhamRepository.deleteBySanPhamChiTietId(id);
         sanPhamChiTietRepository.deleteById(id);
     }
 

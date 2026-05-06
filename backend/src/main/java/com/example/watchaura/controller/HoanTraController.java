@@ -241,4 +241,57 @@ public class HoanTraController {
         return "admin/hoan-tra-print";
     }
 
+    // API endpoint cho AJAX đổi trạng thái
+    @PostMapping("/api/{id}/trang-thai")
+    @ResponseBody
+    public Map<String, Object> apiDoiTrangThai(
+            @PathVariable Integer id,
+            @RequestParam String trangThai,
+            @RequestParam(required = false, defaultValue = "true") Boolean themVaoKho,
+            HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+            if (nhanVienId == null) {
+                result.put("success", false);
+                result.put("message", "Bạn chưa đăng nhập!");
+                return result;
+            }
+            HoanTraDTO updated = hoanTraService.doiTrangThai(id, trangThai, nhanVienId, themVaoKho, null);
+            result.put("success", true);
+            result.put("message", "Đổi trạng thái thành công!");
+            result.put("trangThaiMoi", updated.getTrangThai());
+            result.put("trangThaiHienThi", updated.getTrangThaiHienThi());
+            result.put("tenNhanVienXuLy", updated.getTenNhanVienXuLy());
+            result.put("ngayXuLy", updated.getNgayXuLy() != null ? updated.getNgayXuLy().toString() : null);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    @PostMapping("/{id}/trang-thai")
+    public String doiTrangThai(
+            @PathVariable Integer id,
+            @RequestParam String trangThai,
+            @RequestParam(required = false, defaultValue = "1") Integer tuChiTiet,
+            @RequestParam(required = false, defaultValue = "true") Boolean themVaoKho,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Integer nhanVienId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
+            if (nhanVienId == null) {
+                redirectAttributes.addFlashAttribute("error", "Bạn chưa đăng nhập!");
+                return "redirect:/auth/login";
+            }
+            HoanTraDTO updated = hoanTraService.doiTrangThai(id, trangThai, nhanVienId, themVaoKho, null);
+            redirectAttributes.addFlashAttribute("message", "Đổi trạng thái thành công!");
+            return "redirect:/admin/hoan-tra/chi-tiet/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            return "redirect:/admin/hoan-tra/chi-tiet/" + id;
+        }
+    }
+
 }

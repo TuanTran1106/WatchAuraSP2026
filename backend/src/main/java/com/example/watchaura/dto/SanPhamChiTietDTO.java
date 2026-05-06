@@ -36,5 +36,6 @@ public class SanPhamChiTietDTO {
     private Boolean trangThai;
     private String hinhAnh;
     private Integer soLuongSerialTrongKho;
+    private Integer soLuongSerial;
     private List<String> serials;
 }

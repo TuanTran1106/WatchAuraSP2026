@@ -1,5 +1,6 @@
 package com.example.watchaura.service.impl;
 
+import com.example.watchaura.config.VNPayProperties;
 import com.example.watchaura.dto.GuestOrderPlaceResponse;
 import com.example.watchaura.dto.GuestOrderPreviewResponse;
 import com.example.watchaura.dto.GuestOrderRequest;
@@ -19,8 +20,11 @@ import com.example.watchaura.service.GuestOrderService;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import com.example.watchaura.service.ShippingService;
+import com.example.watchaura.service.VNPayService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +41,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GuestOrderServiceImpl implements GuestOrderService {
     private static final String HMAC_SHA256 = "HmacSHA256";
 
@@ -47,6 +52,8 @@ public class GuestOrderServiceImpl implements GuestOrderService {
     private final KhuyenMaiService khuyenMaiService;
     private final ShippingService shippingService;
     private final EmailService emailService;
+    private final VNPayService vnPayService;
+    private final VNPayProperties vnPayProperties;
 
     @Value("${checkout.guest.tracking-secret:watchaura-guest-secret-change-me}")
     private String trackingSecret;
@@ -89,6 +96,7 @@ public class GuestOrderServiceImpl implements GuestOrderService {
         hoaDon.setGhiChu(clean(request.getGhiChu()));
         hoaDon.setTongTienTamTinh(pricing.subtotal);
         hoaDon.setTienGiam(BigDecimal.ZERO);
+        hoaDon.setPhiVanChuyen(shippingFee);
         hoaDon.setTongTienThanhToan(total);
         hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
         hoaDon.setPhuongThucThanhToan(resolvePaymentMethod(request.getPhuongThucThanhToan()));
@@ -106,9 +114,13 @@ public class GuestOrderServiceImpl implements GuestOrderService {
             hoaDonChiTietRepository.save(ct);
         }
 
+        // Flush để đảm bảo dữ liệu được persist trước khi gửi email
+        hoaDonRepository.flush();
+
         try {
             emailService.sendOrderConfirmation(saved);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.error("❌ Lỗi gửi email xác nhận cho đơn {}: {}", saved.getMaDonHang(), e.getMessage());
         }
         session.removeAttribute("cart");
 
@@ -119,6 +131,149 @@ public class GuestOrderServiceImpl implements GuestOrderService {
                 .trackingToken(token)
                 .message("Đặt hàng thành công.")
                 .build();
+    }
+
+    @Override
+    @Transactional(timeout = 30)
+    public GuestOrderPlaceResponse placeOrderForVnPay(GuestOrderRequest request, HttpSession session, HttpServletRequest httpRequest) {
+        log.info("[VNPAY] Bắt đầu placeOrderForVnPay");
+        try {
+            CartPricing pricing = buildCartPricing(session, true);
+            log.info("[VNPAY] buildCartPricing xong, subtotal={}", pricing.subtotal);
+            ShippingFeeResponse shipping = shippingService.calculateGuestFee(toShippingRequest(request, pricing.subtotal));
+            log.info("[VNPAY] calculateGuestFee xong, shippingFee={}", shipping.getShippingFee());
+            BigDecimal shippingFee = BigDecimal.valueOf(Math.max(0L, shipping.getShippingFee()));
+            BigDecimal total = pricing.subtotal.add(shippingFee);
+            log.info("[VNPAY] total={}", total);
+
+            HoaDon hoaDon = new HoaDon();
+            hoaDon.setMaDonHang("WA" + System.currentTimeMillis());
+            hoaDon.setTenKhachHang(clean(request.getHoTen()));
+            hoaDon.setEmail(clean(request.getEmail()));
+            hoaDon.setSdtKhachHang(clean(request.getSdt()));
+            hoaDon.setDiaChi(buildAddress(request));
+            hoaDon.setGhiChu(clean(request.getGhiChu()));
+            hoaDon.setTongTienTamTinh(pricing.subtotal);
+            hoaDon.setTienGiam(BigDecimal.ZERO);
+            hoaDon.setPhiVanChuyen(shippingFee);
+            hoaDon.setTongTienThanhToan(total);
+            hoaDon.setTrangThaiDonHang("CHO_THANH_TOAN");
+            hoaDon.setPhuongThucThanhToan("VNPAY");
+            hoaDon.setLoaiHoaDon("ONLINE");
+            hoaDon.setNgayDat(LocalDateTime.now());
+            hoaDon.setTrangThai(true);
+            HoaDon saved = hoaDonRepository.save(hoaDon);
+            log.info("[VNPAY] HoaDon saved, id={}", saved.getId());
+
+            for (CartLine line : pricing.lines) {
+                HoaDonChiTiet ct = new HoaDonChiTiet();
+                ct.setHoaDon(saved);
+                ct.setSanPhamChiTiet(line.spct);
+                ct.setSoLuong(line.quantity);
+                ct.setDonGia(line.unitPrice);
+                hoaDonChiTietRepository.save(ct);
+            }
+            log.info("[VNPAY] Chi tiết đã lưu");
+
+            // Lưu thông tin vào session để xử lý khi VnPay callback
+            session.setAttribute("pendingGuestVnPayOrderId", saved.getId());
+            session.setAttribute("pendingGuestVnPayEmail", saved.getEmail());
+            session.setAttribute("pendingGuestVnPaySdt", saved.getSdtKhachHang());
+            session.setAttribute("pendingGuestVnPayMaDonHang", saved.getMaDonHang());
+            log.info("[VNPAY] Session saved");
+
+            // Tạo URL thanh toán VnPay
+            String baseUrl = getBaseUrl(httpRequest);
+            String returnUrl = vnPayProperties.getGuestReturnUrl();
+            if (returnUrl.contains("localhost") || returnUrl.contains("127.0.0.1")) {
+                returnUrl = baseUrl + "/api/guest-checkout/vnpay/return";
+            }
+            long amountVnd = total.longValue();
+            String orderInfo = "Thanh toan don hang " + saved.getMaDonHang();
+            String clientIp = getClientIp(httpRequest);
+            log.info("[VNPAY] Creating payment URL with amount={}, orderInfo={}", amountVnd, orderInfo);
+            String paymentUrl = vnPayService.createPaymentUrl(amountVnd, saved.getMaDonHang(), orderInfo, returnUrl, clientIp, "vn");
+            log.info("[VNPAY] Payment URL created: {}", paymentUrl);
+
+            GuestOrderPlaceResponse response = GuestOrderPlaceResponse.builder()
+                    .orderId(saved.getId())
+                    .orderCode(saved.getMaDonHang())
+                    .redirectUrl(paymentUrl)
+                    .needVnPayRedirect(true)
+                    .message("Đang chuyển sang thanh toán VnPay...")
+                    .build();
+            log.info("[VNPAY] Response created, returning...");
+            return response;
+        } catch (Exception e) {
+            log.error("[VNPAY] Error in placeOrderForVnPay", e);
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean handleVnPayReturn(HttpServletRequest request, HttpSession session) {
+        Map<String, String> params = vnPayService.getReturnParams(request);
+        String vnpTxnRef = params.get("vnp_TxnRef");
+
+        if (vnpTxnRef == null || vnpTxnRef.isBlank()) {
+            log.warn("[VNPAY] handleVnPayReturn: vnpTxnRef is null or blank");
+            return false;
+        }
+
+        try {
+            HoaDon hoaDon = hoaDonRepository.findByMaDonHang(vnpTxnRef).orElse(null);
+            if (hoaDon == null) {
+                log.warn("[VNPAY] handleVnPayReturn: HoaDon not found for maDonHang={}", vnpTxnRef);
+                return false;
+            }
+
+            if (vnPayService.verifyReturn(request)) {
+                log.info("[VNPAY] handleVnPayReturn: Payment SUCCESS for maDonHang={}", vnpTxnRef);
+
+                // Trừ tồn kho cho từng sản phẩm trong đơn
+                hoaDon.getChiTietList().forEach(ct -> {
+                    int updated = sanPhamChiTietRepository.deductStock(ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
+                    if (updated > 0) {
+                        log.info("[VNPAY] Trừ tồn kho thành công: spctId={}, soLuong={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
+                    } else {
+                        log.warn("[VNPAY] Trừ tồn kho thất bại (không đủ hàng): spctId={}, soLuong={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
+                    }
+                });
+
+                hoaDon.setTrangThaiDonHang("DA_THANH_TOAN_ONL");
+                hoaDonRepository.save(hoaDon);
+
+                // Gửi email xác nhận
+                try {
+                    emailService.sendOrderConfirmation(hoaDon);
+                    log.info("[VNPAY] Đã gửi email xác nhận cho: {}", hoaDon.getEmail());
+                } catch (Exception e) {
+                    log.error("[VNPAY] Lỗi gửi email: {}", e.getMessage());
+                }
+
+                // Xóa session cart
+                session.removeAttribute("cart");
+                // Xóa pending session
+                session.removeAttribute("pendingGuestVnPayOrderId");
+                session.removeAttribute("pendingGuestVnPayEmail");
+                session.removeAttribute("pendingGuestVnPaySdt");
+                session.removeAttribute("pendingGuestVnPayMaDonHang");
+                return true;
+            } else {
+                log.warn("[VNPAY] handleVnPayReturn: Payment FAILED for maDonHang={}", vnpTxnRef);
+                hoaDon.setTrangThaiDonHang("DA_HUY");
+                hoaDonRepository.save(hoaDon);
+                session.removeAttribute("pendingGuestVnPayOrderId");
+                session.removeAttribute("pendingGuestVnPayEmail");
+                session.removeAttribute("pendingGuestVnPaySdt");
+                session.removeAttribute("pendingGuestVnPayMaDonHang");
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("[VNPAY] handleVnPayReturn: Error processing return", e);
+            return false;
+        }
     }
 
     @Override
@@ -262,6 +417,27 @@ public class GuestOrderServiceImpl implements GuestOrderService {
             return false;
         }
         return a.trim().equals(b.trim());
+    }
+
+    private static String getBaseUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int port = request.getServerPort();
+        String contextPath = request.getContextPath();
+        StringBuilder url = new StringBuilder().append(scheme).append("://").append(serverName);
+        if (("http".equals(scheme) && port != 80) || ("https".equals(scheme) && port != 443)) {
+            url.append(":").append(port);
+        }
+        url.append(contextPath);
+        return url.toString();
+    }
+
+    private static String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
     }
 
     private record CartLine(SanPhamChiTiet spct, Integer quantity, BigDecimal unitPrice) {

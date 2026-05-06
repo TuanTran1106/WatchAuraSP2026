@@ -28,45 +28,53 @@ public class VNPayServiceImpl implements VNPayService {
 
     @Override
     public String createPaymentUrl(long amountVnd, String orderRef, String orderInfo, String returnUrl, String clientIp, String locale) {
+        log.info("[VNPay] createPaymentUrl called - amount={}, orderRef={}, returnUrl={}", amountVnd, orderRef, returnUrl);
         if (locale == null || locale.isBlank()) locale = "vn";
 
-        Map<String, String> params = new TreeMap<>();
-        params.put("vnp_Version", VNP_VERSION);
-        params.put("vnp_Command", VNP_COMMAND);
-        params.put("vnp_TmnCode", vnPayProperties.getTmnCode());
-        params.put("vnp_Amount", String.valueOf(amountVnd * 100)); // VN Pay yêu cầu số tiền * 100
-        params.put("vnp_CurrCode", VNP_CURR_CODE);
-        params.put("vnp_TxnRef", orderRef);
-        params.put("vnp_OrderInfo", orderInfo);
-        params.put("vnp_OrderType", "other");
-        params.put("vnp_Locale", locale);
-        params.put("vnp_ReturnUrl", returnUrl);
-        params.put("vnp_IpAddr", clientIp != null ? clientIp : "127.0.0.1");
-        params.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            Map<String, String> params = new TreeMap<>();
+            params.put("vnp_Version", VNP_VERSION);
+            params.put("vnp_Command", VNP_COMMAND);
+            params.put("vnp_TmnCode", vnPayProperties.getTmnCode());
+            params.put("vnp_Amount", String.valueOf(amountVnd * 100)); // VN Pay yêu cầu số tiền * 100
+            params.put("vnp_CurrCode", VNP_CURR_CODE);
+            params.put("vnp_TxnRef", orderRef);
+            params.put("vnp_OrderInfo", orderInfo);
+            params.put("vnp_OrderType", "other");
+            params.put("vnp_Locale", locale);
+            params.put("vnp_ReturnUrl", returnUrl);
+            params.put("vnp_IpAddr", clientIp != null ? clientIp : "127.0.0.1");
+            params.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
-        // Chuỗi để ký: key=value&... (giá trị raw)
-        StringBuilder signData = new StringBuilder();
-        StringBuilder queryEncoded = new StringBuilder();
-        for (Map.Entry<String, String> e : params.entrySet()) {
-            if (e.getValue() != null && !e.getValue().isEmpty()) {
+            // Chuỗi để ký: key=value&... (giá trị raw)
+            StringBuilder signData = new StringBuilder();
+            StringBuilder queryEncoded = new StringBuilder();
+            for (Map.Entry<String, String> e : params.entrySet()) {
+                if (e.getValue() != null && !e.getValue().isEmpty()) {
 
-                String encodedValue = urlEncode(e.getValue());
+                    String encodedValue = urlEncode(e.getValue());
 
-                if (signData.length() > 0) {
-                    signData.append("&");
-                    queryEncoded.append("&");
+                    if (signData.length() > 0) {
+                        signData.append("&");
+                        queryEncoded.append("&");
+                    }
+
+                    // VNPay yêu cầu encode trước khi ký
+                    signData.append(e.getKey()).append("=").append(encodedValue);
+
+                    queryEncoded.append(e.getKey()).append("=").append(encodedValue);
                 }
-
-                // VNPay yêu cầu encode trước khi ký
-                signData.append(e.getKey()).append("=").append(encodedValue);
-
-                queryEncoded.append(e.getKey()).append("=").append(encodedValue);
             }
-        }
-        String secureHash = hmacSha512(vnPayProperties.getHashSecret(), signData.toString());
-        queryEncoded.append("&vnp_SecureHash=").append(secureHash);
+            String secureHash = hmacSha512(vnPayProperties.getHashSecret(), signData.toString());
+            queryEncoded.append("&vnp_SecureHash=").append(secureHash);
 
-        return vnPayProperties.getUrl() + "?" + queryEncoded;
+            String paymentUrl = vnPayProperties.getUrl() + "?" + queryEncoded;
+            log.info("[VNPay] Payment URL created: {}", paymentUrl);
+            return paymentUrl;
+        } catch (Exception e) {
+            log.error("[VNPay] Error creating payment URL", e);
+            throw e;
+        }
     }
 
     @Override

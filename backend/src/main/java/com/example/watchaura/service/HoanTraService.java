@@ -3,6 +3,7 @@ package com.example.watchaura.service;
 import com.example.watchaura.dto.HoanTraDTO;
 import com.example.watchaura.dto.HoanTraExcelRow;
 import com.example.watchaura.dto.HoanTraRequest;
+import com.example.watchaura.dto.HoanTraUocTinhDTO;
 import com.example.watchaura.dto.ImportHoanTraResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -97,4 +98,12 @@ public interface HoanTraService {
      * Trả về danh sách serial trong kho cùng loại sản phẩm
      */
     Map<String, Object> getSerialCoTheDoi(Integer hoaDonId, Integer sanPhamChiTietId);
+
+    HoanTraDTO doiTrangThai(Integer id, String trangThaiMoi, Integer idNhanVienXuLy, Boolean themVaoKho, String ghiChuXuLy);
+
+    /**
+     * Tính số tiền hoàn ước tính dựa trên danh sách sản phẩm hoàn
+     * Áp dụng logic: tổng tiền hàng hoàn - tỷ lệ voucher - phí vận chuyển
+     */
+    HoanTraUocTinhDTO tinhSoTienHoanUocTinh(Integer hoaDonId, Integer khachHangId, List<Map<String, Object>> chiTietList);
 }

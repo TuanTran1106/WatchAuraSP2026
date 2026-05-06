@@ -29,23 +29,27 @@
             <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
 
                 <option value="">Tất cả</option>
-                <option value="CAN_XU_LY" th:text="'Cần xử lý'">Cần xử lý</option>
-                <option value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
-                <option value="DA_THANH_TOAN_ONL" th:text="'TT VnPay thành công'">TT VnPay thành công</option>
-                <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'">Đã xác nhận</option>
-                <option value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
-                <option value="DA_GIAO" th:text="'Đã giao'">Đã giao</option>
-                <option value="DA_THANH_TOAN" th:text="'Hoàn thành'">Hoàn thành</option>
-                <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
+                <option value="CAN_XU_LY" th:text="'Cần xử lý'" th:selected="${filterTrangThai == 'CAN_XU_LY'}">Cần xử lý</option>
+                <option value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'" th:selected="${filterTrangThai == 'CHO_XAC_NHAN'}">Chờ xác nhận</option>
+                <option value="DA_THANH_TOAN_ONL" th:text="'TT VnPay OK'" th:selected="${filterTrangThai == 'DA_THANH_TOAN_ONL'}">TT VnPay thành công</option>
+                <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'" th:selected="${filterTrangThai == 'DA_XAC_NHAN'}">Đã xác nhận</option>
+                <option value="DANG_GIAO" th:text="'Đang giao'" th:selected="${filterTrangThai == 'DANG_GIAO'}">Đang giao</option>
+                <option value="DA_GIAO" th:text="'Đã giao'" th:selected="${filterTrangThai == 'DA_GIAO'}">Đã giao</option>
+                <option value="DA_THANH_TOAN" th:text="'Hoàn thành'" th:selected="${filterTrangThai == 'DA_THANH_TOAN'}">Hoàn thành</option>
+                <option value="DA_HUY" th:text="'Đã hủy'" th:selected="${filterTrangThai == 'DA_HUY'}">Đã hủy</option>
             </select>
+
+        </form>
+
+        <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--filter-row js-admin-ajax-form" data-ajax="true">
 
             <label class="toolbar__label">Loại đơn:</label>
 
             <select name="loaiDon" class="toolbar__select" onchange="this.form.submit()">
 
                 <option value="">Tất cả</option>
-                <option value="OFFLINE">Tại quầy</option>
-                <option value="ONLINE">Online</option>
+                <option value="OFFLINE" th:selected="${filterLoaiDon == 'OFFLINE'}">Tại quầy</option>
+                <option value="ONLINE" th:selected="${filterLoaiDon == 'ONLINE'}">Online</option>
 
             </select>
 

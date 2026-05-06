@@ -380,13 +380,6 @@
 <!-- Toast -->
 <div class="th-toast" id="toast"></div>
 
-<!-- Loading Overlay -->
-<div class="th-loading-overlay" id="loadingOverlay">
-    <div class="th-loading-spinner">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>Đang xử lý...</p>
-    </div>
-</div>
 
 <script src="/js/confirm-modal.js"></script>
 <script th:src="@{/admin/admin.js}"></script>
@@ -595,13 +588,8 @@ function showToast(message, type) {
     }, 4000);
 }
 
-function showLoading() {
-    document.getElementById('loadingOverlay').classList.add('active');
-}
-
-function hideLoading() {
-    document.getElementById('loadingOverlay').classList.remove('active');
-}
+function showLoading() { }
+function hideLoading() { }
 
 // Modal click outside to close
 document.getElementById('confirmModal').addEventListener('click', function(e) {

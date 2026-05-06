@@ -213,27 +213,27 @@
                 </div>
 
                 <div class="order-detail-back">
-                    <a th:href="@{/don-hang}" class="btn-order btn-order--primary" id="btnBackToList">← Quay lại đơn
+                    <a th:href="@{/don-hang}" class="btn-order btn-order--back" id="btnBackToList">← Quay lại đơn
                         hàng</a>
                 </div>
 
                 <!-- Action Buttons -->
-                <th:block th:if="${hoaDon.trangThaiDonHang == 'HOAN_THANH'}">
-                    <div class="order-detail-actions" id="orderDetailActions">
-                        <!-- Nếu chưa có yêu cầu hoàn trả: hiện nút Trả/Đổi hàng -->
-                        <a th:if="${hoanTra == null}"
-                           th:href="@{'/khach-hang/hoan-tra/tao-moi/' + ${hoaDon.id}}"
-                           class="btn-order btn-order--return">
-                            <i class="fas fa-undo"></i> Trả/Đổi hàng
-                        </a>
-                        <!-- Nếu đã có yêu cầu hoàn trả: hiện nút Lịch sử trả hàng -->
-                        <a th:if="${hoanTra != null}"
-                           th:href="@{'/khach-hang/hoan-tra/' + ${hoanTra.id}}"
-                           class="btn-order btn-order--return-history">
-                            <i class="fas fa-history"></i> Lịch sử trả hàng
-                        </a>
-                    </div>
-                </th:block>
+<!--                <th:block th:if="${hoaDon.trangThaiDonHang == 'HOAN_THANH'}">-->
+<!--                    <div class="order-detail-actions" id="orderDetailActions">-->
+<!--                        &lt;!&ndash; Nếu chưa có yêu cầu hoàn trả: hiện nút Trả/Đổi hàng &ndash;&gt;-->
+<!--                        <a th:if="${hoanTra == null}"-->
+<!--                           th:href="@{'/khach-hang/hoan-tra/tao-moi/' + ${hoaDon.id}}"-->
+<!--                           class="btn-order btn-order&#45;&#45;return">-->
+<!--                            <i class="fas fa-undo"></i> Trả/Đổi hàng-->
+<!--                        </a>-->
+<!--                        &lt;!&ndash; Nếu đã có yêu cầu hoàn trả: hiện nút Lịch sử trả hàng &ndash;&gt;-->
+<!--                        <a th:if="${hoanTra != null}"-->
+<!--                           th:href="@{'/khach-hang/hoan-tra/' + ${hoanTra.id}}"-->
+<!--                           class="btn-order btn-order&#45;&#45;return-history">-->
+<!--                            <i class="fas fa-history"></i> Lịch sử trả hàng-->
+<!--                        </a>-->
+<!--                    </div>-->
+<!--                </th:block>-->
 
             </div>
         </div>

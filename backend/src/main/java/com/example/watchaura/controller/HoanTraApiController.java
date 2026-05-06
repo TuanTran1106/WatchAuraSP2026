@@ -3,6 +3,7 @@ package com.example.watchaura.controller;
 import com.example.watchaura.dto.HoanTraDTO;
 import com.example.watchaura.dto.HoanTraExcelRow;
 import com.example.watchaura.dto.HoanTraRequest;
+import com.example.watchaura.dto.HoanTraUocTinhDTO;
 import com.example.watchaura.dto.ImportHoanTraResponse;
 import com.example.watchaura.entity.KhachHang;
 import com.example.watchaura.repository.KhachHangRepository;
@@ -514,6 +515,48 @@ public class HoanTraApiController {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * API tính số tiền hoàn ước tính
+     */
+    @PostMapping("/tinh-tien-hoan")
+    public ResponseEntity<?> tinhSoTienHoanUocTinh(
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        try {
+            Integer khachHangId = (Integer) session.getAttribute("currentUserId");
+            Integer hoaDonId = request.get("hoaDonId") != null ? Integer.parseInt(request.get("hoaDonId").toString()) : null;
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> chiTietList = (List<Map<String, Object>>) request.get("chiTietList");
+
+            if (hoaDonId == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Thiếu ID hóa đơn");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            HoanTraUocTinhDTO result = hoanTraService.tinhSoTienHoanUocTinh(hoaDonId, khachHangId, chiTietList);
+
+            if (!Boolean.TRUE.equals(result.getCoTheHoanTra())) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", result.getLoiThuong());
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", result);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Lỗi khi tính số tiền hoàn: " + e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }

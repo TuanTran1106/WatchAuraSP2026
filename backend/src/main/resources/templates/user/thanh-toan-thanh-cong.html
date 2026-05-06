@@ -517,10 +517,26 @@
                                     th:text="${#numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'POINT', 0, 'NONE') + ' đ'}">0
                                     đ</span>
                             </div>
-                            <div class="order-summary__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
-                                <span class="order-summary__label">Giảm giá</span>
-                                <span class="order-summary__value order-summary__value--discount"
-                                    th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'POINT', 0, 'NONE')} + ' đ'">0
+                            <th:block th:if="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}">
+                                <div class="order-summary__row">
+                                    <span class="order-summary__label">Voucher (<span th:text="${hoaDon.maVoucher}"></span>)</span>
+                                    <span class="order-summary__value order-summary__value--discount"
+                                        th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam != null ? hoaDon.tienGiam : 0, 0, 'POINT', 0, 'NONE')} + ' đ'">0
+                                        đ</span>
+                                </div>
+                            </th:block>
+                            <th:block th:unless="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}">
+                                <div class="order-summary__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
+                                    <span class="order-summary__label">Giảm giá</span>
+                                    <span class="order-summary__value order-summary__value--discount"
+                                        th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'POINT', 0, 'NONE')} + ' đ'">0
+                                        đ</span>
+                                </div>
+                            </th:block>
+                            <div class="order-summary__row" th:if="${hoaDon.phiVanChuyen != null}">
+                                <span class="order-summary__label">Phí giao hàng</span>
+                                <span class="order-summary__value"
+                                    th:text="${#numbers.formatDecimal(hoaDon.phiVanChuyen, 0, 'POINT', 0, 'NONE') + ' đ'}">0
                                     đ</span>
                             </div>
                             <div class="order-summary__row order-summary__row--total">

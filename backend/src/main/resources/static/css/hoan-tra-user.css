@@ -801,7 +801,7 @@
 }
 
 .return-detail-back:hover {
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 /* Info Card */

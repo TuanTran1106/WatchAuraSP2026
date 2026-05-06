@@ -1,6 +1,7 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.GioHangDTO;
+import com.example.watchaura.dto.HoaDonSuccessDTO;
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
 import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.HoaDonChiTiet;
@@ -165,5 +166,44 @@ public class CheckoutController {
         // Thông báo đặt hàng thành công
         redirect.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + hoaDon.getMaDonHang());
         return "redirect:/gio-hang";
+    }
+
+    @GetMapping("/checkout/vnpay-failed")
+    public String vnpayFailedPage(
+            @RequestParam(value = "orderCode", required = false) String orderCode,
+            Model model) {
+        model.addAttribute("title", "Thanh toán thất bại - WatchAura");
+        model.addAttribute("maDonHang", orderCode);
+        model.addAttribute("content", "user/vnpay-failed :: content");
+        return "layout/user-layout";
+    }
+
+    @GetMapping("/checkout/success")
+    public String checkoutSuccessPage(
+            @RequestParam(value = "orderCode", required = false) String orderCode,
+            @RequestParam(value = "payment", required = false) String payment,
+            Model model) {
+        if (orderCode != null && !orderCode.isBlank()) {
+            try {
+                var hoaDon = hoaDonRepository.findByMaDonHang(orderCode);
+                if (hoaDon.isPresent()) {
+                    var hoaDonEntity = hoaDon.get();
+
+                    // Load chi tiết đơn hàng với đầy đủ thông tin
+                    List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDonEntity.getId());
+                    
+                    // Chuyển sang DTO để tránh lazy loading
+                    HoaDonSuccessDTO hoaDonDTO = HoaDonSuccessDTO.fromHoaDon(hoaDonEntity, chiTietList);
+                    model.addAttribute("hoaDon", hoaDonDTO);
+                }
+            } catch (Exception e) {
+                log.warn("Không tìm thấy đơn hàng: {}", orderCode);
+            }
+        }
+        model.addAttribute("maDonHang", orderCode);
+        model.addAttribute("payment", payment);
+        model.addAttribute("title", "Đặt hàng thành công - WatchAura");
+        model.addAttribute("content", "user/checkout-success :: content");
+        return "layout/user-layout";
     }
 }

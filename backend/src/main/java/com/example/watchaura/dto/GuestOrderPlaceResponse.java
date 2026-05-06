@@ -12,4 +12,8 @@ public class GuestOrderPlaceResponse {
     private String orderCode;
     private String trackingToken;
     private String message;
+    /** URL redirect VnPay (chỉ set khi chọn thanh toán VnPay) */
+    private String redirectUrl;
+    /** true nếu cần redirect sang VnPay */
+    private Boolean needVnPayRedirect;
 }

@@ -41,6 +41,17 @@
         .guest-checkout-page .inline-msg { margin: 12px 0; padding: 10px 12px; border-radius: 8px; font-size: 13px; }
         .guest-checkout-page .inline-msg--error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .guest-checkout-page .inline-msg--success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .guest-checkout-page .payment-options { margin-top: 15px; }
+        .guest-checkout-page .payment-option { display: flex; align-items: center; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+        .guest-checkout-page .payment-option:hover { border-color: #1a1a2e; }
+        .guest-checkout-page .payment-option.selected { border-color: #1a1a2e; background: #f8f9fa; }
+        .guest-checkout-page .payment-option input[type="radio"] { margin-right: 12px; transform: scale(1.2); }
+        .guest-checkout-page .payment-option-label { flex: 1; }
+        .guest-checkout-page .payment-option-title { font-weight: 600; color: #1a1a2e; }
+        .guest-checkout-page .payment-option-desc { font-size: 12px; color: #666; margin-top: 2px; }
+        .guest-checkout-page .payment-option-icon { font-size: 24px; margin-left: 10px; }
+        .guest-checkout-page .btn-submit.vnpay { background: linear-gradient(135deg, #0066cc 0%, #004499 100%); }
+
         @media (max-width: 768px) {
             .guest-checkout-page .checkout-grid { grid-template-columns: 1fr; }
             .guest-checkout-page .order-summary { position: static; }
@@ -114,9 +125,29 @@
                             <textarea id="ghiChu" rows="3" placeholder="Ghi chú thêm cho đơn hàng"></textarea>
                         </div>
                     </div>
+                    <div class="form-section">
+                        <h3>Phương thức thanh toán</h3>
+                        <div class="payment-options">
+                            <label class="payment-option selected" id="payment-option-cod">
+                                <input type="radio" name="phuongThucThanhToan" value="COD" checked>
+                                <div class="payment-option-label">
+                                    <div class="payment-option-title">Thanh toán khi nhận hàng (COD)</div>
+                                    <div class="payment-option-desc">Trả tiền mặt khi nhận được hàng</div>
+                                </div>
+                                <div class="payment-option-icon">💵</div>
+                            </label>
+                            <label class="payment-option" id="payment-option-vnpay">
+                                <input type="radio" name="phuongThucThanhToan" value="VNPAY">
+                                <div class="payment-option-label">
+                                    <div class="payment-option-title">Thanh toán qua VNPay</div>
+                                    <div class="payment-option-desc">Thanh toán an toàn qua QR Code hoặc thẻ</div>
+                                </div>
+                                <div class="payment-option-icon">💳</div>
+                            </label>
+                        </div>
+                    </div>
                     <div id="guestCheckoutError" class="inline-msg inline-msg--error" style="display:none;"></div>
                     <div id="guestCheckoutSuccess" class="inline-msg inline-msg--success" style="display:none;"></div>
-                    <button type="submit" class="btn-submit">Đặt hàng (COD)</button>
                 </form>
             </div>
 
@@ -159,9 +190,13 @@
                     <p id="guestCheckoutStatus" class="checkout-status">Phí giao hàng sẽ được tính realtime theo GHN khi chọn đủ địa chỉ.</p>
                 </div>
 
-                <div class="payment-method">
-                    <p>Thanh toán khi nhận hàng <span>(COD)</span></p>
-                </div>
+<!--                <div class="payment-method">-->
+<!--                    <p>Thanh toán khi nhận hàng <span>(COD)</span></p>-->
+<!--                </div>-->
+
+                <div id="guestCheckoutError" class="inline-msg inline-msg--error" style="display:none;"></div>
+                <div id="guestCheckoutSuccess" class="inline-msg inline-msg--success" style="display:none;"></div>
+                <button type="button" class="btn-submit" id="guestCheckoutBtn" onclick="submitGuestCheckout()">Đặt hàng (COD)</button>
             </div>
         </div>
     </div>
@@ -183,8 +218,111 @@
                 grandTotal: document.getElementById('guestGrandTotal'),
                 status: document.getElementById('guestCheckoutStatus'),
                 err: document.getElementById('guestCheckoutError'),
-                ok: document.getElementById('guestCheckoutSuccess')
+                ok: document.getElementById('guestCheckoutSuccess'),
+                submitBtn: document.getElementById('guestCheckoutBtn')
             };
+            function setMsg(type, text) {
+                els.err.style.display = 'none';
+                els.ok.style.display = 'none';
+                if (!text) return;
+                if (type === 'error') {
+                    els.err.textContent = text;
+                    els.err.style.display = 'block';
+                    return;
+                }
+                els.ok.textContent = text;
+                els.ok.style.display = 'block';
+            }
+
+            async function submitGuestCheckout() {
+                if (!form) return;
+                setMsg(null, '');
+
+                // Validate required fields
+                const requiredFields = ['hoTen', 'email', 'sdt', 'diaChiCuThe'];
+                for (const fieldId of requiredFields) {
+                    const field = document.getElementById(fieldId);
+                    if (!field || !field.value.trim()) {
+                        setMsg('error', 'Vui lòng điền đầy đủ thông tin bắt buộc.');
+                        field && field.focus();
+                        return;
+                    }
+                }
+
+                if (!els.province.value) {
+                    setMsg('error', 'Vui lòng chọn Tỉnh/Thành phố.');
+                    els.province.focus();
+                    return;
+                }
+                if (!els.district.value) {
+                    setMsg('error', 'Vui lòng chọn Quận/Huyện.');
+                    els.district.focus();
+                    return;
+                }
+                if (!els.ward.value) {
+                    setMsg('error', 'Vui lòng chọn Phường/Xã.');
+                    els.ward.focus();
+                    return;
+                }
+
+                const selectedPayment = document.querySelector('input[name="phuongThucThanhToan"]:checked');
+                const paymentMethod = selectedPayment ? selectedPayment.value : 'COD';
+
+                els.submitBtn.disabled = true;
+                els.submitBtn.textContent = 'Đang xử lý...';
+
+                // Backup timeout để xử lý nếu request treo quá 15 giây
+                const requestTimeout = setTimeout(() => {
+                    setMsg('error', 'Yêu cầu thanh toán bị timeout. Vui lòng thử lại.');
+                    els.submitBtn.disabled = false;
+                    els.submitBtn.textContent = paymentMethod === 'VNPAY' ? 'Thanh toán qua VNPay' : 'Đặt hàng (COD)';
+                }, 15000);
+
+                const payload = buildPayload();
+                fetch('/api/guest-checkout/place-order', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                    body: JSON.stringify(payload)
+                })
+                .then(res => {
+                    console.log('Response status:', res.status);
+                    console.log('Response headers:', res.headers);
+                    return res.json().catch(err => {
+                        console.error('JSON parse error:', err);
+                        return { error: 'parse_error', message: err.message };
+                    });
+                })
+                .then(body => {
+                    clearTimeout(requestTimeout); // Hủy timeout
+                    console.log('Response body:', body);
+                    // Kiểm tra nếu cần redirect sang VnPay
+                    if (body.needVnPayRedirect && body.redirectUrl) {
+                        setMsg('success', 'Đang chuyển sang thanh toán VNPay...');
+                        els.submitBtn.textContent = 'Đang chuyển sang VNPay...';
+                        console.log('Redirecting to:', body.redirectUrl);
+                        // Redirect sang VnPay
+                        window.location.href = body.redirectUrl;
+                        return;
+                    }
+
+                    if (!body.orderCode) throw new Error(body.message || 'Đặt hàng thất bại.');
+                    const msg = 'Đặt hàng thành công! Mã đơn: ' + body.orderCode;
+                    setMsg('success', msg);
+                    els.submitBtn.textContent = 'Đã đặt hàng thành công!';
+                    els.submitBtn.style.background = '#27ae60';
+                    if (window.showToast) window.showToast('Đặt hàng thành công: ' + (body.orderCode || ''), 'success');
+                    // Redirect sau 2 giây
+                    setTimeout(() => {
+                        window.location.href = '/checkout/success?orderCode=' + encodeURIComponent(body.orderCode || '');
+                    }, 2000);
+                })
+                .catch(e => {
+                    clearTimeout(requestTimeout); // Hủy timeout
+                    setMsg('error', e.message || 'Đặt hàng thất bại.');
+                    els.submitBtn.disabled = false;
+                    els.submitBtn.textContent = paymentMethod === 'VNPAY' ? 'Thanh toán qua VNPay' : 'Đặt hàng (COD)';
+                });
+            }
 
             let shippingFeeValue = null;
             let requestNo = 0;
@@ -200,19 +338,6 @@
 
             function currentSubtotal() {
                 return num(els.grandTotal && els.grandTotal.dataset ? els.grandTotal.dataset.subtotal : 0);
-            }
-
-            function setMsg(type, text) {
-                els.err.style.display = 'none';
-                els.ok.style.display = 'none';
-                if (!text) return;
-                if (type === 'error') {
-                    els.err.textContent = text;
-                    els.err.style.display = 'block';
-                    return;
-                }
-                els.ok.textContent = text;
-                els.ok.style.display = 'block';
             }
 
             function fillSelect(select, items, placeholder) {
@@ -244,6 +369,7 @@
             }
 
             function buildPayload() {
+                const selectedPayment = document.querySelector('input[name="phuongThucThanhToan"]:checked');
                 return {
                     hoTen: (els.hoTen.value || '').trim(),
                     email: (els.email.value || '').trim(),
@@ -256,7 +382,7 @@
                     ghnDistrictId: els.district.value ? Number(els.district.value) : null,
                     ghnWardCode: (els.ward.value || '').trim(),
                     ghiChu: (els.ghiChu.value || '').trim(),
-                    phuongThucThanhToan: 'COD'
+                    phuongThucThanhToan: selectedPayment ? selectedPayment.value : 'COD'
                 };
             }
 
@@ -358,28 +484,25 @@
                 el.addEventListener('input', schedulePreview);
             });
 
-            form.addEventListener('submit', async (ev) => {
-                ev.preventDefault();
-                setMsg(null, '');
-                const payload = buildPayload();
-                form.querySelector('.btn-submit').disabled = true;
-                try {
-                    const res = await fetch('/api/guest-checkout/place-order', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-                        body: JSON.stringify(payload)
-                    });
-                    const body = await res.json().catch(() => ({}));
-                    if (!res.ok) throw new Error(body.message || 'Đặt hàng thất bại.');
-                    const msg = 'Đặt hàng thành công. Mã đơn: ' + body.orderCode + '. Token: ' + body.trackingToken;
-                    setMsg('success', msg);
-                    if (window.showToast) window.showToast('Đặt hàng thành công: ' + (body.orderCode || ''), 'success');
-                } catch (e) {
-                    setMsg('error', e.message || 'Đặt hàng thất bại.');
-                } finally {
-                    form.querySelector('.btn-submit').disabled = false;
-                }
+            // Xử lý chọn phương thức thanh toán
+            document.querySelectorAll('input[name="phuongThucThanhToan"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const paymentOptions = document.querySelectorAll('.payment-option');
+                    paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                    if (this.value === 'VNPAY') {
+                        document.getElementById('payment-option-vnpay').classList.add('selected');
+                        els.submitBtn.textContent = 'Thanh toán qua VNPay';
+                        els.submitBtn.classList.add('vnpay');
+                    } else {
+                        document.getElementById('payment-option-cod').classList.add('selected');
+                        els.submitBtn.textContent = 'Đặt hàng (COD)';
+                        els.submitBtn.classList.remove('vnpay');
+                    }
+                });
             });
+
+            // Expose submitGuestCheckout to global scope for onclick handler
+            window.submitGuestCheckout = submitGuestCheckout;
 
             updateTotals();
             loadProvinces();
