@@ -2,6 +2,8 @@ package com.example.watchaura.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,11 +12,11 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.FutureOrPresent;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import org.springframework.format.annotation.DateTimeFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
 @Setter
@@ -23,6 +25,12 @@ import lombok.Setter;
 @Entity
 @Table(name = "KhuyenMai")
 public class KhuyenMai {
+
+    public enum PhamViApDung {
+        ALL,
+        CATEGORY,
+        SKU
+    }
 
     public interface OnCreate {}
 
@@ -42,6 +50,10 @@ public class KhuyenMai {
     @Column(name = "danh_muc_ap_dung", length = 255)
     private String danhMucApDung;
 
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "pham_vi_ap_dung")
+    private PhamViApDung phamViApDung;
+
     @Column(name = "loai_giam", nullable = false, length = 20)
     private String loaiGiam;
 
@@ -51,7 +63,15 @@ public class KhuyenMai {
     @Column(name = "giam_toi_da", precision = 18, scale = 2)
     private BigDecimal giamToiDa;
 
-    /** Khớp input HTML {@code datetime-local} (không có giây phần thập phân — tránh ô trống khi sửa từ SQL Server). */
+    @Column(name = "don_toi_thieu", precision = 18, scale = 2)
+    private BigDecimal donToiThieu;
+
+    @Column(name = "gioi_han_luot_dung")
+    private Integer gioiHanLuotDung;
+
+    @Column(name = "so_luot_da_dung")
+    private Integer soLuotDaDung;
+
     @Column(name = "ngay_bat_dau")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @FutureOrPresent(message = "Ngày bắt đầu không được ở quá khứ", groups = OnCreate.class)

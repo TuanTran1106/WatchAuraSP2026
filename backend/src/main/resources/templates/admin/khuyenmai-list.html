@@ -3,6 +3,16 @@
 
 <body>
     <div th:fragment="content">
+        <style>
+            .km-status-badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;line-height:1.2}
+            .km-status--upcoming{background:#dbeafe;color:#1d4ed8}
+            .km-status--running{background:#dcfce7;color:#166534}
+            .km-status--ended{background:#fee2e2;color:#b91c1c}
+            .km-status--off{background:#e2e8f0;color:#334155}
+            .km-num-col,.km-num-cell{text-align:right}
+            .km-date-warning{display:none;margin-top:6px;color:#b91c1c;font-size:.82rem;font-weight:600}
+            .form__input.is-invalid{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+        </style>
         <div th:if="${message}" class="admin-toast-payload"
             th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
         <div th:if="${warning}" class="admin-toast-payload"
@@ -75,6 +85,12 @@
                                     nhưng không quá 500.000₫).</small>
                             </div>
                             <div class="form__group">
+                                <label class="form__label">Đơn tối thiểu (VNĐ)</label>
+                                <input class="form__input" type="number" step="0.01" min="0" th:field="*{donToiThieu}"
+                                    placeholder="0 = không yêu cầu" />
+                                <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Chỉ áp dụng khi giá trị đơn đạt ngưỡng này.</small>
+                            </div>
+                            <div class="form__group">
                                 <label class="form__label">Ngày bắt đầu</label>
                                 <input class="form__input" type="datetime-local" th:field="*{ngayBatDau}"
                                     id="ngayBatDau" />
@@ -85,10 +101,9 @@
                                 <label class="form__label">Ngày kết thúc</label>
                                 <input class="form__input" type="datetime-local" th:field="*{ngayKetThuc}"
                                     id="ngayKetThuc" />
+                                <div id="ngayRangeWarning" class="km-date-warning">Ngày kết thúc phải lớn hơn ngày bắt đầu.</div>
                                 <span class="form__error" th:if="${#fields.hasErrors('ngayKetThuc')}"
                                     th:errors="*{ngayKetThuc}"></span>
-                                <span class="form__error" th:if="${#fields.hasErrors('ngayKetThucSauNgayBatDau')}"
-                                    th:errors="*{ngayKetThucSauNgayBatDau}"></span>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Trạng thái</label>
@@ -157,6 +172,17 @@
                     <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
                     <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
                 </select>
+                <label class="toolbar__label">Từ ngày:</label>
+                <input type="date" name="fromDate" class="toolbar__input" th:value="${fromDate}" />
+                <label class="toolbar__label">Đến ngày:</label>
+                <input type="date" name="toDate" class="toolbar__input" th:value="${toDate}" />
+                <label class="toolbar__label">Phạm vi áp dụng:</label>
+                <select name="phamViApDung" class="toolbar__select" onchange="this.form.submit()">
+                    <option value="" th:selected="${filterPhamViApDung == null or filterPhamViApDung == ''}">Tất cả</option>
+                    <option value="ALL" th:selected="${filterPhamViApDung == 'ALL'}">Toàn sàn</option>
+                    <option value="CATEGORY" th:selected="${filterPhamViApDung == 'CATEGORY'}">Theo danh mục</option>
+                    <option value="SKU" th:selected="${filterPhamViApDung == 'SKU'}">Theo SKU</option>
+                </select>
             </form>
 
             <table class="table">
@@ -166,10 +192,13 @@
                         <th>Mã KM</th>
                         <th>Tên chương trình</th>
                         <th>Loại giảm</th>
-                        <th>Giá trị giảm</th>
+                        <th class="km-num-col">Giá trị giảm</th>
+                        <th class="km-num-col">Đơn tối thiểu</th>
+                        <th class="km-num-col">Trần tiền giảm</th>
+                        <th>Danh mục áp dụng</th>
                         <th>Ngày bắt đầu</th>
                         <th>Ngày kết thúc</th>
-                        <th>Trạng thái</th>
+                        <th>Trạng thái runtime</th>
                         <th>Thao tác</th>
                     </tr>
                 </thead>
@@ -189,7 +218,7 @@
                                 th:text="${item.loaiGiam}">Khác</th:block>
                             <th:block th:if="${item.loaiGiam == null}">—</th:block>
                         </td>
-                        <td>
+                        <td class="km-num-cell">
                             <th:block
                                 th:if="${item.giaTriGiam != null && (item.loaiGiam == 'PHAN_TRAM' || item.loaiGiam == 'PERCENT')}">
                                 <span
@@ -209,6 +238,13 @@
                             </th:block>
                             <th:block th:if="${item.giaTriGiam == null}">—</th:block>
                         </td>
+                        <td class="km-num-cell"
+                            th:text="${item.donToiThieu != null ? (#numbers.formatDecimal(item.donToiThieu, 1, 'POINT', 0, 'COMMA') + ' ₫') : '—'}">
+                        </td>
+                        <td class="km-num-cell">
+                            <span th:text="${item.giamToiDa != null ? (#numbers.formatDecimal(item.giamToiDa, 1, 'POINT', 0, 'COMMA') + ' ₫') : '—'}">—</span>
+                        </td>
+                        <td th:text="${item.danhMucApDung != null && !#strings.isEmpty(item.danhMucApDung) ? item.danhMucApDung : 'Tất cả'}">Tất cả</td>
                         <td
                             th:text="${item.ngayBatDau != null ? #temporals.format(item.ngayBatDau, 'dd/MM/yyyy HH:mm') : '—'}">
                         </td>
@@ -216,23 +252,14 @@
                             th:text="${item.ngayKetThuc != null ? #temporals.format(item.ngayKetThuc, 'dd/MM/yyyy HH:mm') : '—'}">
                         </td>
                         <td>
-                            <form
-                                th:action="@{/admin/khuyen-mai/{id}/trang-thai(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
-                                method="post" style="display:inline;" class="js-admin-ajax-form" data-ajax="true"
-                                data-confirm="Bạn có chắc chắn muốn đổi trạng thái khuyến mãi này?"
-                                data-confirm-title="Đổi trạng thái" data-confirm-ok="Đồng ý" data-confirm-cancel="Hủy"
-                                data-confirm-tone="info">
-                                <button type="submit" class="btn-icon btn-icon--toggle"
-                                    th:title="${item.trangThai != null and item.trangThai ? 'Đang hoạt động (bấm để tắt)' : 'Không hoạt động (bấm để bật)'}"
-                                    aria-label="Đổi trạng thái">
-                                    <i class="fa-solid fa-toggle-on"
-                                        th:if="${item.trangThai != null and item.trangThai}"
-                                        style="color: #16a34a; font-size: 1.35rem;"></i>
-                                    <i class="fa-solid fa-toggle-off"
-                                        th:if="${item.trangThai == null or !item.trangThai}"
-                                        style="color: #94a3b8; font-size: 1.35rem;"></i>
-                                </button>
-                            </form>
+                            <span class="km-status-badge km-status--off"
+                                th:if="${item.trangThai == null or !item.trangThai}">Đã tắt</span>
+                            <span class="km-status-badge km-status--upcoming"
+                                th:if="${item.trangThai != null and item.trangThai and item.ngayBatDau != null and item.ngayBatDau > #temporals.createNow()}">Sắp diễn ra</span>
+                            <span class="km-status-badge km-status--ended"
+                                th:if="${item.trangThai != null and item.trangThai and item.ngayKetThuc != null and item.ngayKetThuc < #temporals.createNow()}">Đã kết thúc</span>
+                            <span class="km-status-badge km-status--running"
+                                th:if="${item.trangThai != null and item.trangThai and (item.ngayBatDau == null or item.ngayBatDau <= #temporals.createNow()) and (item.ngayKetThuc == null or item.ngayKetThuc >= #temporals.createNow())}">Đang chạy</span>
                         </td>
                         <td>
                             <div class="table-actions">
@@ -242,11 +269,11 @@
                                 <form
                                     th:action="@{/admin/khuyen-mai/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
                                     method="post" style="display:inline;" class="js-admin-ajax-form" data-ajax="true"
-                                    data-confirm="Xóa khuyến mãi này? Hành động này không thể hoàn tác."
-                                    data-confirm-title="Xóa khuyến mãi" data-confirm-ok="Xóa" data-confirm-cancel="Hủy"
-                                    data-confirm-tone="danger">
-                                    <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i
-                                            class="fa-solid fa-trash"></i></button>
+                                    data-confirm="Bạn có chắc muốn ngừng hoạt động khuyến mãi này? Bạn có thể bật lại sau."
+                                    data-confirm-title="Ngừng hoạt động khuyến mãi" data-confirm-ok="Ngừng hoạt động" data-confirm-cancel="Hủy"
+                                    data-confirm-tone="warning">
+                                    <button type="submit" class="btn-icon btn-icon--delete" title="Ngừng hoạt động"><i
+                                            class="fa-solid fa-ban"></i></button>
                                 </form>
                             </div>
                         </td>
@@ -298,14 +325,16 @@
                     if (v === 'PHAN_TRAM') {
                         if (giamToiDaGroup) giamToiDaGroup.style.display = '';
                         if (hintGiaTri) hintGiaTri.textContent = 'Nhập phần trăm (vd. 15 = giảm 15%). Tối đa 100%.';
-                        if (giaTriInput) giaTriInput.removeAttribute('max');
+                        if (giaTriInput) giaTriInput.setAttribute('max', '100');
                     } else if (v === 'TIEN') {
                         if (giamToiDaGroup) giamToiDaGroup.style.display = 'none';
                         if (giamToiDaInput) giamToiDaInput.value = '';
                         if (hintGiaTri) hintGiaTri.textContent = 'Nhập số tiền trừ trực tiếp khỏi giá niêm yết (VNĐ).';
+                        if (giaTriInput) giaTriInput.removeAttribute('max');
                     } else {
                         if (giamToiDaGroup) giamToiDaGroup.style.display = '';
                         if (hintGiaTri) hintGiaTri.textContent = 'Chọn loại giảm để hiển thị đúng đơn vị.';
+                        if (giaTriInput) giaTriInput.removeAttribute('max');
                     }
                 }
                 if (loai) {
@@ -325,12 +354,30 @@
                 } else {
                     ngayBatDau.removeAttribute('min');
                 }
+                var ngayRangeWarning = document.getElementById('ngayRangeWarning');
                 function setNgayKetThucMin() {
                     var startVal = ngayBatDau.value;
                     ngayKetThuc.setAttribute('min', startVal || (isNewKhuyenMai ? minStr : ''));
                 }
+                function validateNgayRangeRealtime() {
+                    var hasBoth = !!ngayBatDau.value && !!ngayKetThuc.value;
+                    var invalid = hasBoth && (new Date(ngayKetThuc.value) <= new Date(ngayBatDau.value));
+                    if (invalid) {
+                        ngayKetThuc.classList.add('is-invalid');
+                        if (ngayRangeWarning) ngayRangeWarning.style.display = 'block';
+                    } else {
+                        ngayKetThuc.classList.remove('is-invalid');
+                        if (ngayRangeWarning) ngayRangeWarning.style.display = 'none';
+                    }
+                }
                 setNgayKetThucMin();
-                ngayBatDau.addEventListener('change', setNgayKetThucMin);
+                validateNgayRangeRealtime();
+                ngayBatDau.addEventListener('change', function () {
+                    setNgayKetThucMin();
+                    validateNgayRangeRealtime();
+                });
+                ngayKetThuc.addEventListener('change', validateNgayRangeRealtime);
+                ngayKetThuc.addEventListener('input', validateNgayRangeRealtime);
             })();
         </script>
     </div>

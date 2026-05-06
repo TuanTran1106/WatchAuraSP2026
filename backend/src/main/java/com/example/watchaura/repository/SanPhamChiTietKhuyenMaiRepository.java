@@ -2,6 +2,7 @@ package com.example.watchaura.repository;
 
 import com.example.watchaura.entity.SanPhamChiTietKhuyenMai;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,5 +28,9 @@ public interface SanPhamChiTietKhuyenMaiRepository extends JpaRepository<SanPham
                 @Param("spctId") Integer spctId,
                 @Param("now") LocalDateTime now
         );
+
+    @Modifying
+    @Query("DELETE FROM SanPhamChiTietKhuyenMai spkm WHERE spkm.khuyenMai.id = :khuyenMaiId")
+    void deleteByKhuyenMaiId(@Param("khuyenMaiId") Integer khuyenMaiId);
 }
 

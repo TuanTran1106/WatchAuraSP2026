@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,8 +21,19 @@ public interface KhuyenMaiRepository extends JpaRepository<KhuyenMai, Integer> {
 
     @Query("SELECT km FROM KhuyenMai km WHERE " +
             "(:q IS NULL OR :q = '' OR LOWER(km.maKhuyenMai) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(km.tenChuongTrinh) LIKE LOWER(CONCAT('%', :q, '%'))) AND " +
-            "(:trangThai IS NULL OR km.trangThai = :trangThai)")
-    Page<KhuyenMai> searchByKeywordAndTrangThai(@Param("q") String q, @Param("trangThai") Boolean trangThai, Pageable pageable);
+            "(:trangThai IS NULL OR km.trangThai = :trangThai) AND " +
+            "(:phamViApDung IS NULL OR km.phamViApDung = :phamViApDung) AND " +
+            "(:fromDate IS NULL OR km.ngayBatDau IS NULL OR km.ngayBatDau >= :fromDateStart) AND " +
+            "(:toDate IS NULL OR km.ngayKetThuc IS NULL OR km.ngayKetThuc <= :toDateEnd)")
+    Page<KhuyenMai> searchByFilters(
+            @Param("q") String q,
+            @Param("trangThai") Boolean trangThai,
+            @Param("phamViApDung") KhuyenMai.PhamViApDung phamViApDung,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("fromDateStart") LocalDateTime fromDateStart,
+            @Param("toDate") LocalDate toDate,
+            @Param("toDateEnd") LocalDateTime toDateEnd,
+            Pageable pageable);
 
     /** Khuyến mãi đang diễn ra (trạng thái bật, trong khoảng ngày) */
     @Query("SELECT km FROM KhuyenMai km WHERE km.trangThai = true " +

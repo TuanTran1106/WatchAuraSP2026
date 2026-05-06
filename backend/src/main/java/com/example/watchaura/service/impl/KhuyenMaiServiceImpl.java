@@ -2,11 +2,14 @@ package com.example.watchaura.service.impl;
 
 import com.example.watchaura.entity.KhuyenMai;
 import com.example.watchaura.repository.KhuyenMaiRepository;
+import com.example.watchaura.repository.SanPhamChiTietKhuyenMaiRepository;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.util.KhuyenMaiPricing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,6 +23,9 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
     @Autowired
     private KhuyenMaiRepository khuyenMaiRepository;
+
+    @Autowired
+    private SanPhamChiTietKhuyenMaiRepository sanPhamChiTietKhuyenMaiRepository;
 
     @Override
     public List<KhuyenMai> getActivePromotions(LocalDateTime now) {
@@ -35,7 +41,27 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
     @Override
     public Page<KhuyenMai> searchPage(String q, Boolean trangThai, Pageable pageable) {
-        return khuyenMaiRepository.searchByKeywordAndTrangThai(q, trangThai, pageable);
+        return searchPage(q, trangThai, null, null, null, pageable);
+    }
+
+    @Override
+    public Page<KhuyenMai> searchPage(String q,
+                                      Boolean trangThai,
+                                      LocalDate fromDate,
+                                      LocalDate toDate,
+                                      KhuyenMai.PhamViApDung phamViApDung,
+                                      Pageable pageable) {
+        LocalDateTime fromDateStart = fromDate != null ? fromDate.atStartOfDay() : null;
+        LocalDateTime toDateEnd = toDate != null ? toDate.atTime(23, 59, 59) : null;
+        return khuyenMaiRepository.searchByFilters(
+                q,
+                trangThai,
+                phamViApDung,
+                fromDate,
+                fromDateStart,
+                toDate,
+                toDateEnd,
+                pageable);
     }
 
     @Override
@@ -48,11 +74,21 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         if (khuyenMai.getTrangThai() == null) {
             khuyenMai.setTrangThai(Boolean.FALSE);
         }
+        apGiaTriMacDinh(khuyenMai);
         chuanHoaTruocKhiLuu(khuyenMai);
         khuyenMai.setNgayTao(LocalDateTime.now());
         khuyenMai.setNgayCapNhat(LocalDateTime.now());
         if (khuyenMai.getDanhMucApDung() == null) {
             khuyenMai.setDanhMucApDung("");
+        }
+        if (khuyenMai.getPhamViApDung() == null) {
+            khuyenMai.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
+        }
+        if (khuyenMai.getDonToiThieu() == null) {
+            khuyenMai.setDonToiThieu(java.math.BigDecimal.ZERO);
+        }
+        if (khuyenMai.getSoLuotDaDung() == null || khuyenMai.getSoLuotDaDung() < 0) {
+            khuyenMai.setSoLuotDaDung(0);
         }
         return khuyenMaiRepository.save(khuyenMai);
     }
@@ -73,6 +109,10 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
         existing.setGiaTriGiam(khuyenMai.getGiaTriGiam());
         existing.setGiamToiDa(khuyenMai.getGiamToiDa());
+        existing.setDonToiThieu(khuyenMai.getDonToiThieu());
+        existing.setGioiHanLuotDung(khuyenMai.getGioiHanLuotDung());
+        existing.setSoLuotDaDung(khuyenMai.getSoLuotDaDung());
+        existing.setPhamViApDung(khuyenMai.getPhamViApDung());
         // Form datetime-local đôi khi gửi rỗng / không bind → null; DB cột NOT NULL → không được xóa ngày cũ.
         if (khuyenMai.getNgayBatDau() != null) {
             existing.setNgayBatDau(khuyenMai.getNgayBatDau());
@@ -80,14 +120,43 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         if (khuyenMai.getNgayKetThuc() != null) {
             existing.setNgayKetThuc(khuyenMai.getNgayKetThuc());
         }
+        existing.setDonToiThieu(khuyenMai.getDonToiThieu());
+        existing.setGioiHanLuotDung(khuyenMai.getGioiHanLuotDung());
+        existing.setSoLuotDaDung(khuyenMai.getSoLuotDaDung());
+        existing.setPhamViApDung(khuyenMai.getPhamViApDung());
         existing.setTrangThai(khuyenMai.getTrangThai());
         if (existing.getTrangThai() == null) {
             existing.setTrangThai(Boolean.FALSE);
         }
+        apGiaTriMacDinh(existing);
         chuanHoaTruocKhiLuu(existing);
+        if (existing.getPhamViApDung() == null) {
+            existing.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
+        }
+        if (existing.getDonToiThieu() == null) {
+            existing.setDonToiThieu(java.math.BigDecimal.ZERO);
+        }
+        if (existing.getSoLuotDaDung() == null || existing.getSoLuotDaDung() < 0) {
+            existing.setSoLuotDaDung(0);
+        }
         existing.setNgayCapNhat(LocalDateTime.now());
 
         return khuyenMaiRepository.save(existing);
+    }
+
+    private static void apGiaTriMacDinh(KhuyenMai km) {
+        if (km == null) {
+            return;
+        }
+        if (km.getPhamViApDung() == null) {
+            km.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
+        }
+        if (km.getDonToiThieu() == null || km.getDonToiThieu().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            km.setDonToiThieu(java.math.BigDecimal.ZERO);
+        }
+        if (km.getSoLuotDaDung() == null || km.getSoLuotDaDung() < 0) {
+            km.setSoLuotDaDung(0);
+        }
     }
 
     /**
@@ -107,8 +176,20 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
+        sanPhamChiTietKhuyenMaiRepository.deleteByKhuyenMaiId(id);
         khuyenMaiRepository.deleteById(id);
+    }
+
+    @Override
+    public void deactivate(Integer id) {
+        KhuyenMai km = khuyenMaiRepository.findById(id).orElse(null);
+        if (km != null) {
+            km.setTrangThai(Boolean.FALSE);
+            km.setNgayCapNhat(LocalDateTime.now());
+            khuyenMaiRepository.save(km);
+        }
     }
 
     @Override
