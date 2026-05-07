@@ -44,9 +44,12 @@ public class HoanTraApiController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String trangThai,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String loaiHoanTra,
+            @RequestParam(required = false) String tuNgay,
+            @RequestParam(required = false) String denNgay) {
         try {
-            Map<String, Object> result = hoanTraService.getHoanTraPaged(page, size, trangThai, keyword);
+            Map<String, Object> result = hoanTraService.getHoanTraPaged(page, size, trangThai, keyword, loaiHoanTra, tuNgay, denNgay);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();

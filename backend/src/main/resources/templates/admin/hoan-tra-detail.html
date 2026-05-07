@@ -296,19 +296,81 @@
             </div>
         </section>
 
-        <!-- Tong tien hoan tra -->
+        <!-- Tong tien hoan tra - Chi tiet -->
         <section class="invoice-detail__summary" th:if="${hoanTra.chiTietList != null and !hoanTra.chiTietList.isEmpty()}">
             <div class="invoice-detail__summary-row">
                 <span class="invoice-detail__summary-label">Tổng số sản phẩm</span>
                 <span class="invoice-detail__summary-value"
                     th:text="|${hoanTra.chiTietList.size()} sản phẩm|">0 sản phẩm</span>
             </div>
+
+            <!-- Tong tien mat hang hoan - tinh lai tu chi tiet -->
+            <div class="invoice-detail__summary-row">
+                <span class="invoice-detail__summary-label">Tổng tiền mặt hàng hoàn</span>
+                <span class="invoice-detail__summary-value invoice-detail__summary-value--sub" id="tongMatHangHienThi">—</span>
+            </div>
+
+            <!-- Tien voucher giam - chi hien neu co voucher -->
+            <th:block th:if="${hoanTra.voucherGiam != null and hoanTra.voucherGiam > 0}">
+                <div class="invoice-detail__summary-row">
+                    <span class="invoice-detail__summary-label">
+                        <i class="fa-solid fa-tag" style="color: #dc2626; margin-right: 0.25rem;"></i>
+                        Trừ voucher giảm giá
+                    </span>
+                    <span class="invoice-detail__summary-value invoice-detail__summary-value--deduct"
+                        id="voucherGiamHienThi">—</span>
+                </div>
+            </th:block>
+
+            <!-- Tong tien hoan tra cuoi cung - tinh lai -->
             <div class="invoice-detail__summary-row invoice-detail__summary-row--total">
-                <span class="invoice-detail__summary-label invoice-detail__summary-label--grand">Tổng tiền hoàn trả</span>
-                <span class="invoice-detail__summary-grand"
+                <span class="invoice-detail__summary-label invoice-detail__summary-label--grand">Số tiền hoàn trả</span>
+                <span class="invoice-detail__summary-grand" id="soTienHoanTraHienThi"
                     th:text="|${hoanTra.soTienHoanTra != null ? #numbers.formatDecimal(hoanTra.soTienHoanTra, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0 đ</span>
             </div>
+
+            <!-- Ghi chu cong thuc tinh -->
+            <th:block th:if="${(hoanTra.voucherGiam != null and hoanTra.voucherGiam > 0)}">
+                <div class="invoice-detail__formula-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Công thức: Tổng mặt hàng - Voucher giảm = Số tiền hoàn trả
+                </div>
+            </th:block>
         </section>
+
+        <script th:inline="javascript">
+            (function() {
+                var chiTietList = /*[[${hoanTra.chiTietList}]]*/ [];
+                var tongTienTamTinhGoc = /*[[${hoanTra.tongTienHoaDon}]]*/ 0;
+                var tienGiamGoc = /*[[${hoanTra.voucherGiam}]]*/ 0;
+
+                if (!tongTienTamTinhGoc) tongTienTamTinhGoc = 0;
+                if (!tienGiamGoc) tienGiamGoc = 0;
+
+                var totalMatHang = 0;
+                if (chiTietList && chiTietList.length > 0) {
+                    chiTietList.forEach(function(item) {
+                        var donGia = parseFloat(item.donGiaTaiThoiDiemMua) || 0;
+                        var soLuong = parseInt(item.soLuongHoanTra) || 0;
+                        totalMatHang += donGia * soLuong;
+                    });
+                }
+
+                var tyLe = tongTienTamTinhGoc > 0 ? totalMatHang / tongTienTamTinhGoc : 0;
+                var voucherGiamTheoTyLe = Math.round(tienGiamGoc * tyLe);
+                var soTienHoanTra = totalMatHang - voucherGiamTheoTyLe;
+                if (soTienHoanTra < 0) soTienHoanTra = 0;
+
+                var fmt = function(n) { return Math.round(n).toLocaleString('vi-VN') + ' đ'; };
+
+                var el = document.getElementById('soTienHoanTraHienThi');
+                if (el) el.textContent = fmt(soTienHoanTra);
+                var el2 = document.getElementById('tongMatHangHienThi');
+                if (el2) el2.textContent = fmt(totalMatHang);
+                var el3 = document.getElementById('voucherGiamHienThi');
+                if (el3) el3.textContent = '-' + fmt(voucherGiamTheoTyLe);
+            })();
+        </script>
 
     </article>
 

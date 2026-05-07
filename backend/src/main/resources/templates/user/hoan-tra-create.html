@@ -355,12 +355,12 @@
                     <div class="return-summary-card__row" th:if="${hoaDonInfo.voucherGiam != null and hoaDonInfo.voucherGiam > 0}">
                         <span class="return-summary-card__label">Trừ voucher giảm</span>
                         <span class="return-summary-card__value" id="voucherGiamTru"
-                              th:text="${#numbers.formatDecimal(hoaDonInfo.voucherGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                              th:text="'- ' +${#numbers.formatDecimal(hoaDonInfo.voucherGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                     </div>
                     <div class="return-summary-card__row" th:if="${hoaDonInfo.phiGiaoHang != null and hoaDonInfo.phiGiaoHang > 0}">
                         <span class="return-summary-card__label">Trừ phí giao hàng</span>
                         <span class="return-summary-card__value"
-                              th:text="${#numbers.formatDecimal(hoaDonInfo.phiGiaoHang, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                              th:text=" ${#numbers.formatDecimal(hoaDonInfo.phiGiaoHang, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                     </div>
                     <div class="return-summary-card__row return-summary-card__row--total">
                         <span class="return-summary-card__label">Số tiền hoàn (ước tính)</span>

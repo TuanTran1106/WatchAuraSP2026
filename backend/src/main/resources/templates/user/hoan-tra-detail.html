@@ -59,10 +59,39 @@
         <!-- Số tiền hoàn trả -->
         <div class="return-info-item return-info-item--full return-info-item--highlight">
             <div class="return-info__label">Số tiền hoàn trả/đổi</div>
-            <p class="return-info__value return-info__value--highlight"
+            <p class="return-info__value return-info__value--highlight" id="soTienHoanTraDisplay"
                th:text="${#numbers.formatDecimal(hoanTra.soTienHoanTra, 0, 'COMMA', 0, 'POINT')} + ' ₫'">5,000,000 ₫</p>
         </div>
         </div>
+
+        <script th:inline="javascript">
+            (function() {
+                var chiTietList = /*[[${hoanTra.chiTietList}]]*/ [];
+                var tongTienTamTinhGoc = /*[[${hoanTra.tongTienHoaDon}]]*/ 0;
+                var tienGiamGoc = /*[[${hoanTra.voucherGiam}]]*/ 0;
+
+                if (!tongTienTamTinhGoc) tongTienTamTinhGoc = 0;
+                if (!tienGiamGoc) tienGiamGoc = 0;
+
+                var totalMatHang = 0;
+                if (chiTietList && chiTietList.length > 0) {
+                    chiTietList.forEach(function(item) {
+                        var donGia = parseFloat(item.donGiaTaiThoiDiemMua) || 0;
+                        var soLuong = parseInt(item.soLuongHoanTra) || 0;
+                        totalMatHang += donGia * soLuong;
+                    });
+                }
+
+                var tyLe = tongTienTamTinhGoc > 0 ? totalMatHang / tongTienTamTinhGoc : 0;
+                var voucherGiamTheoTyLe = Math.round(tienGiamGoc * tyLe);
+                var soTienHoanTra = totalMatHang - voucherGiamTheoTyLe;
+                if (soTienHoanTra < 0) soTienHoanTra = 0;
+
+                var display = Math.round(soTienHoanTra).toLocaleString('vi-VN') + ' ₫';
+                var el = document.getElementById('soTienHoanTraDisplay');
+                if (el) el.textContent = display;
+            })();
+        </script>
 
         <!-- Thông tin tài khoản ngân hàng -->
         <th:block th:if="${hoanTra.soTaiKhoan != null or hoanTra.tenNganHang != null or hoanTra.tenChuTaiKhoan != null}">

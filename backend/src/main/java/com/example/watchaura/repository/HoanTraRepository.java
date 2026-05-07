@@ -18,20 +18,51 @@ public interface HoanTraRepository extends JpaRepository<HoanTra, Integer> {
 
     Page<HoanTra> findByTrangThai(String trangThai, Pageable pageable);
 
-    @Query("SELECT h FROM HoanTra h WHERE h.trangThai = :trangThai")
+    @Query("SELECT DISTINCT h FROM HoanTra h LEFT JOIN FETCH h.hoaDon LEFT JOIN FETCH h.khachHang WHERE h.trangThai = :trangThai")
     Page<HoanTra> findByTrangThaiOrderByNgayYeuCauDesc(@Param("trangThai") String trangThai, Pageable pageable);
 
-    @Query("SELECT h FROM HoanTra h")
+    @Query("SELECT DISTINCT h FROM HoanTra h LEFT JOIN FETCH h.hoaDon LEFT JOIN FETCH h.khachHang")
     Page<HoanTra> findAllOrderByNgayYeuCauDesc(Pageable pageable);
 
-    @Query("SELECT h FROM HoanTra h WHERE " +
+    @Query(value = "SELECT DISTINCT h FROM HoanTra h " +
+           "LEFT JOIN FETCH h.chiTietList ct " +
+           "WHERE " +
            "(:trangThai IS NULL OR h.trangThai = :trangThai) AND " +
+           "(:loaiHoanTra IS NULL OR h.loaiHoanTra = :loaiHoanTra) AND " +
+           "(:keyword IS NULL OR LOWER(h.maHoanTra) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(h.hoaDon.maDonHang) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(h.khachHang.tenNguoiDung) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+           countQuery = "SELECT COUNT(DISTINCT h) FROM HoanTra h WHERE " +
+           "(:trangThai IS NULL OR h.trangThai = :trangThai) AND " +
+           "(:loaiHoanTra IS NULL OR h.loaiHoanTra = :loaiHoanTra) AND " +
            "(:keyword IS NULL OR LOWER(h.maHoanTra) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(h.hoaDon.maDonHang) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(h.khachHang.tenNguoiDung) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<HoanTra> searchHoanTra(
             @Param("trangThai") String trangThai,
             @Param("keyword") String keyword,
+            @Param("loaiHoanTra") String loaiHoanTra,
+            Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT h FROM HoanTra h " +
+           "WHERE " +
+           "(:trangThai IS NULL OR h.trangThai = :trangThai) AND " +
+           "(:loaiHoanTra IS NULL OR h.loaiHoanTra = :loaiHoanTra)",
+           countQuery = "SELECT COUNT(DISTINCT h) FROM HoanTra h WHERE " +
+           "(:trangThai IS NULL OR h.trangThai = :trangThai) AND " +
+           "(:loaiHoanTra IS NULL OR h.loaiHoanTra = :loaiHoanTra)")
+    Page<HoanTra> searchByFilters(
+            @Param("trangThai") String trangThai,
+            @Param("loaiHoanTra") String loaiHoanTra,
+            Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT h FROM HoanTra h " +
+           "WHERE " +
+           "(:loaiHoanTra IS NULL OR h.loaiHoanTra = :loaiHoanTra)",
+           countQuery = "SELECT COUNT(DISTINCT h) FROM HoanTra h WHERE " +
+           "(:loaiHoanTra IS NULL OR h.loaiHoanTra = :loaiHoanTra)")
+    Page<HoanTra> findByLoaiHoanTraWithDateRange(
+            @Param("loaiHoanTra") String loaiHoanTra,
             Pageable pageable);
 
     @Query("SELECT h FROM HoanTra h LEFT JOIN FETCH h.chiTietList WHERE h.id = :id")

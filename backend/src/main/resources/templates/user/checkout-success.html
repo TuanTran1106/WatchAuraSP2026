@@ -557,7 +557,7 @@
                         <div class="order-summary__row" th:if="${hoaDon.phiVanChuyen != null}">
                             <span class="order-summary__label">Phí giao hàng</span>
                             <span class="order-summary__value"
-                                th:text="${#numbers.formatDecimal(hoaDon.phiVanChuyen, 0, 'POINT', 0, 'NONE') + ' đ'}">0
+                                th:text="'+' + ${#numbers.formatDecimal(hoaDon.phiVanChuyen, 0, 'POINT', 0, 'NONE') + ' đ'}">0
                                 đ</span>
                         </div>
                         <div class="order-summary__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">

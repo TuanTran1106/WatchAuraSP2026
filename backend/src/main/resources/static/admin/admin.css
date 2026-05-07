@@ -3317,6 +3317,35 @@ body.dash-modal-open {
   letter-spacing: -0.02em;
 }
 
+.invoice-detail__summary-value--sub {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.invoice-detail__summary-value--deduct {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.invoice-detail__formula-note {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  line-height: 1.5;
+}
+
+.invoice-detail__formula-note i {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
 .invoice-detail__empty-items {
   margin: 0;
   padding: 0.5rem 0 0.25rem;
@@ -3774,6 +3803,24 @@ body:has(.admin-layout.theme-dark) {
 
 .admin-layout.theme-dark .invoice-detail__summary-grand {
   color: #fda4af;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-value--sub {
+  color: #f1f5f9;
+}
+
+.admin-layout.theme-dark .invoice-detail__summary-value--deduct {
+  color: #f87171;
+}
+
+.admin-layout.theme-dark .invoice-detail__formula-note {
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.5), rgba(30, 58, 95, 0.3));
+  border-color: rgba(125, 211, 252, 0.3);
+  color: #93c5fd;
+}
+
+.admin-layout.theme-dark .invoice-detail__formula-note i {
+  color: #60a5fa;
 }
 
 .admin-layout.theme-dark .invoice-detail__products-layout {

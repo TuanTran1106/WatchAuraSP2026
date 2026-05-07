@@ -330,8 +330,8 @@
 
 .ht-search-box {
     position: relative;
-    flex: 1;
-    min-width: 180px;
+    flex: 0 0 850px;
+    max-width: 850px;
 }
 
 .ht-search-box i {

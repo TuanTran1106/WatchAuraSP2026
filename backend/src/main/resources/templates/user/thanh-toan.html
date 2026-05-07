@@ -124,7 +124,7 @@
                         </div>
                         <div class="cart-summary__row cart-summary__row--compact" id="shipping-fee-row">
                             <span class="cart-summary__label">Phí giao hàng</span>
-                            <span class="cart-summary__value" id="checkout-shipping-fee" th:text="|${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">40.000 ₫</span>
+                            <span class="cart-summary__value" id="checkout-shipping-fee" th:text=" |${#numbers.formatDecimal(checkoutShippingFee, 0, 'COMMA', 0, 'POINT')} ₫|">+ </span>
                         </div>
                         <p class="cart-summary__note" id="shipping-status-note" style="display:none;"></p>
                         <p class="cart-summary__note cart-summary__note--free-ship" id="shipping-note" style="display:none;">✓ Đơn hàng trên 1.000.000₫ được miễn phí giao hàng</p>

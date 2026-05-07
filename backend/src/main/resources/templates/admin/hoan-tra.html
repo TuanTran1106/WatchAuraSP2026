@@ -184,6 +184,7 @@
                             <div class="ht-search-box">
                                 <i class="fas fa-search"></i>
                                 <input type="text" id="searchInput" placeholder="Tìm mã hoàn trả, mã hóa đơn, khách hàng..." class="ht-search-input" />
+                                <button type="button" id="clearSearchBtn" class="ht-search-clear" style="display: none;" onclick="clearSearchInput()"><i class="fas fa-times"></i></button>
                             </div>
                             <select id="trangThaiFilter" class="ht-select">
                                 <option value="">Tất cả trạng thái</option>
@@ -204,11 +205,12 @@
                                     <option value="KET_THUC">Kết thúc</option>
                                 </optgroup>
                             </select>
-
-                        </div>
-                        <div class="ht-filter-actions">
+                            <select id="loaiHoanTraFilter" class="ht-select">
+                                <option value="">Tất cả loại</option>
+                                <option value="TRA_HANG">Trả hàng</option>
+                                <option value="DOI_HANG">Đổi hàng</option>
+                            </select>
                             <button type="button" class="ht-btn ht-btn--search" onclick="searchHoanTra()"><i class="fas fa-search"></i> Tìm kiếm</button>
-<!--                            <button type="button" class="ht-btn ht-btn&#45;&#45;reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i> Đặt lại</button>-->
                         </div>
                     </div>
                 </div>
@@ -218,7 +220,7 @@
                     <div class="ht-card__header">
                         <div class="ht-card__header-left">
                             <h2 class="ht-card__title"><i class="fas fa-list"></i> Danh sách hoàn trả</h2>
-                            <span class="ht-card__count" id="totalCount">(0 yêu cầu)</span>
+<!--                            <span class="ht-card__count" id="totalCount">(0 yêu cầu)</span>-->
                         </div>
                         <div class="ht-card__header-right">
 <!--                            <button class="ht-btn-icon" onclick="loadHoanTra()" title="Làm mới"><i class="fas fa-rotate"></i></button>-->
@@ -332,9 +334,9 @@ var pageSize = 10;
 var currentFilters = {
     keyword: '',
     trangThai: '',
-    tuNgay: '',
-    denNgay: ''
+    loaiHoanTra: ''
 };
+var isLoading = false;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -348,18 +350,49 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('trangThaiFilter').value = urlParams.get('trangThai');
         currentFilters.trangThai = urlParams.get('trangThai');
     }
+    if (urlParams.get('loaiHoanTra')) {
+        document.getElementById('loaiHoanTraFilter').value = urlParams.get('loaiHoanTra');
+        currentFilters.loaiHoanTra = urlParams.get('loaiHoanTra');
+    }
+    if (urlParams.get('page')) {
+        currentPage = parseInt(urlParams.get('page'));
+    }
+    
+    // Update clear button visibility
+    updateClearSearchBtn();
     
     // Load initial data
-    loadHoanTra();
+    loadHoanTra(currentPage);
     
     // Enter key for search
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') searchHoanTra();
     });
+    
+    // Filter change events
+    document.getElementById('trangThaiFilter').addEventListener('change', searchHoanTra);
+    document.getElementById('loaiHoanTraFilter').addEventListener('change', searchHoanTra);
 });
 
+function updateClearSearchBtn() {
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (clearBtn) {
+        clearBtn.style.display = searchInput && searchInput.value ? 'block' : 'none';
+    }
+}
+
+function clearSearchInput() {
+    document.getElementById('searchInput').value = '';
+    currentFilters.keyword = '';
+    updateClearSearchBtn();
+    searchHoanTra();
+}
+
 async function loadHoanTra(page = 0) {
+    if (isLoading) return;
     currentPage = page;
+    isLoading = true;
     showLoading();
     
     try {
@@ -370,21 +403,82 @@ async function loadHoanTra(page = 0) {
         if (currentFilters.keyword) {
             url += '&keyword=' + encodeURIComponent(currentFilters.keyword);
         }
+        if (currentFilters.loaiHoanTra) {
+            url += '&loaiHoanTra=' + encodeURIComponent(currentFilters.loaiHoanTra);
+        }
         
         const response = await fetch(url);
         const data = await response.json();
+        
+        if (data.success === false) {
+            showToast('Lỗi: ' + (data.message || 'Không rõ lỗi'), 'error');
+            return;
+        }
         
         if (data.content) {
             renderTable(data.content, page);
             renderPagination(data);
             renderStats(data.stats);
             updateUrl(page);
+            updateResultsInfo(data);
         }
     } catch (error) {
+        console.error('Load error:', error);
         showToast('Lỗi khi tải dữ liệu: ' + error.message, 'error');
     } finally {
+        isLoading = false;
         hideLoading();
     }
+}
+
+function updateResultsInfo(data) {
+    const resultsInfo = document.getElementById('resultsInfo');
+    const resultsText = document.getElementById('resultsText');
+    if (!resultsInfo || !resultsText) return;
+    
+    const totalCount = data.totalElements || 0;
+    
+    let hasFilters = currentFilters.keyword || currentFilters.trangThai ||
+                     currentFilters.loaiHoanTra;
+    
+    if (hasFilters) {
+        resultsInfo.style.display = 'flex';
+        let filterDesc = [];
+        if (currentFilters.keyword) filterDesc.push('từ khóa "' + escapeHtml(currentFilters.keyword) + '"');
+        if (currentFilters.trangThai) filterDesc.push('trạng thái "' + getTrangThaiText(currentFilters.trangThai) + '"');
+        if (currentFilters.loaiHoanTra) filterDesc.push('loại "' + (currentFilters.loaiHoanTra === 'TRA_HANG' ? 'Trả hàng' : 'Đổi hàng') + '"');
+
+        resultsText.textContent = 'Tìm thấy ' + totalCount + ' yêu cầu hoàn trả với ' + filterDesc.join(', ');
+    } else {
+        resultsInfo.style.display = 'none';
+    }
+}
+
+function getTrangThaiText(trangThai) {
+    const statusMap = {
+        'CHO_XU_LY': 'Chờ xử lý',
+        'DA_DUYET': 'Đã duyệt',
+        'DA_NHAN_HANG': 'Đã nhận hàng',
+        'DA_HOAN_TIEN': 'Đã hoàn tiền',
+        'DA_XU_LY': 'Đã xử lý',
+        'TU_CHOI': 'Từ chối',
+        'CHO_DUYET_DOI': 'Chờ duyệt đổi',
+        'DA_DUYET_DOI': 'Đã duyệt đổi',
+        'DA_NHAN_HANG_DOI': 'Đã nhận hàng đổi',
+        'CHON_SERIAL_MOI': 'Chọn serial mới',
+        'DA_DOI': 'Đã đổi',
+        'KET_THUC': 'Kết thúc'
+    };
+    return statusMap[trangThai] || trangThai;
+}
+
+function formatDateDisplay(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
+    return dateStr;
 }
 
 function renderTable(items, page) {
@@ -392,26 +486,30 @@ function renderTable(items, page) {
     const emptyState = document.getElementById('emptyState');
     const table = document.getElementById('hoanTraTable');
     const paginationNav = document.getElementById('paginationNav');
+    const totalCountEl = document.getElementById('totalCount');
     
     if (!items || items.length === 0) {
-        tbody.innerHTML = '';
-        table.style.display = 'none';
-        emptyState.style.display = 'block';
-        paginationNav.style.display = 'none';
-        document.getElementById('totalCount').textContent = '(0 yêu cầu)';
+        if (tbody) tbody.innerHTML = '';
+        if (table) table.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'block';
+        if (paginationNav) paginationNav.style.display = 'none';
+        if (totalCountEl) totalCountEl.textContent = '(0 yêu cầu)';
         return;
     }
     
-    table.style.display = 'table';
-    emptyState.style.display = 'none';
-    paginationNav.style.display = 'flex';
-    document.getElementById('totalCount').textContent = '(' + items.length + ' yêu cầu)';
+    if (table) table.style.display = 'table';
+    if (emptyState) emptyState.style.display = 'none';
+    if (paginationNav) paginationNav.style.display = 'flex';
+    
+    if (totalCountEl) totalCountEl.textContent = '(' + items.length + ' yêu cầu)';
+    
+    if (!tbody) return;
     
     const startIndex = page * pageSize + 1;
     tbody.innerHTML = items.map((item, index) => {
         const stt = startIndex + index;
         const ngayYeuCau = formatDate(item.ngayYeuCau);
-        const soTien = formatCurrency(item.soTienHoanTra);
+        const soTien = item ? formatCurrencyFromDTO(item) : '0đ';
         const trangThaiClass = getStatusClass(item.trangThai);
         const loaiBadge = item.loaiHoanTra === 'DOI_HANG'
             ? '<span class="ht-loai-badge ht-loai-badge--doi">Đổi hàng</span>'
@@ -466,6 +564,8 @@ function renderTable(items, page) {
 
 function renderPagination(data) {
     const paginationList = document.getElementById('paginationList');
+    if (!paginationList) return;
+    
     const totalPages = data.totalPages || 1;
     const current = data.currentPage || 0;
     
@@ -519,35 +619,46 @@ function renderPagination(data) {
 function renderStats(stats) {
     if (!stats) return;
 
+    var updateStat = function(selector, value) {
+        if (!selector) return;
+        try {
+            var el = document.querySelector(selector);
+            if (el) el.textContent = (value !== undefined && value !== null) ? value : 0;
+        } catch (e) {
+            console.warn('renderStats warning:', e.message);
+        }
+    };
+
     // TRA_HANG stats
-    document.querySelector('.ht-stat-item--pending .ht-stat-item__value').textContent = stats.totalChoXuLy || 0;
-    document.querySelector('.ht-stat-item--processing .ht-stat-item__value').textContent = stats.totalDangXuLy || 0;
-    document.querySelector('.ht-stat-item--approved .ht-stat-item__value').textContent = stats.totalDaXuLy || 0;
-    document.querySelector('.ht-stat-item--rejected .ht-stat-item__value').textContent = stats.totalTuChoi || 0;
+    updateStat('.ht-stat-item--pending .ht-stat-item__value', stats.totalChoXuLy);
+    updateStat('.ht-stat-item--processing .ht-stat-item__value', stats.totalDangXuLy);
+    updateStat('.ht-stat-item--approved .ht-stat-item__value', stats.totalDaXuLy);
+    updateStat('.ht-stat-item--rejected .ht-stat-item__value', stats.totalTuChoi);
 
     // DOI_HANG stats
-    document.querySelector('.ht-stat-item--doi-pending .ht-stat-item__value').textContent = stats.totalChoDuyetDoi || 0;
-    document.querySelector('.ht-stat-item--doi-approved .ht-stat-item__value').textContent = stats.totalDaDuyetDoi || 0;
-    document.querySelector('.ht-stat-item--doi-serial .ht-stat-item__value').textContent = stats.totalChonSerialMoi || 0;
-    document.querySelector('.ht-stat-item--doi-done .ht-stat-item__value').textContent = stats.totalDaDoi || 0;
+    updateStat('.ht-stat-item--doi-pending .ht-stat-item__value', stats.totalChoDuyetDoi);
+    updateStat('.ht-stat-item--doi-approved .ht-stat-item__value', stats.totalDaDuyetDoi);
+    updateStat('.ht-stat-item--doi-serial .ht-stat-item__value', stats.totalChonSerialMoi);
+    updateStat('.ht-stat-item--doi-done .ht-stat-item__value', stats.totalDaDoi);
 
-    document.querySelector('.ht-stat-item--total .ht-stat-item__value').textContent = stats.tongSo || 0;
+    updateStat('.ht-stat-item--total .ht-stat-item__value', stats.tongSo);
 }
 
 function searchHoanTra() {
     currentFilters.keyword = document.getElementById('searchInput').value.trim();
     currentFilters.trangThai = document.getElementById('trangThaiFilter').value;
-    currentFilters.tuNgay = document.getElementById('tuNgayFilter').value;
-    currentFilters.denNgay = document.getElementById('denNgayFilter').value;
+    currentFilters.loaiHoanTra = document.getElementById('loaiHoanTraFilter').value;
+    currentPage = 0;
     loadHoanTra(0);
 }
 
 function resetFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('trangThaiFilter').value = '';
-    document.getElementById('tuNgayFilter').value = '';
-    document.getElementById('denNgayFilter').value = '';
-    currentFilters = { keyword: '', trangThai: '', tuNgay: '', denNgay: '' };
+    document.getElementById('loaiHoanTraFilter').value = '';
+    currentFilters = { keyword: '', trangThai: '', loaiHoanTra: '' };
+    currentPage = 0;
+    updateClearSearchBtn();
     loadHoanTra(0);
 }
 
@@ -556,8 +667,7 @@ function updateUrl(page) {
     params.set('page', page);
     if (currentFilters.keyword) params.set('q', currentFilters.keyword);
     if (currentFilters.trangThai) params.set('trangThai', currentFilters.trangThai);
-    if (currentFilters.tuNgay) params.set('tuNgay', currentFilters.tuNgay);
-    if (currentFilters.denNgay) params.set('denNgay', currentFilters.denNgay);
+    if (currentFilters.loaiHoanTra) params.set('loaiHoanTra', currentFilters.loaiHoanTra);
     
     const newUrl = window.location.pathname + '?' + params.toString();
     window.history.replaceState({}, '', newUrl);
@@ -577,8 +687,42 @@ function formatDate(dateStr) {
     };
 }
 
+function formatCurrencyFromDTO(item) {
+    if (!item) return '0đ';
+
+    // Lấy dữ liệu từ DTO
+    var chiTietList = item.chiTietList || [];
+    var tongTienHoaDon = parseFloat(item.tongTienHoaDon) || 0;
+    var voucherGiam = parseFloat(item.voucherGiam) || 0;
+
+    // Tính tổng tiền mặt hàng hoàn từ chi tiết
+    var totalMatHang = 0;
+    if (chiTietList && chiTietList.length > 0) {
+        chiTietList.forEach(function(ct) {
+            var donGia = parseFloat(ct.donGiaTaiThoiDiemMua) || 0;
+            var soLuong = parseInt(ct.soLuongHoanTra) || 0;
+            totalMatHang += donGia * soLuong;
+        });
+    }
+
+    // Nếu không có chi tiết, dùng soTienHoanTra từ DB
+    if (!chiTietList || chiTietList.length === 0) {
+        return formatCurrency(item.soTienHoanTra);
+    }
+
+    // Tính tỷ lệ voucher giảm theo công thức từ trang detail
+    var tyLe = tongTienHoaDon > 0 ? totalMatHang / tongTienHoaDon : 0;
+    var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLe);
+
+    // Số tiền hoàn = tổng mặt hàng - voucher giảm theo tỷ lệ
+    var soTienHoanTra = totalMatHang - voucherGiamTheoTyLe;
+    if (soTienHoanTra < 0) soTienHoanTra = 0;
+
+    return formatCurrency(soTienHoanTra);
+}
+
 function formatCurrency(amount) {
-    if (amount == null) return '0đ';
+    if (amount == null || amount === undefined || isNaN(amount)) return '0đ';
     return Number(amount).toLocaleString('vi-VN') + 'đ';
 }
 
@@ -619,8 +763,25 @@ function showToast(message, type) {
     }, 3000);
 }
 
-function showLoading() { }
-function hideLoading() { }
+function showLoading() {
+    const table = document.getElementById('hoanTraTable');
+    const tbody = document.getElementById('hoanTraTableBody');
+    if (table) {
+        table.style.opacity = '0.6';
+        table.style.pointerEvents = 'none';
+    }
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="9" class="ht-loading-cell"><div class="ht-loading-spinner"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</div></td></tr>';
+    }
+}
+
+function hideLoading() {
+    const table = document.getElementById('hoanTraTable');
+    if (table) {
+        table.style.opacity = '1';
+        table.style.pointerEvents = 'auto';
+    }
+}
 
 function openImportModal() {
     document.getElementById('importModal').classList.add('active');
@@ -1223,6 +1384,301 @@ document.getElementById('confirmModal').addEventListener('click', function(e) { 
     color: #64748b;
 }
 
+/* Filter Bar Improvements */
+.ht-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.ht-search-box {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+}
+
+.ht-search-input {
+    width: 100%;
+    padding: 0.625rem 2.5rem 0.625rem 2.25rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.ht-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+.ht-search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.ht-search-clear:hover {
+    color: #64748b;
+}
+
+.ht-select {
+    padding: 0.625rem 2rem 0.625rem 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background-color: #fff;
+    cursor: pointer;
+    min-width: 150px;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
+.ht-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* Date Range */
+.ht-date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ht-date-input {
+    padding: 0.625rem 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    min-width: 140px;
+    transition: all 0.2s ease;
+}
+
+.ht-date-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+.ht-date-separator {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* Filter Actions */
+.ht-filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+}
+
+.ht-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ht-btn--search {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+}
+
+.ht-btn--search:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.ht-btn--reset {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+}
+
+.ht-btn--reset:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Results Info */
+.ht-results-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    animation: slideDown 0.3s ease;
+}
+
+.ht-results-info__text {
+    color: #1e40af;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ht-results-info__text i {
+    color: #3b82f6;
+}
+
+.ht-results-info__clear {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.ht-results-info__clear:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1d4ed8;
+}
+
+/* Loading State */
+.ht-loading-cell {
+    text-align: center;
+    padding: 3rem 1rem !important;
+}
+
+.ht-loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.ht-loading-spinner i {
+    font-size: 1.5rem;
+    color: #3b82f6;
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .ht-filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .ht-search-box {
+        min-width: 100%;
+    }
+    
+    .ht-filter-actions {
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+    
+    .ht-date-range {
+        flex-wrap: wrap;
+    }
+}
+
+.admin-layout.theme-dark .ht-search-input,
+.admin-layout.theme-dark .ht-select,
+.admin-layout.theme-dark .ht-date-input {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.admin-layout.theme-dark .ht-search-input:focus,
+.admin-layout.theme-dark .ht-select:focus,
+.admin-layout.theme-dark .ht-date-input:focus {
+    border-color: #3b82f6;
+}
+
+.admin-layout.theme-dark .ht-results-info {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+    border-color: #3b82f6;
+}
+
+.admin-layout.theme-dark .ht-results-info__text {
+    color: #dbeafe;
+}
+
+.admin-layout.theme-dark .ht-results-info__text i {
+    color: #93c5fd;
+}
+
+.admin-layout.theme-dark .ht-btn--reset {
+    background: #334155;
+    color: #94a3b8;
+    border-color: #475569;
+}
+
+.admin-layout.theme-dark .ht-btn--reset:hover {
+    background: #475569;
+    color: #cbd5e1;
+}
+
 .admin-layout.theme-dark .ht-page-header__title {
     color: #f1f5f9;
 }
@@ -1233,6 +1689,10 @@ document.getElementById('confirmModal').addEventListener('click', function(e) { 
 
 .admin-layout.theme-dark .ht-page-header__subtitle {
     color: #94a3b8;
+}
+
+.admin-layout.theme-dark .ht-date-separator {
+    color: #64748b;
 }
 </style>
 

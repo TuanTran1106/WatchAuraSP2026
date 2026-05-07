@@ -22,7 +22,7 @@ public interface HoanTraService {
 
     List<HoanTraDTO> getHoanTraByTrangThai(String trangThai);
 
-    Map<String, Object> getHoanTraPaged(int page, int size, String trangThai, String keyword);
+    Map<String, Object> getHoanTraPaged(int page, int size, String trangThai, String keyword, String loaiHoanTra, String tuNgay, String denNgay);
 
     HoanTraDTO createHoanTra(HoanTraRequest request);
 

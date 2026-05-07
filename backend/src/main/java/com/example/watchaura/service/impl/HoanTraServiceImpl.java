@@ -81,19 +81,36 @@ public class HoanTraServiceImpl implements HoanTraService {
     }
 
     @Override
-    public Map<String, Object> getHoanTraPaged(int page, int size, String trangThai, String keyword) {
+    public Map<String, Object> getHoanTraPaged(int page, int size, String trangThai, String keyword, String loaiHoanTra, String tuNgay, String denNgay) {
         Map<String, Object> result = new HashMap<>();
+
+        // Parse date filters
+        LocalDateTime tuNgayTime = null;
+        LocalDateTime denNgayTime = null;
+        if (tuNgay != null && !tuNgay.isEmpty()) {
+            tuNgayTime = LocalDateTime.parse(tuNgay + "T00:00:00");
+        }
+        if (denNgay != null && !denNgay.isEmpty()) {
+            denNgayTime = LocalDateTime.parse(denNgay + "T23:59:59");
+        }
 
         Page<HoanTra> hoanTraPage;
         if (keyword != null && !keyword.trim().isEmpty()) {
             hoanTraPage = hoanTraRepository.searchHoanTra(
                     trangThai != null && !trangThai.isEmpty() ? trangThai : null,
                     keyword.trim(),
+                    loaiHoanTra != null && !loaiHoanTra.isEmpty() ? loaiHoanTra : null,
                     PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayYeuCau"))
             );
         } else if (trangThai != null && !trangThai.isEmpty()) {
-            hoanTraPage = hoanTraRepository.findByTrangThaiOrderByNgayYeuCauDesc(
+            hoanTraPage = hoanTraRepository.searchByFilters(
                     trangThai,
+                    loaiHoanTra != null && !loaiHoanTra.isEmpty() ? loaiHoanTra : null,
+                    PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayYeuCau"))
+            );
+        } else if (loaiHoanTra != null && !loaiHoanTra.isEmpty()) {
+            hoanTraPage = hoanTraRepository.findByLoaiHoanTraWithDateRange(
+                    loaiHoanTra,
                     PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayYeuCau"))
             );
         } else {
@@ -102,42 +119,65 @@ public class HoanTraServiceImpl implements HoanTraService {
             );
         }
 
-        List<HoanTraDTO> content = hoanTraPage.getContent().stream()
-                .map(this::convertToDTO)
+        // Apply date filter in memory if needed
+        final LocalDateTime finalTuNgayTime = tuNgayTime;
+        final LocalDateTime finalDenNgayTime = denNgayTime;
+        List<HoanTra> statsList = hoanTraPage.getContent();
+        List<HoanTra> displayList;
+        
+        if (finalTuNgayTime != null || finalDenNgayTime != null) {
+            displayList = statsList.stream()
+                    .filter(h -> {
+                        LocalDateTime ngayYeuCau = h.getNgayYeuCau();
+                        if (ngayYeuCau == null) return false;
+                        if (finalTuNgayTime != null && ngayYeuCau.isBefore(finalTuNgayTime)) return false;
+                        if (finalDenNgayTime != null && ngayYeuCau.isAfter(finalDenNgayTime)) return false;
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            displayList = statsList;
+        }
+
+        // Convert filtered list to DTOs
+        List<HoanTraDTO> content = displayList.stream()
+                .map(this::convertToDTOWithChiTiet)
                 .collect(Collectors.toList());
 
         result.put("content", content);
-        result.put("totalElements", hoanTraPage.getTotalElements());
-        result.put("totalPages", hoanTraPage.getTotalPages());
+        result.put("totalElements", displayList.size());
+        result.put("totalPages", (int) Math.ceil((double) displayList.size() / size));
         result.put("currentPage", page);
         result.put("pageSize", size);
-        result.put("hasNext", hoanTraPage.hasNext());
-        result.put("hasPrevious", hoanTraPage.hasPrevious());
+        result.put("hasNext", page < (int) Math.ceil((double) displayList.size() / size) - 1);
+        result.put("hasPrevious", page > 0);
 
-        // Stats for TRA_HANG
-        long choXuLy = hoanTraPage.getContent().stream()
+        // Stats for current page (using displayList if date filter is active)
+        // Stats for TRA_HANG (current page)
+        long choXuLy = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_CHO_XU_LY.equals(h.getTrangThai())).count();
-        long dangXuLy = hoanTraPage.getContent().stream()
+        long dangXuLy = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_DANG_XU_LY.equals(h.getTrangThai())).count();
-        long daXuLy = hoanTraPage.getContent().stream()
+        long daXuLy = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_DA_XU_LY.equals(h.getTrangThai())).count();
-        long tuChoi = hoanTraPage.getContent().stream()
+        long tuChoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_TU_CHOI.equals(h.getTrangThai())).count();
 
-        // Stats for DOI_HANG
-        long choDuyetDoi = hoanTraPage.getContent().stream()
+        // Stats for DOI_HANG (current page)
+        long choDuyetDoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_CHO_DUYET_DOI.equals(h.getTrangThai())).count();
-        long daDuyetDoi = hoanTraPage.getContent().stream()
+        long daDuyetDoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(h.getTrangThai())).count();
-        long daNhanHangDoi = hoanTraPage.getContent().stream()
+        long daNhanHangDoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(h.getTrangThai())).count();
-        long chonSerialMoi = hoanTraPage.getContent().stream()
+        long chonSerialMoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(h.getTrangThai())).count();
-        long daDoi = hoanTraPage.getContent().stream()
+        long daDoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_DA_DOI.equals(h.getTrangThai())).count();
-        long ketThuc = hoanTraPage.getContent().stream()
+        long ketThuc = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_KET_THUC.equals(h.getTrangThai())).count();
 
+        // Total stats from DB
         long totalChoXuLy = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_CHO_XU_LY);
         long totalDangXuLy = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DANG_XU_LY);
         long totalDaXuLy = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DA_XU_LY);
@@ -150,6 +190,9 @@ public class HoanTraServiceImpl implements HoanTraService {
         long totalChonSerialMoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_CHON_SERIAL_MOI);
         long totalDaDoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DA_DOI);
         long totalKetThuc = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_KET_THUC);
+
+        // Total elements for current filter
+        long totalTongSo = (finalTuNgayTime != null || finalDenNgayTime != null) ? displayList.size() : hoanTraPage.getTotalElements();
 
         result.put("stats", new HashMap<>() {{
             put("choXuLy", choXuLy);
@@ -173,7 +216,7 @@ public class HoanTraServiceImpl implements HoanTraService {
             put("totalChonSerialMoi", totalChonSerialMoi);
             put("totalDaDoi", totalDaDoi);
             put("totalKetThuc", totalKetThuc);
-            put("tongSo", hoanTraPage.getTotalElements());
+            put("tongSo", totalTongSo);
         }});
 
         return result;
@@ -228,8 +271,8 @@ public class HoanTraServiceImpl implements HoanTraService {
                 SanPhamChiTiet sanPhamChiTiet = sanPhamChiTietRepository.findById(chiTietRequest.getIdSanPhamChiTiet())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + chiTietRequest.getIdSanPhamChiTiet()));
 
-                // Lấy đơn giá gốc từ SanPhamChiTiet (chưa trừ khuyến mãi)
-                BigDecimal donGia = sanPhamChiTiet.getGiaBan();
+                // Lấy đơn giá từ hóa đơn chi tiết (cùng nguồn với trang create)
+                BigDecimal donGia = hoaDonChiTiet.getDonGia();
                 if (donGia == null) {
                     donGia = BigDecimal.ZERO;
                 }
@@ -711,6 +754,34 @@ public class HoanTraServiceImpl implements HoanTraService {
         return dto;
     }
 
+    /**
+     * Convert to DTO với chi tiết đầy đủ - dùng cho API paged để tính lại số tiền hoàn trên frontend
+     */
+    private HoanTraDTO convertToDTOWithChiTiet(HoanTra hoanTra) {
+        HoanTraDTO dto = convertToDTO(hoanTra);
+
+        // Đã có trong convertToDTO rồi, nhưng đảm bảo có chi tiết
+        if (hoanTra.getChiTietList() != null && !hoanTra.getChiTietList().isEmpty()) {
+            List<HoanTraChiTietDTO> chiTietDTOs = new ArrayList<>();
+            List<String> allSerialsMoi = new ArrayList<>();
+            for (HoanTraChiTiet chiTiet : hoanTra.getChiTietList()) {
+                HoanTraChiTietDTO chiTietDTO = convertChiTietToDTO(chiTiet);
+                chiTietDTOs.add(chiTietDTO);
+                if (chiTietDTO.getSerialMoi() != null && !chiTietDTO.getSerialMoi().isEmpty()) {
+                    allSerialsMoi.add(chiTietDTO.getSerialMoi());
+                }
+            }
+            dto.setChiTietList(chiTietDTOs);
+            dto.setSerialsMoiList(allSerialsMoi);
+        }
+
+        // Thông tin hóa đơn gốc cho tính lại số tiền hoàn
+        dto.setTongTienHoaDon(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTongTienTamTinh() : null);
+        dto.setVoucherGiam(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTienGiam() : null);
+
+        return dto;
+    }
+
     private HoanTraChiTietDTO convertChiTietToDTO(HoanTraChiTiet chiTiet) {
         SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
 
@@ -907,9 +978,9 @@ public class HoanTraServiceImpl implements HoanTraService {
         }
 
         String tt = hoaDon.getTrangThaiDonHang();
-        boolean coTheHoanTra = "DA_GIAO".equals(tt) || "HOAN_THANH".equals(tt) 
+        boolean coTheHoanTra = "DA_GIAO".equals(tt) || "HOAN_THANH".equals(tt)
                 || "DA_THANH_TOAN".equals(tt) || "DA THANH TOAN".equals(tt)
-                || "DA_XAC_NHAN".equals(tt);
+                || "DA_XAC_NHAN".equals(tt) || "DA_THANH_TOAN_ONL".equals(tt);
         if (!coTheHoanTra) {
             result.put("success", false);
             result.put("message", "Đơn hàng có trạng thái '" + tt + "' không thể hoàn trả.");
@@ -1078,9 +1149,9 @@ public class HoanTraServiceImpl implements HoanTraService {
         }
 
         String tt = hoaDon.getTrangThaiDonHang();
-        boolean coTheHoanTra = "DA_GIAO".equals(tt) || "HOAN_THANH".equals(tt) 
+        boolean coTheHoanTra = "DA_GIAO".equals(tt) || "HOAN_THANH".equals(tt)
                 || "DA_THANH_TOAN".equals(tt) || "DA THANH TOAN".equals(tt)
-                || "DA_XAC_NHAN".equals(tt);
+                || "DA_XAC_NHAN".equals(tt) || "DA_THANH_TOAN_ONL".equals(tt);
         if (!coTheHoanTra) {
             throw new RuntimeException("Đơn hàng có trạng thái '" + tt + "' không thể hoàn trả");
         }
@@ -1138,8 +1209,8 @@ public class HoanTraServiceImpl implements HoanTraService {
                             + sanPhamChiTiet.getSanPham().getTenSanPham());
                 }
 
-                // Lấy đơn giá gốc từ SanPhamChiTiet (chưa trừ khuyến mãi)
-                BigDecimal donGia = sanPhamChiTiet.getGiaBan();
+                // Lấy đơn giá từ hóa đơn chi tiết (cùng nguồn với trang create)
+                BigDecimal donGia = hoaDonChiTiet.getDonGia();
                 if (donGia == null) {
                     donGia = BigDecimal.ZERO;
                 }
@@ -1290,7 +1361,7 @@ public class HoanTraServiceImpl implements HoanTraService {
         Map<String, Object> result = new HashMap<>();
         
         List<String> trangThaiCoTheHoan = Arrays.asList(
-                "DA_GIAO", "HOAN_THANH", "DA_THANH_TOAN", "DA THANH TOAN", "DA_XAC_NHAN"
+                "DA_GIAO", "HOAN_THANH", "DA_THANH_TOAN", "DA THANH TOAN", "DA_XAC_NHAN", "DA_THANH_TOAN_ONL"
         );
         
         List<HoaDon> hoaDonList = hoaDonRepository.findAll().stream()
@@ -1330,7 +1401,7 @@ public class HoanTraServiceImpl implements HoanTraService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + hoaDonId));
         
         List<String> trangThaiCoTheHoan = Arrays.asList(
-                "DA_GIAO", "HOAN_THANH", "DA_THANH_TOAN", "DA THANH TOAN", "DA_XAC_NHAN"
+                "DA_GIAO", "HOAN_THANH", "DA_THANH_TOAN", "DA THANH TOAN", "DA_XAC_NHAN", "DA_THANH_TOAN_ONL"
         );
         
         boolean coTheHoanTra = trangThaiCoTheHoan.contains(hoaDon.getTrangThaiDonHang());

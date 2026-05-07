@@ -31,7 +31,7 @@ export async function bootstrapCheckoutStep4() {
             merchandiseSubtotal: Number(payload?.merchandiseSubtotal || 0),
             discount: Number(payload?.discount || 0)
         });
-        return store.recalculateShippingFee();
+        // Khong tinh lai phi van chuyen khi ap voucher - giu nguyen phi ship da duoc tinh theo dia chi
     };
 
     const selector = createCheckoutAddressSelectorComponent({
