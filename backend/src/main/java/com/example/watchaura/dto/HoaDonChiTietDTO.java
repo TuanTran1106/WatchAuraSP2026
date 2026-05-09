@@ -21,6 +21,10 @@ public class HoaDonChiTietDTO {
     private BigDecimal donGia;
     /** Giá gốc chưa khuyến mãi (lấy từ SanPhamChiTiet.giaBan tại thời điểm đặt). */
     private BigDecimal giaGoc;
+    /** Giá gốc tại thời điểm đặt (lưu từ HoaDonChiTiet.donGiaGoc, dùng cho hóa đơn). */
+    private BigDecimal donGiaGoc;
+    /** Tên khuyến mãi đang áp dụng cho sản phẩm này. */
+    private String tenKhuyenMai;
     private BigDecimal thanhTien;
     private String hinhAnh;
     private String tenBienThe;

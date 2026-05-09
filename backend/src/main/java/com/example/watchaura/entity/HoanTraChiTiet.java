@@ -46,14 +46,4 @@ public class HoanTraChiTiet {
     @Column(name = "hinh_anh", length = 1000)
     private String hinhAnh;
 
-    // === DOI_HANG: Serial mới thay thế ===
-    // Mã serial mới được cấp khi đổi hàng (sản phẩm cùng loại, serial mới)
-    @Column(name = "serial_moi", length = 100)
-    private String serialMoi;
-
-    // === Trạng thái của serial cũ khi DOI_HANG ===
-    // - true: serial cũ bị lỗi
-    // - false: serial mới được đổi (trạng thái ĐÃ BÁN)
-    @Column(name = "serial_cu_loi")
-    private Boolean serialCuLoi;
 }

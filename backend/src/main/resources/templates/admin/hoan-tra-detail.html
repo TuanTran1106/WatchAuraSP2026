@@ -29,11 +29,9 @@
 
                 <!-- Loai Hoan Tra Badge -->
                 <div th:if="${hoanTra.loaiHoanTra != null}" class="invoice-detail__type-badge"
-                    th:classappend="${hoanTra.loaiHoanTra == 'DOI_HANG'} ? 'type-badge--doi' : 'type-badge--tra'">
-                    <i th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}" class="fa-solid fa-exchange-alt"></i>
-                    <i th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}" class="fa-solid fa-undo"></i>
-                    <span th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Đổi hàng</span>
-                    <span th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Trả hàng</span>
+                    th:classappend="type-badge--tra">
+                    <i class="fa-solid fa-undo"></i>
+                    <span>Trả hàng</span>
                 </div>
 
                 <!-- Status Form - Similar to Invoice Detail -->
@@ -47,17 +45,11 @@
                         <label for="hoanTraStatus" class="invoice-detail__status-field-label">Trạng thái</label>
                         <select name="trangThai" id="hoanTraStatus" class="invoice-detail__status-select"
                             th:with="cur=${hoanTra.trangThai != null ? hoanTra.trangThai : 'CHO_XU_LY'},
-                                     _class=${cur == 'CHO_XU_LY' or cur == 'CHO_DUYET_DOI' ? 'status--cho-xu-ly' :
+                                     _class=${cur == 'CHO_XU_LY' ? 'status--cho-xu-ly' :
                                       (cur == 'DA_DUYET' ? 'status--da-duyet' :
                                       (cur == 'DA_NHAN_HANG' ? 'status--da-nhan-hang' :
                                       (cur == 'DA_HOAN_TIEN' ? 'status--da-hoan-tien' :
-                                      (cur == 'TU_CHOI' ? 'status--tu-choi' :
-                                      (cur == 'CHO_DUYET_DOI' ? 'status--cho-duyet-doi' :
-                                      (cur == 'DA_DUYET_DOI' ? 'status--da-duyet-doi' :
-                                      (cur == 'DA_NHAN_HANG_DOI' ? 'status--da-nhan-hang-doi' :
-                                      (cur == 'CHON_SERIAL_MOI' ? 'status--chon-serial-moi' :
-                                      (cur == 'DA_DOI' ? 'status--da-doi' :
-                                      (cur == 'KET_THUC' ? 'status--ket-thuc' : ''))))))))))}"
+                                      (cur == 'TU_CHOI' ? 'status--tu-choi' : '')))}"
                             th:classappend="${_class}">
 
                             <!-- ==================== TRA HANG WORKFLOW ==================== -->
@@ -81,36 +73,7 @@
                                 <option th:if="${cur == 'DA_NHAN_HANG'}" value="DA_HOAN_TIEN">Đã hoàn tiền</option>
                             </th:block>
 
-                            <!-- ==================== DOI HANG WORKFLOW ==================== -->
-                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
-                                <!-- Current status display -->
-                                <option th:if="${cur == 'CHO_DUYET_DOI'}" value="CHO_DUYET_DOI" selected>Chờ duyệt đổi</option>
-                                <option th:if="${cur == 'DA_DUYET_DOI'}" value="DA_DUYET_DOI" selected>Đã duyệt đổi</option>
-                                <option th:if="${cur == 'DA_NHAN_HANG_DOI'}" value="DA_NHAN_HANG_DOI" selected>Đã nhận hàng đổi</option>
-                                <option th:if="${cur == 'CHON_SERIAL_MOI'}" value="CHON_SERIAL_MOI" selected>Chọn serial mới</option>
-                                <option th:if="${cur == 'DA_DOI'}" value="DA_DOI" selected>Đã đổi serial</option>
-                                <option th:if="${cur == 'KET_THUC'}" value="KET_THUC" selected>Hoàn tất đổi hàng</option>
-                                <option th:if="${cur == 'TU_CHOI'}" value="TU_CHOI" selected>Đã từ chối</option>
-
-                                <!-- Next steps from CHO_DUYET_DOI -->
-                                <option th:if="${cur == 'CHO_DUYET_DOI'}" value="DA_DUYET_DOI">Duyệt đổi hàng</option>
-                                <option th:if="${cur == 'CHO_DUYET_DOI'}" value="TU_CHOI">Từ chối</option>
-
-                                <!-- Next steps from DA_DUYET_DOI -->
-                                <option th:if="${cur == 'DA_DUYET_DOI'}" value="DA_NHAN_HANG_DOI">Xác nhận nhận hàng</option>
-                                <option th:if="${cur == 'DA_DUYET_DOI'}" value="TU_CHOI">Từ chối</option>
-
-                                <!-- Next steps from DA_NHAN_HANG_DOI -->
-                                <option th:if="${cur == 'DA_NHAN_HANG_DOI'}" value="CHON_SERIAL_MOI">Chọn serial mới</option>
-                                <option th:if="${cur == 'DA_NHAN_HANG_DOI'}" value="TU_CHOI">Từ chối</option>
-
-                                <!-- Next steps from CHON_SERIAL_MOI -->
-                                <option th:if="${cur == 'CHON_SERIAL_MOI'}" value="DA_DOI">Hoàn tất đổi serial</option>
-
-                                <!-- Next steps from DA_DOI -->
-                                <option th:if="${cur == 'DA_DOI'}" value="KET_THUC">Hoàn tất đổi hàng</option>
-                            </th:block>
-
+                            
                         </select>
                     </div>
                 </form>
@@ -167,7 +130,7 @@
                 <div class="invoice-detail__item">
                     <span class="invoice-detail__label invoice-detail__label--caps">Loại hoàn trả</span>
                     <span class="invoice-detail__value"
-                        th:text="${hoanTra.loaiHoanTra == 'DOI_HANG'} ? 'Đổi hàng' : 'Trả hàng'">—</span>
+                        th:text="'Trả hàng'">—</span>
                 </div>
             </div>
         </section>
@@ -277,18 +240,7 @@
                                             </th:block>
                                         </div>
                                     </th:block>
-                                    <!-- Serial moi (DOI HANG) -->
-                                    <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and ct.serialMoi != null}">
-                                        <div class="invoice-detail__serial-list" style="margin-top: 0.25rem;">
-                                            <span class="serial-label">Serial mới:</span>
-                                            <span class="invoice-detail__serial-tag serial-tag--new" th:text="${ct.serialMoi}">—</span>
-                                        </div>
-                                    </th:block>
-                                    <!-- Tinh trang serial cu (DOI HANG) -->
-                                    <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and ct.serialCuLoiHienThi != null}">
-                                        <div class="invoice-detail__serial-status" th:text="${ct.serialCuLoiHienThi}">—</div>
-                                    </th:block>
-                                </td>
+                                                                    </td>
                             </tr>
                         </th:block>
                     </tbody>

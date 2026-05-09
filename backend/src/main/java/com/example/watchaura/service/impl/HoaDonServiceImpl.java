@@ -1,66 +1,37 @@
 package com.example.watchaura.service.impl;
 
 
-
 import com.example.watchaura.dto.CheckoutStockResponse;
-
 import com.example.watchaura.dto.StockWarningItem;
-
 import com.example.watchaura.dto.DiaChiGiaoHangDTO;
-
 import com.example.watchaura.dto.HoaDonChiTietDTO;
-
 import com.example.watchaura.dto.HoaDonDTO;
-
 import com.example.watchaura.dto.HoaDonRequest;
-
 import com.example.watchaura.dto.HoaDonChiTietRequest;
-
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
-
 import com.example.watchaura.entity.DiaChiGiaoHang;
-
 import com.example.watchaura.entity.GioHangChiTiet;
-
 import com.example.watchaura.entity.HoaDon;
-
 import com.example.watchaura.entity.HoaDonChiTiet;
-
 import com.example.watchaura.entity.KhuyenMai;
-
 import com.example.watchaura.entity.KhachHang;
-
 import com.example.watchaura.entity.SerialSanPham;
-
 import com.example.watchaura.entity.SanPhamChiTiet;
-
 import com.example.watchaura.entity.Voucher;
-
 import com.example.watchaura.entity.VoucherUser;
-
 import com.example.watchaura.repository.DiaChiGiaoHangRepository;
-
 import com.example.watchaura.repository.GioHangChiTietRepository;
-
 import com.example.watchaura.repository.HoaDonChiTietRepository;
-
 import com.example.watchaura.repository.HoaDonRepository;
-
 import com.example.watchaura.repository.KhachHangRepository;
-
 import com.example.watchaura.repository.SanPhamChiTietRepository;
-
 import com.example.watchaura.repository.SerialSanPhamRepository;
-
 import com.example.watchaura.repository.VoucherRepository;
-
 import com.example.watchaura.repository.VoucherUserRepository;
-
 import com.example.watchaura.service.HoaDonService;
-
 import com.example.watchaura.service.KhuyenMaiService;
-
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
+import com.example.watchaura.service.SerialSelectionRequiredException;
 
 import com.example.watchaura.util.ShippingFeeUtil;
 
@@ -83,6 +54,8 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 
 import com.itextpdf.text.pdf.PdfWriter;
+
+import com.itextpdf.text.pdf.BaseFont;
 
 import lombok.RequiredArgsConstructor;
 
@@ -365,8 +338,10 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
         // Tính tổng tiền (kiểm tra tồn kho = soLuongTon, không trừ giữ hàng nữa); đơn giá theo KM như giỏ/card
-
+        // tongTienTamTinh = tổng giá SAU khuyến mãi (lưu vào DB)
+        // tongTienGoc = tổng giá GỐC chưa khuyến mãi (để tính tongTienGiamKhuyenMai cho hóa đơn)
         BigDecimal tongTienTamTinh = BigDecimal.ZERO;
+        BigDecimal tongTienGoc = BigDecimal.ZERO;
 
         for (HoaDonChiTietRequest itemRequest : request.getItems()) {
 
@@ -406,6 +381,11 @@ public class HoaDonServiceImpl implements HoaDonService {
 
                     dongGiaKm.giaSauGiam().multiply(BigDecimal.valueOf(itemRequest.getSoLuong())));
 
+        }
+
+        BigDecimal tongTienGiamKhuyenMai = tongTienGoc.subtract(tongTienTamTinh);
+        if (tongTienGiamKhuyenMai.compareTo(BigDecimal.ZERO) < 0) {
+            tongTienGiamKhuyenMai = BigDecimal.ZERO;
         }
 
 
@@ -509,6 +489,7 @@ public class HoaDonServiceImpl implements HoaDonService {
             hoaDonChiTiet.setSoLuong(itemRequest.getSoLuong());
 
             hoaDonChiTiet.setDonGia(dongGiaKm.giaSauGiam());
+            hoaDonChiTiet.setDonGiaGoc(dongGiaKm.giaGoc());
 
             hoaDonChiTietRepository.save(hoaDonChiTiet);
 
@@ -780,16 +761,23 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
-            // Đủ tồn kho -> trừ kho và phân bổ serial
-
+            // Đủ tồn kho -> trừ kho và kiểm tra serial
+            // Admin phải vào trang chọn serial để gán thủ công
             for (HoaDonChiTiet chiTiet : chiTiets) {
 
                 sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
 
             }
 
-            allocateSerialForOrderLines(chiTiets);
-
+            // Kiểm tra xem đơn đã có serial chưa
+            boolean hasAllSerials = hasAllSerialsAssigned(chiTiets);
+            if (!hasAllSerials) {
+                // Chưa có serial -> chuyển hướng đến trang chọn serial
+                hoaDon.setTrangThaiDonHang("DA_XAC_NHAN");
+                hoaDonRepository.save(hoaDon);
+                throw new SerialSelectionRequiredException(id);
+            }
+            // Có đủ serial -> tiếp tục lưu trạng thái
         }
 
 
@@ -846,16 +834,21 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
-            // Đủ tồn kho -> trừ kho và xác nhận
-
+            // Đủ tồn kho -> trừ kho và kiểm tra serial
             for (HoaDonChiTiet chiTiet : chiTiets) {
 
                 sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
 
             }
-
-            allocateSerialForOrderLines(chiTiets);
-
+            // Kiểm tra xem đơn đã có serial chưa
+            boolean hasAllSerials = hasAllSerialsAssigned(chiTiets);
+            if (!hasAllSerials) {
+                // Chưa có serial -> chuyển hướng đến trang chọn serial
+                hoaDon.setTrangThaiDonHang("DA_XAC_NHAN");
+                hoaDonRepository.save(hoaDon);
+                throw new SerialSelectionRequiredException(id);
+            }
+            // Có đủ serial -> tiếp tục
         }
 
 
@@ -919,9 +912,7 @@ public class HoaDonServiceImpl implements HoaDonService {
                     sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
 
                 }
-
-                allocateSerialForOrderLines(chiTiets);
-
+                // KHÔNG gọi allocateSerialForOrderLines nữa - admin phải chọn serial thủ công
             }
 
         }
@@ -933,11 +924,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         // Hữu ích cho đơn legacy/ngoại lệ chưa có serial ở bước trước.
 
         if ("DANG_GIAO".equals(newStatus) && !"DANG_GIAO".equals(effectiveCurrent)) {
-
-            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
-
-            allocateSerialForOrderLines(chiTiets);
-
+            // KHÔNG gán serial tự động - admin phải chọn serial trước
         }
 
 
@@ -1042,21 +1029,61 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
-            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Font fontTitle, fontSection, fontHeader, fontNormal, fontSmall;
+            try {
+                // Try Arial font from Windows system with UTF-8 encoding
+                BaseFont bf = BaseFont.createFont("c:/windows/fonts/arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                fontTitle = new Font(bf, 18, Font.BOLD);
+                fontSection = new Font(bf, 12, Font.BOLD);
+                fontHeader = new Font(bf, 10, Font.BOLD);
+                fontNormal = new Font(bf, 10, Font.NORMAL);
+                fontSmall = new Font(bf, 8, Font.NORMAL);
+            } catch (Exception e1) {
+                try {
+                    // Try Arial from system fonts
+                    BaseFont bf = BaseFont.createFont("Arial", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                    fontTitle = new Font(bf, 18, Font.BOLD);
+                    fontSection = new Font(bf, 12, Font.BOLD);
+                    fontHeader = new Font(bf, 10, Font.BOLD);
+                    fontNormal = new Font(bf, 10, Font.NORMAL);
+                    fontSmall = new Font(bf, 8, Font.NORMAL);
+                } catch (Exception e2) {
+                    try {
+                        // Try Times New Roman as fallback
+                        BaseFont bf = BaseFont.createFont("c:/windows/fonts/times.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                        fontTitle = new Font(bf, 18, Font.BOLD);
+                        fontSection = new Font(bf, 12, Font.BOLD);
+                        fontHeader = new Font(bf, 10, Font.BOLD);
+                        fontNormal = new Font(bf, 10, Font.NORMAL);
+                        fontSmall = new Font(bf, 8, Font.NORMAL);
+                    } catch (Exception e3) {
+                        // Last resort - use built-in font
+                        fontTitle = FontFactory.getFont(FontFactory.COURIER_BOLD, 18);
+                        fontSection = FontFactory.getFont(FontFactory.COURIER_BOLD, 12);
+                        fontHeader = FontFactory.getFont(FontFactory.COURIER_BOLD, 10);
+                        fontNormal = FontFactory.getFont(FontFactory.COURIER, 10);
+                        fontSmall = FontFactory.getFont(FontFactory.COURIER, 8);
+                    }
+                }
+            }
 
-            Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-
-            Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 10);
 
 
+            // Title
 
             Paragraph title = new Paragraph("HÓA ĐƠN BÁN HÀNG", fontTitle);
 
             title.setAlignment(Element.ALIGN_CENTER);
 
+            title.setSpacingAfter(15);
+
             document.add(title);
 
 
+
+            // Basic Order Info
+
+            document.add(new Paragraph("THÔNG TIN ĐƠN HÀNG", fontSection));
 
             document.add(new Paragraph("Mã đơn: " + safe(dto.getMaDonHang()), fontNormal));
 
@@ -1068,11 +1095,21 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             }
 
-            document.add(new Paragraph("Khách hàng: " + safe(dto.getTenKhachHang()), fontNormal));
+            document.add(new Paragraph("Loại hóa đơn: " + safe(dto.getLoaiHoaDon()), fontNormal));
 
-            document.add(new Paragraph("SĐT: " + safe(dto.getSdtKhachHang()), fontNormal));
+            document.add(new Paragraph("Phương thức thanh toán: " + safe(dto.getPhuongThucThanhToan()), fontNormal));
 
-            document.add(new Paragraph("Địa chỉ: " + safe(dto.getDiaChi()), fontNormal));
+            if (dto.getMaVoucher() != null && !dto.getMaVoucher().isEmpty()) {
+
+                document.add(new Paragraph("Mã voucher: " + dto.getMaVoucher(), fontNormal));
+
+            }
+
+            if (dto.getGhiChu() != null && !dto.getGhiChu().isEmpty()) {
+
+                document.add(new Paragraph("Ghi chú: " + dto.getGhiChu(), fontNormal));
+
+            }
 
 
 
@@ -1080,11 +1117,63 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
-            PdfPTable table = new PdfPTable(4);
+            // Customer Information
+
+            document.add(new Paragraph("THÔNG TIN KHÁCH HÀNG", fontSection));
+
+            document.add(new Paragraph("Họ tên: " + safe(dto.getTenKhachHang()), fontNormal));
+
+            document.add(new Paragraph("Số điện thoại: " + safe(dto.getSdtKhachHang()), fontNormal));
+
+            document.add(new Paragraph("Email: " + safe(dto.getEmail()), fontNormal));
+
+            document.add(new Paragraph("Giới tính: " + safe(dto.getGioiTinh()), fontNormal));
+
+            if (dto.getNgaySinh() != null) {
+
+                String formattedDob = dto.getNgaySinh().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+                document.add(new Paragraph("Ngày sinh: " + formattedDob, fontNormal));
+
+            }
+
+            document.add(new Paragraph("Địa chỉ: " + safe(dto.getDiaChi()), fontNormal));
+
+            if (dto.getDiaChiGiaoHang() != null) {
+
+                String diaChiGiao = dto.getDiaChiGiaoHang().getDiaChiCuThe() != null ? dto.getDiaChiGiaoHang().getDiaChiCuThe() : "";
+
+                String phuongXa = dto.getDiaChiGiaoHang().getPhuongXa() != null && !dto.getDiaChiGiaoHang().getPhuongXa().isEmpty() ? ", " + dto.getDiaChiGiaoHang().getPhuongXa() : "";
+
+                String quanHuyen = dto.getDiaChiGiaoHang().getQuanHuyen() != null && !dto.getDiaChiGiaoHang().getQuanHuyen().isEmpty() ? ", " + dto.getDiaChiGiaoHang().getQuanHuyen() : "";
+
+                String tinhThanh = dto.getDiaChiGiaoHang().getTinhThanh() != null && !dto.getDiaChiGiaoHang().getTinhThanh().isEmpty() ? ", " + dto.getDiaChiGiaoHang().getTinhThanh() : "";
+
+                String fullDiaChiGiao = (diaChiGiao + phuongXa + quanHuyen + tinhThanh).trim();
+
+                if (!fullDiaChiGiao.isEmpty()) {
+
+                    document.add(new Paragraph("Địa chỉ giao hàng: " + fullDiaChiGiao, fontNormal));
+
+                }
+
+            }
+
+
+
+            document.add(new Paragraph(" "));
+
+
+
+            // Product Table
+
+            document.add(new Paragraph("SẢN PHẨM ĐÃ ĐẶT", fontSection));
+
+            PdfPTable table = new PdfPTable(5);
 
             table.setWidthPercentage(100);
 
-            table.setWidths(new float[]{4f, 1.2f, 2f, 2f});
+            table.setWidths(new float[]{5f, 1f, 1.5f, 1.5f, 1.5f});
 
 
 
@@ -1092,7 +1181,9 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             table.addCell(createCell("SL", fontHeader, Element.ALIGN_CENTER));
 
-            table.addCell(createCell("Đơn giá", fontHeader, Element.ALIGN_RIGHT));
+            table.addCell(createCell("Giá gốc", fontHeader, Element.ALIGN_RIGHT));
+
+            table.addCell(createCell("Đơn giá (KM)", fontHeader, Element.ALIGN_RIGHT));
 
             table.addCell(createCell("Thành tiền", fontHeader, Element.ALIGN_RIGHT));
 
@@ -1102,9 +1193,21 @@ public class HoaDonServiceImpl implements HoaDonService {
 
                 for (HoaDonChiTietDTO ct : dto.getItems()) {
 
-                    table.addCell(createCell(safe(ct.getTenSanPham()), fontNormal, Element.ALIGN_LEFT));
+                    String productName = safe(ct.getTenSanPham());
+
+                    if (ct.getTenBienThe() != null && !ct.getTenBienThe().isEmpty()) {
+
+                        productName += " — " + ct.getTenBienThe();
+
+                    }
+
+                    table.addCell(createCell(productName, fontNormal, Element.ALIGN_LEFT));
 
                     table.addCell(createCell(String.valueOf(ct.getSoLuong()), fontNormal, Element.ALIGN_CENTER));
+
+                    BigDecimal giaGoc = ct.getGiaGoc() != null ? ct.getGiaGoc() : ct.getDonGia();
+
+                    table.addCell(createCell(formatMoney(giaGoc), fontNormal, Element.ALIGN_RIGHT));
 
                     table.addCell(createCell(formatMoney(ct.getDonGia()), fontNormal, Element.ALIGN_RIGHT));
 
@@ -1120,21 +1223,71 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             document.add(new Paragraph(" "));
 
-            BigDecimal tongTamTinh = dto.getTongTienTamTinh() != null ? dto.getTongTienTamTinh() : BigDecimal.ZERO;
 
-            BigDecimal giam = dto.getTienGiam() != null ? dto.getTienGiam() : BigDecimal.ZERO;
+
+            // Totals Section
+
+            document.add(new Paragraph("TỔNG THANH TOÁN", fontSection));
+
+            BigDecimal tongGiaGoc = dto.getTongGiaGoc() != null ? dto.getTongGiaGoc() : BigDecimal.ZERO;
+
+            document.add(new Paragraph("Tạm tính (đơn giá gốc): " + formatMoney(tongGiaGoc), fontNormal));
+
+
+
+            // Voucher discount
+
+            if (dto.getTienGiam() != null && dto.getTienGiam().compareTo(BigDecimal.ZERO) > 0) {
+
+                String voucherInfo = "Voucher";
+
+                if (dto.getMaVoucher() != null && !dto.getMaVoucher().isEmpty()) {
+
+                    voucherInfo += " (Mã: " + dto.getMaVoucher() + ")";
+
+                }
+
+                document.add(new Paragraph(voucherInfo + ": -" + formatMoney(dto.getTienGiam()), fontNormal));
+
+            }
+
+
+
+            // Promotion discount
+
+            if (dto.getTongTienGiamKhuyenMai() != null && dto.getTongTienGiamKhuyenMai().compareTo(BigDecimal.ZERO) > 0) {
+
+                String kmInfo = "Khuyến mãi";
+
+                if (dto.getTenKhuyenMai() != null && !dto.getTenKhuyenMai().isEmpty()) {
+
+                    kmInfo += " (" + dto.getTenKhuyenMai() + ")";
+
+                }
+
+                document.add(new Paragraph(kmInfo + ": -" + formatMoney(dto.getTongTienGiamKhuyenMai()), fontNormal));
+
+            }
+
+
+
+            // Shipping fee
+
+            if (dto.getPhiVanChuyen() != null && dto.getPhiVanChuyen().compareTo(BigDecimal.ZERO) > 0) {
+
+                document.add(new Paragraph("Phí giao hàng: " + formatMoney(dto.getPhiVanChuyen()), fontNormal));
+
+            }
+
+
 
             BigDecimal thanhToan = dto.getTongTienThanhToan() != null ? dto.getTongTienThanhToan() : BigDecimal.ZERO;
 
+            Paragraph totalPara = new Paragraph("TỔNG THANH TOÁN: " + formatMoney(thanhToan), fontSection);
 
+            totalPara.setSpacingBefore(10);
 
-            document.add(new Paragraph("Tạm tính: " + formatMoney(tongTamTinh), fontNormal));
-
-            document.add(new Paragraph("Giảm giá: " + formatMoney(giam), fontNormal));
-
-            document.add(new Paragraph("Tổng thanh toán: " + formatMoney(thanhToan), fontHeader));
-
-            document.add(new Paragraph("Phương thức thanh toán: " + safe(dto.getPhuongThucThanhToan()), fontNormal));
+            document.add(totalPara);
 
 
 
@@ -1318,7 +1471,9 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         if (value == null) return "0";
 
-        return value.toPlainString();
+        // Format to remove decimal places and add commas
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
+        return df.format(value);
 
     }
 
@@ -1531,11 +1686,31 @@ public class HoaDonServiceImpl implements HoaDonService {
         // Tổng tiền gốc (chưa trừ khuyến mãi) = tạm tính + tienGiam
 
         BigDecimal tienGiamVal = hoaDon.getTienGiam() != null ? hoaDon.getTienGiam() : BigDecimal.ZERO;
-
         BigDecimal tamTinh = hoaDon.getTongTienTamTinh() != null ? hoaDon.getTongTienTamTinh() : BigDecimal.ZERO;
 
-        dto.setTongTienChuaGiam(tamTinh.add(tienGiamVal));
+        // Tính tổng giá gốc, tổng giảm khuyến mãi từ chi tiết hóa đơn
+        BigDecimal tongGiaGoc = BigDecimal.ZERO;
+        BigDecimal tongTienGiamKhuyenMai = BigDecimal.ZERO;
+        try {
+            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDon.getId());
+            for (HoaDonChiTiet ct : chiTiets) {
+                Integer soLuong = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                // Tổng giá gốc = donGiaGoc * soLuong
+                if (ct.getDonGiaGoc() != null) {
+                    tongGiaGoc = tongGiaGoc.add(ct.getDonGiaGoc().multiply(BigDecimal.valueOf(soLuong)));
+                }
+                // Tiền giảm khuyến mãi = (donGiaGoc - donGia) * soLuong
+                if (ct.getDonGiaGoc() != null && ct.getDonGia() != null) {
+                    BigDecimal giamItem = ct.getDonGiaGoc().subtract(ct.getDonGia());
+                    if (giamItem.compareTo(BigDecimal.ZERO) > 0) {
+                        tongTienGiamKhuyenMai = tongTienGiamKhuyenMai.add(giamItem.multiply(BigDecimal.valueOf(soLuong)));
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
 
+        dto.setTongGiaGoc(tongGiaGoc);
+        dto.setTongTienGiamKhuyenMai(tongTienGiamKhuyenMai);
         dto.setTienGiam(hoaDon.getTienGiam());
 
         dto.setTongTienThanhToan(hoaDon.getTongTienThanhToan());
@@ -1555,6 +1730,9 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setTrangThai(hoaDon.getTrangThai());
 
         dto.setTrangThaiDonHang(hoaDon.getTrangThaiDonHang());
+
+        dto.setTrangThaiThanhToan(hoaDon.getTrangThaiThanhToan());
+        dto.setTenTrangThaiThanhToan(getTenTrangThaiThanhToan(hoaDon.getTrangThaiThanhToan()));
 
         dto.setNgayDat(hoaDon.getNgayDat());
 
@@ -1652,6 +1830,18 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     }
 
+    private static String getTenTrangThaiThanhToan(String trangThai) {
+        if (trangThai == null || trangThai.isBlank()) {
+            return "Chưa thanh toán";
+        }
+        return switch (trangThai) {
+            case "CHUA_THANH_TOAN" -> "Chưa thanh toán";
+            case "DA_THANH_TOAN" -> "Đã thanh toán";
+            case "THANH_TOAN_LOI" -> "Thanh toán lỗi";
+            default -> trangThai;
+        };
+    }
+
 
 
     private HoaDonChiTietDTO convertChiTietToDTO(HoaDonChiTiet chiTiet) {
@@ -1683,6 +1873,8 @@ public class HoaDonServiceImpl implements HoaDonService {
         dto.setSoLuong(chiTiet.getSoLuong());
 
         dto.setDonGia(chiTiet.getDonGia());
+        dto.setDonGiaGoc(chiTiet.getDonGiaGoc());
+        dto.setTenKhuyenMai(chiTiet.getTenKhuyenMai());
 
         dto.setMaSerials(serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId()).stream()
 
@@ -1726,6 +1918,21 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     }
 
+
+
+    /**
+     * Kiểm tra xem tất cả các chi tiết hóa đơn đã có đủ serial chưa
+     */
+    private boolean hasAllSerialsAssigned(List<HoaDonChiTiet> chiTiets) {
+        for (HoaDonChiTiet chiTiet : chiTiets) {
+            int soLuongCan = chiTiet.getSoLuong();
+            List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
+            if (serials.size() < soLuongCan) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 
     private void allocateSerialForOrderLines(List<HoaDonChiTiet> chiTiets) {
@@ -2251,6 +2458,7 @@ public class HoaDonServiceImpl implements HoaDonService {
                     forPrice, thoiDiemSua, khuyenMaiDangChay);
 
             chiTiet.setDonGia(dongGiaKm.giaSauGiam());
+            chiTiet.setDonGiaGoc(dongGiaKm.giaGoc());
 
             hoaDonChiTietRepository.save(chiTiet);
 
@@ -2366,6 +2574,25 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         return convertToDTO(hoaDon);
 
+    }
+
+    @Override
+    @Transactional
+    public HoaDonDTO updateTrangThaiThanhToan(Integer id, String trangThaiThanhToan) {
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + id));
+
+        String trangThaiDon = hoaDon.getTrangThaiDonHang();
+        boolean isCompleted = "HOAN_THANH".equals(trangThaiDon)
+                || "DA_THANH_TOAN".equals(trangThaiDon)
+                || "DA THANH TOAN".equals(trangThaiDon);
+
+        if (isCompleted && "THANH_TOAN_LOI".equals(trangThaiThanhToan)) {
+            throw new RuntimeException("Đơn hàng đã hoàn thành, không thể chuyển sang trạng thái thanh toán lỗi.");
+        }
+
+        hoaDon.setTrangThaiThanhToan(trangThaiThanhToan);
+        return convertToDTO(hoaDonRepository.save(hoaDon));
     }
 
 }

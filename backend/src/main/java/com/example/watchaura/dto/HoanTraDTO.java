@@ -49,13 +49,7 @@ public class HoanTraDTO {
     private String tenNganHang;
     private String tenChuTaiKhoan;
 
-    // === DOI_HANG specific fields ===
-    // Trạng thái cho biết serial cũ bị lỗi hay serial mới được đổi
-    private Boolean serialCuLoi;
-    private String serialCuLoiHienThi;
-    // Danh sách serial mới được đổi (cho từng chi tiết)
-    private List<String> serialsMoiList;
-
+    
     // Thông tin hóa đơn gốc cho hoàn trả
     private BigDecimal tongTienHoaDon;  // Tổng tiền hàng (tổng tiền sản phẩm + voucher đã áp, khuyến mãi)
     private BigDecimal phiGiaoHang;     // Phí giao hàng (sẽ trừ khi hoàn)

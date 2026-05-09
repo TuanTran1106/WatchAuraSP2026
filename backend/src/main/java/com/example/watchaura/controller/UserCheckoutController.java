@@ -175,6 +175,80 @@ public class UserCheckoutController {
         return resp;
     }
 
+    @GetMapping("/khuyen-mai")
+    @ResponseBody
+    public Map<String, Object> getActiveKhuyenMai(HttpSession session) {
+        Map<String, Object> resp = new HashMap<>();
+        Integer userId = (Integer) session.getAttribute(AuthController.SESSION_CURRENT_USER_ID);
+        if (userId == null) {
+            resp.put("success", false);
+            resp.put("message", "Vui lòng đăng nhập.");
+            return resp;
+        }
+
+        try {
+            GioHangDTO cart = gioHangService.getOrCreateCart(userId);
+            if (cart.getItems() == null || cart.getItems().isEmpty()) {
+                resp.put("success", false);
+                resp.put("message", "Giỏ hàng trống.");
+                return resp;
+            }
+
+            List<Map<String, Object>> khuyenMaiInfo = new ArrayList<>();
+            BigDecimal tongGiaGoc = BigDecimal.ZERO;
+            BigDecimal tongGiaSauGiam = BigDecimal.ZERO;
+
+            for (var item : cart.getItems()) {
+                BigDecimal giaGoc = item.getGiaGoc();
+                BigDecimal giaBan = item.getGiaBan();
+                Integer soLuong = item.getSoLuong();
+
+                if (giaGoc == null) {
+                    giaGoc = giaBan;
+                }
+                if (giaBan == null) {
+                    giaBan = giaGoc;
+                }
+                if (soLuong == null) {
+                    soLuong = 1;
+                }
+
+                tongGiaGoc = tongGiaGoc.add(giaGoc.multiply(BigDecimal.valueOf(soLuong)));
+                tongGiaSauGiam = tongGiaSauGiam.add(giaBan.multiply(BigDecimal.valueOf(soLuong)));
+
+                Map<String, Object> itemInfo = new HashMap<>();
+                itemInfo.put("tenSanPham", item.getTenSanPham());
+                itemInfo.put("soLuong", soLuong);
+                itemInfo.put("giaGoc", giaGoc);
+                itemInfo.put("giaSauGiam", giaBan);
+                itemInfo.put("tenKhuyenMai", item.getTenKhuyenMai());
+                BigDecimal giamItem = giaGoc.subtract(giaBan);
+                if (giamItem.compareTo(BigDecimal.ZERO) < 0) {
+                    giamItem = BigDecimal.ZERO;
+                }
+                itemInfo.put("soTienGiam", giamItem.multiply(BigDecimal.valueOf(soLuong)));
+                khuyenMaiInfo.add(itemInfo);
+            }
+
+            BigDecimal tongTienGiamKm = tongGiaGoc.subtract(tongGiaSauGiam);
+            if (tongTienGiamKm.compareTo(BigDecimal.ZERO) < 0) {
+                tongTienGiamKm = BigDecimal.ZERO;
+            }
+
+            resp.put("success", true);
+            resp.put("khuyenMaiInfo", khuyenMaiInfo);
+            resp.put("tongGiaGoc", tongGiaGoc);
+            resp.put("tongGiaSauGiam", tongGiaSauGiam);
+            resp.put("tongTienGiamKhuyenMai", tongTienGiamKm);
+            resp.put("message", "Lấy thông tin khuyến mãi thành công.");
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi: " + (e.getMessage() != null ? e.getMessage() : "Không thể lấy thông tin khuyến mãi."));
+        }
+
+        return resp;
+    }
+
     @PostMapping("/dat-hang")
     public String datHang(
             HttpSession session,

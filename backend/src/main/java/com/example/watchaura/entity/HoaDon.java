@@ -69,6 +69,9 @@ public class HoaDon {
     @Column(name = "trang_thai_don_hang", length = 50, nullable = false)
     private String trangThaiDonHang;
 
+    @Column(name = "trang_thai_thanh_toan", length = 50)
+    private String trangThaiThanhToan;
+
     @Column(name = "ngay_dat")
     private LocalDateTime ngayDat;
 

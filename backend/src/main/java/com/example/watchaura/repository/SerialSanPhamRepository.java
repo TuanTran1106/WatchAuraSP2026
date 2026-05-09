@@ -26,7 +26,7 @@ public interface SerialSanPhamRepository extends JpaRepository<SerialSanPham, In
             Pageable pageable
     );
 
-    // Simple query without pagination (for DOI_HANG)
+    // Simple query without pagination
     @Query("SELECT s FROM SerialSanPham s WHERE s.sanPhamChiTiet.id = :sanPhamChiTietId AND s.trangThai = :trangThai ORDER BY s.id ASC")
     List<SerialSanPham> findBySanPhamChiTietIdAndTrangThai(
             @Param("sanPhamChiTietId") Integer sanPhamChiTietId,

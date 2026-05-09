@@ -54,21 +54,7 @@ public class HoanTraController {
         model.addAttribute("statDaXuLy", daXuLy);
         model.addAttribute("statTuChoi", tuChoi);
 
-        // DOI_HANG stats
-        long choDuyetDoi = list.stream().filter(h -> "DOI_HANG".equals(h.getLoaiHoanTra()) && "CHO_DUYET_DOI".equals(h.getTrangThai())).count();
-        long daDuyetDoi = list.stream().filter(h -> "DOI_HANG".equals(h.getLoaiHoanTra()) && "DA_DUYET_DOI".equals(h.getTrangThai())).count();
-        long daNhanHangDoi = list.stream().filter(h -> "DOI_HANG".equals(h.getLoaiHoanTra()) && "DA_NHAN_HANG_DOI".equals(h.getTrangThai())).count();
-        long chonSerialMoi = list.stream().filter(h -> "DOI_HANG".equals(h.getLoaiHoanTra()) && "CHON_SERIAL_MOI".equals(h.getTrangThai())).count();
-        long daDoi = list.stream().filter(h -> "DOI_HANG".equals(h.getLoaiHoanTra()) && "DA_DOI".equals(h.getTrangThai())).count();
-        long ketThucDoi = list.stream().filter(h -> "DOI_HANG".equals(h.getLoaiHoanTra()) && "KET_THUC".equals(h.getTrangThai())).count();
-
-        model.addAttribute("statChoDuyetDoi", choDuyetDoi);
-        model.addAttribute("statDaDuyetDoi", daDuyetDoi);
-        model.addAttribute("statDaNhanHangDoi", daNhanHangDoi);
-        model.addAttribute("statChonSerialMoi", chonSerialMoi);
-        model.addAttribute("statDaDoi", daDoi);
-        model.addAttribute("statKetThucDoi", ketThucDoi);
-
+        
         model.addAttribute("statTongSo", (long) list.size());
 
         model.addAttribute("currentPage", page);

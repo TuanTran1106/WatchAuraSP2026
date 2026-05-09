@@ -3,19 +3,14 @@ package com.example.watchaura.controller;
 
 
 import com.example.watchaura.annotation.RequiresRole;
-
+import com.example.watchaura.dto.HoaDonChiTietDTO;
 import com.example.watchaura.dto.HoaDonDTO;
-
 import com.example.watchaura.dto.HoaDonRequest;
-
 import com.example.watchaura.util.PaginationWindow;
-
 import com.example.watchaura.entity.Voucher;
-
 import com.example.watchaura.service.HoaDonService;
-
 import com.example.watchaura.service.KhachHangService;
-
+import com.example.watchaura.service.SerialSelectionRequiredException;
 import com.example.watchaura.service.VoucherService;
 
 import jakarta.validation.Valid;
@@ -24,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.*;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 import org.springframework.ui.Model;
@@ -40,7 +36,11 @@ import org.springframework.data.domain.PageRequest;
 
 
 
+import java.util.ArrayList;
+
 import java.util.Collections;
+
+import java.util.HashMap;
 
 import java.time.LocalDate;
 
@@ -288,6 +288,57 @@ public class HoaDonController {
 
     }
 
+    @GetMapping("/{id}/serial")
+
+    public String selectSerial(@PathVariable Integer id) {
+
+        return "redirect:/admin/serial/chon/" + id;
+
+    }
+
+    /**
+     * API kiểm tra tồn kho trước khi xác nhận đơn hàng
+     */
+    @GetMapping("/{id}/check-ton-kho")
+    @ResponseBody
+    public ResponseEntity<?> checkTonKho(@PathVariable Integer id) {
+        try {
+            HoaDonDTO hoaDon = hoaDonService.getById(id);
+            List<HoaDonChiTietDTO> items = hoaDon.getItems();
+            if (items == null || items.isEmpty()) {
+                return ResponseEntity.ok(Map.of("du", true, "items", List.of()));
+            }
+
+            List<Map<String, Object>> itemResults = new ArrayList<>();
+            boolean tatCaDu = true;
+
+            for (HoaDonChiTietDTO item : items) {
+                Integer spctId = item.getSanPhamChiTietId();
+                Integer soLuongCan = item.getSoLuong();
+                Integer soLuongTon = item.getSoLuongKhaDung() != null ? item.getSoLuongKhaDung() : 0;
+
+                Map<String, Object> itemResult = new HashMap<>();
+                itemResult.put("sanPhamChiTietId", spctId);
+                itemResult.put("tenSanPham", item.getTenSanPham());
+                itemResult.put("soLuongCan", soLuongCan);
+                itemResult.put("soLuongTon", soLuongTon);
+                itemResult.put("du", soLuongTon >= soLuongCan);
+                itemResults.add(itemResult);
+
+                if (soLuongTon < soLuongCan) {
+                    tatCaDu = false;
+                }
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "du", tatCaDu,
+                    "items", itemResults
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
 
 
     @GetMapping("/bao-cao/pdf")
@@ -364,7 +415,7 @@ public class HoaDonController {
 
     @PostMapping("/{id}/trang-thai")
 
-    public String updateTrangThai(@PathVariable Integer id, @RequestParam String trangThai,
+    public Object updateTrangThai(@PathVariable Integer id, @RequestParam String trangThai,
 
                                   @RequestParam(required = false) String q,
 
@@ -464,6 +515,19 @@ public class HoaDonController {
 
             redirect.addFlashAttribute(chuyenCanXuLy ? "warning" : "message", msg);
 
+        } catch (SerialSelectionRequiredException e) {
+            // Chuyển hướng đến trang chọn serial
+            // Với AJAX request, trả về JSON để frontend redirect
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return ResponseEntity.ok()
+                        .header("X-Redirect-Url", "/admin/serial/chon/" + e.getHoaDonId())
+                        .body(Map.of(
+                                "success", false,
+                                "redirect", "/admin/serial/chon/" + e.getHoaDonId(),
+                                "message", "Cần chọn serial trước khi xác nhận đơn hàng"
+                        ));
+            }
+            return "redirect:/admin/serial/chon/" + e.getHoaDonId();
         } catch (RuntimeException e) {
 
             String errorMsg = e.getMessage();
@@ -536,6 +600,66 @@ public class HoaDonController {
 
 
 
+    @PostMapping("/{id}/trang-thai-thanh-toan")
+    public Object updateTrangThaiThanhToan(@PathVariable Integer id,
+                                           @RequestParam String trangThaiThanhToan,
+                                           @RequestParam(required = false) String q,
+                                           @RequestParam(required = false) String trangThaiFilter,
+                                           @RequestParam(required = false) String loaiDon,
+                                           @RequestParam(defaultValue = "0") int page,
+                                           Model model,
+                                           RedirectAttributes redirect,
+                                           @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+        try {
+            HoaDonDTO updated = hoaDonService.updateTrangThaiThanhToan(id, trangThaiThanhToan);
+
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
+                model.addAttribute("title", "Hóa đơn");
+                model.addAttribute("content", "admin/hoadon-list");
+                model.addAttribute("list", pageResult.getContent());
+                model.addAttribute("page", pageResult);
+                model.addAttribute("paginationItems", PaginationWindow.build(pageResult, 2));
+                model.addAttribute("searchKeyword", q != null ? q : "");
+                model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
+                model.addAttribute("filterLoaiDon", loaiDon != null ? loaiDon : "");
+                model.addAttribute("message", "Đã cập nhật trạng thái thanh toán.");
+                return "admin/hoadon-list :: content";
+            }
+
+            redirect.addFlashAttribute("message", "Đã cập nhật trạng thái thanh toán.");
+
+        } catch (RuntimeException e) {
+            String errorMsg = e.getMessage();
+
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
+                model.addAttribute("title", "Hóa đơn");
+                model.addAttribute("content", "admin/hoadon-list");
+                model.addAttribute("list", pageResult.getContent());
+                model.addAttribute("page", pageResult);
+                model.addAttribute("paginationItems", PaginationWindow.build(pageResult, 2));
+                model.addAttribute("searchKeyword", q != null ? q : "");
+                model.addAttribute("filterTrangThai", trangThaiFilter != null ? trangThaiFilter : "");
+                model.addAttribute("filterLoaiDon", loaiDon != null ? loaiDon : "");
+                model.addAttribute("error", errorMsg);
+                return "admin/hoadon-list :: content";
+            }
+
+            redirect.addFlashAttribute("error", errorMsg);
+        }
+
+        if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
+        if (trangThaiFilter != null && !trangThaiFilter.isBlank()) redirect.addAttribute("trangThai", trangThaiFilter);
+        if (loaiDon != null && !loaiDon.isBlank()) redirect.addAttribute("loaiDon", loaiDon);
+        redirect.addAttribute("page", page);
+
+        return "redirect:/admin/hoa-don";
+    }
+
+
     @PostMapping("/{id}/xoa")
 
     public String delete(@PathVariable Integer id,
@@ -565,7 +689,5 @@ public class HoaDonController {
         return "redirect:/admin/hoa-don";
 
     }
-
-
 
 }

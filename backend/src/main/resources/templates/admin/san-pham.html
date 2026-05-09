@@ -339,6 +339,7 @@
             }
 
             .variant-item .variant-serial {
+                display: none;
                 margin-top: 8px;
                 font-size: 11px;
                 color: #475569;
@@ -647,6 +648,14 @@
                 outline: none;
                 border-color: #2c3e50;
                 box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+            }
+
+            .modal-form-group input:disabled,
+            .modal-form-group select:disabled {
+                background-color: #f1f5f9;
+                color: #64748b;
+                cursor: not-allowed;
+                border-color: #e2e8f0;
             }
 
             .modal-form-group textarea {
@@ -1537,7 +1546,7 @@
 
                 <div class="modal-form-group">
                     <label>Số lượng tồn *</label>
-                    <input type="number" class="variant-soLuongTon" min="0" required>
+                    <input type="number" class="variant-soLuongTon" min="0" required disabled>
                 </div>
 
                 <div class="modal-form-group">
@@ -1742,6 +1751,12 @@
                         }
                         hiddenValidCount.value = result.totalSerials;
 
+                        // Tự động điền số lượng tồn = số serial đọc được từ file
+                        const soLuongTonInput = variantRow.querySelector('.variant-soLuongTon');
+                        if (soLuongTonInput) {
+                            soLuongTonInput.value = result.totalSerials;
+                        }
+
                         // Hiển thị tất cả serial (hoặc giới hạn hiển thị)
                         const allSerials = result.previewSerials || result.serials || [];
                         const displaySerials = allSerials.slice(0, 50); // Hiển thị tối đa 50 serial
@@ -1783,11 +1798,15 @@
                 const variantRow = btn.closest('.variant-row');
                 const fileInput = variantRow.querySelector('.variant-serial-file');
                 const hiddenSerials = variantRow.querySelector('.variant-serialized-serials');
+                const hiddenValidCount = variantRow.querySelector('.variant-valid-serial-count');
+                const soLuongTonInput = variantRow.querySelector('.variant-soLuongTon');
                 const serialCount = variantRow.querySelector('.serial-count');
                 const serialList = variantRow.querySelector('.serial-list');
 
                 fileInput.value = '';
                 if (hiddenSerials) hiddenSerials.remove();
+                if (hiddenValidCount) hiddenValidCount.remove();
+                if (soLuongTonInput) soLuongTonInput.value = '0';
                 serialCount.textContent = 'Chưa chọn file';
                 serialCount.style.color = '#475569';
                 serialList.innerHTML = '';
@@ -2008,6 +2027,9 @@
                                     <div class="variant-price">
                                         ${price} · <span class="muted">SL: ${qty}</span>
                                     </div>
+
+
+
                                     <div class="variant-serial">
                                         <strong>Serial:</strong> ${detail.serials && detail.serials.length
                                         ? `${detail.soLuongSerialTrongKho || 0} trong kho · ${detail.serials.slice(0, 4).join(' || ')}${detail.serials.length > 4 ? ' ...' : ''}`
@@ -2547,7 +2569,7 @@
 
                             <div class="modal-form-group">
                                 <label>Số lượng tồn *</label>
-                                <input type="number" class="variant-soLuongTon" min="0" required>
+                                <input type="number" class="variant-soLuongTon" min="0" required disabled>
                             </div>
 
                             <div class="modal-form-group">

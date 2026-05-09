@@ -163,19 +163,6 @@ public class HoanTraServiceImpl implements HoanTraService {
         long tuChoi = statsList.stream()
                 .filter(h -> HoanTra.TRANG_THAI_TU_CHOI.equals(h.getTrangThai())).count();
 
-        // Stats for DOI_HANG (current page)
-        long choDuyetDoi = statsList.stream()
-                .filter(h -> HoanTra.TRANG_THAI_CHO_DUYET_DOI.equals(h.getTrangThai())).count();
-        long daDuyetDoi = statsList.stream()
-                .filter(h -> HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(h.getTrangThai())).count();
-        long daNhanHangDoi = statsList.stream()
-                .filter(h -> HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(h.getTrangThai())).count();
-        long chonSerialMoi = statsList.stream()
-                .filter(h -> HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(h.getTrangThai())).count();
-        long daDoi = statsList.stream()
-                .filter(h -> HoanTra.TRANG_THAI_DA_DOI.equals(h.getTrangThai())).count();
-        long ketThuc = statsList.stream()
-                .filter(h -> HoanTra.TRANG_THAI_KET_THUC.equals(h.getTrangThai())).count();
 
         // Total stats from DB
         long totalChoXuLy = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_CHO_XU_LY);
@@ -183,13 +170,6 @@ public class HoanTraServiceImpl implements HoanTraService {
         long totalDaXuLy = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DA_XU_LY);
         long totalTuChoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_TU_CHOI);
 
-        // DOI_HANG total counts
-        long totalChoDuyetDoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_CHO_DUYET_DOI);
-        long totalDaDuyetDoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DA_DUYET_DOI);
-        long totalDaNhanHangDoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI);
-        long totalChonSerialMoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_CHON_SERIAL_MOI);
-        long totalDaDoi = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_DA_DOI);
-        long totalKetThuc = hoanTraRepository.countByTrangThai(HoanTra.TRANG_THAI_KET_THUC);
 
         // Total elements for current filter
         long totalTongSo = (finalTuNgayTime != null || finalDenNgayTime != null) ? displayList.size() : hoanTraPage.getTotalElements();
@@ -203,19 +183,6 @@ public class HoanTraServiceImpl implements HoanTraService {
             put("totalDangXuLy", totalDangXuLy);
             put("totalDaXuLy", totalDaXuLy);
             put("totalTuChoi", totalTuChoi);
-            // DOI_HANG stats
-            put("choDuyetDoi", choDuyetDoi);
-            put("daDuyetDoi", daDuyetDoi);
-            put("daNhanHangDoi", daNhanHangDoi);
-            put("chonSerialMoi", chonSerialMoi);
-            put("daDoi", daDoi);
-            put("ketThuc", ketThuc);
-            put("totalChoDuyetDoi", totalChoDuyetDoi);
-            put("totalDaDuyetDoi", totalDaDuyetDoi);
-            put("totalDaNhanHangDoi", totalDaNhanHangDoi);
-            put("totalChonSerialMoi", totalChonSerialMoi);
-            put("totalDaDoi", totalDaDoi);
-            put("totalKetThuc", totalKetThuc);
             put("tongSo", totalTongSo);
         }});
 
@@ -248,12 +215,8 @@ public class HoanTraServiceImpl implements HoanTraService {
             hoanTra.setTenChuTaiKhoan(request.getTenChuTaiKhoan());
         }
 
-        // Set initial status based on type
-        if (HoanTra.LOAI_DOI_HANG.equals(request.getLoaiHoanTra())) {
-            hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_DUYET_DOI);
-        } else {
-            hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_XU_LY);
-        }
+        // Set initial status
+        hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_XU_LY);
 
         hoanTra.setSoTienHoanTra(BigDecimal.ZERO);
         hoanTra.setNgayYeuCau(LocalDateTime.now());
@@ -382,21 +345,12 @@ public class HoanTraServiceImpl implements HoanTraService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hoàn trả với ID: " + id));
 
         String trangThaiHienTai = hoanTra.getTrangThai();
-        String loaiHoanTra = hoanTra.getLoaiHoanTra();
 
         // Kiểm tra trạng thái có thể từ chối
-        boolean coTheTuChoi;
-        if (HoanTra.LOAI_DOI_HANG.equals(loaiHoanTra)) {
-            coTheTuChoi = HoanTra.TRANG_THAI_CHO_DUYET_DOI.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(trangThaiHienTai);
-        } else {
-            coTheTuChoi = HoanTra.TRANG_THAI_CHO_XU_LY.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_DANG_XU_LY.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_DA_DUYET.equals(trangThaiHienTai)
-                    || HoanTra.TRANG_THAI_DA_NHAN_HANG.equals(trangThaiHienTai);
-        }
+        boolean coTheTuChoi = HoanTra.TRANG_THAI_CHO_XU_LY.equals(trangThaiHienTai)
+                || HoanTra.TRANG_THAI_DANG_XU_LY.equals(trangThaiHienTai)
+                || HoanTra.TRANG_THAI_DA_DUYET.equals(trangThaiHienTai)
+                || HoanTra.TRANG_THAI_DA_NHAN_HANG.equals(trangThaiHienTai);
 
         if (!coTheTuChoi) {
             throw new RuntimeException("Không thể từ chối hoàn trả ở trạng thái: " + trangThaiHienTai);
@@ -417,7 +371,7 @@ public class HoanTraServiceImpl implements HoanTraService {
             for (SerialSanPham serial : serials) {
                 if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
                     serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
-                    serial.setGhiChu("Từ chối đổi/trả hàng - Serial trả lại cho khách");
+                    serial.setGhiChu("Từ chối trả hàng - Serial trả lại cho khách");
                     serialSanPhamRepository.save(serial);
                 }
             }
@@ -728,8 +682,6 @@ public class HoanTraServiceImpl implements HoanTraService {
                 .soTaiKhoan(hoanTra.getSoTaiKhoan())
                 .tenNganHang(hoanTra.getTenNganHang())
                 .tenChuTaiKhoan(hoanTra.getTenChuTaiKhoan())
-                // DOI_HANG fields
-                .serialCuLoiHienThi(getSerialCuLoiHienThi(hoanTra.getLoaiHoanTra(), hoanTra.getTrangThai()))
                 // Thông tin hóa đơn gốc
                 .tongTienHoaDon(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTongTienTamTinh() : null)
                 .phiGiaoHang(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getPhiVanChuyen() : null)
@@ -738,17 +690,11 @@ public class HoanTraServiceImpl implements HoanTraService {
 
         if (hoanTra.getChiTietList() != null && !hoanTra.getChiTietList().isEmpty()) {
             List<HoanTraChiTietDTO> chiTietDTOs = new ArrayList<>();
-            List<String> allSerialsMoi = new ArrayList<>();
             for (HoanTraChiTiet chiTiet : hoanTra.getChiTietList()) {
                 HoanTraChiTietDTO chiTietDTO = convertChiTietToDTO(chiTiet);
                 chiTietDTOs.add(chiTietDTO);
-                // Collect all serial mới from chi tiết
-                if (chiTietDTO.getSerialMoi() != null && !chiTietDTO.getSerialMoi().isEmpty()) {
-                    allSerialsMoi.add(chiTietDTO.getSerialMoi());
-                }
             }
             dto.setChiTietList(chiTietDTOs);
-            dto.setSerialsMoiList(allSerialsMoi);
         }
 
         return dto;
@@ -763,16 +709,11 @@ public class HoanTraServiceImpl implements HoanTraService {
         // Đã có trong convertToDTO rồi, nhưng đảm bảo có chi tiết
         if (hoanTra.getChiTietList() != null && !hoanTra.getChiTietList().isEmpty()) {
             List<HoanTraChiTietDTO> chiTietDTOs = new ArrayList<>();
-            List<String> allSerialsMoi = new ArrayList<>();
             for (HoanTraChiTiet chiTiet : hoanTra.getChiTietList()) {
                 HoanTraChiTietDTO chiTietDTO = convertChiTietToDTO(chiTiet);
                 chiTietDTOs.add(chiTietDTO);
-                if (chiTietDTO.getSerialMoi() != null && !chiTietDTO.getSerialMoi().isEmpty()) {
-                    allSerialsMoi.add(chiTietDTO.getSerialMoi());
-                }
             }
             dto.setChiTietList(chiTietDTOs);
-            dto.setSerialsMoiList(allSerialsMoi);
         }
 
         // Thông tin hóa đơn gốc cho tính lại số tiền hoàn
@@ -806,34 +747,13 @@ public class HoanTraServiceImpl implements HoanTraService {
                 .donGiaTaiThoiDiemMua(chiTiet.getDonGiaTaiThoiDiemMua())
                 .soTienHoan(chiTiet.getSoTienHoan())
                 .hinhAnh(chiTiet.getHinhAnh())
-                // DOI_HANG fields
-                .serialMoi(chiTiet.getSerialMoi())
-                .serialCuLoi(chiTiet.getSerialCuLoi())
-                .serialCuLoiHienThi(getSerialCuLoiHienThiChiTiet(chiTiet.getSerialCuLoi()))
                 .build();
 
         List<String> serialsHoanTra = new ArrayList<>();
         List<HoanTraChiTietDTO.SerialInfo> serialsChiTiet = new ArrayList<>();
 
-        // Kiểm tra xem có đơn đổi hàng không - nếu có, chỉ hiển thị serial mới
-        HoanTra hoanTraEntity = chiTiet.getHoanTra();
-        boolean coDonDoiHangDaHoanTat = hoanTraEntity != null 
-                && HoanTra.LOAI_DOI_HANG.equals(hoanTraEntity.getLoaiHoanTra())
-                && (HoanTra.TRANG_THAI_DA_DOI.equals(hoanTraEntity.getTrangThai())
-                    || HoanTra.TRANG_THAI_KET_THUC.equals(hoanTraEntity.getTrangThai()));
-
-        // Nếu có serial mới từ đổi hàng và trạng thái đã đổi/kết thúc → chỉ hiển thị serial mới
-        if (coDonDoiHangDaHoanTat && chiTiet.getSerialMoi() != null && !chiTiet.getSerialMoi().isEmpty()) {
-            serialsHoanTra.add(chiTiet.getSerialMoi());
-            HoanTraChiTietDTO.SerialInfo siMoi = HoanTraChiTietDTO.SerialInfo.builder()
-                    .maSerial(chiTiet.getSerialMoi())
-                    .trangThai(String.valueOf(SerialSanPham.TRANG_THAI_DA_BAN))
-                    .trangThaiHienThi("Serial mới đã đổi")
-                    .daDuocChon(true)
-                    .build();
-            serialsChiTiet.add(siMoi);
-        } else if (chiTiet.getHoaDonChiTiet() != null && chiTiet.getHoaDonChiTiet().getSerialSanPhams() != null) {
-            // Không có đổi hàng hoặc chưa hoàn tất → hiển thị serials theo logic cũ
+        // Hiển thị serials đã trả hàng
+        if (chiTiet.getHoaDonChiTiet() != null && chiTiet.getHoaDonChiTiet().getSerialSanPhams() != null) {
             for (SerialSanPham sp : chiTiet.getHoaDonChiTiet().getSerialSanPhams()) {
                 if (sp.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
                     serialsHoanTra.add(sp.getMaSerial());
@@ -878,19 +798,6 @@ public class HoanTraServiceImpl implements HoanTraService {
                 return "Đã nhận hàng";
             case HoanTra.TRANG_THAI_DA_HOAN_TIEN:
                 return "Đã hoàn tiền";
-            // === DOI_HANG statuses ===
-            case HoanTra.TRANG_THAI_CHO_DUYET_DOI:
-                return "Chờ duyệt đổi";
-            case HoanTra.TRANG_THAI_DA_DUYET_DOI:
-                return "Đã duyệt đổi";
-            case HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI:
-                return "Đã nhận hàng";
-            case HoanTra.TRANG_THAI_CHON_SERIAL_MOI:
-                return "Chọn serial mới";
-            case HoanTra.TRANG_THAI_DA_DOI:
-                return "Đã đổi";
-            case HoanTra.TRANG_THAI_KET_THUC:
-                return "Kết thúc";
             default:
                 return trangThai;
         }
@@ -901,8 +808,6 @@ public class HoanTraServiceImpl implements HoanTraService {
         switch (loaiHoanTra) {
             case HoanTra.LOAI_TRA_HANG:
                 return "Trả hàng";
-            case HoanTra.LOAI_DOI_HANG:
-                return "Đổi hàng";
             default:
                 return loaiHoanTra;
         }
@@ -1177,12 +1082,8 @@ public class HoanTraServiceImpl implements HoanTraService {
             hoanTra.setTenChuTaiKhoan(request.getTenChuTaiKhoan());
         }
 
-        // Set initial status based on type
-        if (HoanTra.LOAI_DOI_HANG.equals(hoanTra.getLoaiHoanTra())) {
-            hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_DUYET_DOI);
-        } else {
-            hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_XU_LY);
-        }
+        // Set initial status
+        hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHO_XU_LY);
 
         hoanTra.setNgayYeuCau(LocalDateTime.now());
 
@@ -1288,64 +1189,12 @@ public class HoanTraServiceImpl implements HoanTraService {
         }
     }
 
-    // === DOI_HANG Helper Methods ===
-
-    private String getSerialCuLoiHienThi(String loaiHoanTra, String trangThai) {
-        if (!HoanTra.LOAI_DOI_HANG.equals(loaiHoanTra)) {
-            return null;
-        }
-        if (HoanTra.TRANG_THAI_KET_THUC.equals(trangThai) ||
-            HoanTra.TRANG_THAI_DA_DOI.equals(trangThai)) {
-            return "Serial cũ đã được xử lý";
-        }
-        return null;
-    }
-
-    private String getSerialCuLoiHienThiChiTiet(Boolean serialCuLoi) {
-        if (serialCuLoi == null) {
-            return "Chưa xác định";
-        }
-        return serialCuLoi ? "Serial cũ bị lỗi" : "Serial mới đã đổi";
-    }
 
     @Override
     public boolean existsByHoaDonId(Integer hoaDonId) {
         return hoanTraRepository.existsByHoaDonId(hoaDonId);
     }
 
-    /**
-     * Lấy serial trong kho có thể đổi cho sản phẩm
-     * Trả về danh sách serial cùng loại sản phẩm (cùng SanPhamChiTiet) đang ở trạng thái TRONG_KHO
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public Map<String, Object> getSerialCoTheDoi(Integer hoaDonId, Integer sanPhamChiTietId) {
-        Map<String, Object> result = new HashMap<>();
-
-        SanPhamChiTiet spct = sanPhamChiTietRepository.findById(sanPhamChiTietId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm chi tiết với ID: " + sanPhamChiTietId));
-
-        // Tìm tất cả serial cùng loại (cùng sanPhamChiTiet) đang trong kho
-        List<SerialSanPham> serials = serialSanPhamRepository
-                .findBySanPhamChiTietIdAndTrangThai(sanPhamChiTietId, SerialSanPham.TRANG_THAI_TRONG_KHO);
-
-        List<Map<String, Object>> serialList = new ArrayList<>();
-        for (SerialSanPham serial : serials) {
-            Map<String, Object> serialMap = new HashMap<>();
-            serialMap.put("id", serial.getId());
-            serialMap.put("maSerial", serial.getMaSerial());
-            serialMap.put("trangThai", serial.getTrangThai());
-            serialMap.put("trangThaiHienThi", getSerialTrangThaiText(serial.getTrangThai()));
-            serialList.add(serialMap);
-        }
-
-        result.put("sanPhamChiTietId", sanPhamChiTietId);
-        result.put("tenSanPham", spct.getSanPham() != null ? spct.getSanPham().getTenSanPham() : "");
-        result.put("soLuongSerialTrongKho", serialList.size());
-        result.put("serialList", serialList);
-
-        return result;
-    }
 
     @Override
     @Transactional
@@ -1541,12 +1390,7 @@ public class HoanTraServiceImpl implements HoanTraService {
         String trangThaiHienTai = hoanTra.getTrangThai();
         String loaiHoanTra = hoanTra.getLoaiHoanTra();
 
-        // === XỬ LÝ DOI_HANG WORKFLOW ===
-        if (HoanTra.LOAI_DOI_HANG.equals(loaiHoanTra)) {
-            return xuLyDoiHangWorkflow(hoanTra, trangThaiHienTai, nhanVien, ghiChuXuLy);
-        }
-
-        // === XỬ LÝ TRA_HANG WORKFLOW (giữ nguyên logic cũ) ===
+        // === XỬ LÝ TRA_HANG WORKFLOW ===
         if (HoanTra.TRANG_THAI_CHO_XU_LY.equals(trangThaiHienTai)) {
             hoanTra.setTrangThai(HoanTra.TRANG_THAI_DA_DUYET);
             hoanTra.setNhanVienXuLy(nhanVien);
@@ -1600,203 +1444,9 @@ public class HoanTraServiceImpl implements HoanTraService {
         throw new RuntimeException("Không thể duyệt đơn trả hàng ở trạng thái: " + trangThaiHienTai);
     }
 
-    /**
-     * XỬ LÝ LUỒNG DOI_HANG
-     * LUỒNG: CHỜ DUYỆT → ĐÃ DUYỆT → ĐÃ NHẬN HÀNG → CHỌN SERIAL MỚI → ĐÃ ĐỔI → KẾT THÚC
-     *
-     * - SR cũ → LỖI (đánh dấu serial cũ bị lỗi)
-     * - SR mới → ĐÃ BÁN (serial mới được đổi, đánh dấu là đã bán cho khách)
-     */
-    private HoanTraDTO xuLyDoiHangWorkflow(HoanTra hoanTra, String trangThaiHienTai,
-                                            KhachHang nhanVien, String ghiChuXuLy) {
-        switch (trangThaiHienTai) {
-            case HoanTra.TRANG_THAI_CHO_DUYET_DOI:
-                // Bước 1: CHỜ DUYỆT → ĐÃ DUYỆT
-                hoanTra.setTrangThai(HoanTra.TRANG_THAI_DA_DUYET_DOI);
-                hoanTra.setNhanVienXuLy(nhanVien);
-                hoanTra.setGhiChuXuLy(ghiChuXuLy);
-                hoanTra.setNgayXuLy(LocalDateTime.now());
-                hoanTra = hoanTraRepository.save(hoanTra);
-                return convertToDTO(hoanTra);
 
-            case HoanTra.TRANG_THAI_DA_DUYET_DOI:
-                // Bước 2: ĐÃ DUYỆT → ĐÃ NHẬN HÀNG
-                hoanTra.setTrangThai(HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI);
-                hoanTra.setNhanVienXuLy(nhanVien);
-                hoanTra.setGhiChuXuLy(ghiChuXuLy);
-                hoanTra.setNgayXuLy(LocalDateTime.now());
-                hoanTra = hoanTraRepository.save(hoanTra);
-                return convertToDTO(hoanTra);
 
-            case HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI:
-                // Bước 3: ĐÃ NHẬN HÀNG → CHỌN SERIAL MỚI
-                hoanTra.setTrangThai(HoanTra.TRANG_THAI_CHON_SERIAL_MOI);
-                hoanTra.setNhanVienXuLy(nhanVien);
-                hoanTra.setGhiChuXuLy(ghiChuXuLy);
-                hoanTra.setNgayXuLy(LocalDateTime.now());
-                hoanTra = hoanTraRepository.save(hoanTra);
-                return convertToDTO(hoanTra);
 
-            default:
-                throw new RuntimeException("Không thể duyệt đơn đổi hàng ở trạng thái: " + trangThaiHienTai);
-        }
-    }
-
-    /**
-     * Xử lý bước CHỌN SERIAL MỚI - Chọn serial và cấp cho khách
-     * - Chọn serial mới từ danh sách trong kho
-     * - Trừ số lượng tồn kho
-     * - Cập nhật serial mới vào chi tiết
-     * - Chuyển trạng thái sang ĐÃ ĐỔI
-     */
-    @Override
-    @Transactional
-    public HoanTraDTO xuLyDoiHangHoanTat(Integer hoanTraId, Map<Integer, String> serialsMoi,
-                                          Integer idNhanVienXuLy,
-                                          String ghiChuXuLy) {
-        HoanTra hoanTra = hoanTraRepository.findByIdWithChiTiet(hoanTraId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hoàn trả với ID: " + hoanTraId));
-
-        if (!HoanTra.LOAI_DOI_HANG.equals(hoanTra.getLoaiHoanTra())) {
-            throw new RuntimeException("Chỉ áp dụng cho loại đổi hàng");
-        }
-
-        if (!HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(hoanTra.getTrangThai())) {
-            throw new RuntimeException("Đơn đổi hàng phải ở trạng thái 'Chọn serial mới' để thực hiện bước này");
-        }
-
-        KhachHang nhanVien = khachHangRepository.findById(idNhanVienXuLy)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + idNhanVienXuLy));
-
-        // Xử lý từng chi tiết - cấp serial mới
-        for (HoanTraChiTiet chiTiet : hoanTra.getChiTietList()) {
-            Integer chiTietId = chiTiet.getId();
-            String serialMoi = serialsMoi != null ? serialsMoi.get(chiTietId) : null;
-
-            if (serialMoi == null || serialMoi.isEmpty()) {
-                throw new RuntimeException("Vui lòng chọn serial mới cho tất cả sản phẩm");
-            }
-
-            // Cấp serial mới cho khách
-            capSerialMoiChoKhach(chiTiet, serialMoi, hoanTra);
-
-            // Cập nhật chi tiết - lưu serial mới
-            chiTiet.setSerialMoi(serialMoi);
-            hoanTraChiTietRepository.save(chiTiet);
-        }
-
-        // Cập nhật trạng thái phiếu đổi → ĐÃ ĐỔI
-        hoanTra.setTrangThai(HoanTra.TRANG_THAI_DA_DOI);
-        hoanTra.setNhanVienXuLy(nhanVien);
-        hoanTra.setGhiChuXuLy(ghiChuXuLy);
-        hoanTra.setNgayXuLy(LocalDateTime.now());
-        hoanTra = hoanTraRepository.save(hoanTra);
-
-        return convertToDTO(hoanTra);
-    }
-
-    /**
-     * Hoàn tất đổi hàng - Xử lý serial cũ
-     * - Hỏi admin: Serial cũ có lưu vào kho không hay lỗi?
-     * - Nếu luuKho = true: serial cũ → TRONG_KHO (hàng bình thường)
-     * - Nếu luuKho = false: serial cũ → LỖI (hàng lỗi, không bán)
-     */
-    @Override
-    @Transactional
-    public HoanTraDTO hoanTatDoiHang(Integer hoanTraId, Map<Integer, Boolean> serialCuLoi,
-                                       Integer idNhanVienXuLy, String ghiChuXuLy) {
-        HoanTra hoanTra = hoanTraRepository.findByIdWithChiTiet(hoanTraId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hoàn trả với ID: " + hoanTraId));
-
-        if (!HoanTra.LOAI_DOI_HANG.equals(hoanTra.getLoaiHoanTra())) {
-            throw new RuntimeException("Chỉ áp dụng cho loại đổi hàng");
-        }
-
-        if (!HoanTra.TRANG_THAI_DA_DOI.equals(hoanTra.getTrangThai())) {
-            throw new RuntimeException("Đơn đổi hàng phải ở trạng thái 'Đã đổi' để hoàn tất");
-        }
-
-        KhachHang nhanVien = khachHangRepository.findById(idNhanVienXuLy)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + idNhanVienXuLy));
-
-        // Cập nhật trạng thái phiếu đổi → KẾT THÚC
-        hoanTra.setTrangThai(HoanTra.TRANG_THAI_KET_THUC);
-        hoanTra.setNhanVienXuLy(nhanVien);
-        hoanTra.setGhiChuXuLy(ghiChuXuLy);
-        hoanTra.setNgayXuLy(LocalDateTime.now());
-        hoanTra = hoanTraRepository.save(hoanTra);
-
-        return convertToDTO(hoanTra);
-    }
-
-    /**
-     * Cấp serial mới cho khách - trừ tồn kho và đánh dấu ĐÃ BÁN
-     */
-    private void capSerialMoiChoKhach(HoanTraChiTiet chiTiet, String serialMoi, HoanTra hoanTra) {
-        SerialSanPham serial = serialSanPhamRepository.findByMaSerial(serialMoi.trim())
-                .orElseThrow(() -> new RuntimeException("Serial '" + serialMoi + "' không tồn tại"));
-
-        // Kiểm tra serial phải đang trong kho
-        if (serial.getTrangThai() != SerialSanPham.TRANG_THAI_TRONG_KHO) {
-            throw new RuntimeException("Serial '" + serialMoi + "' không còn trong kho. Vui lòng chọn serial khác");
-        }
-
-        // Kiểm tra serial cùng loại sản phẩm
-        if (serial.getSanPhamChiTiet() == null ||
-            !serial.getSanPhamChiTiet().getId().equals(chiTiet.getSanPhamChiTiet().getId())) {
-            throw new RuntimeException("Serial '" + serialMoi + "' không cùng loại sản phẩm");
-        }
-
-        // Trừ tồn kho
-        SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
-        if (spct.getSoLuongTon() <= 0) {
-            throw new RuntimeException("Sản phẩm đã hết hàng trong kho");
-        }
-        spct.setSoLuongTon(spct.getSoLuongTon() - 1);
-        sanPhamChiTietRepository.save(spct);
-
-        // Cập nhật serial mới → ĐÃ BÁN
-        serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
-        serial.setHoaDonChiTiet(chiTiet.getHoaDonChiTiet());
-        serial.setNgayXuatKho(LocalDateTime.now());
-        serial.setGhiChu("Serial đổi hàng - " + hoanTra.getMaHoanTra());
-        serialSanPhamRepository.save(serial);
-
-        log.info("Đã cấp serial '{}' cho khách trong đơn đổi hàng {}", serialMoi, hoanTra.getMaHoanTra());
-    }
-
-    /**
-     * Xử lý serial cũ sau khi hoàn tất đổi hàng
-     * - luuKho = true: serial cũ → TRONG_KHO (hàng bình thường)
-     * - luuKho = false: serial cũ → LỖI (hàng lỗi, không bán nữa)
-     */
-    private void xuLySerialCuDoiHang(HoanTraChiTiet chiTiet, Boolean luuKho) {
-        if (chiTiet.getHoaDonChiTiet() == null) return;
-
-        List<SerialSanPham> serials = serialSanPhamRepository
-                .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
-
-        for (SerialSanPham serial : serials) {
-            if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
-                if (Boolean.TRUE.equals(luuKho)) {
-                    // Serial cũ bình thường → đưa về kho
-                    serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
-                    serial.setGhiChu("Serial cũ đổi hàng - Lưu kho");
-
-                    // Tăng tồn kho
-                    SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
-                    spct.setSoLuongTon(spct.getSoLuongTon() + 1);
-                    sanPhamChiTietRepository.save(spct);
-                } else {
-                    // Serial cũ bị lỗi → đánh dấu LỖI, không bán nữa
-                    serial.setTrangThai(SerialSanPham.TRANG_THAI_LOI);
-                    serial.setGhiChu("Serial cũ đổi hàng - LỖI");
-                }
-                serial.setHoaDonChiTiet(null);
-                serialSanPhamRepository.save(serial);
-            }
-        }
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -1810,11 +1460,6 @@ public class HoanTraServiceImpl implements HoanTraService {
         result.put("trangThaiHienTai", trangThaiHienTai);
         result.put("trangThaiHienThi", getTrangThaiHienThi(trangThaiHienTai));
         result.put("loaiHoanTra", loaiHoanTra);
-
-        // === DOI_HANG workflow actions ===
-        if (HoanTra.LOAI_DOI_HANG.equals(loaiHoanTra)) {
-            return getBuocXuLyNextDoiHang(hoanTra, result);
-        }
 
         // === TRA_HANG workflow actions ===
         boolean canXacNhanNhanHang = HoanTra.TRANG_THAI_DA_DUYET.equals(trangThaiHienTai);
@@ -1850,50 +1495,6 @@ public class HoanTraServiceImpl implements HoanTraService {
         return result;
     }
 
-    /**
-     * Lấy các bước xử lý tiếp theo cho DOI_HANG
-     * LUỒNG: CHỜ DUYỆT → ĐÃ DUYỆT → ĐÃ NHẬN HÀNG → CHỌN SERIAL MỚI → ĐÃ ĐỔI → KẾT THÚC
-     */
-    private Map<String, Object> getBuocXuLyNextDoiHang(HoanTra hoanTra, Map<String, Object> result) {
-        String trangThaiHienTai = hoanTra.getTrangThai();
-
-        boolean canDuyet = HoanTra.TRANG_THAI_CHO_DUYET_DOI.equals(trangThaiHienTai);
-        boolean canNhanHang = HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(trangThaiHienTai);
-        boolean canChonSerial = HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(trangThaiHienTai);
-        boolean canHoanTat = HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(trangThaiHienTai)
-                || HoanTra.TRANG_THAI_DA_DOI.equals(trangThaiHienTai);
-        boolean canTuChoi = HoanTra.TRANG_THAI_CHO_DUYET_DOI.equals(trangThaiHienTai)
-                || HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(trangThaiHienTai);
-        boolean isHoanTat = HoanTra.TRANG_THAI_KET_THUC.equals(trangThaiHienTai)
-                || HoanTra.TRANG_THAI_DA_DOI.equals(trangThaiHienTai);
-
-        result.put("canDuyet", canDuyet);
-        result.put("canNhanHang", canNhanHang);
-        result.put("canChonSerial", canChonSerial);
-        result.put("canHoanTat", canHoanTat);
-        result.put("canTuChoi", canTuChoi);
-        result.put("daHoanTat", isHoanTat);
-
-        String trangThaiText = "";
-        if (HoanTra.TRANG_THAI_CHO_DUYET_DOI.equals(trangThaiHienTai)) {
-            trangThaiText = "Chờ duyệt đổi hàng";
-        } else if (HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(trangThaiHienTai)) {
-            trangThaiText = "Đã duyệt - Chờ nhận hàng";
-        } else if (HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(trangThaiHienTai)) {
-            trangThaiText = "Đã nhận hàng - Sẵn sàng chọn serial mới";
-        } else if (HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(trangThaiHienTai)) {
-            trangThaiText = "Chọn serial mới để đổi";
-        } else if (HoanTra.TRANG_THAI_DA_DOI.equals(trangThaiHienTai)) {
-            trangThaiText = "Đã đổi - Chờ kết thúc";
-        } else if (HoanTra.TRANG_THAI_KET_THUC.equals(trangThaiHienTai)) {
-            trangThaiText = "Hoàn tất đổi hàng";
-        } else if (HoanTra.TRANG_THAI_TU_CHOI.equals(trangThaiHienTai)) {
-            trangThaiText = "Từ chối đổi hàng";
-        }
-        result.put("trangThaiText", trangThaiText);
-
-        return result;
-    }
 
     @Override
     @Transactional
@@ -1932,39 +1533,18 @@ public class HoanTraServiceImpl implements HoanTraService {
     private boolean isValidTransition(String loaiHoanTra, String currentStatus, String newStatus) {
         if (loaiHoanTra == null) return false;
 
-        if (HoanTra.LOAI_DOI_HANG.equals(loaiHoanTra)) {
-            // DOI_HANG workflow
-            switch (currentStatus) {
-                case HoanTra.TRANG_THAI_CHO_DUYET_DOI:
-                    return HoanTra.TRANG_THAI_DA_DUYET_DOI.equals(newStatus) 
-                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
-                case HoanTra.TRANG_THAI_DA_DUYET_DOI:
-                    return HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI.equals(newStatus)
-                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
-                case HoanTra.TRANG_THAI_DA_NHAN_HANG_DOI:
-                    return HoanTra.TRANG_THAI_CHON_SERIAL_MOI.equals(newStatus)
-                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
-                case HoanTra.TRANG_THAI_CHON_SERIAL_MOI:
-                    return HoanTra.TRANG_THAI_DA_DOI.equals(newStatus);
-                case HoanTra.TRANG_THAI_DA_DOI:
-                    return HoanTra.TRANG_THAI_KET_THUC.equals(newStatus);
-                default:
-                    return false;
-            }
-        } else {
-            // TRA_HANG workflow
-            switch (currentStatus) {
-                case HoanTra.TRANG_THAI_CHO_XU_LY:
-                    return HoanTra.TRANG_THAI_DA_DUYET.equals(newStatus)
-                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
-                case HoanTra.TRANG_THAI_DA_DUYET:
-                    return HoanTra.TRANG_THAI_DA_NHAN_HANG.equals(newStatus)
-                            || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
-                case HoanTra.TRANG_THAI_DA_NHAN_HANG:
-                    return HoanTra.TRANG_THAI_DA_HOAN_TIEN.equals(newStatus);
-                default:
-                    return false;
-            }
+        // TRA_HANG workflow
+        switch (currentStatus) {
+            case HoanTra.TRANG_THAI_CHO_XU_LY:
+                return HoanTra.TRANG_THAI_DA_DUYET.equals(newStatus)
+                        || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+            case HoanTra.TRANG_THAI_DA_DUYET:
+                return HoanTra.TRANG_THAI_DA_NHAN_HANG.equals(newStatus)
+                        || HoanTra.TRANG_THAI_TU_CHOI.equals(newStatus);
+            case HoanTra.TRANG_THAI_DA_NHAN_HANG:
+                return HoanTra.TRANG_THAI_DA_HOAN_TIEN.equals(newStatus);
+            default:
+                return false;
         }
     }
 
@@ -1979,7 +1559,7 @@ public class HoanTraServiceImpl implements HoanTraService {
                     for (SerialSanPham serial : serials) {
                         if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
                             serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
-                            serial.setGhiChu("Từ chối đổi/trả hàng - Serial trả lại cho khách");
+                            serial.setGhiChu("Từ chối trả hàng - Serial trả lại cho khách");
                             serialSanPhamRepository.save(serial);
                         }
                     }

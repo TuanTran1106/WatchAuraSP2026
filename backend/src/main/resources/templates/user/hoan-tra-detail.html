@@ -7,8 +7,7 @@
                 <div class="return-detail-card__header-left">
                     <h5 class="return-detail-card__title">
                         <i class="fas fa-rotate-left"></i>
-                        <span th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Yêu cầu đổi hàng</span>
-                        <span th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Yêu cầu hoàn trả</span>
+                        <span>Yêu cầu hoàn trả</span>
                     </h5>
                     <span class="return-detail-card__code" th:text="${hoanTra.maHoanTra}">HT001</span>
                 </div>
@@ -18,13 +17,7 @@
                                           + ${hoanTra.trangThai == 'DA_DUYET' ? 'return-status--da-duyet' : ''}
                                           + ${hoanTra.trangThai == 'DA_NHAN_HANG' ? 'return-status--da-nhan-hang' : ''}
                                           + ${hoanTra.trangThai == 'DA_HOAN_TIEN' ? 'return-status--da-hoan-tien' : ''}
-                                          + ${hoanTra.trangThai == 'TU_CHOI' ? 'return-status--tu-choi' : ''}
-                                          + ${hoanTra.trangThai == 'CHO_DUYET_DOI' ? 'return-status--cho-duyet-doi' : ''}
-                                          + ${hoanTra.trangThai == 'DA_DUYET_DOI' ? 'return-status--da-duyet-doi' : ''}
-                                          + ${hoanTra.trangThai == 'DA_NHAN_HANG_DOI' ? 'return-status--da-nhan-hang-doi' : ''}
-                                          + ${hoanTra.trangThai == 'CHON_SERIAL_MOI' ? 'return-status--cho-serial-moi' : ''}
-                                          + ${hoanTra.trangThai == 'DA_DOI' ? 'return-status--da-doi' : ''}
-                                          + ${hoanTra.trangThai == 'KET_THUC' ? 'return-status--ket-thuc' : ''}"
+                                          + ${hoanTra.trangThai == 'TU_CHOI' ? 'return-status--tu-choi' : ''}"
                           th:text="${hoanTra.trangThaiHienThi}">Chờ xử lý</span>
                 </div>
             </div>
@@ -37,12 +30,7 @@
                 <div class="return-info-item">
                     <div class="return-info__label">Loại yêu cầu</div>
                     <p class="return-info__value">
-                        <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
-                            <i class="fas fa-exchange-alt" style="color: #c9a227;"></i> Đổi hàng
-                        </th:block>
-                        <th:block th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
-                            <i class="fas fa-undo" style="color: #c9a227;"></i> Trả hàng
-                        </th:block>
+                        <i class="fas fa-undo" style="color: #c9a227;"></i> Trả hàng
                     </p>
                 </div>
                 <div class="return-info-item">
@@ -234,20 +222,17 @@
                     </div>
                     <div class="return-timeline__content">
                         <div class="return-timeline__title">
-                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Gửi yêu cầu đổi hàng</th:block>
-                            <th:block th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Gửi yêu cầu hoàn trả</th:block>
+                            Gửi yêu cầu hoàn trả
                         </div>
                         <div class="return-timeline__desc">
-                            <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Bạn đã gửi yêu cầu đổi sản phẩm</th:block>
-                            <th:block th:unless="${hoanTra.loaiHoanTra == 'DOI_HANG'}">Bạn đã gửi yêu cầu hoàn trả sản phẩm</th:block>
+                            Bạn đã gửi yêu cầu hoàn trả sản phẩm
                         </div>
                         <div class="return-timeline__time"
                              th:text="${#temporals.format(hoanTra.ngayYeuCau, 'dd/MM/yyyy HH:mm')}">25/04/2026 10:00</div>
                     </div>
                 </div>
 
-                <!-- TRẢ HÀNG: Bước 2 -->
-                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG'}">
+                <!-- Bước 2 -->
                     <th:block th:if="${hoanTra.trangThai == 'CHO_XU_LY'}">
                         <div class="return-timeline__item return-timeline__item--active">
                             <div class="return-timeline__dot">
@@ -275,8 +260,8 @@
                     </th:block>
                 </th:block>
 
-                <!-- TRẢ HÀNG: Bước 3 - Đã duyệt -->
-                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'DA_DUYET'}">
+                <!-- Bước 3 - Đã duyệt -->
+                <th:block th:if="${hoanTra.trangThai == 'DA_DUYET'}">
                     <div class="return-timeline__item return-timeline__item--active">
                         <div class="return-timeline__dot">
                             <i class="fas fa-check"></i>
@@ -288,8 +273,8 @@
                     </div>
                 </th:block>
 
-                <!-- TRẢ HÀNG: Bước 3 - Đã nhận hàng -->
-                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'DA_NHAN_HANG'}">
+                <!-- Bước 3 - Đã nhận hàng -->
+                <th:block th:if="${hoanTra.trangThai == 'DA_NHAN_HANG'}">
                     <div class="return-timeline__item return-timeline__item--active">
                         <div class="return-timeline__dot">
                             <i class="fas fa-box"></i>
@@ -301,8 +286,8 @@
                     </div>
                 </th:block>
 
-                <!-- TRẢ HÀNG: Bước 4 - Đã hoàn tiền -->
-                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'DA_HOAN_TIEN'}">
+                <!-- Bước 4 - Đã hoàn tiền -->
+                <th:block th:if="${hoanTra.trangThai == 'DA_HOAN_TIEN'}">
                     <div class="return-timeline__item return-timeline__item--done">
                         <div class="return-timeline__dot">
                             <i class="fas fa-check"></i>
@@ -327,8 +312,8 @@
                     </div>
                 </th:block>
 
-                <!-- TRẢ HÀNG: Bước Từ chối -->
-                <th:block th:if="${hoanTra.loaiHoanTra != 'DOI_HANG' and hoanTra.trangThai == 'TU_CHOI'}">
+                <!-- Bước Từ chối -->
+                <th:block th:if="${hoanTra.trangThai == 'TU_CHOI'}">
                     <div class="return-timeline__item return-timeline__item--rejected">
                         <div class="return-timeline__dot">
                             <i class="fas fa-times"></i>
@@ -343,130 +328,7 @@
                     </div>
                 </th:block>
 
-                <!-- ========== ĐỔI HÀNG WORKFLOW ========== -->
-
-                <!-- ĐỔI HÀNG: Bước 2 - Chờ duyệt đổi -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG'}">
-                    <th:block th:if="${hoanTra.trangThai == 'CHO_DUYET_DOI'}">
-                        <div class="return-timeline__item return-timeline__item--active">
-                            <div class="return-timeline__dot">
-                                <i class="fas fa-hourglass-half"></i>
-                            </div>
-                            <div class="return-timeline__content">
-                                <div class="return-timeline__title">Chờ duyệt đổi hàng</div>
-                                <div class="return-timeline__desc">Yêu cầu đổi hàng đang chờ được xem xét</div>
-                            </div>
-                        </div>
-                    </th:block>
-                    <th:block th:if="${hoanTra.trangThai != 'CHO_DUYET_DOI' and hoanTra.trangThai != 'TU_CHOI'}">
-                        <div class="return-timeline__item return-timeline__item--done">
-                            <div class="return-timeline__dot">
-                                <i class="fas fa-check"></i>
-                            </div>
-                            <div class="return-timeline__content">
-                                <div class="return-timeline__title">Chờ duyệt đổi hàng</div>
-                                <div class="return-timeline__desc">Yêu cầu đổi hàng đã được tiếp nhận</div>
-                                <th:block th:if="${hoanTra.ngayXuLy != null}">
-                                    <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
-                                </th:block>
-                            </div>
-                        </div>
-                    </th:block>
-                </th:block>
-
-                <!-- ĐỔI HÀNG: Từ chối -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'TU_CHOI'}">
-                    <div class="return-timeline__item return-timeline__item--rejected">
-                        <div class="return-timeline__dot">
-                            <i class="fas fa-times"></i>
-                        </div>
-                        <div class="return-timeline__content">
-                            <div class="return-timeline__title">Yêu cầu đổi hàng bị từ chối</div>
-                            <div class="return-timeline__desc" th:text="${hoanTra.ghiChuXuLy != null ? hoanTra.ghiChuXuLy : 'Yêu cầu không được duyệt'}">Lý do từ chối</div>
-                            <th:block th:if="${hoanTra.ngayXuLy != null}">
-                                <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">25/04/2026 14:00</div>
-                            </th:block>
-                        </div>
-                    </div>
-                </th:block>
-
-                <!-- ĐỔI HÀNG: Bước 3 - Đã duyệt đổi -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_DUYET_DOI'}">
-                    <div class="return-timeline__item return-timeline__item--active">
-                        <div class="return-timeline__dot">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <div class="return-timeline__content">
-                            <div class="return-timeline__title">Đã duyệt đổi hàng</div>
-                            <div class="return-timeline__desc">Yêu cầu đổi đã được duyệt. Vui lòng gửi sản phẩm về cho chúng tôi.</div>
-                        </div>
-                    </div>
-                </th:block>
-
-                <!-- ĐỔI HÀNG: Bước 4 - Đã nhận hàng đổi -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'DA_NHAN_HANG_DOI'}">
-                    <div class="return-timeline__item return-timeline__item--active">
-                        <div class="return-timeline__dot">
-                            <i class="fas fa-box"></i>
-                        </div>
-                        <div class="return-timeline__content">
-                            <div class="return-timeline__title">Đã nhận sản phẩm cần đổi</div>
-                            <div class="return-timeline__desc">Chúng tôi đã nhận được sản phẩm từ bạn. Đang kiểm tra...</div>
-                        </div>
-                    </div>
-                </th:block>
-
-                <!-- ĐỔI HÀNG: Bước 5 - Chọn serial mới -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'CHON_SERIAL_MOI'}">
-                    <div class="return-timeline__item return-timeline__item--active">
-                        <div class="return-timeline__dot">
-                            <i class="fas fa-barcode"></i>
-                        </div>
-                        <div class="return-timeline__content">
-                            <div class="return-timeline__title">Chọn sản phẩm đổi mới</div>
-                            <div class="return-timeline__desc">Đang chuẩn bị sản phẩm thay thế cho bạn</div>
-                        </div>
-                    </div>
-                </th:block>
-
-                <!-- ĐỔI HÀNG: Bước 6 - Đã đổi hàng -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and (hoanTra.trangThai == 'DA_DOI' or hoanTra.trangThai == 'KET_THUC')}">
-                    <div class="return-timeline__item return-timeline__item--done">
-                        <div class="return-timeline__dot">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <div class="return-timeline__content">
-                            <div class="return-timeline__title">Đã đổi sản phẩm</div>
-                            <div class="return-timeline__desc">Sản phẩm đổi mới đã được xác nhận</div>
-                            <!-- Hiển thị serial mới nếu có -->
-                            <th:block th:if="${not #lists.isEmpty(hoanTra.serialsMoiList)}">
-                                <div class="return-timeline__serials">
-                                    <span class="return-timeline__serial-label">Serial mới:</span>
-                                    <th:block th:each="serial : ${hoanTra.serialsMoiList}">
-                                        <span class="return-timeline__serial-tag" th:text="${serial}"></span>
-                                    </th:block>
-                                </div>
-                            </th:block>
-                        </div>
-                    </div>
-                </th:block>
-
-                <!-- ĐỔI HÀNG: Bước 7 - Hoàn tất đổi hàng -->
-                <th:block th:if="${hoanTra.loaiHoanTra == 'DOI_HANG' and hoanTra.trangThai == 'KET_THUC'}">
-                    <div class="return-timeline__item return-timeline__item--completed">
-                        <div class="return-timeline__dot">
-                            <i class="fas fa-flag-checkered"></i>
-                        </div>
-                        <div class="return-timeline__content">
-                            <div class="return-timeline__title">Hoàn tất đổi hàng</div>
-                            <div class="return-timeline__desc">Đơn đổi hàng đã được xử lý thành công</div>
-                            <th:block th:if="${hoanTra.ngayXuLy != null}">
-                                <div class="return-timeline__time" th:text="${#temporals.format(hoanTra.ngayXuLy, 'dd/MM/yyyy HH:mm')}">26/04/2026 10:00</div>
-                            </th:block>
-                        </div>
-                    </div>
-                </th:block>
-
+                
             </div>
         </div>
 

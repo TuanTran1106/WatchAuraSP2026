@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chọn Serial</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="serial-selection">
+        <!-- Toast container -->
+        <div id="toast-container"></div>
+
+        <!-- Breadcrumb -->
+        <div class="serial-selection__top">
+            <a th:href="@{/admin/hoa-don/{id}(id=${serialData.hoaDonId})}" class="serial-selection__back">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Quay lại chi tiết hóa đơn</span>
+            </a>
+        </div>
+
+        <!-- Main Card -->
+        <article class="serial-selection__card">
+            <header class="serial-selection__header">
+                <h1 class="serial-selection__title">Chọn Serial cho đơn hàng</h1>
+                <p class="serial-selection__subtitle">
+                    Mã đơn: <strong th:text="${serialData.maDonHang}">—</strong>
+                    <span class="serial-selection__status" th:text="${serialData.trangThaiDonHang}">—</span>
+                </p>
+            </header>
+
+            <!-- Info Banner -->
+            <div class="serial-selection__info">
+                <p class="serial-selection__info-text">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Vui lòng chọn đủ số lượng serial cho mỗi biến thể sản phẩm.
+                </p>
+            </div>
+
+            <!-- Form -->
+            <form id="serialAssignForm">
+                <input type="hidden" id="hoaDonId" th:value="${serialData.hoaDonId}" />
+                <input type="hidden" id="trangThaiMoi" value="DA_XAC_NHAN" />
+
+                <div class="serial-selection__groups">
+                    <th:block th:each="group : ${serialData.bienTheGroups}">
+                        <div class="serial-group"
+                             th:data-hoadonchitiet-id="${group.hoaDonChiTietId}"
+                             th:data-so-luong-mua="${group.soLuongMua}">
+
+                            <!-- Group Header -->
+                            <div class="serial-group__header">
+                                <div class="serial-group__product-info">
+                                    <h3 class="serial-group__product-name" th:text="${group.tenSanPham}">—</h3>
+                                    <p class="serial-group__variant" th:if="${group.tenBienThe != null}"
+                                       th:text="${group.tenBienThe}">—</p>
+                                </div>
+                                <div class="serial-group__stats">
+                                    <span class="serial-group__quantity-badge">
+                                        <span class="serial-group__quantity-label">SL mua:</span>
+                                        <span class="serial-group__quantity-value" th:text="${group.soLuongMua}">0</span>
+                                    </span>
+                                    <span class="serial-group__selected-badge"
+                                          th:classappend="${group.soLuongDaChon == group.soLuongMua} ? 'serial-group__selected-badge--complete'">
+                                        <span class="serial-group__quantity-label">Đã chọn:</span>
+                                        <span class="serial-group__quantity-value selected-count"
+                                              th:text="${group.soLuongDaChon}">0</span>
+                                        <span class="serial-group__quantity-separator">/</span>
+                                        <span class="serial-group__quantity-value"
+                                              th:text="${group.soLuongMua}">0</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Group List -->
+                            <div class="serial-group__list">
+                                <!-- Toolbar: Search -->
+                                <div class="serial-group__list-header">
+                                    <div class="serial-search serial-search--full">
+                                        <i class="fa-solid fa-search serial-search__icon"></i>
+                                        <input type="text"
+                                               class="serial-search__input"
+                                               th:data-hoadonchitiet-id="${group.hoaDonChiTietId}"
+                                               th:data-hoadon-id="${serialData.hoaDonId}"
+                                               placeholder="Nhập mã serial để tìm kiếm..." />
+                                    </div>
+                                </div>
+
+                                <!-- Serial List -->
+                                <div class="serial-group__items"
+                                     th:id="'serial-list-' + ${group.hoaDonChiTietId}"
+                                     th:data-hoadonchitiet-id="${group.hoaDonChiTietId}"
+                                     th:data-page="1"
+                                     th:data-page-size="10">
+
+                                    <th:block th:each="serial : ${group.serials}">
+                                        <label class="serial-item"
+                                               th:classappend="${serial.daChon} ? 'serial-item--selected' : ''"
+                                               th:data-ma-serial="${serial.maSerial}">
+                                            <input type="checkbox"
+                                                   class="serial-checkbox"
+                                                   name="serialsByBienThe"
+                                                   th:value="${serial.id}"
+                                                   th:data-hoadonchitiet-id="${group.hoaDonChiTietId}"
+                                                   th:checked="${serial.daChon}" />
+                                            <div class="serial-item__info">
+                                                <span class="serial-item__code" th:text="${serial.maSerial}">—</span>
+                                                <span class="serial-item__date"
+                                                      th:if="${serial.ngayTao != null}"
+                                                      th:text="'Tạo: ' + ${#temporals.format(serial.ngayTao, 'dd/MM/yyyy HH:mm')}">—</span>
+                                            </div>
+                                            <span class="serial-item__badge" th:if="${serial.daChon}">
+                                                <i class="fa-solid fa-check"></i> Đã gán
+                                            </span>
+                                        </label>
+                                    </th:block>
+
+                                    <!-- Empty states -->
+                                    <div class="serial-item serial-item--empty serial-item--no-results" style="display: none;">
+                                        <i class="fa-solid fa-search"></i>
+                                        <span>Không tìm thấy serial nào</span>
+                                    </div>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="serial-group__pagination"
+                                     th:data-hoadonchitiet-id="${group.hoaDonChiTietId}">
+                                </div>
+                            </div>
+
+                            <!-- Warning -->
+                            <div class="serial-group__warning" style="display: none;">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                <span>Vui lòng chọn đủ số lượng serial</span>
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+
+                <!-- Actions -->
+                <div class="serial-selection__actions">
+                    <a th:href="@{/admin/hoa-don/{id}(id=${serialData.hoaDonId})}"
+                       class="btn btn--secondary btn--lg">
+                        <i class="fa-solid fa-times"></i>
+                        <span>Hủy</span>
+                    </a>
+                    <button type="button" class="btn btn--primary btn--lg" id="btnAssignSerial">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Xác nhận gán Serial</span>
+                    </button>
+                </div>
+            </form>
+        </article>
+    </div>
+
+    <style>
+        /* Container */
+        .serial-selection {
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Top */
+        .serial-selection__top {
+            margin-bottom: 20px;
+        }
+
+        .serial-selection__back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .serial-selection__back:hover {
+            color: #2563eb;
+        }
+
+        /* Card */
+        .serial-selection__card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .serial-selection__header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .serial-selection__title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 8px;
+        }
+
+        .serial-selection__subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .serial-selection__subtitle strong {
+            color: #1e293b;
+        }
+
+        .serial-selection__status {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Info */
+        .serial-selection__info {
+            padding: 16px 24px;
+            background: #fef3c7;
+            border-bottom: 1px solid #fde68a;
+        }
+
+        .serial-selection__info-text {
+            margin: 0;
+            color: #92400e;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .serial-selection__info-text i {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* Groups */
+        .serial-selection__groups {
+            padding: 24px;
+        }
+
+        .serial-group {
+            margin-bottom: 24px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .serial-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .serial-group--valid {
+            border-color: #22c55e;
+        }
+
+        /* Group Header */
+        .serial-group__header {
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .serial-group__product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 4px;
+        }
+
+        .serial-group__variant {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .serial-group__stats {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .serial-group__quantity-badge,
+        .serial-group__selected-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .serial-group__quantity-badge {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .serial-group__selected-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .serial-group__selected-badge--complete {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .serial-group__quantity-label {
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        .serial-group__quantity-value {
+            font-weight: 600;
+        }
+
+        .serial-group__quantity-separator {
+            opacity: 0.5;
+        }
+
+        /* Group List */
+        .serial-group__list {
+            padding: 16px 20px;
+        }
+
+        .serial-group__list-header {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .serial-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .serial-search--full {
+            max-width: 100%;
+        }
+
+        .serial-search__icon {
+            position: absolute;
+            left: 14px;
+            color: #6b7280;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .serial-search__input {
+            padding: 12px 16px 12px 44px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            width: 100%;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+
+        .serial-search__input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: #fff;
+        }
+
+        /*.serial-search__loading {*/
+        /*    text-align: center;*/
+        /*    padding: 12px;*/
+        /*    color: #2563eb;*/
+        /*    font-size: 14px;*/
+        /* Pagination */
+        .serial-group__pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px dashed #e5e7eb;
+        }
+
+        .serial-pagination__btn {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            color: #475569;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .serial-pagination__btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .serial-pagination__btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .serial-pagination__btn--active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .serial-pagination__info {
+            font-size: 13px;
+            color: #64748b;
+            padding: 0 8px;
+        }
+
+        /* Serial Item */
+        .serial-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .serial-item:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .serial-item--selected {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .serial-item--selected:hover {
+            border-color: #16a34a;
+            background: #dcfce7;
+        }
+
+        .serial-item--header {
+            cursor: default;
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .serial-item--header:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .serial-item--empty {
+            justify-content: center;
+            color: #94a3b8;
+            cursor: default;
+            border-style: dashed;
+        }
+
+        .serial-item--empty:hover {
+            background: #fff;
+            border-color: #e5e7eb;
+        }
+
+        .serial-item__checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #2563eb;
+        }
+
+        .serial-item__info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .serial-item__code {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .serial-item__date {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .serial-item__badge {
+            background: #22c55e;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .serial-item__badge i {
+            margin-right: 4px;
+        }
+
+        /* Warning */
+        .serial-group__warning {
+            padding: 12px 20px;
+            background: #fef2f2;
+            border-top: 1px solid #fecaca;
+            color: #dc2626;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Actions */
+        .serial-selection__actions {
+            padding: 20px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 48px;
+            box-sizing: border-box;
+            line-height: 1;
+        }
+
+        .btn i {
+            font-size: 14px;
+        }
+
+        .btn--lg {
+            padding: 0 28px;
+            font-size: 15px;
+            height: 48px;
+        }
+
+        .btn--primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn--primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn--secondary {
+            background: #fff;
+            color: #475569;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn--secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 400px;
+        }
+
+        .toast--success {
+            background: #22c55e;
+        }
+
+        .toast--error {
+            background: #ef4444;
+        }
+
+        .toast--warning {
+            background: #f59e0b;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast--leaving {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <script>
+        (function() {
+            var PAGE_SIZE = 10;
+
+            // ========== Toast ==========
+            function showToast(message, type) {
+                var toast = document.createElement('div');
+                toast.className = 'toast toast--' + (type || 'success');
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(function () {
+                    toast.classList.add('toast--leaving');
+                    setTimeout(function () {
+                        if (toast.parentNode) toast.parentNode.removeChild(toast);
+                    }, 300);
+                }, 4000);
+            }
+
+            // ========== Filter & Paginate ==========
+            function filterAndPaginate(container) {
+                var hoaDonChiTietId = container.getAttribute('data-hoadonchitiet-id');
+                var searchInput = document.querySelector('.serial-search__input[data-hoadonchitiet-id="' + hoaDonChiTietId + '"]');
+                var searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+                var allItems = Array.from(container.querySelectorAll('.serial-item[data-ma-serial]'));
+                var filteredItems = allItems.filter(function(item) {
+                    if (!searchTerm) return true;
+                    var maSerial = (item.getAttribute('data-ma-serial') || '').toLowerCase();
+                    return maSerial.includes(searchTerm);
+                });
+
+                var page = parseInt(container.getAttribute('data-page')) || 1;
+                var totalItems = filteredItems.length;
+                var totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+                if (page > totalPages) page = totalPages;
+
+                // Hide all items first
+                allItems.forEach(function(item) {
+                    item.style.display = 'none';
+                });
+
+                // Show items for current page
+                var start = (page - 1) * PAGE_SIZE;
+                var end = start + PAGE_SIZE;
+                filteredItems.slice(start, end).forEach(function(item) {
+                    item.style.display = '';
+                });
+
+                // Empty states
+                var noResultsEl = container.querySelector('.serial-item--no-results');
+                var noDataEl = container.querySelector('.serial-item--no-data');
+                if (noDataEl) {
+                    noDataEl.style.display = totalItems === 0 && !searchTerm ? '' : 'none';
+                }
+                if (noResultsEl) {
+                    noResultsEl.style.display = totalItems === 0 && searchTerm ? '' : 'none';
+                }
+
+                container.setAttribute('data-page', page);
+                renderPagination(container, page, totalPages, totalItems);
+                updateGroupStatus(container.closest('.serial-group'));
+            }
+
+            function renderPagination(container, currentPage, totalPages, totalItems) {
+                var hoaDonChiTietId = container.getAttribute('data-hoadonchitiet-id');
+                var paginationContainer = document.querySelector('.serial-group__pagination[data-hoadonchitiet-id="' + hoaDonChiTietId + '"]');
+                if (!paginationContainer) return;
+
+                var start = (currentPage - 1) * PAGE_SIZE + 1;
+                var end = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+                var html = '';
+
+                // Prev button
+                html += '<button class="serial-pagination__btn" onclick="window.paginationNav(\'' + hoaDonChiTietId + '\', ' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '>';
+                html += '<i class="fa-solid fa-chevron-left"></i></button>';
+
+                // Page numbers
+                var maxButtons = 5;
+                var startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                var endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                startPage = Math.max(1, endPage - maxButtons + 1);
+
+                if (startPage > 1) {
+                    html += '<button class="serial-pagination__btn" onclick="window.paginationNav(\'' + hoaDonChiTietId + '\', 1)">1</button>';
+                    if (startPage > 2) {
+                        html += '<span class="serial-pagination__info">...</span>';
+                    }
+                }
+
+                for (var i = startPage; i <= endPage; i++) {
+                    html += '<button class="serial-pagination__btn ' + (i === currentPage ? 'serial-pagination__btn--active' : '') + '" onclick="window.paginationNav(\'' + hoaDonChiTietId + '\', ' + i + ')">' + i + '</button>';
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        html += '<span class="serial-pagination__info">...</span>';
+                    }
+                    html += '<button class="serial-pagination__btn" onclick="window.paginationNav(\'' + hoaDonChiTietId + '\', ' + totalPages + ')">' + totalPages + '</button>';
+                }
+
+                // Next button
+                html += '<button class="serial-pagination__btn" onclick="window.paginationNav(\'' + hoaDonChiTietId + '\', ' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '>';
+                html += '<i class="fa-solid fa-chevron-right"></i></button>';
+
+                paginationContainer.innerHTML = html;
+            }
+
+            window.paginationNav = function(hoaDonChiTietId, page) {
+                var container = document.querySelector('.serial-group__items[data-hoadonchitiet-id="' + hoaDonChiTietId + '"]');
+                if (container) {
+                    container.setAttribute('data-page', page);
+                    filterAndPaginate(container);
+                }
+            };
+
+            // ========== Update Group Status ==========
+            function updateGroupStatus(group) {
+                if (!group) return;
+
+                var hoaDonChiTietId = group.getAttribute('data-hoadonchitiet-id');
+                var soLuongMua = parseInt(group.getAttribute('data-so-luong-mua'));
+                var container = group.querySelector('.serial-group__items[data-hoadonchitiet-id="' + hoaDonChiTietId + '"]');
+                var searchInput = document.querySelector('.serial-search__input[data-hoadonchitiet-id="' + hoaDonChiTietId + '"]');
+                var searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+                // Count checked items (only visible ones)
+                var allCheckboxes = Array.from(group.querySelectorAll('.serial-checkbox:checked'));
+                var visibleCheckboxes = allCheckboxes.filter(function(cb) {
+                    if (!searchTerm) return true;
+                    var item = cb.closest('.serial-item');
+                    if (!item) return false;
+                    var maSerial = (item.getAttribute('data-ma-serial') || '').toLowerCase();
+                    return maSerial.includes(searchTerm);
+                });
+                var selectedCount = visibleCheckboxes.length;
+
+                // Update count display
+                var countDisplay = group.querySelector('.selected-count');
+                if (countDisplay) {
+                    countDisplay.textContent = selectedCount;
+                }
+
+                // Update badge and warning
+                var badge = group.querySelector('.serial-group__selected-badge');
+                var warning = group.querySelector('.serial-group__warning');
+                var btn = document.getElementById('btnAssignSerial');
+
+                if (selectedCount === soLuongMua) {
+                    badge.classList.add('serial-group__selected-badge--complete');
+                    warning.style.display = 'none';
+                    group.classList.add('serial-group--valid');
+                } else {
+                    badge.classList.remove('serial-group__selected-badge--complete');
+                    if (selectedCount > soLuongMua) {
+                        warning.querySelector('span').textContent = 'Số lượng serial vượt quá số lượng mua (' + soLuongMua + ')';
+                        warning.style.display = 'flex';
+                    } else {
+                        warning.querySelector('span').textContent = 'Vui lòng chọn đủ số lượng serial (' + selectedCount + '/' + soLuongMua + ')';
+                        warning.style.display = 'flex';
+                    }
+                    group.classList.remove('serial-group--valid');
+                }
+
+                // Update submit button
+                var allValid = true;
+                document.querySelectorAll('.serial-group').forEach(function(g) {
+                    var sl = parseInt(g.getAttribute('data-so-luong-mua'));
+                    var selected = 0;
+                    g.querySelectorAll('.serial-checkbox:checked').forEach(function(cb) {
+                        selected++;
+                    });
+                    if (selected !== sl) allValid = false;
+                });
+
+                if (btn) {
+                    btn.disabled = !allValid;
+                    if (allValid) {
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Xác nhận gán Serial</span>';
+                    } else {
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Chưa chọn đủ Serial</span>';
+                    }
+                }
+            }
+
+            // ========== Debounce utility ==========
+            function debounce(func, wait) {
+                var timeout;
+                return function executedFunction(...args) {
+                    var later = function() {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // ========== AJAX Search ==========
+            function searchSerialsAjax(input) {
+                var hoaDonId = input.getAttribute('data-hoadon-id');
+                var hoaDonChiTietId = input.getAttribute('data-hoadonchitiet-id');
+                var searchTerm = input.value.trim();
+                var container = document.querySelector('.serial-group__items[data-hoadonchitiet-id="' + hoaDonChiTietId + '"]');
+
+                fetch('/admin/serial/api/' + hoaDonId, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    // Find the group for this hoaDonChiTietId
+                    var groups = data.bienTheGroups || [];
+                    var targetGroup = groups.find(function(g) { return g.hoaDonChiTietId == hoaDonChiTietId; });
+
+                    if (targetGroup && container) {
+                        // Filter serials by search term
+                        var serials = targetGroup.serials || [];
+                        var filteredSerials = serials.filter(function(s) {
+                            if (!searchTerm) return true;
+                            return (s.maSerial || '').toLowerCase().includes(searchTerm.toLowerCase());
+                        });
+
+                        // Rebuild serial items HTML
+                        var html = '';
+                        serials.forEach(function(serial) {
+                            var isFiltered = searchTerm && !(serial.maSerial || '').toLowerCase().includes(searchTerm.toLowerCase());
+                            var isSelected = serial.daChon;
+                            html += '<label class="serial-item' + (isSelected ? ' serial-item--selected' : '') + '"' +
+                                    ' data-ma-serial="' + (serial.maSerial || '') + '"' +
+                                    ' style="' + (isFiltered ? 'display:none' : '') + '">' +
+                                '<input type="checkbox" class="serial-checkbox" name="serialsByBienThe" value="' + serial.id + '"' +
+                                ' data-hoadonchitiet-id="' + hoaDonChiTietId + '"' + (isSelected ? ' checked' : '') + ' />' +
+                                '<div class="serial-item__info">' +
+                                    '<span class="serial-item__code">' + (serial.maSerial || '') + '</span>';
+                            if (serial.ngayTao) {
+                                html += '<span class="serial-item__date">Tạo: ' + formatDate(serial.ngayTao) + '</span>';
+                            }
+                            html += '</div>';
+                            if (isSelected) {
+                                html += '<span class="serial-item__badge"><i class="fa-solid fa-check"></i> Đã gán</span>';
+                            }
+                            html += '</label>';
+                        });
+
+                        if (filteredSerials.length === 0) {
+                            html += '<div class="serial-item serial-item--empty serial-item--no-results">' +
+                                    '<i class="fa-solid fa-search"></i>' +
+                                    '<span>Không tìm thấy serial nào</span></div>';
+                        }
+
+                        // Update container content (keep the no-results element if exists)
+                        var noResultsEl = container.querySelector('.serial-item--no-results');
+                        container.innerHTML = html;
+                        if (noResultsEl && filteredSerials.length === 0) {
+                            noResultsEl.style.display = '';
+                            container.appendChild(noResultsEl);
+                        }
+
+                        // Reset pagination
+                        container.setAttribute('data-page', '1');
+                        updateGroupStatus(container.closest('.serial-group'));
+                        renderPagination(container, 1, Math.max(1, Math.ceil(filteredSerials.length / PAGE_SIZE)), filteredSerials.length);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Search error:', err);
+                    // Fallback to client-side filtering
+                    if (container) {
+                        container.setAttribute('data-page', '1');
+                        filterAndPaginate(container);
+                    }
+                });
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                var d = new Date(dateStr);
+                var day = ('0' + d.getDate()).slice(-2);
+                var month = ('0' + (d.getMonth() + 1)).slice(-2);
+                var year = d.getFullYear();
+                var hour = ('0' + d.getHours()).slice(-2);
+                var min = ('0' + d.getMinutes()).slice(-2);
+                return day + '/' + month + '/' + year + ' ' + hour + ':' + min;
+            }
+
+            // ========== Initialize ==========
+            function init() {
+                // Search input events with AJAX and debounce
+                document.querySelectorAll('.serial-search__input').forEach(function(input) {
+                    if (input.dataset.initialized) return;
+                    input.dataset.initialized = 'true';
+
+                    var debouncedSearch = debounce(function() {
+                        searchSerialsAjax(input);
+                    }, 300);
+
+                    input.addEventListener('input', debouncedSearch);
+                });
+
+                // Initial pagination display
+                document.querySelectorAll('.serial-group__items').forEach(function(container) {
+                    filterAndPaginate(container);
+                });
+
+                // Checkbox change events
+                document.querySelectorAll('.serial-group').forEach(function(group) {
+                    group.addEventListener('change', function(e) {
+                        if (e.target.classList.contains('serial-checkbox')) {
+                            updateGroupStatus(group);
+                        }
+                    });
+                });
+
+                // Initial status update
+                document.querySelectorAll('.serial-group').forEach(function(group) {
+                    updateGroupStatus(group);
+                });
+            }
+
+            // ========== Submit Form ==========
+            function submitSerialForm() {
+                var allValid = true;
+                var messages = [];
+                var serialsByBienThe = {};
+
+                document.querySelectorAll('.serial-group').forEach(function(group) {
+                    var soLuongMua = parseInt(group.getAttribute('data-so-luong-mua'));
+                    var hoaDonChiTietId = group.getAttribute('data-hoadonchitiet-id');
+                    var productName = group.querySelector('.serial-group__product-name');
+                    var productNameText = productName ? productName.textContent : 'Sản phẩm';
+                    var selectedSerials = [];
+
+                    group.querySelectorAll('.serial-checkbox:checked').forEach(function(cb) {
+                        selectedSerials.push(parseInt(cb.value));
+                    });
+
+                    serialsByBienThe[hoaDonChiTietId] = selectedSerials;
+
+                    if (selectedSerials.length !== soLuongMua) {
+                        allValid = false;
+                        messages.push(productNameText + ': cần ' + soLuongMua + ' serial, đã chọn ' + selectedSerials.length);
+                    }
+                });
+
+                if (!allValid) {
+                    alert('Vui lòng chọn đủ số lượng serial cho các sản phẩm:\n\n' + messages.join('\n'));
+                    return;
+                }
+
+                var hoaDonId = document.getElementById('hoaDonId').value;
+                var trangThaiMoi = document.getElementById('trangThaiMoi').value;
+                var btnSubmit = document.getElementById('btnAssignSerial');
+
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Đang xử lý...</span>';
+
+                fetch('/admin/serial/api/assign', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        hoaDonId: parseInt(hoaDonId),
+                        trangThaiMoi: trangThaiMoi,
+                        serialsByBienThe: serialsByBienThe
+                    })
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        showToast(data.message || 'Chọn serial thành công!', 'success');
+                        setTimeout(function() {
+                            window.location.href = '/admin/hoa-don/' + hoaDonId;
+                        }, 1500);
+                    } else {
+                        showToast(data.message || 'Có lỗi xảy ra', 'error');
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i><span>Xác nhận gán Serial</span>';
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Lỗi:', err);
+                    showToast('Đã xảy ra lỗi khi gán serial. Vui lòng thử lại.', 'error');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i><span>Xác nhận gán Serial</span>';
+                });
+            }
+
+            // Submit button
+            var btnSubmit = document.getElementById('btnAssignSerial');
+            if (btnSubmit) {
+                btnSubmit.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    submitSerialForm();
+                });
+            }
+
+            // Form submit
+            var form = document.getElementById('serialAssignForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitSerialForm();
+                });
+            }
+
+            // Run init
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</div>
+</body>
+</html>

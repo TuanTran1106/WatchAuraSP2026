@@ -84,23 +84,7 @@
                                             </div>
                                         </div>
                                     </label>
-                                    <label class="htc-type-option">
-                                        <input type="radio" name="loaiHoanTraRadio" value="DOI_HANG"
-                                               onchange="setLoaiHoanTra(this.value)">
-                                        <div class="htc-type-card htc-type-card--exchange">
-                                            <div class="htc-type-icon">
-                                                <i class="fas fa-exchange-alt"></i>
-                                            </div>
-                                            <div class="htc-type-info">
-                                                <div class="htc-type-title">Đổi hàng</div>
-                                                <div class="htc-type-desc">Khách hàng đổi sang sản phẩm khác</div>
-                                            </div>
-                                            <div class="htc-type-check">
-                                                <i class="fas fa-check"></i>
-                                            </div>
-                                        </div>
-                                    </label>
-                                </div>
+                                                                    </div>
                             </div>
                         </div>
 
@@ -214,10 +198,10 @@ function setLoaiHoanTra(value) {
     currentLoaiHoanTra = value;
     document.getElementById('loaiHoanTra').value = value;
     
-    var loaiHienThi = value === 'DOI_HANG' ? 'Đổi hàng' : 'Trả hàng';
+    var loaiHienThi = 'Trả hàng';
     document.getElementById('loaiHienThi').textContent = loaiHienThi;
     
-    var tongTienLabel = value === 'DOI_HANG' ? 'Giá trị đổi (tham khảo)' : 'Tiền hoàn';
+    var tongTienLabel = 'Tiền hoàn';
     document.getElementById('tongTienLabel').textContent = tongTienLabel;
     
     updateSummary();

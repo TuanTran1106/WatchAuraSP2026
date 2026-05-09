@@ -24,7 +24,14 @@ public class HoaDonDTO {
     private String maVoucher;
     private BigDecimal tongTienTamTinh;
     private BigDecimal tienGiam;
+    /** Tổng tiền gốc chưa khuyến mãi (tongTienTamTinh + tongTienGiamKhuyenMai). */
     private BigDecimal tongTienChuaGiam;
+    /** Tổng tiền được giảm từ khuyến mãi sản phẩm (hiển thị riêng trong hóa đơn). */
+    private BigDecimal tongTienGiamKhuyenMai;
+    /** Tên khuyến mãi đang áp dụng cho đơn hàng. */
+    private String tenKhuyenMai;
+    /** Tổng giá gốc chưa trừ bất kỳ khoản nào (tổng donGiaGoc * soLuong của all items). */
+    private BigDecimal tongGiaGoc;
     /** Phí ship suy ra: tổng thanh toán − tạm tính + giảm giá (đồng bộ logic checkout). */
     private BigDecimal phiVanChuyen;
     private BigDecimal tongTienThanhToan;
@@ -33,6 +40,8 @@ public class HoaDonDTO {
     private Boolean trangThai;
     private String trangThaiDonHang;
     private String tenTrangThaiDonHang;
+    private String trangThaiThanhToan;
+    private String tenTrangThaiThanhToan;
     private LocalDateTime ngayDat;
     private String diaChi;
     private String sdtKhachHang;

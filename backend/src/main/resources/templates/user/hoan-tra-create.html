@@ -31,10 +31,11 @@
                 <div class="return-order-card__body">
                     <div class="return-order-card__info-grid">
                         <div class="return-order-card__info-item">
-                            <span class="return-order-card__info-label">Tổng tiền hàng</span>
+                            <span class="return-order-card__info-label">Tiền sản phẩm(Đã trừ khuyến mãi)</span>
                             <span class="return-order-card__info-value"
                                   th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienHoaDon, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                         </div>
+
                         <div class="return-order-card__info-item">
                             <span class="return-order-card__info-label">Voucher giảm</span>
                             <span class="return-order-card__info-value return-order-card__info-value--discount"
@@ -89,7 +90,7 @@
                                         <div class="return-product-card__sku">Mã SP: <span th:text="${item.maSanPham}"></span></div>
                                     </div>
                                     <div class="return-product-card__price-info">
-                                        <div class="return-product-card__price-label">Đơn giá</div>
+                                        <div class="return-product-card__price-label">Đơn giá(Đã trừ khuyến mãi)</div>
                                         <div class="return-product-card__price-value"
                                              th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></div>
                                     </div>
@@ -214,23 +215,7 @@
                                 </div>
                             </div>
                         </label>
-                        <label class="return-type-option">
-                            <input type="radio" name="loaiHoanTra" value="DOI_HANG"
-                                   onchange="setLoaiHoanTra(this.value)">
-                            <div class="return-type-card">
-                                <div class="return-type-icon">
-                                    <i class="fas fa-exchange-alt"></i>
-                                </div>
-                                <div class="return-type-info">
-                                    <div class="return-type-title">Đổi hàng</div>
-                                    <div class="return-type-desc">Đổi sang sản phẩm khác</div>
-                                </div>
-                                <div class="return-type-check">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                        </label>
-                    </div>
+                                            </div>
                 </div>
 
                 <!-- Reason -->
@@ -348,7 +333,7 @@
                         <span class="return-summary-card__value" id="totalSerialsSelected">0</span>
                     </div>
                     <div class="return-summary-card__row">
-                        <span class="return-summary-card__label">Tổng tiền hàng hoàn</span>
+                        <span class="return-summary-card__label">Tiền sản phẩm (Đã trừ khuyến mãi)</span>
                         <span class="return-summary-card__value" id="tongTienHangHoan"
                               th:text="${#numbers.formatDecimal(hoaDonInfo.tongTienHoaDon, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                     </div>
@@ -357,11 +342,11 @@
                         <span class="return-summary-card__value" id="voucherGiamTru"
                               th:text="'- ' +${#numbers.formatDecimal(hoaDonInfo.voucherGiam, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                     </div>
-                    <div class="return-summary-card__row" th:if="${hoaDonInfo.phiGiaoHang != null and hoaDonInfo.phiGiaoHang > 0}">
-                        <span class="return-summary-card__label">Trừ phí giao hàng</span>
-                        <span class="return-summary-card__value"
-                              th:text=" ${#numbers.formatDecimal(hoaDonInfo.phiGiaoHang, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
-                    </div>
+<!--                    <div class="return-summary-card__row" th:if="${hoaDonInfo.phiGiaoHang != null and hoaDonInfo.phiGiaoHang > 0}">-->
+<!--                        <span class="return-summary-card__label">Trừ phí giao hàng</span>-->
+<!--                        <span class="return-summary-card__value"-->
+<!--                              th:text=" ${#numbers.formatDecimal(hoaDonInfo.phiGiaoHang, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>-->
+<!--                    </div>-->
                     <div class="return-summary-card__row return-summary-card__row--total">
                         <span class="return-summary-card__label">Số tiền hoàn (ước tính)</span>
                         <span class="return-summary-card__value" id="totalRefundAmount"
@@ -417,7 +402,7 @@
 
         function setLoaiHoanTra(value) {
             currentLoaiHoanTra = value;
-            var loaiHienThi = value === 'DOI_HANG' ? 'Đổi hàng' : 'Trả hàng';
+            var loaiHienThi = 'Trả hàng';
             document.getElementById('loaiHienThi').textContent = loaiHienThi;
             updateSummary();
         }

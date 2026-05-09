@@ -189,11 +189,11 @@ public class SerialServiceImpl implements SerialService {
         if (importedSerials.isEmpty() && errorSerials.isEmpty()) {
             message = "Tất cả serial đã tồn tại trong biến thể này, không có serial mới để thêm. Tổng: " + totalSerialsInStock + " serial";
         } else if (errorSerials.isEmpty()) {
-            message = "Import thành công " + importedSerials.size() + " serial. Tổng: " + totalSerialsInStock + " serial";
+            message = "Import thành công " + importedSerials.size() + " serial. Tổng số serial trong kho: " + totalSerialsInStock;
         } else if (importedSerials.isEmpty()) {
             message = "Import thất bại: tất cả serial đều có lỗi";
         } else {
-            message = "Import " + importedSerials.size() + " serial thành công, " + errorSerials.size() + " serial có lỗi. Tổng: " + totalSerialsInStock + " serial";
+            message = "Import " + importedSerials.size() + " serial thành công, " + errorSerials.size() + " serial có lỗi. Tổng số serial trong kho: " + totalSerialsInStock;
         }
 
         return ImportSerialResponse.builder()

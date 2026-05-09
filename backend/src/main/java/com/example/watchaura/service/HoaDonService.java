@@ -118,5 +118,14 @@ public interface HoaDonService {
 
     CheckoutStockResponse checkAndAdjustStockBeforeCheckout(Integer gioHangId, Integer khachHangId);
 
+    /**
+     * Cập nhật trạng thái thanh toán của hóa đơn.
+     *
+     * @param id ID hóa đơn
+     * @param trangThaiThanhToan Trạng thái thanh toán mới (CHUA_THANH_TOAN, DA_THANH_TOAN, THANH_TOAN_LOI)
+     * @return HoaDonDTO đã cập nhật
+     */
+    HoaDonDTO updateTrangThaiThanhToan(Integer id, String trangThaiThanhToan);
+
 }
 

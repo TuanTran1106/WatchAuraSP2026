@@ -62,9 +62,7 @@ public class HoanTraRequest {
 
         private String hinhAnh;
 
-        // === DOI_HANG: Serial mới thay thế ===
-        private String serialMoi;
-
+        
         // Trạng thái serial cũ:
         // - true: serial cũ bị lỗi (không cấp serial mới)
         // - false: serial mới được đổi

@@ -114,9 +114,17 @@
                                     <span class="checkout-item__name" th:text="${item.tenSanPham}">Tên SP</span>
                                     <span class="checkout-item__variants" th:if="${item.moTaBienThe != null and !item.moTaBienThe.isEmpty()}" th:text="${item.moTaBienThe}"></span>
                                     <span class="checkout-item__qty" th:text="'x' + ${item.soLuong}">x1</span>
+                                    <span class="checkout-item__promo" th:if="${item.giaGoc != null and item.giaBan != null and item.giaGoc.compareTo(item.giaBan) > 0}">
+                                        <span class="checkout-item__gia-goc" th:text="${#numbers.formatDecimal(item.giaGoc, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                                        <span class="checkout-item__km-name" th:if="${item.tenKhuyenMai != null}" th:text="${item.tenKhuyenMai}"></span>
+                                    </span>
                                 </div>
                                 <div class="checkout-item__total" th:text="|${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} ₫|">0 ₫</div>
                             </div>
+                        </div>
+                        <div class="cart-summary__row cart-summary__row--compact" id="promo-discount-row">
+                            <span class="cart-summary__label cart-summary__label--promo">Giảm khuyến mãi:</span>
+                            <span class="cart-summary__value cart-summary__value--promo" id="checkout-promo-discount">- 0 ₫</span>
                         </div>
                         <div class="cart-summary__row" id="voucher-row" style="display:none;">
                             <span class="cart-summary__label cart-summary__label--voucher">Voucher:</span>
@@ -177,10 +185,16 @@
         .checkout-page .checkout-item__variants { display: block; font-size: 0.8rem; color: #666; margin-top: 0.2rem; line-height: 1.35; white-space: normal; }
         .checkout-page .checkout-item__qty { font-size: 0.85rem; color: #666; }
         .checkout-page .checkout-item__total { font-weight: 600; color: #dc3545; white-space: nowrap; }
+        .checkout-page .checkout-item__promo { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+        .checkout-page .checkout-item__gia-goc { font-size: 0.78rem; color: #999; text-decoration: line-through; }
+        .checkout-page .checkout-item__km-name { font-size: 0.72rem; color: #dc3545; background: #fff0f0; padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 600; }
         .checkout-page .cart-summary__row--total { padding-top: 0.75rem; margin-top: 0.5rem; border-top: 2px solid #eee; }
         .checkout-page .cart-summary__value--large { font-size: 1.25rem; font-weight: 700; color: #dc3545; }
         .checkout-page .cart-summary__value--discount { color: #0277bd; font-size: 0.95rem; font-weight: 600; }
         .checkout-page .cart-summary__label--voucher { color: #1976d2; font-size: 0.95rem; font-weight: 600; }
+        .checkout-page .cart-summary__label--promo { color: #d84315; font-size: 0.9rem; font-weight: 500; }
+        .checkout-page .cart-summary__value--promo { color: #d84315; font-size: 0.9rem; font-weight: 600; }
+        .checkout-page #promo-discount-row { padding: 0.3rem 0; }
         .checkout-page .cart-summary__actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
         .checkout-page .voucher-input-row { display: flex; gap: 0.5rem; align-items: center; }
         .checkout-page .voucher-input-row .form-control { flex: 1; }
@@ -228,7 +242,7 @@
         }
     </style>
     <script th:inline="javascript">
-        window.__checkoutBaseTotal = Number(/*[[${cart.tongTien}]]*/ 0);
+        window.__checkoutBaseTotal = 0;
     </script>
     <script type="module" th:src="@{/js/address-checkout/page.entry.js}"></script>
     <script th:inline="javascript">
@@ -241,10 +255,17 @@
             var voucherMsg = document.getElementById('voucherMessage');
             var voucherRow = document.getElementById('voucher-row');
             var voucherDiscountEl = document.getElementById('checkout-voucher-discount');
+            var promoRow = document.getElementById('promo-discount-row');
+            var promoDiscountEl = document.getElementById('checkout-promo-discount');
             var getVouchersUrl = /*[[@{/thanh-toan/vouchers}]]*/ '/thanh-toan/vouchers';
+            var getKhuyenMaiUrl = /*[[@{/thanh-toan/khuyen-mai}]]*/ '/thanh-toan/khuyen-mai';
             var applyVoucherUrl = /*[[@{/thanh-toan/apply-voucher-by-id}]]*/ '/thanh-toan/apply-voucher-by-id';
             var baseTotal = Number(window.__checkoutBaseTotal || 0);
             var currentDiscount = 0;
+            var currentPromoDiscount = 0;
+
+            // Lưu thông tin khuyến mãi ban đầu
+            window.__checkoutPromoData = null;
 
             if (form && btn) {
                 var radios = form.querySelectorAll('input[name="phuongThucThanhToan"]');
@@ -260,6 +281,47 @@
                 var num = Number(value || 0);
                 if (isNaN(num)) num = 0;
                 return num.toLocaleString('vi-VN') + ' ₫';
+            }
+
+            function loadKhuyenMai() {
+                if (!promoRow) return;
+
+                fetch(getKhuyenMaiUrl)
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            window.__checkoutPromoData = data;
+                            currentPromoDiscount = Number(data.tongTienGiamKhuyenMai) || 0;
+                            baseTotal = Number(data.tongGiaGoc) || 0;
+
+                            if (currentPromoDiscount > 0) {
+                                if (promoDiscountEl) {
+                                    promoRow.style.display = '';
+                                    promoDiscountEl.textContent = '- ' + formatCurrencyVnd(currentPromoDiscount);
+                                }
+                            } else {
+                                promoRow.style.display = 'none';
+                            }
+                            updatePricingDisplay();
+                        } else {
+                            promoRow.style.display = 'none';
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Lỗi tải khuyến mãi:', err);
+                        promoRow.style.display = 'none';
+                    });
+            }
+
+            function updatePricingDisplay() {
+                // Cập nhật tổng tiền: baseTotal (đã giảm KM) - voucher discount + shipping
+                if (typeof window.__waCheckoutSetPricing === 'function') {
+                    window.__waCheckoutSetPricing({
+                        merchandiseSubtotal: baseTotal,
+                        discount: currentDiscount,
+                        promoDiscount: currentPromoDiscount
+                    });
+                }
             }
 
             function formatDiscount(voucher) {
@@ -394,9 +456,7 @@
                 }
                 voucherMsg.textContent = '';
                 voucherMsg.className = 'voucher-message';
-                if (typeof window.__waCheckoutSetPricing === 'function') {
-                    window.__waCheckoutSetPricing({ merchandiseSubtotal: baseTotal, discount: 0 });
-                }
+                updatePricingDisplay();
             };
 
             function applyVoucher(voucherId) {
@@ -418,13 +478,11 @@
                         voucherMsg.classList.add('voucher-message--success');
                         var discount = typeof data.discount !== 'undefined' && data.discount !== null ? Number(data.discount) : 0;
                         currentDiscount = discount;
-                        if (typeof window.__waCheckoutSetPricing === 'function') {
-                            window.__waCheckoutSetPricing({ merchandiseSubtotal: baseTotal, discount: currentDiscount });
-                        }
                         if (voucherRow && voucherDiscountEl) {
                             voucherRow.style.display = '';
                             voucherDiscountEl.textContent = '- ' + formatCurrencyVnd(discount);
                         }
+                        updatePricingDisplay();
                     } else {
                         voucherMsg.classList.add('voucher-message--error');
                     }
@@ -435,11 +493,18 @@
                 });
             }
 
-            // Load vouchers on page load
+            // Load vouchers and khuyen mai on page load
             loadVouchers();
-            if (typeof window.__waCheckoutSetPricing === 'function') {
-                window.__waCheckoutSetPricing({ merchandiseSubtotal: baseTotal, discount: 0 });
+
+            // Đợi page.entry.js khởi tạo xong __waCheckoutSetPricing
+            function waitForSetPricingAndLoadPromo() {
+                if (typeof window.__waCheckoutSetPricing === 'function') {
+                    loadKhuyenMai();
+                } else {
+                    setTimeout(waitForSetPricingAndLoadPromo, 100);
+                }
             }
+            waitForSetPricingAndLoadPromo();
 
             var hiddenSelect = document.getElementById('shippingAddressSelect');
             var radioAddressEls = document.querySelectorAll('input[name="waShippingAddressChoice"]');

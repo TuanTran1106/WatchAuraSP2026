@@ -33,16 +33,7 @@ public class HoanTraChiTietDTO {
     private List<String> serialsHoanTra;
     private List<SerialInfo> serialsChiTiet;
 
-    // === DOI_HANG: Serial mới thay thế ===
-    // Serial mới được cấp khi đổi hàng
-    private String serialMoi;
-
-    // Trạng thái serial cũ:
-    // - true: serial cũ bị lỗi
-    // - false: serial mới được đổi
-    private Boolean serialCuLoi;
-    private String serialCuLoiHienThi;
-
+    
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

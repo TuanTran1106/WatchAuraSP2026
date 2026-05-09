@@ -1703,6 +1703,44 @@ body.dash-modal-open {
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* Phone cell styling */
+.phone-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0ea5e9;
+  font-weight: 500;
+}
+
+.phone-icon {
+  font-size: 0.85rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  border-radius: 50%;
+  color: #0284c7;
+}
+
+/* Customer cell with name and phone stacked */
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.customer-name {
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+.customer-phone {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
 .table tbody tr:hover {
   background: #f8fafc;
 }
@@ -3216,6 +3254,27 @@ body.dash-modal-open {
   color: #0f172a;
 }
 
+.invoice-detail__serials small:first-child {
+  color: #64748b;
+}
+
+.invoice-detail__promotion-tag {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 4px;
+  color: #92400e;
+  font-size: 0.75rem;
+}
+
+.invoice-detail__promotion-tag i {
+  color: #f59e0b;
+}
+
 .invoice-detail__td--num {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -4714,4 +4773,105 @@ body > .toast.toast--error::before {
 
 .invoice-detail .invoice-detail__status-select.is-loading {
   animation: selectLoading 1s infinite;
+}
+
+/* ===== Badge for Payment Status in Invoice List ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge--success {
+  background-color: #d1fae5;
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge--danger {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.badge--warning {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid rgba(180, 83, 9, 0.25);
+}
+
+.badge i {
+  font-size: 0.7rem;
+}
+
+/* Payment Status Dropdown in Table */
+.payment-status-select {
+  min-width: 140px;
+}
+
+.payment-status-select.status--da-thanh-toan {
+  background-color: #d1fae5;
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #047857;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23047857' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.payment-status-select.status--thanh-toan-loi {
+  background-color: #fee2e2;
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #dc2626;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.payment-status-select.status--chua-thanh-toan {
+  background-color: #fef3c7;
+  border-color: rgba(180, 83, 9, 0.3);
+  color: #b45309;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b45309' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Dark theme for payment status */
+.admin-layout.theme-dark .payment-status-select.status--da-thanh-toan {
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236ee7b7' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.admin-layout.theme-dark .payment-status-select.status--thanh-toan-loi {
+  background-color: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #fca5a5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23fca5a5' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.admin-layout.theme-dark .payment-status-select.status--chua-thanh-toan {
+  background-color: rgba(180, 83, 9, 0.15);
+  border-color: rgba(180, 83, 9, 0.4);
+  color: #fcd34d;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23fcd34d' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Dark theme */
+.admin-layout.theme-dark .badge--success {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.admin-layout.theme-dark .badge--danger {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #fca5a5;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.admin-layout.theme-dark .badge--warning {
+  background-color: rgba(180, 83, 9, 0.15);
+  color: #fcd34d;
+  border-color: rgba(180, 83, 9, 0.3);
 }

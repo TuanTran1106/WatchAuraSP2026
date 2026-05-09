@@ -3,6 +3,8 @@
 
 <body>
     <div th:fragment="content">
+        <style>
+        </style>
         <div class="invoice-detail">
             <div th:if="${message}" class="admin-toast-payload"
                 th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
@@ -122,13 +124,13 @@
                                 </select>
                             </div>
                         </form>
-                        <div class="invoice-detail__header-actions">
-                            <a class="btn btn--primary btn--sm" th:href="@{/admin/hoa-don/{id}/pdf(id=${hoaDon.id})}"
-                                target="_blank">
-                                <i class="fa-solid fa-file-pdf"></i>
-                                <span>Xuất PDF</span>
-                            </a>
-                        </div>
+
+                        <!-- Nút xuất PDF -->
+                        <a class="btn btn--primary btn--sm" th:href="@{/admin/hoa-don/{id}/pdf(id=${hoaDon.id})}"
+                            target="_blank">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span>Xuất PDF</span>
+                        </a>
                 </header>
 
                 <!-- Thông tin giao hàng -->
@@ -248,6 +250,11 @@
                                             <small>Serial: </small>
                                             <small th:text="${#strings.listJoin(ct.maSerials, ', ')}">SP001-0001</small>
                                         </div>
+                                        <div class="invoice-detail__promotion-tag"
+                                            th:if="${ct.tenKhuyenMai != null and !ct.tenKhuyenMai.isEmpty()}">
+                                            <i class="fa-solid fa-tag"></i>
+                                            <small th:text="${ct.tenKhuyenMai}">Khuyến mãi</small>
+                                        </div>
                                     </td>
                                     <td class="invoice-detail__td--num" th:text="${ct.soLuong}">0</td>
                                     <td class="invoice-detail__td--num"
@@ -268,9 +275,9 @@
                 <!-- Tổng thanh toán -->
                 <section class="invoice-detail__summary" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
                     <div class="invoice-detail__summary-row">
-                        <span class="invoice-detail__summary-label">Tạm tính (đơn giá KM)</span>
+                        <span class="invoice-detail__summary-label">Tạm tính (đơn giá gốc)</span>
                         <span class="invoice-detail__summary-value"
-                            th:text="|${hoaDon.tongTienTamTinh != null ? #numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0
+                            th:text="|${hoaDon.tongGiaGoc != null ? #numbers.formatDecimal(hoaDon.tongGiaGoc, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0
                             đ</span>
                     </div>
                     <div class="invoice-detail__summary-row invoice-detail__summary-row--stack"
@@ -284,6 +291,18 @@
                         </span>
                         <span class="invoice-detail__summary-value invoice-detail__summary-value--discount">
                             − <span th:text="|${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'COMMA', 0, 'POINT')} đ|">0
+                                đ</span>
+                        </span>
+                    </div>
+                    <div class="invoice-detail__summary-row invoice-detail__summary-row--stack"
+                        th:if="${hoaDon.tongTienGiamKhuyenMai != null and hoaDon.tongTienGiamKhuyenMai > 0}">
+                        <span class="invoice-detail__summary-label-wrap">
+                            <span class="invoice-detail__summary-label">Khuyến mãi</span>
+                            <span class="invoice-detail__summary-sublabel"
+                                th:text="${hoaDon.tenKhuyenMai != null and !hoaDon.tenKhuyenMai.isEmpty()} ? ${hoaDon.tenKhuyenMai} : 'Sản phẩm đang giảm giá'">—</span>
+                        </span>
+                        <span class="invoice-detail__summary-value invoice-detail__summary-value--discount">
+                            − <span th:text="|${#numbers.formatDecimal(hoaDon.tongTienGiamKhuyenMai, 0, 'COMMA', 0, 'POINT')} đ|">0
                                 đ</span>
                         </span>
                     </div>
@@ -334,10 +353,35 @@
                         body: formData
                     })
                         .then(function (res) {
-                            if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái');
-                            return res.text();
+                            var contentType = res.headers.get('content-type');
+                            // Kiểm tra redirect header trước
+                            var redirectUrl = res.headers.get('X-Redirect-Url');
+                            if (redirectUrl) {
+                                window.location.href = redirectUrl;
+                                return { isJson: false, html: '' };
+                            }
+                            // Kiểm tra nếu response là JSON (chứa redirect)
+                            if (contentType && contentType.indexOf('application/json') !== -1) {
+                                return res.json().then(function(data) {
+                                    if (data.redirect) {
+                                        window.location.href = data.redirect;
+                                        return { isJson: true, data: data, redirect: data.redirect };
+                                    }
+                                    return { isJson: true, data: data };
+                                });
+                            }
+                            return res.text().then(function(html) {
+                                return { isJson: false, html: html };
+                            });
                         })
-                        .then(function (html) {
+                        .then(function(result) {
+                            // Xử lý redirect nếu có
+                            if (result.isJson && result.redirect) {
+                                window.location.href = result.redirect;
+                                return;
+                            }
+
+                            var html = result.html;
                             var parser = new DOMParser();
                             var doc = parser.parseFromString(html, 'text/html');
 
@@ -367,10 +411,13 @@
                             var newSelect = doc.querySelector('.invoice-detail__status-select');
                             var currentSelect = document.querySelector('.invoice-detail__status-select');
                             if (newSelect && currentSelect) {
-                                var newValue = newSelect.value;
-                                var newClass = newSelect.className;
-                                currentSelect.value = newValue;
-                                currentSelect.className = newClass;
+                                // Replace entire select to get updated options
+                                var parent = currentSelect.parentNode;
+                                var newSelectClone = newSelect.cloneNode(true);
+                                parent.replaceChild(newSelectClone, currentSelect);
+
+                                // Re-bind event listener to the new select
+                                bindStatusChangeHandler(newSelectClone);
                             }
                         })
                         .catch(function (err) {
@@ -385,33 +432,67 @@
                         });
                 }
 
-                function showToastMessage(message, type) {
-                    var toast = document.createElement('div');
-                    toast.className = 'toast toast--' + (type || 'success');
-                    toast.textContent = message;
-                    document.body.appendChild(toast);
-                    setTimeout(function () {
-                        toast.classList.add('toast--leaving');
-                        setTimeout(function () {
-                            if (toast.parentNode) toast.parentNode.removeChild(toast);
-                        }, 300);
-                    }, 4000);
-                }
-
-                document.querySelectorAll('.invoice-detail__status-form').forEach(function (form) {
-                    var select = form.querySelector('select[name="trangThai"]');
-                    if (!select) return;
+                function bindStatusChangeHandler(select) {
+                    var form = select.closest('form');
+                    if (!form) return;
 
                     select.addEventListener('change', function () {
                         var newVal = select.value;
-                        var needCheck = (newVal === 'DA_XAC_NHAN') ||
-                            (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
+                        var needCheck = (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
 
                         var currentSelected = select.querySelector('option[selected]');
                         select.dataset.prevValue = currentSelected ? currentSelected.value : '';
 
+                        // Nếu chọn "Đã xác nhận" -> chuyển sang trang chọn serial
+                        if (newVal === 'DA_XAC_NHAN') {
+                            var actionParts = (form.getAttribute('action') || '').split('/');
+                            var idIdx = actionParts.indexOf('hoa-don');
+                            var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
+                            if (hoaDonId) {
+                                window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
+                                return;
+                            }
+                        }
+
+                        // Xử lý AJAX cho các trạng thái khác
                         if (!needCheck) {
-                            submitStatusFormViaAjax(form, select);
+                            var statusLabels = {
+                                'CHO_THANH_TOAN': 'Chờ thanh toán',
+                                'CHO_XAC_NHAN': 'Chờ xác nhận',
+                                'DA_XAC_NHAN': 'Đã xác nhận',
+                                'DANG_GIAO': 'Đang giao',
+                                'DA_GIAO': 'Đã giao',
+                                'DA_THANH_TOAN': 'Hoàn thành',
+                                'DA THANH TOAN': 'Hoàn thành',
+                                'DA_HUY': 'Đã hủy',
+                                'HOAN_THANH': 'Hoàn thành',
+                                'CAN_XU_LY': 'Cần xử lý'
+                            };
+                            var currentLabel = statusLabels[select.dataset.prevValue] || select.dataset.prevValue;
+                            var newLabel = statusLabels[newVal] || newVal;
+                            var confirmMsg = 'Bạn có chắc muốn đổi trạng thái từ "' + currentLabel + '" sang "' + newLabel + '" không?';
+
+                            if (typeof window.confirmModal === 'function') {
+                                window.confirmModal({
+                                    title: 'Xác nhận đổi trạng thái',
+                                    message: confirmMsg,
+                                    confirmText: 'Xác nhận',
+                                    cancelText: 'Hủy',
+                                    tone: 'info'
+                                }).then(function (ok) {
+                                    if (ok) {
+                                        submitStatusFormViaAjax(form, select);
+                                    } else {
+                                        select.value = select.dataset.prevValue;
+                                    }
+                                });
+                            } else {
+                                if (window.confirm(confirmMsg)) {
+                                    submitStatusFormViaAjax(form, select);
+                                } else {
+                                    select.value = select.dataset.prevValue;
+                                }
+                            }
                             return;
                         }
 
@@ -462,6 +543,167 @@
                                 showToastMessage('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
                                 select.value = select.dataset.prevValue;
                             });
+                    });
+                }
+
+                function showToastMessage(message, type) {
+                    var toast = document.createElement('div');
+                    toast.className = 'toast toast--' + (type || 'success');
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+                    setTimeout(function () {
+                        toast.classList.add('toast--leaving');
+                        setTimeout(function () {
+                            if (toast.parentNode) toast.parentNode.removeChild(toast);
+                        }, 300);
+                    }, 4000);
+                }
+
+                document.querySelectorAll('.invoice-detail__status-form').forEach(function (form) {
+                    var select = form.querySelector('select[name="trangThai"]');
+                    if (!select) return;
+
+                    bindStatusChangeHandler(select);
+                });
+
+                // Xử lý AJAX cho trạng thái thanh toán
+                function submitPaymentStatusViaAjax(select) {
+                    var form = select.closest('form');
+                    if (!form) return;
+
+                    var action = form.getAttribute('action');
+                    var formData = new FormData(form);
+                    var newStatus = select.value;
+                    var currentStatus = select.dataset.prevPaymentValue || select.querySelector('option[selected]')?.value || '';
+
+                    var statusLabels = {
+                        'CHUA_THANH_TOAN': 'Chưa thanh toán',
+                        'DA_THANH_TOAN': 'Đã thanh toán',
+                        'THANH_TOAN_LOI': 'Thanh toán lỗi'
+                    };
+                    var newLabel = statusLabels[newStatus] || newStatus;
+                    var currentLabel = statusLabels[currentStatus] || currentStatus;
+
+                    var confirmMsg = 'Bạn có chắc chắn muốn đổi trạng thái thanh toán từ "' + currentLabel + '" sang "' + newLabel + '" không?';
+
+                    var doSubmit = function() {
+                        select.disabled = true;
+                        select.classList.add('is-loading');
+                        select.dataset.prevPaymentValue = newStatus;
+
+                        fetch(action, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        })
+                        .then(function (res) {
+                            var contentType = res.headers.get('content-type');
+                            if (contentType && contentType.indexOf('application/json') !== -1) {
+                                return res.json().then(function(data) {
+                                    if (data.redirect) {
+                                        window.location.href = data.redirect;
+                                        return { isJson: true, data: data };
+                                    }
+                                    return { isJson: true, data: data };
+                                });
+                            }
+                            return res.text().then(function(html) {
+                                return { isJson: false, html: html };
+                            });
+                        })
+                        .then(function(result) {
+                            if (result.isJson) {
+                                if (result.data.message) {
+                                    showToastMessage(result.data.message, result.data.error ? 'error' : 'success');
+                                }
+                                if (result.data.error) {
+                                    select.value = currentStatus;
+                                    select.dataset.prevPaymentValue = currentStatus;
+                                } else {
+                                    showToastMessage('Cập nhật trạng thái thanh toán thành công!', 'success');
+                                }
+                                return;
+                            }
+
+                            var html = result.html;
+                            var parser = new DOMParser();
+                            var doc = parser.parseFromString(html, 'text/html');
+
+                            var msgEl = doc.querySelector('[data-admin-toast-message]');
+                            var warnEl = doc.querySelector('[data-admin-toast-type="warning"]');
+                            var errEl = doc.querySelector('[data-admin-toast-type="error"]');
+
+                            var message = null;
+                            var messageType = null;
+
+                            if (errEl) {
+                                message = errEl.textContent;
+                                messageType = 'error';
+                            } else if (warnEl) {
+                                message = warnEl.textContent;
+                                messageType = 'warning';
+                            } else if (msgEl) {
+                                message = msgEl.textContent;
+                                messageType = 'success';
+                            }
+
+                            if (message) {
+                                showToastMessage(message, messageType);
+                            }
+
+                            // Update payment status select from response
+                            var newSelect = doc.querySelector('.invoice-detail__payment-select');
+                            var currentSelect = document.querySelector('.invoice-detail__payment-select');
+                            if (newSelect && currentSelect) {
+                                var newValue = newSelect.value;
+                                var newClass = newSelect.className;
+                                currentSelect.value = newValue;
+                                currentSelect.className = newClass;
+                            }
+                        })
+                        .catch(function (err) {
+                            console.error('Lỗi AJAX:', err);
+                            showToastMessage('Đã xảy ra lỗi khi cập nhật trạng thái thanh toán. Vui lòng thử lại.', 'error');
+                            select.value = select.dataset.prevPaymentValue;
+                        })
+                        .finally(function () {
+                            select.disabled = false;
+                            select.classList.remove('is-loading');
+                        });
+                    };
+
+                    if (typeof window.confirmModal === 'function') {
+                        window.confirmModal({
+                            title: 'Xác nhận đổi trạng thái thanh toán',
+                            message: confirmMsg,
+                            confirmText: 'Xác nhận',
+                            cancelText: 'Hủy',
+                            tone: 'info'
+                        }).then(function (ok) {
+                            if (ok) {
+                                doSubmit();
+                            } else {
+                                select.value = currentStatus;
+                            }
+                        });
+                    } else {
+                        if (window.confirm(confirmMsg)) {
+                            doSubmit();
+                        } else {
+                            select.value = currentStatus;
+                        }
+                    }
+                }
+
+                // Bind event cho trạng thái thanh toán
+                document.querySelectorAll('.invoice-detail__payment-form select[name="trangThaiThanhToan"]').forEach(function(select) {
+                    var selectedOption = select.querySelector('option[selected]');
+                    select.dataset.prevPaymentValue = selectedOption ? selectedOption.value : select.value;
+
+                    select.addEventListener('change', function() {
+                        submitPaymentStatusViaAjax(select);
                     });
                 });
             })();

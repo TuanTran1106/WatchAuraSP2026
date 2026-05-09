@@ -46,6 +46,12 @@ public class HoaDonChiTiet {
     @Column(name = "don_gia", precision = 18, scale = 2, nullable = false)
     private BigDecimal donGia;
 
+    @Column(name = "don_gia_goc", precision = 18, scale = 2)
+    private BigDecimal donGiaGoc;
+
+    @Column(name = "ten_khuyen_mai", length = 255)
+    private String tenKhuyenMai;
+
     @OneToMany(mappedBy = "hoaDonChiTiet")
     private List<SerialSanPham> serialSanPhams = new ArrayList<>();
 

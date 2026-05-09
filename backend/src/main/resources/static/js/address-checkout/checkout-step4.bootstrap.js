@@ -27,11 +27,12 @@ export async function bootstrapCheckoutStep4() {
     const baseTotal = Number(window.__checkoutBaseTotal || 0);
     store.setPricing({ merchandiseSubtotal: baseTotal, discount: 0 });
     window.__waCheckoutSetPricing = function (payload) {
+        var promo = Number(payload?.promoDiscount || 0);
+        var voucher = Number(payload?.discount || 0);
         store.setPricing({
             merchandiseSubtotal: Number(payload?.merchandiseSubtotal || 0),
-            discount: Number(payload?.discount || 0)
+            discount: promo + voucher
         });
-        // Khong tinh lai phi van chuyen khi ap voucher - giu nguyen phi ship da duoc tinh theo dia chi
     };
 
     const selector = createCheckoutAddressSelectorComponent({

@@ -497,6 +497,10 @@
                                     <p class="order-item__variant" th:if="${item.tenBienThe != null}"
                                         th:text="${item.tenBienThe}">Biến thể</p>
                                     <p class="order-item__qty">Số lượng: <span th:text="${item.soLuong}">1</span></p>
+                                    <!-- Hiển thị giá gốc nếu có khuyến mãi -->
+                                    <p class="order-item__original-price" th:if="${item.donGiaGoc != null and item.donGia != null and item.donGiaGoc.compareTo(item.donGia) > 0}"
+                                        th:style="'text-decoration: line-through; color: #9ca3af; font-size: 0.78rem; margin: 0.2rem 0;'"
+                                        th:text="${#numbers.formatDecimal(item.donGiaGoc, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</p>
                                     <p class="order-item__serial"
                                         th:if="${item.maSerials != null and !item.maSerials.isEmpty() and (hoaDon.trangThaiDonHang == 'DANG_GIAO' or hoaDon.trangThaiDonHang == 'DA_GIAO' or hoaDon.trangThaiDonHang == 'HOAN_THANH' or hoaDon.trangThaiDonHang == 'DA_THANH_TOAN' or hoaDon.trangThaiDonHang == 'DA THANH TOAN')}"
                                         th:text="|Serial: ${#strings.listJoin(item.maSerials, ', ')}|">Serial:
@@ -511,39 +515,43 @@
                         </div>
 
                         <div class="order-summary">
-                            <div class="order-summary__row" th:if="${hoaDon.tongTienTamTinh != null}">
+                            <!-- Hiển thị giá gốc (chưa khuyến mãi) -->
+                            <th:block th:with="giaGoc=${hoaDon.tongTienChuaGiam != null and hoaDon.tienGiam != null ? hoaDon.tongTienChuaGiam.subtract(hoaDon.tienGiam) : (hoaDon.tongTienChuaGiam != null ? hoaDon.tongTienChuaGiam : hoaDon.tongTienTamTinh)}">
+                            <div class="order-summary__row" th:if="${giaGoc != null}">
                                 <span class="order-summary__label">Tạm tính</span>
                                 <span class="order-summary__value"
-                                    th:text="${#numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'POINT', 0, 'NONE') + ' đ'}">0
-                                    đ</span>
+                                    th:text="${#numbers.formatDecimal(giaGoc, 0, 'POINT', 0, 'NONE') + ' đ'}">0 đ</span>
+                            </div>
+                            </th:block>
+                            <!-- Hiển thị giảm khuyến mãi -->
+                            <div class="order-summary__row" th:if="${hoaDon.tongTienGiamKhuyenMai != null and hoaDon.tongTienGiamKhuyenMai > 0}">
+                                <span class="order-summary__label">Giảm khuyến mãi</span>
+                                <span class="order-summary__value order-summary__value--discount"
+                                    th:text="'-' + ${#numbers.formatDecimal(hoaDon.tongTienGiamKhuyenMai, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</span>
                             </div>
                             <th:block th:if="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}">
                                 <div class="order-summary__row">
                                     <span class="order-summary__label">Voucher (<span th:text="${hoaDon.maVoucher}"></span>)</span>
                                     <span class="order-summary__value order-summary__value--discount"
-                                        th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam != null ? hoaDon.tienGiam : 0, 0, 'POINT', 0, 'NONE')} + ' đ'">0
-                                        đ</span>
+                                        th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam != null ? hoaDon.tienGiam : 0, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</span>
                                 </div>
                             </th:block>
                             <th:block th:unless="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}">
-                                <div class="order-summary__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
+                                <div class="order-summary__row" th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0 and hoaDon.tongTienGiamKhuyenMai == null}">
                                     <span class="order-summary__label">Giảm giá</span>
                                     <span class="order-summary__value order-summary__value--discount"
-                                        th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'POINT', 0, 'NONE')} + ' đ'">0
-                                        đ</span>
+                                        th:text="'-' + ${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</span>
                                 </div>
                             </th:block>
                             <div class="order-summary__row" th:if="${hoaDon.phiVanChuyen != null}">
                                 <span class="order-summary__label">Phí giao hàng</span>
                                 <span class="order-summary__value"
-                                    th:text=" ${#numbers.formatDecimal(hoaDon.phiVanChuyen, 0, 'POINT', 0, 'NONE') + ' đ'}">0
-                                    đ</span>
+                                    th:text="${#numbers.formatDecimal(hoaDon.phiVanChuyen, 0, 'POINT', 0, 'NONE') + ' đ'}">0 đ</span>
                             </div>
                             <div class="order-summary__row order-summary__row--total">
                                 <span class="order-summary__label">Tổng thanh toán</span>
                                 <span class="order-summary__value"
-                                    th:text="${#numbers.formatDecimal(hoaDon.tongTienThanhToan, 0, 'POINT', 0, 'NONE') + ' đ'}">0
-                                    đ</span>
+                                    th:text="${#numbers.formatDecimal(hoaDon.tongTienThanhToan, 0, 'POINT', 0, 'NONE') + ' đ'}">0 đ</span>
                             </div>
                         </div>
                     </th:block>

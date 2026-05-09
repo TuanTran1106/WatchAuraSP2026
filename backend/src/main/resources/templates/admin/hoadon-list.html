@@ -5,6 +5,34 @@
 <body>
 
 <div th:fragment="content">
+    <style>
+        .badge--payment-pending {
+            background: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+            color: #b45309 !important;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 14.4px;
+            font-family: Arial;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 150px;
+        }
+        .customer-name,
+        .customer-phone {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .customer-name i,
+        .customer-phone i {
+            font-size: 11px;
+            color: #777;
+        }
+    </style>
 
     <div th:if="${message}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
 
@@ -67,6 +95,7 @@
                 <th>Ngày đặt</th>
                 <th>Tổng thanh toán</th>
                 <th>Trạng thái</th>
+                <th>TT Thanh toán</th>
                 <th>Thao tác</th>
             </tr>
 
@@ -80,11 +109,24 @@
 
                     <td th:text="${item.maDonHang}"></td>
 
-                    <td th:text="${item.tenKhachHang != null ? item.tenKhachHang : 'â€”'}"></td>
+                    <td>
 
-                    <td th:text="${item.ngayDat != null ? #temporals.format(item.ngayDat, 'dd/MM/yyyy HH:mm') : 'â€”'}"></td>
+                        <div class="customer-cell">
+                            <span class="customer-name">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${item.tenKhachHang != null ? item.tenKhachHang : '-'}"></span>
+                             </span>
 
-                    <td th:text="${item.tongTienThanhToan != null ? #numbers.formatDecimal(item.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : 'â€”'}"></td>
+                            <span class="customer-phone">
+                                <i class="fas fa-phone"></i>
+                                 <span th:text="${item.sdtKhachHang != null ? item.sdtKhachHang : '-'}"></span>
+                            </span>
+                        </div>
+                    </td>
+
+                    <td th:text="${item.ngayDat != null ? #temporals.format(item.ngayDat, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+
+                    <td th:text="${item.tongTienThanhToan != null ? #numbers.formatDecimal(item.tongTienThanhToan, 1, 'POINT', 0, 'COMMA') : '-'}"></td>
 
                     <td>
 
@@ -238,6 +280,45 @@
                     </td>
 
                     <td>
+                        <span th:with="trangThaiDon=${item.trangThaiDonHang},
+                                       isHoanThanh=${trangThaiDon == 'HOAN_THANH' or trangThaiDon == 'DA THANH TOAN' or trangThaiDon == 'DA_THANH_TOAN'},
+                                       isDaHuy=${trangThaiDon == 'DA_HUY'},
+                                       curTT=${item.trangThaiThanhToan != null ? item.trangThaiThanhToan : 'CHUA_THANH_TOAN'}">
+                            <!-- Dropdown chỉ mở khi đơn hoàn thành hoặc đã hủy -->
+                            <form th:if="${isHoanThanh or isDaHuy}"
+                                  th:action="@{/admin/hoa-don/{id}/trang-thai-thanh-toan(id=${item.id})}"
+                                  method="post"
+                                  style="display:inline;"
+                                  class="payment-status-form js-admin-ajax-form"
+                                  data-ajax="true">
+
+                                <input type="hidden" name="page" th:value="${page != null ? page.number : 0}" />
+                                <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
+                                <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
+                                <input type="hidden" name="loaiDon" th:value="${filterLoaiDon != null ? filterLoaiDon : ''}" />
+
+                                <select name="trangThaiThanhToan"
+                                        class="form__select form__select--sm payment-status-select"
+                                        th:classappend="${curTT == 'DA_THANH_TOAN'} ? 'status--da-thanh-toan' : (${curTT == 'THANH_TOAN_LOI'} ? 'status--thanh-toan-loi' : 'status--chua-thanh-toan')"
+                                        th:disabled="${curTT == 'DA_THANH_TOAN' or curTT == 'THANH_TOAN_LOI'}">
+
+                                    <option value="CHUA_THANH_TOAN" th:selected="${curTT == 'CHUA_THANH_TOAN'}" th:text="'Chưa thanh toán'">Chưa thanh toán</option>
+                                    <option value="DA_THANH_TOAN" th:selected="${curTT == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'" disabled="disabled">Đã thanh toán</option>
+                                    <option value="THANH_TOAN_LOI" th:selected="${curTT == 'THANH_TOAN_LOI'}" th:text="'Thanh toán lỗi'" disabled="disabled">Thanh toán lỗi</option>
+
+                                </select>
+                            </form>
+
+                            <!-- Hiển thị badge khi không phải hoàn thành/hủy -->
+                            <span th:unless="${isHoanThanh or isDaHuy}">
+                                <span class="badge badge--payment-pending">
+                                    Chưa thanh toán
+                                </span>
+                            </span>
+                        </span>
+                    </td>
+
+                    <td>
 
                         <div class="table-actions">
 
@@ -334,11 +415,27 @@
             })
 
             .then(function (res) {
+                // Kiểm tra redirect header từ backend
+                var redirectUrl = res.headers.get('X-Redirect-Url');
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                    return Promise.resolve('');
+                }
+
+                // Kiểm tra JSON response có redirect không
+                var contentType = res.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    return res.json().then(function(data) {
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                            return '';
+                        }
+                        throw new Error(data.message || 'Có lỗi xảy ra');
+                    });
+                }
 
                 if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái');
-
                 return res.text();
-
             })
 
             .then(function (html) {
@@ -376,6 +473,7 @@
                     currentTableBody.innerHTML = newTableBody.innerHTML;
 
                     bindStatusChangeEvents();
+                    bindPaymentStatusEvents();
 
 
 
@@ -439,25 +537,21 @@
 
                     var newVal = select.value;
 
-                    var needCheck = (newVal === 'DA_XAC_NHAN') ||
-
-                        (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
-
-
-
                     var currentSelected = select.querySelector('option[selected]');
-
                     select.dataset.prevValue = currentSelected ? currentSelected.value : '';
 
-
-
-                    if (!needCheck) {
-
-                        submitStatusFormViaAjax(form, select);
-
-                        return;
-
+                    // Nếu chọn "Đã xác nhận" -> chuyển sang trang chọn serial
+                    if (newVal === 'DA_XAC_NHAN') {
+                        var actionParts = (form.getAttribute('action') || '').split('/');
+                        var idIdx = actionParts.indexOf('hoa-don');
+                        var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
+                        if (hoaDonId) {
+                            window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
+                            return;
+                        }
                     }
+
+                    var needCheck = (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
 
 
 
@@ -469,7 +563,10 @@
 
                     if (!hoaDonId) return;
 
-
+                    if (!needCheck) {
+                        submitStatusFormViaAjax(form, select);
+                        return;
+                    }
 
                     fetch('/api/hoa-don/' + hoaDonId + '/check-ton-kho')
 
@@ -491,13 +588,14 @@
 
                                 .map(function (i) {
 
-                                    return i.tenSanPham + ': cáº§n ' + i.soLuongCan + ', cÃ²n ' + i.soLuongTon;
+                                    return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
 
                                 });
 
 
 
                             var msg = 'Tồn kho không đủ:\n' + missingItems.join('\n') +
+
                                 '\n\nĐơn hàng sẽ chuyển sang trạng thái "Cần xử lý" và ghi chú cho khách. Tiếp tục?';
 
 
@@ -600,13 +698,144 @@
 
 
 
+        function submitPaymentStatus(select) {
+            var form = select.closest('form');
+            var action = form.getAttribute('action');
+            var formData = new FormData(form);
+
+            var newStatus = select.value;
+            var currentStatus = select.dataset.prevPaymentValue || select.querySelector('option[selected]')?.value || '';
+
+            var statusLabels = {
+                'CHUA_THANH_TOAN': 'Chưa thanh toán',
+                'DA_THANH_TOAN': 'Đã thanh toán',
+                'THANH_TOAN_LOI': 'Thanh toán lỗi'
+            };
+            var newLabel = statusLabels[newStatus] || newStatus;
+            var currentLabel = statusLabels[currentStatus] || currentStatus;
+
+            var confirmMsg = 'Bạn có chắc chắn muốn đổi trạng thái thanh toán từ "' + currentLabel + '" sang "' + newLabel + '" không?';
+
+            var doSubmit = function() {
+                select.disabled = true;
+                select.classList.add('is-loading');
+                // Cập nhật prevPaymentValue trước khi submit
+                select.dataset.prevPaymentValue = newStatus;
+
+                fetch(action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(function (res) {
+                    var contentType = res.headers.get('content-type');
+                    if (contentType && contentType.indexOf('application/json') !== -1) {
+                        return res.json().then(function(data) {
+                            if (data.redirect) {
+                                window.location.href = data.redirect;
+                                return '';
+                            }
+                            throw new Error(data.message || 'Có lỗi xảy ra');
+                        });
+                    }
+                    if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái thanh toán');
+                    return res.text();
+                })
+                .then(function (html) {
+                    if (!html) return;
+
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+
+                    var toastPayloads = doc.querySelectorAll('[data-admin-toast-message]');
+                    toastPayloads.forEach(function(el) {
+                        var msg = el.getAttribute('data-admin-toast-message');
+                        var toastType = el.getAttribute('data-admin-toast-type') || 'success';
+                        if (msg && window.showAdminToast) {
+                            window.showAdminToast(msg, toastType);
+                        }
+                    });
+
+                    var newTableBody = doc.querySelector('table.table tbody');
+                    var currentTableBody = document.querySelector('table.table tbody');
+                    if (newTableBody && currentTableBody) {
+                        currentTableBody.innerHTML = newTableBody.innerHTML;
+                        // Cập nhật lại prevPaymentValue sau khi thành công
+                        bindPaymentStatusEvents();
+                    }
+                })
+                .catch(function (err) {
+                    console.error('Lỗi AJAX:', err);
+                    if (window.showAdminToast) {
+                        window.showAdminToast('Đã xảy ra lỗi khi cập nhật trạng thái thanh toán. Vui lòng thử lại.', 'error');
+                    }
+                    select.value = select.dataset.prevPaymentValue;
+                })
+                .finally(function () {
+                    select.disabled = false;
+                    select.classList.remove('is-loading');
+                });
+            };
+
+            // Store current value before change
+            select.dataset.prevValue = currentStatus;
+
+            if (typeof window.confirmModal === 'function') {
+                window.confirmModal({
+                    title: 'Xác nhận đổi trạng thái thanh toán',
+                    message: confirmMsg,
+                    confirmText: 'Xác nhận',
+                    cancelText: 'Hủy',
+                    tone: 'info'
+                }).then(function (ok) {
+                    if (ok) {
+                        doSubmit();
+                    } else {
+                        select.value = currentStatus;
+                    }
+                });
+            } else {
+                if (window.confirm(confirmMsg)) {
+                    doSubmit();
+                } else {
+                    select.value = currentStatus;
+                }
+            }
+        }
+
+
+
+        function bindPaymentStatusEvents() {
+            // Bind cho các select trạng thái thanh toán
+            document.querySelectorAll('form.payment-status-form select[name="trangThaiThanhToan"], form[action*="/trang-thai-thanh-toan"] select[name="trangThaiThanhToan"]').forEach(function(select) {
+                if (select.dataset.boundPayment) return;
+                select.dataset.boundPayment = 'true';
+
+                // Lưu giá trị ban đầu khi bind
+                var selectedOption = select.querySelector('option[selected]');
+                select.dataset.prevPaymentValue = selectedOption ? selectedOption.value : select.value;
+
+                select.addEventListener('change', function() {
+                    submitPaymentStatus(select);
+                });
+            });
+        }
+
+
+
         if (document.readyState === 'loading') {
 
-            document.addEventListener('DOMContentLoaded', bindStatusChangeEvents);
+            document.addEventListener('DOMContentLoaded', function() {
+                bindStatusChangeEvents();
+                bindPaymentStatusEvents();
+            });
 
         } else {
 
             bindStatusChangeEvents();
+            bindPaymentStatusEvents();
 
         }
 
@@ -619,6 +848,3 @@
 </body>
 
 </html>
-
-
-

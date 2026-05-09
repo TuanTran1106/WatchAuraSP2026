@@ -29,17 +29,8 @@ public class HoanTra {
     public static final String TRANG_THAI_DA_NHAN_HANG = "DA_NHAN_HANG";
     public static final String TRANG_THAI_DA_HOAN_TIEN = "DA_HOAN_TIEN";
 
-    // === DOI_HANG specific statuses ===
-    // LUONG: CHỜ DUYỆT → ĐÃ DUYỆT → ĐÃ NHẬN HÀNG → CHỌN SERIAL MỚI → ĐÃ ĐỔI → KẾT THÚC
-    public static final String TRANG_THAI_CHO_DUYET_DOI = "CHO_DUYET_DOI";
-    public static final String TRANG_THAI_DA_DUYET_DOI = "DA_DUYET_DOI";
-    public static final String TRANG_THAI_DA_NHAN_HANG_DOI = "DA_NHAN_HANG_DOI";
-    public static final String TRANG_THAI_CHON_SERIAL_MOI = "CHON_SERIAL_MOI";
-    public static final String TRANG_THAI_DA_DOI = "DA_DOI";
-    public static final String TRANG_THAI_KET_THUC = "KET_THUC";
 
     public static final String LOAI_TRA_HANG = "TRA_HANG";
-    public static final String LOAI_DOI_HANG = "DOI_HANG";
 
     public static final String PHUONG_THUC_TIEN_MAT = "TIEN_MAT";
     public static final String PHUONG_THUC_CHUYEN_KHOAN = "CHUYEN_KHOAN";
