@@ -1,5 +1,6 @@
 package com.example.watchaura.controller;
 
+import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.GioHangDTO;
 import com.example.watchaura.dto.HoaDonSuccessDTO;
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
+@RequiresRole(value = {}, requireAuth = true)
 public class CheckoutController {
 
     private static final Logger log = LoggerFactory.getLogger(CheckoutController.class);
@@ -163,8 +165,12 @@ public class CheckoutController {
 
         session.removeAttribute("cart");
 
-        // Thông báo đặt hàng thành công
-        redirect.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + hoaDon.getMaDonHang());
+        // Redirect về giỏ hàng với thông tin để hiện modal đăng ký
+        redirect.addFlashAttribute("checkoutSuccess", true);
+        redirect.addFlashAttribute("checkoutMaDon", hoaDon.getMaDonHang());
+        redirect.addFlashAttribute("checkoutEmail", email);
+        redirect.addFlashAttribute("checkoutTen", tenKhachHang);
+        redirect.addFlashAttribute("checkoutSdt", sdt);
         return "redirect:/gio-hang";
     }
 

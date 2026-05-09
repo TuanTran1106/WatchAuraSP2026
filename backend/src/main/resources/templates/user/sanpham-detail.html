@@ -398,8 +398,22 @@
             }
         };
 
-        var lastStock = {};
+        function onQtyClick(e) {
+            var btn = e.target.closest('[data-qty-action]');
+            if (!btn) return;
+            var group = btn.closest('.qty-group');
+            if (!group) return;
+            var input = group.querySelector('.quantity-input');
+            if (!input) return;
+            var current = parseInt(input.value, 10) || 1;
+            var max = parseInt(input.getAttribute('max'), 10) || 999;
+            if (btn.getAttribute('data-qty-action') === 'minus' && current > 1) input.value = current - 1;
+            else if (btn.getAttribute('data-qty-action') === 'plus' && (max <= 0 || current < max)) input.value = current + 1;
+        }
+        document.addEventListener('click', onQtyClick);
+
         var pollInterval = null;
+        var lastStock = {};
 
         function checkStock() {
             if (!productId) return;

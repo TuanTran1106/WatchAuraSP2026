@@ -39,11 +39,23 @@ public class AuthController {
             @RequestParam(value = "success", required = false) String success,
             HttpSession session,
             Model model) {
-        // Nếu đã đăng nhập rồi thì chuyển hướng về trang chủ để mua hàng
+        // Nếu đã đăng nhập rồi thì chuyển hướng đến trang phù hợp
         Integer userId = (Integer) session.getAttribute(SESSION_CURRENT_USER_ID);
         if (userId != null) {
             Optional<KhachHang> opt = khachHangService.getByIdForView(userId);
             if (opt.isPresent()) {
+                KhachHang kh = opt.get();
+                if (isTaiKhoanNoiBo(kh)) {
+                    String tenChucVu = kh.getChucVu() != null ? kh.getChucVu().getTenChucVu() : null;
+                    if (tenChucVu != null) {
+                        if (tenChucVu.equalsIgnoreCase("Nhân viên") || tenChucVu.equalsIgnoreCase("nhanvien")) {
+                            return "redirect:/ban-hang";
+                        } else if (tenChucVu.equalsIgnoreCase("Admin") || tenChucVu.equalsIgnoreCase("Quản lý")
+                                || tenChucVu.equalsIgnoreCase("admin") || tenChucVu.equalsIgnoreCase("quanly")) {
+                            return "redirect:/admin";
+                        }
+                    }
+                }
                 return "redirect:/home";
             }
         }
@@ -250,7 +262,7 @@ public class AuthController {
                 || t.equalsIgnoreCase("admin") || t.equalsIgnoreCase("quanly");
     }
 
-    /** Đăng nhập — mọi tài khoản (khách hàng, admin, nhân viên) đều vào /home để mua hàng */
+    /** Đăng nhập — Admin/Nhân viên → chuyển đến /admin hoặc /ban-hang; khách hàng → /home */
     @PostMapping("/dang-nhap")
     public String dangNhap(
             @RequestParam("email") String email,
