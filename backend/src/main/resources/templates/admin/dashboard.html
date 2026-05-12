@@ -15,8 +15,13 @@
                 <div class="col-6 col-md-auto">
                     <label class="form-label small text-muted mb-1" for="dashRangeSelect">Khoảng thời gian</label>
                     <select id="dashRangeSelect" class="form-select form-select-sm">
-                        <option value="7">7 ngày</option>
-                        <option value="30">30 ngày</option>
+                        <option value="today">Hôm nay</option>
+                        <option value="yesterday">Hôm qua</option>
+                        <option value="last7" selected>7 ngày qua</option>
+                        <option value="last30">30 ngày qua</option>
+                        <option value="this_week">Tuần này</option>
+                        <option value="this_month">Tháng này</option>
+                        <option disabled class="text-muted">──────────</option>
                         <option value="custom">Tùy chọn</option>
                     </select>
                 </div>
@@ -32,13 +37,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-auto">
-                    <label class="form-label small text-muted mb-1" for="dashTopRangeSelect">Xếp hạng SP</label>
-                    <select id="dashTopRangeSelect" class="form-select form-select-sm">
-                        <option value="week" selected>Theo tuần</option>
-                        <option value="month">Theo tháng</option>
-                    </select>
-                </div>
                 <div class="col-12 col-md-auto">
                     <button type="button" id="dashRefreshBtn" class="btn btn-primary btn-sm px-3">Làm mới</button>
                 </div>
@@ -52,7 +50,7 @@
                 <div class="col">
                     <div class="rounded-3 shadow-sm bg-white border border-light p-3 h-100 d-flex flex-column" id="dashKpiRevenueToday">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="small text-muted">Doanh thu hôm nay</span>
+                            <span class="small text-muted" data-kpi-heading>Doanh thu theo kỳ</span>
                             <span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="fas fa-bolt fa-sm"></i></span>
                         </div>
                         <div class="fs-4 fw-bold text-dark mb-2 lh-sm" data-kpi-value>0đ</div>
@@ -63,7 +61,7 @@
                 <div class="col">
                     <div class="rounded-3 shadow-sm bg-white border border-light p-3 h-100 d-flex flex-column" id="dashKpiRevenue">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="small text-muted">Doanh thu trong kỳ</span>
+                            <span class="small text-muted" data-kpi-heading>Doanh thu trong kỳ (Net)</span>
                             <span class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="fas fa-chart-line fa-sm"></i></span>
                         </div>
                         <div class="fs-4 fw-bold text-dark mb-2 lh-sm" data-kpi-value>0đ</div>
@@ -146,8 +144,8 @@
                 <div class="col-lg-8">
                     <div class="rounded-3 shadow-sm bg-white border border-light h-100 d-flex flex-column overflow-hidden">
                         <div class="px-3 py-2 border-bottom bg-white">
-                            <span class="fw-semibold text-dark">Doanh thu theo ngày</span>
-                            <span class="small text-muted ms-2">(tiền đã thanh toán)</span>
+                            <span class="fw-semibold text-dark" id="dashRevenueChartTitle">Doanh thu</span>
+                            <span class="small text-muted ms-2" id="dashRevenueChartSub">Thực thu = Thu gộp (tiền hàng + ship) − Hoàn trả; chỉ đơn đã thanh toán</span>
                         </div>
                         <div class="position-relative flex-grow-1 p-3 dash-chart-fix-h">
                             <div class="dash-skeleton" data-dashboard-skeleton data-skeleton="revenue"></div>

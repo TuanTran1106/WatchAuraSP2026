@@ -105,21 +105,48 @@
     if (subtitleEl) subtitleEl.textContent = subtitle || '';
   }
 
+  function setKpiHeading(cardId, text) {
+    var card = qs(cardId);
+    if (!card || !text) return;
+    var h = card.querySelector('[data-kpi-heading]');
+    if (h) h.textContent = text;
+  }
+
+  /** Ưu tiên % so với kỳ trước (periodCompare) cho badge */
+  function resolveKpiComparePeriodFirst(data) {
+    if (!data) return { pct: null, compareText: '—', subtitleExtra: '' };
+    var pc = data.periodCompare;
+    if (pc && pc.percentChange !== undefined && pc.percentChange !== null) {
+      return {
+        pct: pc.percentChange,
+        compareText: fmtPct(pc.percentChange),
+        subtitleExtra: pc.compareLabel || 'So với kỳ trước'
+      };
+    }
+    return resolveKpiCompare(data);
+  }
+
   function renderKpis(payload) {
     var kpi = payload && payload.kpi ? payload.kpi : {};
+    var primaryLabel = payload && payload.revenuePrimaryLabel ? payload.revenuePrimaryLabel : 'theo kỳ';
+    setKpiHeading('dashKpiRevenueToday', 'Doanh thu ' + primaryLabel);
+    var scope = payload && payload.revenueScopeText ? payload.revenueScopeText : 'trong kỳ';
+    setKpiHeading('dashKpiRevenue', 'Doanh thu ' + scope + ' (thực thu)');
+
     var rows = [
-      ['dashKpiRevenueToday', kpi.revenueToday, fmtMoney],
-      ['dashKpiRevenue', kpi.revenue, fmtMoney],
-      ['dashKpiOrders', kpi.orders, fmtCompact],
-      ['dashKpiCustomers', kpi.customers, fmtCompact],
-      ['dashKpiProducts', kpi.products, fmtCompact],
-      ['dashKpiLowStock', kpi.lowStock, fmtCompact],
-      ['dashKpiPromotions', kpi.promotions, fmtCompact],
-      ['dashKpiVouchers', kpi.vouchers, fmtCompact]
+      ['dashKpiRevenueToday', kpi.revenuePrimary, fmtMoney, false],
+      ['dashKpiRevenue', kpi.revenue, fmtMoney, true],
+      ['dashKpiOrders', kpi.orders, fmtCompact, true],
+      ['dashKpiCustomers', kpi.customers, fmtCompact, true],
+      ['dashKpiProducts', kpi.products, fmtCompact, false],
+      ['dashKpiLowStock', kpi.lowStock, fmtCompact, false],
+      ['dashKpiPromotions', kpi.promotions, fmtCompact, false],
+      ['dashKpiVouchers', kpi.vouchers, fmtCompact, false]
     ];
     rows.forEach(function (item) {
       var data = item[1] || {};
-      var cmp = resolveKpiCompare(data);
+      var usePeriod = item[3];
+      var cmp = usePeriod ? resolveKpiComparePeriodFirst(data) : resolveKpiCompare(data);
       var subtitle = data.subtitle || cmp.subtitleExtra || '';
       var rawVal = kpiNumericRaw(data);
       setKpi(item[0], item[2](rawVal), cmp.compareText, subtitle, cmp.pct);
@@ -159,10 +186,22 @@
   function fmtActivityDate(meta) {
     if (!meta) return '';
     try {
-      var d = new Date(meta);
-      if (!isNaN(d.getTime())) return d.toLocaleDateString('vi-VN');
-    } catch (e) {}
-    return String(meta);
+      var s = String(meta).trim();
+      var d = new Date(s);
+      if (isNaN(d.getTime())) return s;
+      if (s.indexOf('T') >= 0) {
+        return d.toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      return d.toLocaleDateString('vi-VN');
+    } catch (e) {
+      return String(meta);
+    }
   }
 
   function renderActivityList(rootId, items, emptyText, iconClass) {
@@ -247,7 +286,10 @@
     if (!revenueCanvas || !orderCanvas || !topCanvas) return;
     destroyCharts();
 
-    var revenueRows = (payload && payload.revenueDaily) || [];
+    var revenueRows = (payload && payload.revenueSeries) || (payload && payload.revenueDaily) || [];
+
+    var chartTitleEl = qs('dashRevenueChartTitle');
+    if (chartTitleEl && payload.chartTitle) chartTitleEl.textContent = payload.chartTitle;
     var topRows = (payload && payload.topProducts) || [];
     var orderStatus = payload && payload.orderStatus ? payload.orderStatus : {};
 
@@ -259,7 +301,7 @@
         }),
         datasets: [
           {
-            label: 'Doanh thu',
+            label: 'Thực thu (thu gộp − hoàn trả)',
             data: revenueRows.map(function (x) {
               return x.value;
             }),
@@ -332,13 +374,80 @@
     return state.abortController;
   }
 
+  function pad2(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+
+  function toYMD(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  function mondayOfDate(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var diff = (x.getDay() + 6) % 7;
+    x.setDate(x.getDate() - diff);
+    return x;
+  }
+
+  function applyPresetDates() {
+    var rangeSel = qs('dashRangeSelect');
+    var from = qs('dashFromDate');
+    var to = qs('dashToDate');
+    if (!rangeSel || !from || !to) return;
+
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var v = rangeSel.value;
+
+    if (v === 'custom') {
+      from.disabled = false;
+      to.disabled = false;
+      if (!from.value || !to.value) {
+        var s0 = new Date(today);
+        s0.setDate(s0.getDate() - 6);
+        from.value = toYMD(s0);
+        to.value = toYMD(today);
+      }
+      return;
+    }
+
+    from.disabled = true;
+    to.disabled = true;
+
+    var start;
+    var end = new Date(today);
+
+    if (v === 'today') {
+      start = new Date(today);
+    } else if (v === 'yesterday') {
+      start = new Date(today);
+      start.setDate(start.getDate() - 1);
+      end = new Date(start);
+    } else if (v === 'last7') {
+      start = new Date(today);
+      start.setDate(start.getDate() - 6);
+    } else if (v === 'last30') {
+      start = new Date(today);
+      start.setDate(start.getDate() - 29);
+    } else if (v === 'this_week') {
+      start = mondayOfDate(today);
+    } else if (v === 'this_month') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else {
+      start = new Date(today);
+      start.setDate(start.getDate() - 6);
+    }
+
+    from.value = toYMD(start);
+    to.value = toYMD(end);
+  }
+
   function buildUrl() {
     var rangeSel = qs('dashRangeSelect');
     var from = qs('dashFromDate');
     var to = qs('dashToDate');
-    var top = qs('dashTopRangeSelect');
     var params = new URLSearchParams();
-    params.set('topType', top && top.value === 'month' ? 'month' : 'week');
+    if (rangeSel) params.set('rangePreset', rangeSel.value);
     if (rangeSel && rangeSel.value === 'custom') {
       if (from && from.value) params.set('fromDate', from.value);
       if (to && to.value) params.set('toDate', to.value);
@@ -347,13 +456,7 @@
   }
 
   function syncDateInputs() {
-    var rangeSel = qs('dashRangeSelect');
-    var from = qs('dashFromDate');
-    var to = qs('dashToDate');
-    if (!rangeSel || !from || !to) return;
-    var custom = rangeSel.value === 'custom';
-    from.disabled = !custom;
-    to.disabled = !custom;
+    applyPresetDates();
   }
 
   function fetchDashboard() {
@@ -409,7 +512,7 @@
 
     if (rangeSel)
       rangeSel.addEventListener('change', function () {
-        syncDateInputs();
+        applyPresetDates();
         fetchDashboard();
       });
     if (from) from.addEventListener('change', fetchDashboard);

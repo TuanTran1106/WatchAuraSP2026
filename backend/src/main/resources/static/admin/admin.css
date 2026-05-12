@@ -4543,6 +4543,8 @@ body > .toast.toast--error::before {
   visibility: visible;
 }
 
+/* .modal-panel: dialog inside .modal-overlay — avoid Bootstrap .modal { display:none } */
+.modal-overlay .modal-panel,
 .modal {
   background: #fff;
   border-radius: 14px;
@@ -4797,6 +4799,7 @@ body > .toast.toast--error::before {
   color: #fca5a5;
 }
 
+.admin-layout.theme-dark .modal-overlay .modal-panel,
 .admin-layout.theme-dark .modal {
   background: #1e293b;
 }
