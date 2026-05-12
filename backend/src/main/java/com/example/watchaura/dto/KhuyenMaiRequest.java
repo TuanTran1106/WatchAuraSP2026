@@ -15,6 +15,7 @@ public class KhuyenMaiRequest {
 
     private Integer id;
 
+    @NotBlank(message = "Mã khuyến mãi không được để trống")
     private String maKhuyenMai;
 
     @NotBlank(message = "Tên chương trình không được để trống")

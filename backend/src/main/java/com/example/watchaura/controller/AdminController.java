@@ -1,6 +1,10 @@
 package com.example.watchaura.controller;
 
 import com.example.watchaura.annotation.RequiresRole;
+import com.example.watchaura.entity.KhuyenMai;
+import com.example.watchaura.entity.Voucher;
+import com.example.watchaura.repository.KhuyenMaiRepository;
+import com.example.watchaura.repository.VoucherRepository;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhachHangService;
 import com.example.watchaura.service.SanPhamService;
@@ -9,20 +13,21 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
@@ -34,6 +39,8 @@ public class AdminController {
     private final KhachHangService khachHangService;
     private final HoaDonService hoaDonService;
     private final SanPhamService sanPhamService;
+    private final KhuyenMaiRepository khuyenMaiRepository;
+    private final VoucherRepository voucherRepository;
 
     /** Cấu hình in-memory (có thể thay bằng DB sau). */
     private static final Map<String, String> SETTINGS_STORE = new HashMap<>();
@@ -56,9 +63,13 @@ public class AdminController {
     }
 
     @GetMapping
-    public String getAdminPage(Model model) {
+    public String getAdminPage(Model model,
+                               @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         model.addAttribute("title", "Dashboard");
         model.addAttribute("content", "admin/dashboard");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "admin/dashboard :: content";
+        }
         return "layout/admin-layout";
     }
 
@@ -151,6 +162,8 @@ public class AdminController {
 
         try {
             // Customers
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
             for (var kh : khachHangService.getAll()) {
                 if (kh == null) continue;
                 LocalDateTime created = kh.getNgayTao();
@@ -164,51 +177,56 @@ public class AdminController {
             }
 
             // Orders & items
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
             List<com.example.watchaura.dto.HoaDonDTO> orders = hoaDonService.getAll();
             for (com.example.watchaura.dto.HoaDonDTO order : orders) {
                 if (order == null || order.getNgayDat() == null) continue;
                 LocalDate orderDate = order.getNgayDat().toLocalDate();
                 String status = order.getTrangThaiDonHang();
-                boolean isDelivered = "DA_GIAO".equals(status);
+                boolean eligible = isDashboardEligibleOrder(order);
                 boolean isCanceled = "DA_HUY".equals(status);
+                BigDecimal revenueAmt = dashboardTongTienThanhToan(order);
 
-                BigDecimal paid = order.getTongTienThanhToan() != null ? order.getTongTienThanhToan() : BigDecimal.ZERO;
+                // KPI đếm đơn — cùng tập với donut: trangThai null/true, loại trừ DRAFT_OFFLINE
+                if (eligible) {
+                    if (orderDate.equals(endDate)) ordersEndDay++;
+                    if (orderDate.equals(prevDay)) ordersPrevDay++;
+                    if (!orderDate.isBefore(prevPeriodFrom) && !orderDate.isAfter(prevPeriodTo)) ordersPrevPeriod++;
+                }
 
-                // KPI order counts (all statuses)
-                if (orderDate.equals(endDate)) ordersEndDay++;
-                if (orderDate.equals(prevDay)) ordersPrevDay++;
-                if (!orderDate.isBefore(prevPeriodFrom) && !orderDate.isAfter(prevPeriodTo)) ordersPrevPeriod++;
-
-                // cancel insight in last 7 days (relative to endDate)
                 LocalDate last7From = endDate.minusDays(6);
-                if (isCanceled && !orderDate.isBefore(last7From) && !orderDate.isAfter(endDate)) {
+                if (eligible && isCanceled && !orderDate.isBefore(last7From) && !orderDate.isAfter(endDate)) {
                     canceledOrdersLast7Days++;
                 }
 
-                // KPI revenue (delivered)
-                if (isDelivered) {
-                    if (orderDate.equals(endDate)) revenueEndDay = revenueEndDay.add(paid);
-                    if (orderDate.equals(prevDay)) revenuePrevDay = revenuePrevDay.add(paid);
-                    if (!orderDate.isBefore(prevPeriodFrom) && !orderDate.isAfter(prevPeriodTo)) revenuePrevPeriod = revenuePrevPeriod.add(paid);
-                }
-
-                // Donut + daily revenue for chart range
-                if (!orderDate.isBefore(chartFrom) && !orderDate.isAfter(chartTo)) {
-                    if (isDelivered) {
-                        orderDeliveredCount++;
-                        revenueInRange = revenueInRange.add(paid);
-                        BigDecimal current = dailyRevenueMap.get(orderDate);
-                        if (current == null) current = BigDecimal.ZERO;
-                        dailyRevenueMap.put(orderDate, current.add(paid));
-                    } else if (isCanceled) {
-                        orderCanceledCount++;
-                    } else {
-                        orderProcessingCount++;
+                boolean countedPaidRevenue = isPaidForDashboardRevenue(order);
+                if (countedPaidRevenue) {
+                    if (orderDate.equals(endDate)) revenueEndDay = revenueEndDay.add(revenueAmt);
+                    if (orderDate.equals(prevDay)) revenuePrevDay = revenuePrevDay.add(revenueAmt);
+                    if (!orderDate.isBefore(prevPeriodFrom) && !orderDate.isAfter(prevPeriodTo)) {
+                        revenuePrevPeriod = revenuePrevPeriod.add(revenueAmt);
                     }
                 }
 
-                // Top products by delivered order items
-                if (isDelivered && !orderDate.isBefore(topFrom) && !orderDate.isAfter(topTo)) {
+                // Donut (3 nhóm) + doanh thu theo ngày trong kỳ — cùng điều kiện tiền: DA_THANH_TOAN (+ legacy)
+                if (eligible && !orderDate.isBefore(chartFrom) && !orderDate.isAfter(chartTo)) {
+                    if (isCanceled) {
+                        orderCanceledCount++;
+                    } else if ("DA_GIAO".equals(status) || "HOAN_THANH".equals(status)) {
+                        orderDeliveredCount++;
+                    } else {
+                        orderProcessingCount++;
+                    }
+                    if (countedPaidRevenue) {
+                        revenueInRange = revenueInRange.add(revenueAmt);
+                        BigDecimal current = dailyRevenueMap.get(orderDate);
+                        if (current == null) current = BigDecimal.ZERO;
+                        dailyRevenueMap.put(orderDate, current.add(revenueAmt));
+                    }
+                }
+
+                if (countedPaidRevenue && !orderDate.isBefore(topFrom) && !orderDate.isAfter(topTo)) {
                     if (order.getItems() == null) continue;
                     for (com.example.watchaura.dto.HoaDonChiTietDTO item : order.getItems()) {
                         if (item == null) continue;
@@ -230,10 +248,10 @@ public class AdminController {
         }
 
         // daily revenue series + max/min highlight
-        BigDecimal maxVal = null;
-        BigDecimal minVal = null;
-        LocalDate maxDate = null;
-        LocalDate minDate = null;
+        BigDecimal maxVal = BigDecimal.valueOf(Long.MIN_VALUE);
+        BigDecimal minVal = BigDecimal.valueOf(Long.MAX_VALUE);
+        LocalDate maxDate = chartFrom;
+        LocalDate minDate = chartFrom;
 
         List<Map<String, Object>> revenueDaily = new ArrayList<>();
         for (Map.Entry<LocalDate, BigDecimal> e : dailyRevenueMap.entrySet()) {
@@ -248,11 +266,11 @@ public class AdminController {
                     "value", dv
             ));
 
-            if (maxVal == null || v.compareTo(maxVal) > 0) {
+            if (v.compareTo(maxVal) > 0) {
                 maxVal = v;
                 maxDate = d;
             }
-            if (minVal == null || v.compareTo(minVal) < 0) {
+            if (v.compareTo(minVal) < 0) {
                 minVal = v;
                 minDate = d;
             }
@@ -269,14 +287,14 @@ public class AdminController {
                 "value", minVal != null ? minVal.doubleValue() : 0d
         ) : null;
 
-        // donut
         long totalOrdersRange = orderProcessingCount + orderDeliveredCount + orderCanceledCount;
-        Map<String, Object> orderStatus = Map.of(
-                "totalOrders", totalOrdersRange,
-                "processingCount", orderProcessingCount,
-                "deliveredCount", orderDeliveredCount,
-                "canceledCount", orderCanceledCount
-        );
+        Map<String, Object> orderStatus = new HashMap<>();
+        orderStatus.put("totalOrders", totalOrdersRange);
+        orderStatus.put("processingCount", orderProcessingCount);
+        orderStatus.put("deliveredCount", orderDeliveredCount);
+        orderStatus.put("canceledCount", orderCanceledCount);
+        orderStatus.put("labels", java.util.List.of("Đang xử lý", "Đã giao", "Đã hủy"));
+        orderStatus.put("colors", java.util.List.of("#2563eb", "#22c55e", "#ef4444"));
 
         BigDecimal totalRevenueTop = productAggMap.values().stream()
                 .map(agg -> agg.revenue != null ? agg.revenue : BigDecimal.ZERO)
@@ -329,26 +347,28 @@ public class AdminController {
             revenueAvgDaily = sumNonZero.divide(BigDecimal.valueOf(nonZeroDays), 2, java.math.RoundingMode.HALF_UP);
         }
 
-        if (revenueInRange.compareTo(BigDecimal.ZERO) == 0 || maxVal == null || maxVal.compareTo(BigDecimal.ZERO) == 0) {
-            warnings.add(item("🔴 Doanh thu đã giao = <strong>0đ</strong> trong khoảng thời gian đã chọn.", "danger"));
-        } else if (revenueAvgDaily.compareTo(BigDecimal.ZERO) > 0 && maxVal.compareTo(BigDecimal.ZERO) > 0) {
-            double pct = maxVal.subtract(revenueAvgDaily).doubleValue() * 100.0d / revenueAvgDaily.doubleValue();
-            String sign = pct >= 0 ? "+" : "-";
-            String pctTxt = sign + String.format(java.util.Locale.US, "%.0f", Math.abs(pct)) + "%";
-            String dayTxt = maxDate != null
-                    ? maxDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"))
-                    : "--";
-            insights.add(item(
-                    "📈 " + dayTxt + " đạt <strong>" + formatMoneyInsight(maxVal) + "</strong> (<strong>" + pctTxt + "</strong> vs trung bình)",
-                    pct >= 0 ? "good" : "danger"
-            ));
-        } else {
-            insights.add(item(
-                    "📈 Ngày doanh thu cao nhất: " + (maxDate != null
-                            ? maxDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"))
-                            : "--") + " (<strong>" + (maxVal != null ? formatMoneyInsight(maxVal) : "0") + "</strong>)",
-                    "info"
-            ));
+        if (revenueInRange.compareTo(BigDecimal.ZERO) > 0
+                && maxVal != null
+                && maxVal.compareTo(BigDecimal.ZERO) > 0) {
+            if (revenueAvgDaily.compareTo(BigDecimal.ZERO) > 0) {
+                double pct = maxVal.subtract(revenueAvgDaily).doubleValue() * 100.0d / revenueAvgDaily.doubleValue();
+                String sign = pct >= 0 ? "+" : "-";
+                String pctTxt = sign + String.format(java.util.Locale.US, "%.0f", Math.abs(pct)) + "%";
+                String dayTxt = maxDate != null
+                        ? maxDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"))
+                        : "--";
+                insights.add(item(
+                        "📈 " + dayTxt + " đạt <strong>" + formatMoneyInsight(maxVal) + "</strong> (<strong>" + pctTxt + "</strong> vs trung bình)",
+                        pct >= 0 ? "good" : "danger"
+                ));
+            } else {
+                insights.add(item(
+                        "📈 Ngày doanh thu cao nhất: " + (maxDate != null
+                                ? maxDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"))
+                                : "--") + " (<strong>" + formatMoneyInsight(maxVal) + "</strong>)",
+                        "info"
+                ));
+            }
         }
 
         // ---- Insight: canceled orders in last 7 days ----
@@ -396,7 +416,7 @@ public class AdminController {
         }
         if (zeroStreak >= 3 && streakStart != null && streakEnd != null) {
             warnings.add(item(
-                    "🔴 3 ngày liên tiếp doanh thu đã giao = <strong>0đ</strong> (" +
+                    "🔴 3 ngày liên tiếp không có doanh thu đã thanh toán (<strong>0đ</strong>) (" +
                             streakStart.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")) + " - " +
                             streakEnd.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")) + ").",
                     "danger"
@@ -502,11 +522,127 @@ public class AdminController {
         ));
         kpi.put("revenue", revenueMap);
 
+        BigDecimal todayRevenue = BigDecimal.ZERO;
+        BigDecimal yesterdayRevenueSameTime = BigDecimal.ZERO;
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDate todayLocal = now.toLocalDate();
+            LocalDate yesterdayLocal = todayLocal.minusDays(1);
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
+            for (com.example.watchaura.dto.HoaDonDTO order : hoaDonService.getAll()) {
+                if (order == null || order.getNgayDat() == null) continue;
+                if (!isPaidForDashboardRevenue(order)) continue;
+                BigDecimal paid = dashboardTongTienThanhToan(order);
+                LocalDateTime placed = order.getNgayDat();
+                if (placed.toLocalDate().equals(todayLocal) && !placed.isAfter(now)) {
+                    todayRevenue = todayRevenue.add(paid);
+                }
+                if (placed.toLocalDate().equals(yesterdayLocal) && !placed.isAfter(now.minusDays(1))) {
+                    yesterdayRevenueSameTime = yesterdayRevenueSameTime.add(paid);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        Double todayRevenuePct = percentChangeBDPractical(todayRevenue, yesterdayRevenueSameTime);
+        Map<String, Object> revenueTodayMap = compareBlockMoney(
+                todayRevenue,
+                yesterdayRevenueSameTime,
+                todayRevenuePct,
+                "So với hôm qua cùng thời điểm"
+        );
+        revenueTodayMap.put("refreshIntervalMs", 300000);
+
+        List<Map<String, Object>> lowStock = new ArrayList<>();
+        try {
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
+            for (var sp : sanPhamService.getAllSanPham()) {
+                if (sp == null || sp.getSoLuongTon() == null) continue;
+                if (sp.getSoLuongTon() < 10) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("title", sp.getTenSanPham());
+                    row.put("subtitle", "Tồn kho: " + sp.getSoLuongTon());
+                    row.put("meta", sp.getSoLuongTon() + " sản phẩm còn lại");
+                    lowStock.add(row);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        lowStock = lowStock.stream().limit(5).collect(java.util.stream.Collectors.toList());
+
+        List<Map<String, Object>> recentCustomers = new ArrayList<>();
+        try {
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
+            for (var kh : khachHangService.getAll()) {
+                if (kh == null) continue;
+                Map<String, Object> row = new HashMap<>();
+                row.put("title", kh.getTenNguoiDung());
+                row.put("subtitle", kh.getEmail());
+                row.put("meta", kh.getNgayTao() != null ? kh.getNgayTao().toLocalDate().toString() : "");
+                recentCustomers.add(row);
+            }
+        } catch (Exception ignored) {
+        }
+        recentCustomers = recentCustomers.stream().limit(5).collect(java.util.stream.Collectors.toList());
+
+        List<Map<String, Object>> recentOrders = new ArrayList<>();
+        try {
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
+            for (com.example.watchaura.dto.HoaDonDTO order : hoaDonService.getAll()) {
+                if (order == null) continue;
+                Map<String, Object> row = new HashMap<>();
+                row.put("title", order.getMaDonHang());
+                row.put("subtitle", order.getTenKhachHang());
+                row.put("meta", order.getNgayDat() != null ? order.getNgayDat().toLocalDate().toString() : "");
+                recentOrders.add(row);
+            }
+        } catch (Exception ignored) {
+        }
+        recentOrders = recentOrders.stream().limit(5).collect(java.util.stream.Collectors.toList());
+
+        List<Map<String, Object>> expiringCampaigns = new ArrayList<>();
+        try {
+            // TODO: thay bằng query chuyên biệt khi dữ liệu lớn (ví dụ: đếm trực tiếp DB,
+            // dùng Pageable hoặc native query thay vì load toàn bộ vào memory)
+            for (KhuyenMai km : khuyenMaiRepository.findAll()) {
+                if (km == null || km.getNgayKetThuc() == null) continue;
+                if (km.getNgayKetThuc().isBefore(LocalDateTime.now())) continue;
+                if (km.getNgayKetThuc().isBefore(LocalDateTime.now().plusDays(7))) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("title", km.getTenChuongTrinh());
+                    row.put("subtitle", km.getNgayKetThuc().toLocalDate().toString());
+                    row.put("meta", "Còn sắp hết hạn");
+                    expiringCampaigns.add(row);
+                }
+            }
+            for (Voucher v : voucherRepository.findAll()) {
+                if (v == null || v.getNgayKetThuc() == null) continue;
+                if (v.getNgayKetThuc().isBefore(LocalDateTime.now())) continue;
+                if (v.getNgayKetThuc().isBefore(LocalDateTime.now().plusDays(7))) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("title", v.getTenVoucher());
+                    row.put("subtitle", v.getNgayKetThuc().toLocalDate().toString());
+                    row.put("meta", "Voucher sắp hết hạn");
+                    expiringCampaigns.add(row);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        expiringCampaigns = expiringCampaigns.stream().limit(5).collect(java.util.stream.Collectors.toList());
+
         Map<String, Object> response = new HashMap<>();
         response.put("chartFrom", chartFrom.toString());
         response.put("chartTo", chartTo.toString());
         response.put("prevPeriodFrom", prevPeriodFrom.toString());
         response.put("prevPeriodTo", prevPeriodTo.toString());
+        kpi.put("revenueToday", revenueTodayMap);
+        kpi.put("lowStock", Map.of("value", lowStock.size(), "subtitle", "Tồn kho dưới 10"));
+        kpi.put("promotions", Map.of("value", khuyenMaiRepository.findAll().size(), "subtitle", "Khuyến mãi"));
+        kpi.put("vouchers", Map.of("value", voucherRepository.findAll().size(), "subtitle", "Voucher"));
+
         response.put("revenueScopeText", revenueScopeText);
         response.put("kpi", kpi);
         response.put("revenueDaily", revenueDaily);
@@ -516,10 +652,34 @@ public class AdminController {
         response.put("topProducts", topProducts);
         response.put("insights", insights);
         response.put("warnings", warnings);
+        response.put("lowStock", lowStock);
+        response.put("recentOrders", recentOrders);
+        response.put("recentCustomers", recentCustomers);
+        response.put("expiringCampaigns", expiringCampaigns);
 
         CacheEntry entry = new CacheEntry(System.currentTimeMillis(), response);
         DASHBOARD_CACHE.put(cacheKey, entry);
         return response;
+    }
+
+    /** Đơn hiển thị trong admin: trangThai null hoặc true; luôn loại trừ nháp quầy. */
+    private static boolean isDashboardEligibleOrder(com.example.watchaura.dto.HoaDonDTO order) {
+        if (order == null) return false;
+        if (Boolean.FALSE.equals(order.getTrangThai())) return false;
+        return !"DRAFT_OFFLINE".equals(order.getTrangThaiDonHang());
+    }
+
+    /** Legacy: chuỗi có dấu cách coi như DA_THANH_TOAN. */
+    private static boolean isPaidForDashboardRevenue(com.example.watchaura.dto.HoaDonDTO order) {
+        if (!isDashboardEligibleOrder(order)) return false;
+        String tt = order.getTrangThaiThanhToan();
+        if (tt == null) return false;
+        String n = tt.trim();
+        return "DA_THANH_TOAN".equals(n) || "DA THANH TOAN".equals(n);
+    }
+
+    private static BigDecimal dashboardTongTienThanhToan(com.example.watchaura.dto.HoaDonDTO order) {
+        return order.getTongTienThanhToan() != null ? order.getTongTienThanhToan() : BigDecimal.ZERO;
     }
 
     private static LocalDate parseDateOrDefault(String input, LocalDate defaultValue) {

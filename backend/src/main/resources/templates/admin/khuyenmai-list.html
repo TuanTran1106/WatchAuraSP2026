@@ -11,7 +11,8 @@
             .km-status--off{background:#e2e8f0;color:#334155}
             .km-num-col,.km-num-cell{text-align:right}
             .km-date-warning{display:none;margin-top:6px;color:#b91c1c;font-size:.82rem;font-weight:600}
-            .form__input.is-invalid{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+            .form__input.is-invalid{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,.15);background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linecap='round' d='M6 3.8v3.2'/%3e%3ccircle cx='6' cy='8.8' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right .75rem center;background-size:1rem 1rem;padding-right:2.2rem}
+            .invalid-feedback{display:block;font-size:.8rem;color:#dc3545;margin-top:4px}
         </style>
         <div th:if="${message}" class="admin-toast-payload"
             th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
@@ -41,10 +42,9 @@
                         <div class="form__grid">
                             <div class="form__group">
                                 <label class="form__label">Mã khuyến mãi</label>
-                                <input class="form__input" type="text" th:field="*{maKhuyenMai}"
+                                <input class="form__input" th:classappend="${#fields.hasErrors('maKhuyenMai')} ? ' is-invalid'" type="text" th:field="*{maKhuyenMai}"
                                     placeholder="VD: KM001" />
-                                <span class="form__error" th:if="${#fields.hasErrors('maKhuyenMai')}"
-                                    th:errors="*{maKhuyenMai}"></span>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('maKhuyenMai')}" th:errors="*{maKhuyenMai}"></div>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Tên chương trình</label>
@@ -69,8 +69,9 @@
                             </div>
                             <div class="form__group">
                                 <label class="form__label" id="labelGiaTriGiam">Giá trị giảm</label>
-                                <input class="form__input" type="number" step="0.01" min="0" th:field="*{giaTriGiam}"
-                                    id="giaTriGiamInput" required placeholder="0" />
+                                <input class="form__input" th:classappend="${#fields.hasErrors('giaTriGiam')} ? ' is-invalid'" type="number" step="0.01" min="0.01" th:field="*{giaTriGiam}"
+                                    id="giaTriGiamInput" required placeholder="0.01" />
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('giaTriGiam')}" th:errors="*{giaTriGiam}"></div>
                                 <small class="form__hint" id="hintGiaTriGiam"
                                     style="display:block;color:#64748b;font-size:0.82rem;margin-top:4px;">
                                     Chọn loại giảm ở trên để hiển thị đúng đơn vị ( % hoặc ₫ ).
@@ -78,17 +79,26 @@
                             </div>
                             <div class="form__group" id="giamToiDaGroup">
                                 <label class="form__label">Trần tiền giảm (VNĐ)</label>
-                                <input class="form__input" type="number" step="0.01" min="0" th:field="*{giamToiDa}"
+                                <input class="form__input" th:classappend="${#fields.hasErrors('giamToiDa')} ? ' is-invalid'" type="number" step="0.01" min="0" th:field="*{giamToiDa}"
                                     id="giamToiDaInput" placeholder="Để trống = không giới hạn" />
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('giamToiDa')}" th:errors="*{giamToiDa}"></div>
                                 <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Chỉ áp khi
                                     loại là <strong>giảm %</strong>: giới hạn tối đa số tiền được trừ (ví dụ giảm 50%
                                     nhưng không quá 500.000₫).</small>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Đơn tối thiểu (VNĐ)</label>
-                                <input class="form__input" type="number" step="0.01" min="0" th:field="*{donToiThieu}"
+                                <input class="form__input" th:classappend="${#fields.hasErrors('donToiThieu')} ? ' is-invalid'" type="number" step="0.01" min="0" th:field="*{donToiThieu}"
                                     placeholder="0 = không yêu cầu" />
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('donToiThieu')}" th:errors="*{donToiThieu}"></div>
                                 <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Chỉ áp dụng khi giá trị đơn đạt ngưỡng này.</small>
+                            </div>
+                            <div class="form__group">
+                                <label class="form__label">Giới hạn lượt dùng</label>
+                                <input class="form__input" th:classappend="${#fields.hasErrors('gioiHanLuotDung')} ? ' is-invalid'" type="number" min="1" th:field="*{gioiHanLuotDung}"
+                                    placeholder="Để trống = không giới hạn" />
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('gioiHanLuotDung')}" th:errors="*{gioiHanLuotDung}"></div>
+                                <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Số lần khuyến mãi được phép sử dụng tối đa.</small>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Ngày bắt đầu</label>
@@ -146,6 +156,7 @@
                 <div class="form-card__header">
                     <span class="form-card__title">Thêm khuyến mãi</span>
                     <button type="button" class="form-card__toggle form-card__toggle--open" id="formKhuyenMaiOpenBtn"
+                        th:attr="data-reset-url=@{/admin/khuyen-mai(page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, fromDate=${fromDate != null ? fromDate : ''}, toDate=${toDate != null ? toDate : ''}, phamViApDung=${filterPhamViApDung != null ? filterPhamViApDung : ''})}"
                         title="Mở form" aria-label="Mở form">+</button>
                 </div>
             </div>
@@ -222,7 +233,7 @@
                             <th:block
                                 th:if="${item.giaTriGiam != null && (item.loaiGiam == 'PHAN_TRAM' || item.loaiGiam == 'PERCENT')}">
                                 <span
-                                    th:text="${#numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 0, 'COMMA') + ' %'}">0
+                                    th:text="${#numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 1, 'COMMA') + ' %'}">0
                                     %</span>
                             </th:block>
                             <th:block
@@ -320,27 +331,60 @@
                 var giamToiDaInput = document.getElementById('giamToiDaInput');
                 var hintGiaTri = document.getElementById('hintGiaTriGiam');
                 var giaTriInput = document.getElementById('giaTriGiamInput');
+                function getLoaiGiamCanon() {
+                    var raw = loai ? loai.value : '';
+                    var canon = String(raw || '').trim().toUpperCase();
+                    return canon === 'PERCENT' ? 'PHAN_TRAM' : ((canon === 'FIXED' || canon === 'TIEN_MAT') ? 'TIEN' : canon);
+                }
+                function normalizePercentInput() {
+                    if (!giaTriInput || getLoaiGiamCanon() !== 'PHAN_TRAM') return;
+                    var raw = giaTriInput.value;
+                    if (raw === null || raw === undefined || raw === '') return;
+                    var n = Number(raw);
+                    if (!Number.isFinite(n)) return;
+                    var rounded = Math.round(n * 10) / 10;
+                    giaTriInput.value = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+                }
                 function syncLoaiGiamUi() {
-                    var v = loai ? loai.value : '';
+                    var v = getLoaiGiamCanon();
                     if (v === 'PHAN_TRAM') {
                         if (giamToiDaGroup) giamToiDaGroup.style.display = '';
+                        if (giamToiDaInput) giamToiDaInput.disabled = false;
                         if (hintGiaTri) hintGiaTri.textContent = 'Nhập phần trăm (vd. 15 = giảm 15%). Tối đa 100%.';
                         if (giaTriInput) giaTriInput.setAttribute('max', '100');
                     } else if (v === 'TIEN') {
                         if (giamToiDaGroup) giamToiDaGroup.style.display = 'none';
-                        if (giamToiDaInput) giamToiDaInput.value = '';
+                        if (giamToiDaInput) {
+                            giamToiDaInput.value = '';
+                            giamToiDaInput.disabled = true;
+                        }
                         if (hintGiaTri) hintGiaTri.textContent = 'Nhập số tiền trừ trực tiếp khỏi giá niêm yết (VNĐ).';
                         if (giaTriInput) giaTriInput.removeAttribute('max');
                     } else {
                         if (giamToiDaGroup) giamToiDaGroup.style.display = '';
+                        if (giamToiDaInput) giamToiDaInput.disabled = false;
                         if (hintGiaTri) hintGiaTri.textContent = 'Chọn loại giảm để hiển thị đúng đơn vị.';
                         if (giaTriInput) giaTriInput.removeAttribute('max');
                     }
                 }
                 if (loai) {
-                    loai.addEventListener('change', syncLoaiGiamUi);
+                    loai.addEventListener('change', function () {
+                        syncLoaiGiamUi();
+                        normalizePercentInput();
+                    });
                     syncLoaiGiamUi();
+                    normalizePercentInput();
                 }
+                if (giaTriInput) {
+                    giaTriInput.addEventListener('blur', normalizePercentInput);
+                }
+                form.querySelectorAll('.form__input.is-invalid, .form__textarea.is-invalid, .form__select.is-invalid').forEach(function (el) {
+                    var clearInvalid = function () {
+                        el.classList.remove('is-invalid');
+                    };
+                    el.addEventListener('input', clearInvalid);
+                    el.addEventListener('change', clearInvalid);
+                });
                 var ngayBatDau = document.getElementById('ngayBatDau');
                 var ngayKetThuc = document.getElementById('ngayKetThuc');
                 if (!ngayBatDau || !ngayKetThuc) return;

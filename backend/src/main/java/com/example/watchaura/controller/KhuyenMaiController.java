@@ -119,7 +119,7 @@ public class KhuyenMaiController {
     private KhuyenMai toEntity(KhuyenMaiRequest req) {
         KhuyenMai km = new KhuyenMai();
         km.setId(req.getId());
-        km.setMaKhuyenMai(req.getMaKhuyenMai());
+        km.setMaKhuyenMai(req.getMaKhuyenMai() != null ? req.getMaKhuyenMai().trim() : null);
         km.setTenChuongTrinh(req.getTenChuongTrinh());
         km.setMoTa(req.getMoTa());
         km.setDanhMucApDung(req.getDanhMucApDung());
@@ -213,6 +213,10 @@ public class KhuyenMaiController {
         KhuyenMai.PhamViApDung filterPhamVi = parsePhamViApDung(phamViApDung);
         Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
 
+        if (khuyenMai.getMaKhuyenMai() != null) {
+            khuyenMai.setMaKhuyenMai(khuyenMai.getMaKhuyenMai().trim());
+        }
+
         khuyenMaiValidator.validate(khuyenMai, result);
         if (khuyenMai.getMaKhuyenMai() != null && !khuyenMai.getMaKhuyenMai().isBlank()
                 && khuyenMaiService.existsByMaKhuyenMai(khuyenMai.getMaKhuyenMai())) {
@@ -268,6 +272,10 @@ public class KhuyenMaiController {
         LocalDate toDateParsed = parseLocalDateOrNull(toDate);
         KhuyenMai.PhamViApDung filterPhamVi = parsePhamViApDung(phamViApDung);
         Boolean filterTrangThaiBool = parseTrangThai(filterTrangThai);
+
+        if (khuyenMai.getMaKhuyenMai() != null) {
+            khuyenMai.setMaKhuyenMai(khuyenMai.getMaKhuyenMai().trim());
+        }
 
         khuyenMaiValidator.validate(khuyenMai, result);
         if (khuyenMai.getMaKhuyenMai() != null && !khuyenMai.getMaKhuyenMai().isBlank()
@@ -339,12 +347,12 @@ public class KhuyenMaiController {
             fillListModel(model, pageResult, q, trangThai, fromDateParsed, toDateParsed, phamViApDung);
             model.addAttribute("khuyenMai", new KhuyenMaiRequest());
             model.addAttribute("formAction", "/admin/khuyen-mai");
-            model.addAttribute("message", "Xóa khuyến mãi thành công.");
+            model.addAttribute("message", "Đã ngừng kích hoạt khuyến mãi.");
             attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
 
-        redirect.addFlashAttribute("message", "Xóa khuyến mãi thành công.");
+        redirect.addFlashAttribute("message", "Đã ngừng kích hoạt khuyến mãi.");
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);

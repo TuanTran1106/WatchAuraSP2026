@@ -255,6 +255,8 @@
       toastPayload &&
       (toastPayload.getAttribute('data-admin-toast-type') || 'success') === 'success';
     drainAdminToastPayload(adminContent);
+    window.dispatchEvent(new CustomEvent('admin:content-replaced', { detail: { html: html } }));
+    document.dispatchEvent(new CustomEvent('dashboard:mount'));
 
     // Form "them" bi thu (is-collapsed) khi id null — neu co loi validation, can mo de thay .form__error.
     // Sau luu thanh cong (toast success), mo de tiep tuc nhap. Khong mo khi chi tim kiem GET (khong toast, khong loi).
@@ -444,6 +446,18 @@
       return;
     }
     if (t.closest('#formKhuyenMaiOpenBtn')) {
+      var kmOpenBtn = t.closest('#formKhuyenMaiOpenBtn');
+      var resetUrlRaw = kmOpenBtn ? kmOpenBtn.getAttribute('data-reset-url') : null;
+      var resetUrl = resetUrlRaw ? String(resetUrlRaw).trim() : '';
+      if (resetUrl) {
+        Promise.resolve(loadAdminContent(resetUrl, { method: 'GET' })).then(function () {
+          var kmW3 = adminContent.querySelector('#formKhuyenMaiWrapper');
+          var kmBar3 = adminContent.querySelector('#formKhuyenMaiOpenBar');
+          if (kmW3) kmW3.classList.remove('is-collapsed');
+          if (kmBar3) kmBar3.setAttribute('aria-hidden', 'true');
+        });
+        return;
+      }
       var kmW2 = adminContent.querySelector('#formKhuyenMaiWrapper');
       var kmBar2 = adminContent.querySelector('#formKhuyenMaiOpenBar');
       if (kmW2) kmW2.classList.remove('is-collapsed');

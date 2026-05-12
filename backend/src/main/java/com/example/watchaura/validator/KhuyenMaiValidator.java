@@ -28,8 +28,19 @@ public class KhuyenMaiValidator implements Validator {
 
         if ("PHAN_TRAM".equals(loaiCanon) && req.getGiaTriGiam() != null) {
             BigDecimal value = req.getGiaTriGiam();
-            if (value.compareTo(BigDecimal.ZERO) < 0 || value.compareTo(BigDecimal.valueOf(100)) > 0) {
-                errors.rejectValue("giaTriGiam", "range", "Giảm theo % phải nằm trong khoảng từ 0 đến 100.");
+            if (value.compareTo(BigDecimal.ZERO) <= 0 || value.compareTo(BigDecimal.valueOf(100)) > 0) {
+                errors.rejectValue("giaTriGiam", "range", "Giảm theo % phải lớn hơn 0 và không quá 100%.");
+            }
+        }
+
+        if ("TIEN".equals(loaiCanon) && req.getGiaTriGiam() != null) {
+            if (req.getGiaTriGiam().compareTo(BigDecimal.ZERO) <= 0) {
+                errors.rejectValue("giaTriGiam", "range", "Giảm theo tiền phải lớn hơn 0.");
+            }
+            if (req.getDonToiThieu() != null
+                    && req.getDonToiThieu().compareTo(BigDecimal.ZERO) > 0
+                    && req.getGiaTriGiam().compareTo(req.getDonToiThieu()) >= 0) {
+                errors.rejectValue("giaTriGiam", "range", "Giảm tiền phải nhỏ hơn đơn tối thiểu.");
             }
         }
 
