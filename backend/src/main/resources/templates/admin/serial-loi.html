@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Serial Lỗi - WatchAura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/admin/admin.css">
+    <link rel="stylesheet" href="/css/serial-loi.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" th:if="${laQuanLy || laNhanVien}">
+            <div class="sidebar__brand">
+                <span class="sidebar__logo">WA</span>
+                <span class="sidebar__title" th:text="${laQuanLy} ? 'WatchAura Admin' : 'WatchAura Staff'">WatchAura Admin</span>
+            </div>
+            <nav class="sidebar__nav" id="adminSidebarNav">
+                <a th:href="@{/admin}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+                <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
+                <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách hàng</span></a>
+                <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
+                <div class="sidebar__dropdown is-open" id="sidebarHoanTraDropdown">
+                    <button type="button" class="sidebar__dropdown-trigger" aria-expanded="true"
+                            aria-controls="sidebarHoanTraMenu" id="sidebarHoanTraTrigger">
+                        <i class="fas fa-rotate-left"></i>
+                        <span>Hoàn trả</span>
+                        <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                    </button>
+                    <div class="sidebar__dropdown-menu" id="sidebarHoanTraMenu" role="menu">
+                        <a th:href="@{/admin/hoan-tra}" class="sidebar__dropdown-link" role="menuitem"><i
+                                class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+                        <a th:href="@{/admin/serial-loi}" class="sidebar__dropdown-link sidebar__dropdown-link--current" role="menuitem"><i
+                                class="fas fa-exclamation-triangle"></i><span>Serial lỗi</span></a>
+                    </div>
+                </div>
+                <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
+                    <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
+                            aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
+                        <i class="fas fa-box-open"></i>
+                        <span>Sản phẩm</span>
+                        <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                    </button>
+                    <div class="sidebar__dropdown-menu" id="sidebarProductMenu" role="menu">
+                        <a th:href="@{/admin/san-pham}" class="sidebar__dropdown-link"><i class="fas fa-box"></i><span>Sản phẩm</span></a>
+                        <a th:href="@{/admin/danh-muc}" class="sidebar__dropdown-link"><i class="fas fa-folder"></i><span>Danh mục</span></a>
+                        <a th:href="@{/admin/thuong-hieu}" class="sidebar__dropdown-link"><i class="fas fa-building"></i><span>Thương hiệu</span></a>
+                        <a th:href="@{/admin/mau-sac}" class="sidebar__dropdown-link"><i class="fas fa-palette"></i><span>Màu sắc</span></a>
+                        <a th:href="@{/admin/kich-thuoc}" class="sidebar__dropdown-link"><i class="fas fa-ruler-combined"></i><span>Kích thước</span></a>
+                        <a th:href="@{/admin/loai-may}" class="sidebar__dropdown-link"><i class="fas fa-cogs"></i><span>Loại máy</span></a>
+                        <a th:href="@{/admin/chat-lieu-day}" class="sidebar__dropdown-link"><i class="fas fa-link"></i><span>Chất liệu dây</span></a>
+                    </div>
+                </div>
+                <a th:href="@{/admin/khuyen-mai}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-percent"></i><span>Khuyến mãi</span></a>
+                <a th:href="@{/admin/voucher}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-ticket"></i><span>Voucher</span></a>
+                <a th:href="@{/admin/blog}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fas fa-newspaper"></i><span>Blog</span></a>
+                <a th:href="@{/admin/cai-dat}" class="sidebar__link" th:classappend="${laQuanLy} ? '' : 'hidden'"><i class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
+                <a href="#" class="sidebar__link sidebar__link--logout" th:unless="${laQuanLy}">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></a>
+            </nav>
+        </aside>
+        
+        <div class="main">
+            <header class="header">
+                <button class="header__menu-btn" id="sidebarToggle" type="button">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="header__title">Quản lý Serial Lỗi</h1>
+                <div class="header__user-info" th:if="${currentUser != null}">
+                    <span class="header__user-badge" th:classappend="${laQuanLy} ? 'badge--admin' : 'badge--staff'">
+                        <i th:class="${laQuanLy} ? 'fas fa-crown' : 'fas fa-user-shield'"></i>
+                        <span th:text="${laQuanLy} ? 'Admin' : 'Staff'">Vai trò</span>
+                    </span>
+                    <span class="header__user-name" th:text="${currentUser.tenNguoiDung}">Tên NV</span>
+                </div>
+            </header>
+            
+            <main class="content">
+                <div class="sl-page">
+                    <!-- Header -->
+                    <div class="sl-page-header">
+                        <div class="sl-page-header__left">
+<!--                            <a href="/admin/hoan-tra" class="sl-page-header__back" title="Quay lại Hoàn trả">-->
+<!--                                <i class="fas fa-arrow-left"></i>-->
+<!--                            </a>-->
+                            <div class="sl-page-header__info">
+                                <h1><i class="fas fa-exclamation-triangle"></i> Danh sách Serial Lỗi</h1>
+                                <p>Quản lý các serial không thể lưu vào kho khi hoàn tiền</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="sl-filters">
+                        <div class="sl-search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm serial, sản phẩm..." onkeyup="handleSearch(event)">
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="sl-table-container">
+                        <table class="sl-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Mã Serial</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Mã hoàn trả</th>
+                                    <th>Lý do</th>
+                                    <th>Ngày thêm vào</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Data loaded via JS -->
+                            </tbody>
+                        </table>
+
+                        <div class="sl-empty" id="emptyState" style="display: none;">
+                            <div class="sl-empty__icon"><i class="fas fa-check-circle"></i></div>
+                            <h3 class="sl-empty__title">Không có serial lỗi nào</h3>
+                            <p class="sl-empty__text">Danh sách trống hoặc không tìm thấy kết quả phù hợp.</p>
+                        </div>
+
+                        <div class="sl-pagination" id="pagination"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="sl-toast" id="toast"></div>
+
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            initSidebarToggle();
+        });
+
+        function initSidebarToggle() {
+            const toggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('is-collapsed');
+                });
+            }
+        }
+
+        async function loadData() {
+            const keyword = document.getElementById('searchInput')?.value || '';
+
+            try {
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    size: pageSize,
+                    keyword: keyword
+                });
+
+                const res = await fetch('/api/serial-loi/paged?' + params);
+                if (!res.ok) throw new Error('Network error');
+                const result = await res.json();
+
+                renderTable(result.content);
+                renderPagination(result.totalPages, result.currentPage);
+            } catch (err) {
+                console.error('Error loading data:', err);
+                showToast('Không thể tải dữ liệu', 'error');
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            tbody.innerHTML = data.map((item, index) => {
+                const stt = currentPage * pageSize + index + 1;
+                const ngayTao = item.ngayTao ? formatDate(item.ngayTao) : '-';
+
+                return `
+                    <tr>
+                        <td>${stt}</td>
+                        <td><span class="sl-serial-code">${item.maSerial || '-'}</span></td>
+                        <td>${item.sanPhamTen || '-'}</td>
+                        <td>${item.maHoanTra || '-'}</td>
+                        <td>${item.lyDo || '-'}</td>
+                        <td>${ngayTao}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(totalPages, currentPageNum) {
+            const pagination = document.getElementById('pagination');
+            if (!pagination) return;
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <button ${currentPageNum === 0 ? 'disabled' : ''} onclick="goToPage(${currentPageNum - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+
+            for (let i = 0; i < totalPages; i++) {
+                if (i === 0 || i === totalPages - 1 || (i >= currentPageNum - 1 && i <= currentPageNum + 1)) {
+                    html += `<button class="${i === currentPageNum ? 'active' : ''}" onclick="goToPage(${i})">${i + 1}</button>`;
+                } else if (i === currentPageNum - 2 || i === currentPageNum + 2) {
+                    html += `<span style="padding: 0 0.5rem;">...</span>`;
+                }
+            }
+
+            html += `
+                <button ${currentPageNum === totalPages - 1 ? 'disabled' : ''} onclick="goToPage(${currentPageNum + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadData();
+        }
+
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                currentPage = 0;
+                loadData();
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = message;
+                toast.className = 'sl-toast sl-toast--' + type + ' show';
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        }
+    </script>
+</body>
+</html>

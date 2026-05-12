@@ -1317,27 +1317,13 @@
             }
 
             function buildSanPhamKmPayload() {
-                const enabled = document.getElementById('trangThaiKhuyenMaiSp').checked;
-                const loai = (document.getElementById('loaiKhuyenMaiSp').value || '').trim();
-                const giaRaw = document.getElementById('giaTriKhuyenMaiSp').value;
-                const ngayBd = document.getElementById('ngayBatDauKmSp').value;
-                const ngayKt = document.getElementById('ngayKetThucKmSp').value;
-                if (!enabled || !loai) {
-                    return {
-                        loaiKhuyenMai: null,
-                        giaTriKhuyenMai: null,
-                        ngayBatDauKhuyenMai: null,
-                        ngayKetThucKhuyenMai: null,
-                        trangThaiKhuyenMai: false
-                    };
-                }
-                const giaTri = giaRaw !== '' && !isNaN(parseFloat(giaRaw)) ? parseFloat(giaRaw) : null;
+                // Khuyến mãi sản phẩm đang bị ẩn (commented out)
                 return {
-                    loaiKhuyenMai: loai,
-                    giaTriKhuyenMai: giaTri,
-                    ngayBatDauKhuyenMai: ngayBd ? ngayBd : null,
-                    ngayKetThucKhuyenMai: ngayKt ? ngayKt : null,
-                    trangThaiKhuyenMai: true
+                    loaiKhuyenMai: null,
+                    giaTriKhuyenMai: null,
+                    ngayBatDauKhuyenMai: null,
+                    ngayKetThucKhuyenMai: null,
+                    trangThaiKhuyenMai: false
                 };
             }
 
@@ -1499,11 +1485,6 @@
                 document.querySelector('input[name="trangThai"][value="true"]').checked = true;
                 document.getElementById('variantContainer').innerHTML = '';
                 document.getElementById('maSanPhamError').style.display = 'none';
-                document.getElementById('trangThaiKhuyenMaiSp').checked = false;
-                document.getElementById('loaiKhuyenMaiSp').value = '';
-                document.getElementById('giaTriKhuyenMaiSp').value = '';
-                document.getElementById('ngayBatDauKmSp').value = '';
-                document.getElementById('ngayKetThucKmSp').value = '';
                 deletedVariantIds.clear(); // Reset danh sách variant đã xóa
                 addVariantRow(); // Thêm 1 dòng biến thể mặc định
             }
@@ -2519,13 +2500,6 @@
                         radio.checked = radio.value === product.trangThai.toString();
                     });
 
-                    document.getElementById('trangThaiKhuyenMaiSp').checked = !!product.trangThaiKhuyenMai;
-                    document.getElementById('loaiKhuyenMaiSp').value = product.loaiKhuyenMai || '';
-                    document.getElementById('giaTriKhuyenMaiSp').value =
-                        product.giaTriKhuyenMai != null && product.giaTriKhuyenMai !== '' ? product.giaTriKhuyenMai : '';
-                    document.getElementById('ngayBatDauKmSp').value = toDatetimeLocal(product.ngayBatDauKhuyenMai);
-                    document.getElementById('ngayKetThucKmSp').value = toDatetimeLocal(product.ngayKetThucKhuyenMai);
-
                     // Load các biến thể của sản phẩm
                     const variantResponse = await fetch(`${API_URL}/san-pham-chi-tiet/san-pham/${id}`);
                     const variants = await variantResponse.json();
@@ -2848,7 +2822,6 @@
                     const beRongDay = row.querySelector('.variant-beRongDay').value.trim();
                     const trongLuong = row.querySelector('.variant-trongLuong').value.trim();
                     if (isNaN(giaBan) || giaBan < 0) return `Biến thể ${i + 1}: ${labels.giaBan} phải là số không âm.`;
-                    if (isNaN(soLuongTon) || soLuongTon < 0) return `Biến thể ${i + 1}: ${labels.soLuongTon} phải là số nguyên không âm.`;
                     if (duongKinh !== '' && (isNaN(parseFloat(duongKinh)) || parseFloat(duongKinh) < 0)) return `Biến thể ${i + 1}: ${labels.duongKinh} phải không âm.`;
                     if (doChiuNuoc !== '' && (isNaN(parseInt(doChiuNuoc, 10)) || parseInt(doChiuNuoc, 10) < 0)) return `Biến thể ${i + 1}: ${labels.doChiuNuoc} phải không âm.`;
                     if (beRongDay !== '' && (isNaN(parseFloat(beRongDay)) || parseFloat(beRongDay) < 0)) return `Biến thể ${i + 1}: ${labels.beRongDay} phải không âm.`;

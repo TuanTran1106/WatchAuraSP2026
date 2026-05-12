@@ -10,7 +10,9 @@ import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonRequest;
 import com.example.watchaura.dto.ShippingFeeRequest;
 import com.example.watchaura.dto.ShippingFeeResponse;
+import com.example.watchaura.entity.HoaDon;
 import com.example.watchaura.entity.KhachHang;
+import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.service.GioHangChiTietService;
 import com.example.watchaura.service.GioHangService;
 import com.example.watchaura.service.HoaDonService;
@@ -54,6 +56,7 @@ public class UserCheckoutController {
     private final GioHangService gioHangService;
     private final GioHangChiTietService gioHangChiTietService;
     private final HoaDonService hoaDonService;
+    private final HoaDonRepository hoaDonRepository;
     private final KhachHangService khachHangService;
     private final VNPayService vnPayService;
     private final VoucherService voucherService;
@@ -514,12 +517,14 @@ public class UserCheckoutController {
         }
 
         try {
-            HoaDonDTO hoaDon = hoaDonService.getByMaDonHang(vnpTxnRef);
+            HoaDonDTO hoaDonDTO = hoaDonService.getByMaDonHang(vnpTxnRef);
             Integer userId = (Integer) session.getAttribute("pendingVnPayUserId");
             Integer pendingCartId = (Integer) session.getAttribute("pendingVnPayCartId");
 
             if (vnPayService.verifyReturn(request)) {
-                hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "DA_THANH_TOAN_ONL");
+                // Trạng thái thanh toán đã được set khi tạo đơn (DA_THANH_TOAN)
+                // Trạng thái đơn hàng giữ nguyên là CHO_XAC_NHAN để admin xử lý
+
                 if (pendingCartId != null && userId != null) {
                     GioHangDTO cart = gioHangService.getOrCreateCart(userId);
                     if (cart.getId().equals(pendingCartId)) {
@@ -529,11 +534,11 @@ public class UserCheckoutController {
                     session.removeAttribute("pendingVnPayUserId");
                 }
                 // Redirect sang trang thành công với mã đơn hàng
-                return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDon.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
+                return "redirect:/thanh-toan/thanh-cong?maDonHang=" + java.net.URLEncoder.encode(hoaDonDTO.getMaDonHang(), java.nio.charset.StandardCharsets.UTF_8);
             }
 
-            // Thanh toán thất bại
-            hoaDonService.updateTrangThaiDonHang(hoaDon.getId(), "DA_HUY");
+            // Thanh toán thất bại - hủy đơn hàng
+            hoaDonService.updateTrangThaiDonHang(hoaDonDTO.getId(), "DA_HUY");
             session.removeAttribute("pendingVnPayCartId");
             session.removeAttribute("pendingVnPayUserId");
 

@@ -157,7 +157,8 @@ public class GuestOrderServiceImpl implements GuestOrderService {
             hoaDon.setTienGiam(BigDecimal.ZERO);
             hoaDon.setPhiVanChuyen(shippingFee);
             hoaDon.setTongTienThanhToan(total);
-            hoaDon.setTrangThaiDonHang("CHO_THANH_TOAN");
+            hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
+            hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
             hoaDon.setPhuongThucThanhToan("VNPAY");
             hoaDon.setLoaiHoaDon("ONLINE");
             hoaDon.setNgayDat(LocalDateTime.now());
@@ -231,18 +232,39 @@ public class GuestOrderServiceImpl implements GuestOrderService {
             if (vnPayService.verifyReturn(request)) {
                 log.info("[VNPAY] handleVnPayReturn: Payment SUCCESS for maDonHang={}", vnpTxnRef);
 
-                // Trừ tồn kho cho từng sản phẩm trong đơn
-                hoaDon.getChiTietList().forEach(ct -> {
-                    int updated = sanPhamChiTietRepository.deductStock(ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
-                    if (updated > 0) {
-                        log.info("[VNPAY] Trừ tồn kho thành công: spctId={}, soLuong={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
-                    } else {
-                        log.warn("[VNPAY] Trừ tồn kho thất bại (không đủ hàng): spctId={}, soLuong={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
-                    }
-                });
+                // Atomic check tồn kho: trừ tồn kho cho từng sản phẩm
+                // Nếu bất kỳ sản phẩm nào không đủ -> rollback tất cả và chuyển sang CAN_XU_LY
+                List<HoaDonChiTiet> chiTietList = hoaDon.getChiTietList();
+                StringBuilder loiTonKho = new StringBuilder();
 
-                hoaDon.setTrangThaiDonHang("DA_THANH_TOAN_ONL");
-                hoaDonRepository.save(hoaDon);
+                for (HoaDonChiTiet ct : chiTietList) {
+                    int result = sanPhamChiTietRepository.deductStock(ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
+                    if (result == 0) {
+                        // Rollback các sản phẩm đã trừ ở trên
+                        for (HoaDonChiTiet previous : chiTietList) {
+                            if (previous.equals(ct)) break;
+                            sanPhamChiTietRepository.restoreStock(previous.getSanPhamChiTiet().getId(), previous.getSoLuong());
+                        }
+
+                        // Lấy thông tin sản phẩm để ghi log
+                        SanPhamChiTiet sp = sanPhamChiTietRepository.findById(ct.getSanPhamChiTiet().getId()).orElse(null);
+                        String tenSp = sp != null && sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + ct.getSanPhamChiTiet().getId();
+                        Integer soLuongTon = sp != null && sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
+                        loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ", tenSp, ct.getSoLuong(), soLuongTon));
+                        log.warn("[VNPAY] Trừ tồn kho thất bại: spctId={}, soLuong={}, soLuongTon={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong(), soLuongTon);
+                        break;
+                    } else {
+                        log.info("[VNPAY] Trừ tồn kho thành công: spctId={}, soLuong={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
+                    }
+                }
+
+                // Nếu có lỗi tồn kho -> chuyển sang CAN_XU_LY
+                if (loiTonKho.length() > 0) {
+                    hoaDon.setGhiChu("Không đủ tồn kho: " + loiTonKho.toString());
+                    hoaDon.setTrangThaiDonHang("CAN_XU_LY");
+                    hoaDonRepository.save(hoaDon);
+                    log.warn("[VNPAY] Don hang {} chuyen sang CAN_XU_LY vi khong du ton kho: {}", vnpTxnRef, loiTonKho);
+                }
 
                 // Gửi email xác nhận
                 try {

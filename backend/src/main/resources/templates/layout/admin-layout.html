@@ -29,7 +29,20 @@
             <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách
                         hàng</span></a>
             <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
-            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+            <div class="sidebar__dropdown" id="sidebarHoanTraDropdown">
+                <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
+                        aria-controls="sidebarHoanTraMenu" id="sidebarHoanTraTrigger">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Hoàn trả</span>
+                    <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                </button>
+                <div class="sidebar__dropdown-menu" id="sidebarHoanTraMenu" role="menu">
+                    <a th:href="@{/admin/hoan-tra}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+                    <a th:href="@{/admin/serial-loi}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-exclamation-triangle"></i><span>Serial lỗi</span></a>
+                </div>
+            </div>
             <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
                         aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
@@ -104,9 +117,12 @@
         var link = document.querySelector('.sidebar-link-banhang');
         if (link) link.classList.add('sidebar__link--current');
     }
-    if (path && path.indexOf('/hoan-tra') === 0) {
-        var link = document.querySelector('.sidebar-link-hoantra');
-        if (link) link.classList.add('sidebar__link--current');
+    // HoanTra dropdown - mở dropdown nếu đang ở trang hoan-tra hoặc serial-loi
+    if (path && (path.indexOf('/hoan-tra') === 0 || path.indexOf('/serial-loi') === 0)) {
+        var hoanTraDropdown = document.getElementById('sidebarHoanTraDropdown');
+        var hoanTraTrigger = document.getElementById('sidebarHoanTraTrigger');
+        if (hoanTraDropdown) hoanTraDropdown.classList.add('is-open');
+        if (hoanTraTrigger) hoanTraTrigger.setAttribute('aria-expanded', 'true');
     }
 })();
 
@@ -117,7 +133,7 @@ function confirmLogout() {
             message: 'Bạn có chắc chắn muốn đăng xuất không?',
             confirmText: 'Đăng xuất',
             cancelText: 'Hủy',
-            tone: 'warning'
+            tone: 'logout'
         }).then(function(ok) {
             if (ok) window.location.href = '/nhan-vien/login';
         });

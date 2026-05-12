@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/admin/admin.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/hoan-tra-admin.css">
+    <script src="/js/confirm-modal.js"></script>
 </head>
 <body>
 <div class="admin-layout" id="hoanTraAdminLayout">
@@ -22,7 +23,20 @@
             <a th:href="@{/ban-hang}" class="sidebar__link sidebar-link-banhang"><i class="fas fa-basket-shopping"></i><span>Bán hàng tại quầy</span></a>
             <a th:href="@{/admin/khach-hang}" class="sidebar__link"><i class="fas fa-users"></i><span>Khách hàng</span></a>
             <a th:href="@{/admin/hoa-don}" class="sidebar__link"><i class="fas fa-file-invoice-dollar"></i><span>Hóa đơn</span></a>
-            <a th:href="@{/admin/hoan-tra}" class="sidebar__link sidebar-link-hoantra sidebar__link--current"><i class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+            <div class="sidebar__dropdown is-open" id="sidebarHoanTraDropdown">
+                <button type="button" class="sidebar__dropdown-trigger" aria-expanded="true"
+                        aria-controls="sidebarHoanTraMenu" id="sidebarHoanTraTrigger">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Hoàn trả</span>
+                    <i class="fas fa-chevron-down sidebar__dropdown-arrow"></i>
+                </button>
+                <div class="sidebar__dropdown-menu" id="sidebarHoanTraMenu" role="menu">
+                    <a th:href="@{/admin/hoan-tra}" class="sidebar__dropdown-link sidebar__dropdown-link--current" role="menuitem"><i
+                            class="fas fa-rotate-left"></i><span>Hoàn trả</span></a>
+                    <a th:href="@{/admin/serial-loi}" class="sidebar__dropdown-link" role="menuitem"><i
+                            class="fas fa-exclamation-triangle"></i><span>Serial lỗi</span></a>
+                </div>
+            </div>
             <div class="sidebar__dropdown" id="sidebarProductDropdown" th:classappend="${laQuanLy} ? '' : 'hidden'">
                 <button type="button" class="sidebar__dropdown-trigger" aria-expanded="false"
                         aria-controls="sidebarProductMenu" id="sidebarProductTrigger">
@@ -196,8 +210,6 @@
                                     <option value="DA_XU_LY">Đã xử lý</option>
                                     <option value="TU_CHOI">Từ chối</option>
                                 </optgroup>
-                                <optgroup label="Đổi hàng">
-                                                                    </optgroup>
                             </select>
                             <select id="loaiHoanTraFilter" class="ht-select">
                                 <option value="">Tất cả loại</option>
@@ -290,18 +302,46 @@
                     </div>
                 </div>
 
-                <!-- Confirm Modal -->
+                <!-- Enhanced Confirm Modal -->
                 <div class="ht-modal-overlay" id="confirmModal">
-                    <div class="ht-modal ht-modal--confirm">
-                        <div class="ht-modal__header">
-                            <h3 class="ht-modal__title" id="confirmTitle"><i class="fas fa-question-circle"></i> Xác nhận</h3>
+                    <div class="ht-modal ht-modal--confirm ht-confirm-modal">
+                        <div class="ht-confirm-modal__header" id="confirmHeader">
+                            <div class="ht-confirm-modal__icon-wrap" id="confirmIconWrap">
+                                <i class="fas fa-question-circle" id="confirmIcon"></i>
+                            </div>
+                            <h3 class="ht-confirm-modal__title" id="confirmTitle">Xác nhận</h3>
+                            <p class="ht-confirm-modal__subtitle" id="confirmSubtitle"></p>
                         </div>
-                        <div class="ht-modal__body">
-                            <p id="confirmMessage">Bạn có chắc chắn muốn thực hiện?</p>
+                        <div class="ht-confirm-modal__body">
+                            <div class="ht-confirm-modal__info" id="confirmInfo">
+                                <div class="ht-confirm-info-item">
+                                    <span class="ht-confirm-info-item__label">Mã hoàn trả:</span>
+                                    <span class="ht-confirm-info-item__value" id="confirmMaHoanTra">-</span>
+                                </div>
+                                <div class="ht-confirm-info-item">
+                                    <span class="ht-confirm-info-item__label">Trạng thái hiện tại:</span>
+                                    <span class="ht-confirm-info-item__value" id="confirmTrangThaiCu">-</span>
+                                </div>
+                                <div class="ht-confirm-info-item">
+                                    <span class="ht-confirm-info-item__label">Chuyển sang:</span>
+                                    <span class="ht-confirm-info-item__value" id="confirmTrangThaiMoi">-</span>
+                                </div>
+                            </div>
+                            <p class="ht-confirm-modal__message" id="confirmMessage">Bạn có chắc chắn muốn thực hiện?</p>
+                            <div class="ht-confirm-modal__warning" id="confirmWarning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span id="confirmWarningText"></span>
+                            </div>
                         </div>
-                        <div class="ht-modal__footer">
-                            <button class="ht-btn ht-btn--secondary" onclick="closeConfirmModal()"><i class="fas fa-times"></i> Hủy</button>
-                            <button class="ht-btn ht-btn--primary" id="confirmAction"><i class="fas fa-check"></i> Xác nhận</button>
+                        <div class="ht-confirm-modal__footer">
+                            <button class="ht-confirm-modal__btn ht-confirm-modal__btn--cancel" onclick="closeConfirmModal()">
+                                <i class="fas fa-times"></i>
+                                <span>Hủy bỏ</span>
+                            </button>
+                            <button class="ht-confirm-modal__btn ht-confirm-modal__btn--confirm" id="confirmAction">
+                                <i class="fas fa-check" id="confirmActionIcon"></i>
+                                <span id="confirmActionText">Xác nhận</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -507,18 +547,6 @@ function renderTable(items, page) {
         const loaiBadge = '<span class="ht-loai-badge ht-loai-badge--tra">Trả hàng</span>';
 
         let actionButtons = '<a href="/admin/hoan-tra/chi-tiet/' + item.id + '" class="ht-action-btn ht-action-btn--view" title="Xem chi tiết"><i class="fas fa-eye"></i></a>';
-
-        // === TRA_HANG workflow buttons ===
-        if (item.trangThai === 'CHO_XU_LY') {
-            actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-trangthai="DUYET" onclick="xuLyHoanTraByData(this)" title="Duyệt đơn"><i class="fas fa-check"></i></button>';
-            actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
-        } else if (item.trangThai === 'DA_DUYET') {
-            actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="nhanHangByData(this)" title="Xác nhận nhận hàng"><i class="fas fa-truck"></i></button>';
-            actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
-        } else if (item.trangThai === 'DA_NHAN_HANG') {
-            actionButtons += '<button class="ht-action-btn ht-action-btn--approve" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" data-trangthai="HOAN_TIEN" onclick="xuLyHoanTraByData(this)" title="Hoàn tiền"><i class="fas fa-coins"></i></button>';
-            actionButtons += '<button class="ht-action-btn ht-action-btn--reject" data-id="' + item.id + '" data-ma="' + item.maHoanTra + '" onclick="tuChoiHoanTraByData(this)" title="Từ chối"><i class="fas fa-ban"></i></button>';
-        }
         actionButtons += '<button class="ht-action-btn ht-action-btn--print" data-id="' + item.id + '" onclick="printHoanTraByData(this)" title="In phiếu"><i class="fas fa-print"></i></button>';
 
         return '<tr data-id="' + item.id + '">' +
@@ -678,9 +706,10 @@ function formatCurrencyFromDTO(item) {
         return formatCurrency(item.soTienHoanTra);
     }
 
-    // Tính tỷ lệ voucher giảm theo công thức từ trang detail
-    var tyLe = tongTienHoaDon > 0 ? totalMatHang / tongTienHoaDon : 0;
-    var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLe);
+    // Tính trực tiếp: (totalMatHang * voucherGiam) / tongTienHoaDon
+    var voucherGiamTheoTyLe = tongTienHoaDon > 0
+        ? Math.round((totalMatHang * voucherGiam) / tongTienHoaDon)
+        : 0;
 
     // Số tiền hoàn = tổng mặt hàng - voucher giảm theo tỷ lệ
     var soTienHoanTra = totalMatHang - voucherGiamTheoTyLe;
@@ -726,13 +755,9 @@ function showToast(message, type) {
 
 function showLoading() {
     const table = document.getElementById('hoanTraTable');
-    const tbody = document.getElementById('hoanTraTableBody');
     if (table) {
         table.style.opacity = '0.6';
         table.style.pointerEvents = 'none';
-    }
-    if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="9" class="ht-loading-cell"><div class="ht-loading-spinner"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</div></td></tr>';
     }
 }
 
@@ -856,22 +881,212 @@ function xuLyHoanTraByData(btn) {
     var id = btn.getAttribute('data-id');
     var maHoanTra = btn.getAttribute('data-ma');
     var trangThai = btn.getAttribute('data-trangthai');
-    xuLyHoanTra(id, maHoanTra, trangThai);
+    
+    // Phân biệt loại action dựa vào trạng thái hiện tại của hàng
+    // Có thể lấy từ data attribute hoặc suy luận từ UI
+    var currentStatus = btn.closest('tr').querySelector('.ht-status')?.textContent?.trim();
+    
+    if (trangThai === 'HOAN_TIEN') {
+        // Đang ở trạng thái DA_NHAN_HANG -> Hiển thị modal hoàn tiền
+        showHoanTienConfirmModal(id, maHoanTra);
+    } else {
+        // CHO_XU_LY -> Hiển thị modal duyệt
+        showDuyetConfirmModal(id, maHoanTra, trangThai);
+    }
 }
 
 function tuChoiHoanTraByData(btn) {
     var id = btn.getAttribute('data-id');
     var maHoanTra = btn.getAttribute('data-ma');
-    tuChoiHoanTra(id, maHoanTra);
+    showTuChoiConfirmModal(id, maHoanTra);
 }
 
 async function nhanHangByData(btn) {
     var id = btn.getAttribute('data-id');
     var maHoanTra = btn.getAttribute('data-ma');
+    showNhanHangConfirmModal(id, maHoanTra);
+}
 
+// ========== ENHANCED CONFIRM MODAL FUNCTIONS ==========
+
+// Map trạng thái sang text hiển thị
+var trangThaiTextMap = {
+    'CHO_XU_LY': 'Chờ xử lý',
+    'DA_DUYET': 'Đã duyệt',
+    'DA_NHAN_HANG': 'Đã nhận hàng',
+    'DA_HOAN_TIEN': 'Đã hoàn tiền',
+    'DA_XU_LY': 'Đã xử lý',
+    'TU_CHOI': 'Từ chối'
+};
+
+// Map trạng thái sang icon
+var trangThaiIconMap = {
+    'CHO_XU_LY': 'fa-clock',
+    'DA_DUYET': 'fa-check-circle',
+    'DA_NHAN_HANG': 'fa-truck',
+    'DA_HOAN_TIEN': 'fa-coins',
+    'DA_XU_LY': 'fa-check-double',
+    'TU_CHOI': 'fa-ban'
+};
+
+function showConfirmModal(config) {
+    var modal = document.getElementById('confirmModal');
+    var header = document.getElementById('confirmHeader');
+    var iconWrap = document.getElementById('confirmIconWrap');
+    var icon = document.getElementById('confirmIcon');
+    var title = document.getElementById('confirmTitle');
+    var subtitle = document.getElementById('confirmSubtitle');
+    var maHoanTra = document.getElementById('confirmMaHoanTra');
+    var trangThaiCu = document.getElementById('confirmTrangThaiCu');
+    var trangThaiMoi = document.getElementById('confirmTrangThaiMoi');
+    var message = document.getElementById('confirmMessage');
+    var warning = document.getElementById('confirmWarning');
+    var warningText = document.getElementById('confirmWarningText');
+    var actionBtn = document.getElementById('confirmAction');
+    var actionIcon = document.getElementById('confirmActionIcon');
+    var actionText = document.getElementById('confirmActionText');
+
+    // Set icon & colors based on type
+    var type = config.type || 'info';
+    var colors = {
+        'approve': { bg: '#d1fae5', color: '#059669', icon: 'fa-check-circle' },
+        'reject': { bg: '#fee2e2', color: '#dc2626', icon: 'fa-times-circle' },
+        'receive': { bg: '#dbeafe', color: '#2563eb', icon: 'fa-truck' },
+        'refund': { bg: '#fef3c7', color: '#d97706', icon: 'fa-coins' },
+        'info': { bg: '#e0f2fe', color: '#0284c7', icon: 'fa-info-circle' }
+    };
+    var colorSet = colors[type] || colors['info'];
+
+    // Header styling
+    header.style.background = 'linear-gradient(135deg, ' + colorSet.bg + ', ' + adjustColor(colorSet.bg, -10) + ')';
+    iconWrap.style.background = colorSet.color;
+    icon.className = 'fas ' + colorSet.icon;
+    title.textContent = config.title || 'Xác nhận';
+    subtitle.textContent = config.subtitle || '';
+
+    // Info items
+    maHoanTra.textContent = config.maHoanTra || '-';
+    trangThaiCu.textContent = trangThaiTextMap[config.trangThaiCu] || config.trangThaiCu || '-';
+    trangThaiMoi.textContent = trangThaiTextMap[config.trangThaiMoi] || config.trangThaiMoi || '-';
+
+    // Message & Warning
+    message.textContent = config.message || '';
+    if (config.warning) {
+        warning.style.display = 'flex';
+        warningText.textContent = config.warning;
+    } else {
+        warning.style.display = 'none';
+    }
+
+    // Action button
+    actionBtn.className = 'ht-confirm-modal__btn ht-confirm-modal__btn--confirm';
+    actionBtn.style.background = colorSet.color;
+    actionIcon.className = 'fas ' + (config.actionIcon || 'fa-check');
+    actionText.textContent = config.actionText || 'Xác nhận';
+    actionBtn.onclick = config.onConfirm;
+
+    modal.classList.add('active');
+}
+
+function adjustColor(hex, amount) {
+    // Simple color adjustment for gradient
+    return hex;
+}
+
+// Modal duyệt hoàn trả
+function showDuyetConfirmModal(id, maHoanTra, trangThai) {
+    showConfirmModal({
+        type: 'approve',
+        title: 'Duyệt hoàn trả',
+        subtitle: 'Xác nhận duyệt yêu cầu hoàn trả',
+        maHoanTra: maHoanTra,
+        trangThaiCu: 'CHO_XU_LY',
+        trangThaiMoi: 'DA_DUYET',
+        message: 'Bạn có chắc chắn muốn DUYỆT hoàn trả này? Sau khi duyệt, đơn hàng sẽ được chuyển sang trạng thái chờ nhận hàng hoàn.',
+        warning: 'Hành động này sẽ gửi thông báo cho khách hàng.',
+        actionText: 'Duyệt ngay',
+        actionIcon: 'fa-check',
+        onConfirm: function() { confirmDuyetHoanTra(id); }
+    });
+}
+
+// Modal nhận hàng
+function showNhanHangConfirmModal(id, maHoanTra) {
+    showConfirmModal({
+        type: 'receive',
+        title: 'Xác nhận nhận hàng',
+        subtitle: 'Hoàn tất bước nhận hàng hoàn trả',
+        maHoanTra: maHoanTra,
+        trangThaiCu: 'DA_DUYET',
+        trangThaiMoi: 'DA_NHAN_HANG',
+        message: 'Xác nhận đã nhận được hàng hoàn trả từ khách hàng?',
+        warning: 'Vui lòng kiểm tra kỹ sản phẩm trước khi xác nhận.',
+        actionText: 'Đã nhận hàng',
+        actionIcon: 'fa-truck',
+        onConfirm: function() { confirmNhanHang(id); }
+    });
+}
+
+// Modal hoàn tiền
+function showHoanTienConfirmModal(id, maHoanTra) {
+    showConfirmModal({
+        type: 'refund',
+        title: 'Hoàn tiền',
+        subtitle: 'Xác nhận hoàn tiền cho khách hàng',
+        maHoanTra: maHoanTra,
+        trangThaiCu: 'DA_NHAN_HANG',
+        trangThaiMoi: 'DA_HOAN_TIEN',
+        message: 'Xác nhận hoàn tiền cho khách hàng? Số tiền sẽ được chuyển về tài khoản của khách.',
+        warning: 'Hành động này không thể hoàn tác.',
+        actionText: 'Hoàn tiền',
+        actionIcon: 'fa-coins',
+        onConfirm: function() { confirmHoanTien(id); }
+    });
+}
+
+// Modal từ chối
+function showTuChoiConfirmModal(id, maHoanTra) {
+    showConfirmModal({
+        type: 'reject',
+        title: 'Từ chối hoàn trả',
+        subtitle: 'Hủy yêu cầu hoàn trả',
+        maHoanTra: maHoanTra,
+        trangThaiCu: '',
+        trangThaiMoi: 'TU_CHOI',
+        message: 'Bạn có chắc chắn muốn TỪ CHỐI hoàn trả này?\nYêu cầu hoàn trả sẽ bị hủy và không thể khôi phục.',
+        warning: 'Khách hàng sẽ nhận được thông báo về việc từ chối.',
+        actionText: 'Từ chối',
+        actionIcon: 'fa-ban',
+        onConfirm: function() { confirmTuChoiHoanTra(id); }
+    });
+}
+
+// ========== CONFIRM ACTION FUNCTIONS ==========
+
+async function confirmDuyetHoanTra(id) {
     closeConfirmModal();
     showLoading();
+    try {
+        var response = await fetch('/api/hoan-tra/' + id + '/duyet?themVaoKho=false', {
+            method: 'POST'
+        });
+        var result = await response.json();
+        if (result.success) {
+            showToast('Duyệt hoàn trả thành công!', 'success');
+            updateRowAfterAction(id, 'DA_DUYET', 'Đã duyệt');
+        } else {
+            showToast(result.message || 'Có lỗi xảy ra', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi khi duyệt hoàn trả', 'error');
+    } finally {
+        hideLoading();
+    }
+}
 
+async function confirmNhanHang(id) {
+    closeConfirmModal();
+    showLoading();
     try {
         var response = await fetch('/api/hoan-tra/' + id + '/duyet?themVaoKho=false', {
             method: 'POST'
@@ -879,7 +1094,7 @@ async function nhanHangByData(btn) {
         var result = await response.json();
         if (result.success) {
             showToast('Xác nhận nhận hàng thành công!', 'success');
-            loadHoanTra(currentPage);
+            updateRowAfterAction(id, 'DA_NHAN_HANG', 'Đã nhận hàng');
         } else {
             showToast(result.message || 'Có lỗi xảy ra', 'error');
         }
@@ -890,51 +1105,25 @@ async function nhanHangByData(btn) {
     }
 }
 
-            
-        
-async function confirmXuLyHoanTra(id, isNhanHang) {
+async function confirmHoanTien(id) {
     closeConfirmModal();
     showLoading();
-
-    var themVaoKho = false;
-    if (isNhanHang) {
-        var radio = document.querySelector('input[name="themVaoKhoList"]:checked');
-        themVaoKho = radio && radio.value === 'true';
-    }
-
     try {
-        var response = await fetch('/api/hoan-tra/' + id + '/duyet?themVaoKho=' + themVaoKho, {
+        var response = await fetch('/api/hoan-tra/' + id + '/hoan-tien', {
             method: 'POST'
         });
         var result = await response.json();
         if (result.success) {
-            var message;
-            if (isNhanHang && themVaoKho) {
-                message = 'Xác nhận nhận hàng thành công! Sản phẩm đã được thêm vào kho và chuyển sang Đã hoàn tiền.';
-            } else if (isNhanHang) {
-                message = 'Xác nhận nhận hàng thành công! Sản phẩm không được thêm vào kho (Lỗi).';
-            } else {
-                message = 'Duyệt đơn thành công!';
-            }
-            showToast(message, 'success');
-            loadHoanTra(currentPage);
+            showToast('Hoàn tiền thành công!', 'success');
+            updateRowAfterAction(id, 'DA_HOAN_TIEN', 'Đã hoàn tiền');
         } else {
             showToast(result.message || 'Có lỗi xảy ra', 'error');
         }
     } catch (error) {
-        showToast('Lỗi khi xử lý hoàn trả', 'error');
+        showToast('Lỗi khi hoàn tiền', 'error');
     } finally {
         hideLoading();
     }
-}
-
-function tuChoiHoanTra(id, maHoanTra) {
-    document.getElementById('confirmTitle').innerHTML = '<i class="fas fa-times-circle" style="color: #dc2626;"></i> Từ chối hoàn trả';
-    document.getElementById('confirmMessage').innerHTML = 'Bạn có chắc chắn muốn từ chối hoàn trả <strong>"' + maHoanTra + '"</strong>?';
-    document.getElementById('confirmAction').className = 'ht-btn ht-btn--danger';
-    document.getElementById('confirmAction').innerHTML = '<i class="fas fa-times"></i> Từ chối';
-    document.getElementById('confirmAction').onclick = function() { confirmTuChoiHoanTra(id); };
-    document.getElementById('confirmModal').classList.add('active');
 }
 
 async function confirmTuChoiHoanTra(id) {
@@ -965,12 +1154,6 @@ function updateRowAfterAction(id, newStatus, statusText) {
     var statusCell = row.querySelector('.ht-table__td--status');
     if (statusCell) {
         statusCell.innerHTML = '<span class="ht-status ' + newStatus + '">' + statusText + '</span>';
-    }
-
-    var actionsCell = row.querySelector('.ht-action-group');
-    if (actionsCell) {
-        actionsCell.innerHTML = '<a href="/admin/hoan-tra/chi-tiet/' + id + '" class="ht-action-btn ht-action-btn--view" title="Xem chi tiết"><i class="fas fa-eye"></i></a>' +
-                               '<button class="ht-action-btn ht-action-btn--print" data-id="' + id + '" onclick="printHoanTraByData(this)" title="In phiếu"><i class="fas fa-print"></i></button>';
     }
 
     row.style.backgroundColor = '#f0fdf4';
@@ -1202,26 +1385,6 @@ document.getElementById('confirmModal').addEventListener('click', function(e) { 
     color: #1d4ed8;
 }
 
-/* Loading State */
-.ht-loading-cell {
-    text-align: center;
-    padding: 3rem 1rem !important;
-}
-
-.ht-loading-spinner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    color: #64748b;
-    font-size: 0.95rem;
-}
-
-.ht-loading-spinner i {
-    font-size: 1.5rem;
-    color: #3b82f6;
-}
-
 /* Animations */
 @keyframes slideDown {
     from {
@@ -1331,6 +1494,26 @@ document.getElementById('confirmModal').addEventListener('click', function(e) { 
     color: #64748b;
 }
 </style>
+
+<script>
+function confirmLogout() {
+    if (typeof window.confirmModal === 'function') {
+        window.confirmModal({
+            title: 'Đăng xuất',
+            message: 'Bạn có chắc chắn muốn đăng xuất không?',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Hủy',
+            tone: 'logout'
+        }).then(function(ok) {
+            if (ok) window.location.href = '/nhan-vien/login';
+        });
+    } else {
+        if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+            window.location.href = '/nhan-vien/login';
+        }
+    }
+}
+</script>
 
 </body>
 </html>

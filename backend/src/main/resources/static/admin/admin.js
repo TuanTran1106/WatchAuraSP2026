@@ -175,6 +175,29 @@
     });
   }
 
+  /* Sidebar dropdown: Hoàn trả - giữ mở khi đang ở trang con */
+  var hoanTraDropdown = document.getElementById('sidebarHoanTraDropdown');
+  var hoanTraTrigger = document.getElementById('sidebarHoanTraTrigger');
+  if (hoanTraTrigger && hoanTraDropdown) {
+    var hoanTraPaths = [
+      '/admin/hoan-tra',
+      '/admin/serial-loi'
+    ];
+    var pathname = window.location.pathname.replace(/\/$/, '');
+    var isHoanTraPage = hoanTraPaths.some(function (p) {
+      return pathname === p || pathname.indexOf(p + '/') === 0;
+    });
+    if (isHoanTraPage) {
+      hoanTraDropdown.classList.add('is-open');
+      hoanTraTrigger.setAttribute('aria-expanded', 'true');
+    }
+    hoanTraTrigger.addEventListener('click', function () {
+      hoanTraDropdown.classList.toggle('is-open');
+      var expanded = hoanTraDropdown.classList.contains('is-open');
+      hoanTraTrigger.setAttribute('aria-expanded', expanded);
+    });
+  }
+
   /* -------- Core AJAX loader cho admin -------- */
   var adminContent = document.getElementById('adminContent');
 

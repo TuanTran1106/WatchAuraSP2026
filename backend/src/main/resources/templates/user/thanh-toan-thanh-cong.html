@@ -524,11 +524,11 @@
                             </div>
                             </th:block>
                             <!-- Hiển thị giảm khuyến mãi -->
-                            <div class="order-summary__row" th:if="${hoaDon.tongTienGiamKhuyenMai != null and hoaDon.tongTienGiamKhuyenMai > 0}">
-                                <span class="order-summary__label">Giảm khuyến mãi</span>
-                                <span class="order-summary__value order-summary__value--discount"
-                                    th:text="'-' + ${#numbers.formatDecimal(hoaDon.tongTienGiamKhuyenMai, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</span>
-                            </div>
+<!--                            <div class="order-summary__row" th:if="${hoaDon.tongTienGiamKhuyenMai != null and hoaDon.tongTienGiamKhuyenMai > 0}">-->
+<!--                                <span class="order-summary__label">Giảm khuyến mãi</span>-->
+<!--                                <span class="order-summary__value order-summary__value&#45;&#45;discount"-->
+<!--                                    th:text="'-' + ${#numbers.formatDecimal(hoaDon.tongTienGiamKhuyenMai, 0, 'POINT', 0, 'NONE')} + ' đ'">0 đ</span>-->
+<!--                            </div>-->
                             <th:block th:if="${hoaDon.maVoucher != null and !hoaDon.maVoucher.isEmpty()}">
                                 <div class="order-summary__row">
                                     <span class="order-summary__label">Voucher (<span th:text="${hoaDon.maVoucher}"></span>)</span>

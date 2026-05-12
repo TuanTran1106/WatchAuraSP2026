@@ -5,6 +5,7 @@ import com.example.watchaura.dto.CartResponse;
 import com.example.watchaura.dto.HoaDonChiTietDTO;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.KhuyenMaiPriceResult;
+import com.example.watchaura.dto.PosSerialSelectionDTO;
 import com.example.watchaura.entity.*;
 import com.example.watchaura.repository.*;
 import com.example.watchaura.service.HoaDonService;
@@ -23,11 +24,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -59,6 +56,9 @@ public class BanHangTaiQuayController {
 
     @Autowired
     private KhuyenMaiService khuyenMaiService;
+
+    @Autowired
+    private SerialSanPhamRepository serialSanPhamRepository;
 
     private static String normalizeVoucherType(String raw) {
         if (raw == null) return null;
@@ -296,55 +296,103 @@ public class BanHangTaiQuayController {
 
         // Chưa có hóa đơn (id = 0) → trả về giỏ trống, không gọi DB
         if (hoaDonId == null || hoaDonId == 0) {
-            CartResponse res = new CartResponse();
-            res.setItems(List.of());
-            res.setTamTinh(BigDecimal.ZERO);
-            res.setGiamGia(BigDecimal.ZERO);
-            res.setTongThanhToan(BigDecimal.ZERO);
-            res.setTenKhachHang("");
-            res.setSdtKhachHang("");
-            return res;
+            return CartResponse.builder()
+                    .items(List.of())
+                    .tamTinh(BigDecimal.ZERO)
+                    .giamGia(BigDecimal.ZERO)
+                    .tongThanhToan(BigDecimal.ZERO)
+                    .tenKhachHang("")
+                    .sdtKhachHang("")
+                    .build();
         }
 
         Optional<HoaDon> hoaDonOpt = hoaDonRepository.findById(hoaDonId);
         if (hoaDonOpt.isEmpty()) {
-            CartResponse res = new CartResponse();
-            res.setItems(List.of());
-            res.setTamTinh(BigDecimal.ZERO);
-            res.setGiamGia(BigDecimal.ZERO);
-            res.setTongThanhToan(BigDecimal.ZERO);
-            res.setTenKhachHang("");
-            res.setSdtKhachHang("");
-            return res;
+            return CartResponse.builder()
+                    .items(List.of())
+                    .tamTinh(BigDecimal.ZERO)
+                    .giamGia(BigDecimal.ZERO)
+                    .tongThanhToan(BigDecimal.ZERO)
+                    .tenKhachHang("")
+                    .sdtKhachHang("")
+                    .build();
         }
         HoaDon hoaDon = hoaDonOpt.get();
-        // Đơn đã thanh toán / không còn ở trạng thái giỏ POS → không coi là giỏ hàng (tránh UI vẫn hiện sau thanh toán)
+        // Đơn đã thanh toán / không còn ở trạng thái giỏ POS → không coi là giỏ hàng
         String ts = hoaDon.getTrangThaiDonHang();
         if (!TRANG_THAI_GIO_QUAY.equals(ts) && !"CHO_THANH_TOAN".equals(ts)) {
-            CartResponse res = new CartResponse();
-            res.setItems(List.of());
-            res.setTamTinh(BigDecimal.ZERO);
-            res.setGiamGia(BigDecimal.ZERO);
-            res.setTongThanhToan(BigDecimal.ZERO);
-            res.setTenKhachHang("");
-            res.setSdtKhachHang("");
-            return res;
+            return CartResponse.builder()
+                    .items(List.of())
+                    .tamTinh(BigDecimal.ZERO)
+                    .giamGia(BigDecimal.ZERO)
+                    .tongThanhToan(BigDecimal.ZERO)
+                    .tenKhachHang("")
+                    .sdtKhachHang("")
+                    .build();
         }
 
-        List<HoaDonChiTiet> list =
-                hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDonId);
+        List<HoaDonChiTiet> list = hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDonId);
 
-        CartResponse res = new CartResponse();
+        // Convert sang DTO để tránh circular reference
+        List<CartResponse.CartItemResponse> itemDTOs = list.stream()
+                .map(ct -> {
+                    CartResponse.MauSacInfo mauSac = null;
+                    CartResponse.KichThuocInfo kichThuoc = null;
 
-        res.setItems(list);
-        res.setTamTinh(hoaDon.getTongTienTamTinh());
-        res.setGiamGia(hoaDon.getTienGiam());
-        res.setTongThanhToan(hoaDon.getTongTienThanhToan());
-        res.setTenKhachHang(hoaDon.getTenKhachHang() != null ? hoaDon.getTenKhachHang() : "");
-        res.setSdtKhachHang(hoaDon.getSdtKhachHang() != null ? hoaDon.getSdtKhachHang() : "");
-        res.setEmailKhachHang(hoaDon.getEmail() != null ? hoaDon.getEmail() : "");
+                    if (ct.getSanPhamChiTiet() != null) {
+                        if (ct.getSanPhamChiTiet().getMauSac() != null) {
+                            mauSac = CartResponse.MauSacInfo.builder()
+                                    .id(ct.getSanPhamChiTiet().getMauSac().getId())
+                                    .tenMauSac(ct.getSanPhamChiTiet().getMauSac().getTenMauSac())
+                                    .build();
+                        }
+                        if (ct.getSanPhamChiTiet().getKichThuoc() != null) {
+                            kichThuoc = CartResponse.KichThuocInfo.builder()
+                                    .id(ct.getSanPhamChiTiet().getKichThuoc().getId())
+                                    .tenKichThuoc(ct.getSanPhamChiTiet().getKichThuoc().getTenKichThuoc())
+                                    .build();
+                        }
+                    }
 
-        return res;
+                    return CartResponse.CartItemResponse.builder()
+                            .id(ct.getId())
+                            .soLuong(ct.getSoLuong())
+                            .donGia(ct.getDonGia())
+                            .tenSanPham(ct.getSanPhamChiTiet() != null && ct.getSanPhamChiTiet().getSanPham() != null
+                                    ? ct.getSanPhamChiTiet().getSanPham().getTenSanPham() : null)
+                            .hinhAnh(ct.getSanPhamChiTiet() != null && ct.getSanPhamChiTiet().getSanPham() != null
+                                    ? ct.getSanPhamChiTiet().getSanPham().getHinhAnh() : null)
+                            .mauSac(mauSac)
+                            .kichThuoc(kichThuoc)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // Lấy serial đã gán cho từng hóa đơn chi tiết
+        List<CartResponse.SerialInfo> serialInfos = new ArrayList<>();
+        for (HoaDonChiTiet ct : list) {
+            List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(ct.getId());
+            if (!serials.isEmpty()) {
+                List<String> maSerials = serials.stream()
+                        .map(SerialSanPham::getMaSerial)
+                        .collect(Collectors.toList());
+                serialInfos.add(CartResponse.SerialInfo.builder()
+                        .hoaDonChiTietId(ct.getId())
+                        .maSerials(maSerials)
+                        .build());
+            }
+        }
+
+        return CartResponse.builder()
+                .items(itemDTOs)
+                .tamTinh(hoaDon.getTongTienTamTinh())
+                .giamGia(hoaDon.getTienGiam())
+                .tongThanhToan(hoaDon.getTongTienThanhToan())
+                .tenKhachHang(hoaDon.getTenKhachHang() != null ? hoaDon.getTenKhachHang() : "")
+                .sdtKhachHang(hoaDon.getSdtKhachHang() != null ? hoaDon.getSdtKhachHang() : "")
+                .emailKhachHang(hoaDon.getEmail() != null ? hoaDon.getEmail() : "")
+                .serials(serialInfos)
+                .build();
     }
 
     @PostMapping("/cap-nhat-khach")
@@ -458,7 +506,10 @@ public class BanHangTaiQuayController {
     @Transactional
     public String giamSoLuong(Integer id){
 
-        HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).get();
+        HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).orElse(null);
+        if (ct == null) {
+            return "NOT_FOUND";
+        }
         String trangThai = ct.getHoaDon().getTrangThaiDonHang();
         boolean laChoThanhToan = "CHO_THANH_TOAN".equals(trangThai);
         // Cho phép giảm số lượng với cả DRAFT_OFFLINE và CHO_THANH_TOAN
@@ -468,21 +519,43 @@ public class BanHangTaiQuayController {
 
         HoaDon hoaDon = ct.getHoaDon();
         Integer hoaDonId = hoaDon.getId();
+        boolean laOffline = "OFFLINE".equals(hoaDon.getLoaiHoaDon());
 
         if(ct.getSoLuong() > 1){
 
+            // Nếu là hóa đơn offline và có serial đã gán, giải phóng 1 serial
+            if (laOffline) {
+                List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(id);
+                if (!serials.isEmpty()) {
+                    SerialSanPham serialToRelease = serials.get(0);
+                    serialToRelease.setHoaDonChiTiet(null);
+                    serialToRelease.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                    serialToRelease.setNgayXuatKho(null);
+                    serialToRelease.setNgayHetBaoHanh(null);
+                    serialSanPhamRepository.save(serialToRelease);
+                }
+            }
+
             ct.setSoLuong(ct.getSoLuong() - 1);
-
             hoaDonChiTietRepository.save(ct);
-
             updateTongTien(hoaDonId);
-
             return "OK";
 
         } else {
 
-            hoaDonChiTietRepository.delete(ct);
+            // Xóa hết - hoàn trả tất cả serial
+            if (laOffline) {
+                List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(id);
+                for (SerialSanPham serial : serials) {
+                    serial.setHoaDonChiTiet(null);
+                    serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                    serial.setNgayXuatKho(null);
+                    serial.setNgayHetBaoHanh(null);
+                    serialSanPhamRepository.save(serial);
+                }
+            }
 
+            hoaDonChiTietRepository.delete(ct);
             List<HoaDonChiTiet> conLai = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
             // Không xóa hóa đơn - giữ lại để có thể thêm sản phẩm lại
             updateTongTien(hoaDonId);
@@ -502,7 +575,10 @@ public class BanHangTaiQuayController {
     @Transactional
     public String xoaSanPham(Integer id){
 
-        HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).get();
+        HoaDonChiTiet ct = hoaDonChiTietRepository.findById(id).orElse(null);
+        if (ct == null) {
+            return "NOT_FOUND";
+        }
         String trangThai = ct.getHoaDon().getTrangThaiDonHang();
         // Cho phép xóa sản phẩm với cả DRAFT_OFFLINE và CHO_THANH_TOAN
         if (!TRANG_THAI_GIO_QUAY.equals(trangThai) && !"CHO_THANH_TOAN".equals(trangThai)) {
@@ -511,6 +587,18 @@ public class BanHangTaiQuayController {
 
         HoaDon hoaDon = ct.getHoaDon();
         Integer hoaDonId = hoaDon.getId();
+
+        // Hoàn trả serial vào kho (chỉ cho hóa đơn offline)
+        if ("OFFLINE".equals(hoaDon.getLoaiHoaDon())) {
+            List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(id);
+            for (SerialSanPham serial : serials) {
+                serial.setHoaDonChiTiet(null);
+                serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                serial.setNgayXuatKho(null);
+                serial.setNgayHetBaoHanh(null);
+                serialSanPhamRepository.save(serial);
+            }
+        }
 
         hoaDonChiTietRepository.delete(ct);
 
@@ -603,8 +691,9 @@ public class BanHangTaiQuayController {
             }
         }
 
-        // Chuẩn hóa trạng thái đã thanh toán (UI / DB dùng "DA THANH TOAN")
-        hoaDon.setTrangThaiDonHang("DA THANH TOAN");
+        // Trạng thái thanh toán là Đã thanh toán, trạng thái hóa đơn là Chờ xác nhận để admin chuyển trạng thái
+        hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
+        hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
         hoaDon.setPhuongThucThanhToan(phuongThuc != null ? phuongThuc : "TIEN_MAT");
         // Cập nhật thời điểm hoàn tất để danh sách "Quản lý đơn hàng" luôn xếp đơn mới nhất lên đầu
         hoaDon.setNgayDat(LocalDateTime.now());
@@ -972,6 +1061,231 @@ public class BanHangTaiQuayController {
         }
 
         return "Đã xóa " + deletedCount + " hóa đơn trống";
+    }
+
+    // =============================
+    // SERIAL SELECTION CHO POS
+    // =============================
+
+    /**
+     * API lấy dữ liệu serial cho trang bán hàng POS
+     */
+    @GetMapping("/api/serial/{hoaDonId}")
+    @ResponseBody
+    public PosSerialSelectionDTO getSerialDataForPos(@PathVariable Integer hoaDonId) {
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+
+        List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonIdWithDetails(hoaDonId);
+
+        List<PosSerialSelectionDTO.SerialGroupItem> groups = new ArrayList<>();
+
+        for (HoaDonChiTiet chiTiet : chiTiets) {
+            SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
+            String tenSanPham = spct.getSanPham() != null ? spct.getSanPham().getTenSanPham() : "Sản phẩm";
+            String tenBienThe = buildTenBienThe(spct);
+            Integer spctId = spct.getId();
+            int soLuongMua = chiTiet.getSoLuong() != null ? chiTiet.getSoLuong() : 0;
+
+            // Lấy serial trong kho (chưa bán)
+            List<SerialSanPham> availableSerials = serialSanPhamRepository
+                    .findBySanPhamChiTietIdAndTrangThai(spctId, SerialSanPham.TRANG_THAI_TRONG_KHO);
+
+            // Lấy serial đã gán cho hóa đơn chi tiết này
+            List<SerialSanPham> assignedSerials = serialSanPhamRepository
+                    .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
+
+            Set<Integer> assignedIds = assignedSerials.stream()
+                    .map(SerialSanPham::getId)
+                    .collect(Collectors.toSet());
+
+            List<PosSerialSelectionDTO.SerialItem> serialItems = new ArrayList<>();
+
+            // Thêm serial đã gán trước
+            for (SerialSanPham serial : assignedSerials) {
+                serialItems.add(PosSerialSelectionDTO.SerialItem.builder()
+                        .id(serial.getId())
+                        .maSerial(serial.getMaSerial())
+                        .daChon(true)
+                        .ngayTao(serial.getNgayTao())
+                        .build());
+            }
+
+            // Thêm serial trong kho
+            for (SerialSanPham serial : availableSerials) {
+                if (!assignedIds.contains(serial.getId())) {
+                    serialItems.add(PosSerialSelectionDTO.SerialItem.builder()
+                            .id(serial.getId())
+                            .maSerial(serial.getMaSerial())
+                            .daChon(false)
+                            .ngayTao(serial.getNgayTao())
+                            .build());
+                }
+            }
+
+            // Sắp xếp theo mã serial
+            serialItems.sort(Comparator.comparing(PosSerialSelectionDTO.SerialItem::getMaSerial));
+
+            groups.add(PosSerialSelectionDTO.SerialGroupItem.builder()
+                    .hoaDonChiTietId(chiTiet.getId())
+                    .sanPhamChiTietId(spctId)
+                    .tenSanPham(tenSanPham)
+                    .tenBienThe(tenBienThe)
+                    .soLuongMua(soLuongMua)
+                    .soLuongDaChon(assignedSerials.size())
+                    .serials(serialItems)
+                    .build());
+        }
+
+        return PosSerialSelectionDTO.builder()
+                .hoaDonId(hoaDonId)
+                .maDonHang(hoaDon.getMaDonHang())
+                .serialGroups(groups)
+                .build();
+    }
+
+    /**
+     * API gán serial cho đơn POS
+     */
+    @PostMapping("/api/serial/assign")
+    @ResponseBody
+    @Transactional
+    public Map<String, Object> assignSerialsForPos(@RequestBody Map<String, Object> request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            Integer hoaDonId = (Integer) request.get("hoaDonId");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> serialsByBienTheRaw = (Map<String, Object>) request.get("serialsByBienThe");
+
+            if (hoaDonId == null) {
+                result.put("success", false);
+                result.put("message", "Không có thông tin hóa đơn");
+                return result;
+            }
+
+            HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                    .orElse(null);
+
+            if (hoaDon == null) {
+                result.put("success", false);
+                result.put("message", "Không tìm thấy hóa đơn với ID: " + hoaDonId);
+                return result;
+            }
+
+            Map<Integer, List<Integer>> serialsByBienThe = new HashMap<>();
+            if (serialsByBienTheRaw != null) {
+                for (Map.Entry<String, Object> entry : serialsByBienTheRaw.entrySet()) {
+                    Integer hoaDonChiTietId = Integer.parseInt(entry.getKey());
+                    @SuppressWarnings("unchecked")
+                    List<Integer> serialIds = (List<Integer>) entry.getValue();
+                    serialsByBienThe.put(hoaDonChiTietId, serialIds);
+                }
+            }
+
+            // Giải phóng và gán serial
+            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
+
+            for (HoaDonChiTiet chiTiet : chiTiets) {
+                Integer hoaDonChiTietId = chiTiet.getId();
+                int soLuongMua = chiTiet.getSoLuong() != null ? chiTiet.getSoLuong() : 0;
+
+                // Giải phóng serial cũ
+                List<SerialSanPham> currentAssigned = serialSanPhamRepository
+                        .findByHoaDonChiTietIdOrderByIdAsc(hoaDonChiTietId);
+
+                for (SerialSanPham serial : currentAssigned) {
+                    serial.setHoaDonChiTiet(null);
+                    serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                    serial.setNgayXuatKho(null);
+                    serial.setNgayHetBaoHanh(null);
+                }
+                if (!currentAssigned.isEmpty()) {
+                    serialSanPhamRepository.saveAll(currentAssigned);
+                }
+
+                // Lấy serial mới được chọn
+                List<Integer> selectedSerialIds = serialsByBienThe.get(hoaDonChiTietId);
+                if (selectedSerialIds == null || selectedSerialIds.isEmpty()) {
+                    continue;
+                }
+
+                // Kiểm tra số lượng
+                if (selectedSerialIds.size() != soLuongMua) {
+                    result.put("success", false);
+                    String tenSp = "Sản phẩm";
+                    if (chiTiet.getSanPhamChiTiet() != null && chiTiet.getSanPhamChiTiet().getSanPham() != null) {
+                        tenSp = chiTiet.getSanPhamChiTiet().getSanPham().getTenSanPham();
+                    }
+                    result.put("message", "Số lượng serial không khớp với số lượng mua cho: " + tenSp);
+                    return result;
+                }
+
+                LocalDateTime now = LocalDateTime.now();
+                for (Integer serialId : selectedSerialIds) {
+                    SerialSanPham serial = serialSanPhamRepository.findById(serialId).orElse(null);
+                    if (serial == null) {
+                        result.put("success", false);
+                        result.put("message", "Không tìm thấy serial với ID: " + serialId);
+                        return result;
+                    }
+
+                    // Kiểm tra serial có trong kho không
+                    if (serial.getTrangThai() != SerialSanPham.TRANG_THAI_TRONG_KHO) {
+                        result.put("success", false);
+                        result.put("message", "Serial " + serial.getMaSerial() + " không còn trong kho");
+                        return result;
+                    }
+
+                    // Kiểm tra serial có thuộc đúng biến thể không
+                    if (serial.getSanPhamChiTiet() == null || !serial.getSanPhamChiTiet().getId().equals(chiTiet.getSanPhamChiTiet().getId())) {
+                        result.put("success", false);
+                        result.put("message", "Serial " + serial.getMaSerial() + " không thuộc biến thể sản phẩm này");
+                        return result;
+                    }
+
+                    // Gán serial cho hóa đơn chi tiết
+                    serial.setHoaDonChiTiet(chiTiet);
+                    // Đơn OFFLINE: chỉ đánh dấu CHỜ XÁC NHẬN, chưa trừ kho
+                    // Đơn ONLINE: đánh dấu ĐÃ BÁN luôn
+                    if ("OFFLINE".equals(hoaDon.getLoaiHoaDon())) {
+                        serial.setTrangThai(SerialSanPham.TRANG_THAI_CHO_XAC_NHAN);
+                        serial.setNgayXuatKho(null);
+                        serial.setNgayHetBaoHanh(null);
+                    } else {
+                        serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
+                        serial.setNgayXuatKho(now);
+                        serial.setNgayHetBaoHanh(now.plusMonths(12));
+                    }
+                    serialSanPhamRepository.save(serial);
+                }
+            }
+
+
+            serialSanPhamRepository.flush();
+
+            result.put("success", true);
+            result.put("message", "Đã gán serial thành công");
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "Lỗi: " + e.getMessage());
+            return result;
+        }
+    }
+
+    private String buildTenBienThe(SanPhamChiTiet spct) {
+        if (spct == null) return null;
+        List<String> parts = new ArrayList<>();
+        if (spct.getMauSac() != null && spct.getMauSac().getTenMauSac() != null && !spct.getMauSac().getTenMauSac().isBlank()) {
+            parts.add(spct.getMauSac().getTenMauSac().trim());
+        }
+        if (spct.getKichThuoc() != null && spct.getKichThuoc().getTenKichThuoc() != null && !spct.getKichThuoc().getTenKichThuoc().isBlank()) {
+            parts.add(spct.getKichThuoc().getTenKichThuoc().trim());
+        }
+        return parts.isEmpty() ? null : String.join(" · ", parts);
     }
 
     private KhuyenMaiPriceResult resolveGiaKhuyenMai(

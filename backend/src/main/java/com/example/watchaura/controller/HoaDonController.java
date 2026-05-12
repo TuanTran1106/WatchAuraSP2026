@@ -84,6 +84,8 @@ public class HoaDonController {
 
                       @RequestParam(required = false) String loaiDon,
 
+                      @RequestParam(required = false) String phuongThucThanhToan,
+
                       @RequestParam(defaultValue = "0") int page,
 
                       Model model,
@@ -92,7 +94,7 @@ public class HoaDonController {
 
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
 
-        Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThai, pageable, loaiDon);
+        Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThai, pageable, loaiDon, phuongThucThanhToan);
 
         model.addAttribute("title", "Hóa đơn");
 
@@ -109,6 +111,8 @@ public class HoaDonController {
         model.addAttribute("filterTrangThai", trangThai != null ? trangThai : "");
 
         model.addAttribute("filterLoaiDon", loaiDon != null ? loaiDon : "");
+
+        model.addAttribute("filterPhuongThucThanhToan", phuongThucThanhToan != null ? phuongThucThanhToan : "");
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
 
@@ -489,7 +493,7 @@ public class HoaDonController {
 
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
 
-                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon, null);
 
                 model.addAttribute("title", "Hóa đơn");
 
@@ -558,7 +562,7 @@ public class HoaDonController {
 
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
 
-                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon, null);
 
                 model.addAttribute("title", "Hóa đơn");
 
@@ -615,7 +619,7 @@ public class HoaDonController {
 
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
-                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon, null);
                 model.addAttribute("title", "Hóa đơn");
                 model.addAttribute("content", "admin/hoadon-list");
                 model.addAttribute("list", pageResult.getContent());
@@ -635,7 +639,7 @@ public class HoaDonController {
 
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
-                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon);
+                Page<HoaDonDTO> pageResult = hoaDonService.searchPage(q, trangThaiFilter, pageable, loaiDon, null);
                 model.addAttribute("title", "Hóa đơn");
                 model.addAttribute("content", "admin/hoadon-list");
                 model.addAttribute("list", pageResult.getContent());

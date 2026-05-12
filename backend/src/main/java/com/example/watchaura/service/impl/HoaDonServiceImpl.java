@@ -228,40 +228,69 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
     @Override
-
     @Transactional(readOnly = true)
-
-    public Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable, String loaiDon) {
-
+    public Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable, String loaiDon, String phuongThucThanhToan) {
         String q = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-
         String status = (trangThai == null || trangThai.isBlank()) ? null : trangThai.trim();
-
         String loai = (loaiDon == null || loaiDon.isBlank()) ? null : loaiDon.trim();
-
-
+        String pttt = (phuongThucThanhToan == null || phuongThucThanhToan.isBlank()) ? null : phuongThucThanhToan.trim();
 
         Page<HoaDon> page;
+        List<String> paidCodes = List.of("DA_THANH_TOAN", "DA THANH TOAN");
+        boolean hasStatus = status != null;
+        boolean hasLoai = loai != null;
+        boolean hasPttt = pttt != null;
 
-        if (status != null && loai != null) {
-
-            // Lọc theo cả trạng thái và loại hóa đơn
+        if (hasStatus && hasLoai && hasPttt) {
             if ("DA_THANH_TOAN".equals(status)) {
-                List<String> paidCodes = List.of("DA_THANH_TOAN", "DA THANH TOAN");
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiInAndLoaiAndPhuongThucAndKeyword(paidCodes, loai, pttt, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiInAndLoaiAndPhuongThuc(paidCodes, loai, pttt, pageable);
+                }
+            } else {
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiAndLoaiAndPhuongThucAndKeyword(status, loai, pttt, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiAndLoaiAndPhuongThuc(status, loai, pttt, pageable);
+                }
+            }
+        } else if (hasStatus && hasLoai) {
+            if ("DA_THANH_TOAN".equals(status)) {
                 if (q != null) {
                     page = hoaDonRepository.findByTrangThaiInAndLoaiAndKeyword(paidCodes, loai, q, pageable);
                 } else {
                     page = hoaDonRepository.findByTrangThaiInAndLoai(paidCodes, loai, pageable);
                 }
-            } else if (q != null) {
-                page = hoaDonRepository.findByTrangThaiAndLoaiAndKeyword(status, loai, q, pageable);
             } else {
-                page = hoaDonRepository.findByTrangThaiAndLoai(status, loai, pageable);
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiAndLoaiAndKeyword(status, loai, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiAndLoai(status, loai, pageable);
+                }
             }
-        } else if (status != null) {
-            // Chỉ lọc theo trạng thái
+        } else if (hasStatus && hasPttt) {
             if ("DA_THANH_TOAN".equals(status)) {
-                List<String> paidCodes = List.of("DA_THANH_TOAN", "DA THANH TOAN");
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiInAndPhuongThucAndKeyword(paidCodes, pttt, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiInAndPhuongThuc(paidCodes, pttt, pageable);
+                }
+            } else {
+                if (q != null) {
+                    page = hoaDonRepository.findByTrangThaiAndPhuongThucAndKeyword(status, pttt, q, pageable);
+                } else {
+                    page = hoaDonRepository.findByTrangThaiAndPhuongThuc(status, pttt, pageable);
+                }
+            }
+        } else if (hasLoai && hasPttt) {
+            if (q != null) {
+                page = hoaDonRepository.findActiveByLoaiAndPhuongThucAndKeyword(loai, pttt, q, pageable);
+            } else {
+                page = hoaDonRepository.findActiveByLoaiAndPhuongThuc(loai, pttt, pageable);
+            }
+        } else if (hasStatus) {
+            if ("DA_THANH_TOAN".equals(status)) {
                 if (q != null) {
                     page = hoaDonRepository.findByTrangThaiInAndKeyword(paidCodes, q, pageable);
                 } else {
@@ -272,25 +301,27 @@ public class HoaDonServiceImpl implements HoaDonService {
             } else {
                 page = hoaDonRepository.findByTrangThaiDonHangAndTrangThai(status, pageable);
             }
-        } else if (loai != null) {
-            // Chỉ lọc theo loại hóa đơn
+        } else if (hasLoai) {
             if (q != null) {
                 page = hoaDonRepository.findActiveByLoaiAndKeyword(loai, q, pageable);
             } else {
                 page = hoaDonRepository.findActiveOrdersByLoai(loai, pageable);
             }
-        } else {
-            // Không lọc theo trạng thái hay loại
+        } else if (hasPttt) {
             if (q != null) {
-                page = hoaDonRepository
-                        .findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCaseAndTrangThai(q, q, pageable);
+                page = hoaDonRepository.findActiveByPhuongThucAndKeyword(pttt, q, pageable);
+            } else {
+                page = hoaDonRepository.findActiveOrdersByPhuongThuc(pttt, pageable);
+            }
+        } else {
+            if (q != null) {
+                page = hoaDonRepository.findByMaDonHangContainingIgnoreCaseOrTenKhachHangContainingIgnoreCaseAndTrangThai(q, q, pageable);
             } else {
                 page = hoaDonRepository.findActiveOrders(pageable);
             }
         }
 
         return page.map(this::convertToDTO);
-
     }
 
 
@@ -441,9 +472,10 @@ public class HoaDonServiceImpl implements HoaDonService {
         boolean isVnPay = request.getPhuongThucThanhToan() != null
 
                 && request.getPhuongThucThanhToan().toUpperCase().contains("VNPAY");
-
-        hoaDon.setTrangThaiDonHang(isVnPay ? "CHO_THANH_TOAN" : "CHO_XAC_NHAN");
-
+        hoaDon.setTrangThaiDonHang("CHO_XAC_NHAN");
+        if (isVnPay) {
+            hoaDon.setTrangThaiThanhToan("DA_THANH_TOAN");
+        }
         hoaDon.setNgayDat(thoiDiemDat);
 
         hoaDon.setDiaChi(request.getDiaChi());
@@ -645,6 +677,15 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
+    /** Kiểm tra đơn đã thanh toán hay chưa (dựa vào trạng thái đơn HOẶC trạng thái thanh toán). */
+    private boolean isDaThanhToan(HoaDon hoaDon) {
+        String trangThaiDon = hoaDon.getTrangThaiDonHang();
+        String trangThaiThanhToan = hoaDon.getTrangThaiThanhToan();
+        return isDaThanhToanCode(trangThaiDon) || isDaThanhToanCode(trangThaiThanhToan);
+    }
+
+
+
     @Override
 
     @Transactional
@@ -681,7 +722,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
-        if (isDaThanhToanCode(effectiveCurrent) && !isDaThanhToanCode(newStatus) && !"DA_XAC_NHAN".equals(newStatus) && !"DA_HUY".equals(newStatus)) {
+        if (isDaThanhToan(hoaDon) && !isDaThanhToanCode(newStatus) && !"DA_XAC_NHAN".equals(newStatus) && !"DANG_GIAO".equals(newStatus) && !"DA_GIAO".equals(newStatus) && !"HOAN_THANH".equals(newStatus) && !"DA_HUY".equals(newStatus)) {
 
             throw new RuntimeException("Đơn đã thanh toán, không thể đổi sang trạng thái khác.");
 
@@ -719,34 +760,33 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             StringBuilder loiTonKho = new StringBuilder();
 
-
-
-            // Kiểm tra tất cả sản phẩm trước
-
+            // Atomic check: gọi deductStock() - nếu return 0 nghĩa là không đủ tồn kho (race condition đã được xử lý nguyên tử)
             for (HoaDonChiTiet chiTiet : chiTiets) {
 
                 SanPhamChiTiet sp = sanPhamChiTietRepository.findByIdWithLock(chiTiet.getSanPhamChiTiet().getId())
 
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
-                Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
+                int result = sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
 
-                if (soLuongTon < chiTiet.getSoLuong()) {
+                if (result == 0) {
+                    // Rollback các sản phẩm đã trừ ở trên
+                    for (HoaDonChiTiet previous : chiTiets) {
+                        if (previous.equals(chiTiet)) break;
+                        sanPhamChiTietRepository.restoreStock(previous.getSanPhamChiTiet().getId(), previous.getSoLuong());
+                    }
 
                     String tenSp = sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + chiTiet.getSanPhamChiTiet().getId();
-
+                    Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
                     loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ",
-
                             tenSp, chiTiet.getSoLuong(), soLuongTon));
-
+                    break;
                 }
 
             }
 
 
-
             // Nếu có lỗi tồn kho -> KHÔNG thanh toán được, CHUYỂN sang "Cần xử lý"
-
             if (loiTonKho.length() > 0) {
 
                 String lyDoHetHang = loiTonKho.toString();
@@ -759,17 +799,10 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             }
 
+            // Đủ tồn kho (atomic check thành công) -> XÓA ghi chú cũ nếu có
+            hoaDon.setGhiChu(null);
 
-
-            // Đủ tồn kho -> trừ kho và kiểm tra serial
-            // Admin phải vào trang chọn serial để gán thủ công
-            for (HoaDonChiTiet chiTiet : chiTiets) {
-
-                sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
-
-            }
-
-            // Kiểm tra xem đơn đã có serial chưa
+            // Kiểm tra serial
             boolean hasAllSerials = hasAllSerialsAssigned(chiTiets);
             if (!hasAllSerials) {
                 // Chưa có serial -> chuyển hướng đến trang chọn serial
@@ -785,112 +818,47 @@ public class HoaDonServiceImpl implements HoaDonService {
         // Xử lý khi xác nhận đơn (DA_XAC_NHAN) - trừ tồn kho ngay khi xác nhận (FIFO)
 
         // Chỉ cho phép từ CHO_XAC_NHAN chuyển sang DA_XAC_NHAN
+        // Nếu đơn đã thanh toán (bán tại quầy) thì không trừ kho lại
 
         if ("DA_XAC_NHAN".equals(newStatus) && !"DA_XAC_NHAN".equals(effectiveCurrent)) {
 
-            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
+            List<HoaDonChiTiet> chiTietsForConfirm = hoaDonChiTietRepository.findByHoaDonId(id);
 
-            StringBuilder loiTonKho = new StringBuilder();
+            // Kiểm tra đơn đã thanh toán chưa (để không trừ kho lại)
+            boolean daThanhToanTruoc = isDaThanhToan(hoaDon);
 
-
-
-            // Kiểm tra tất cả sản phẩm trước
-
-            for (HoaDonChiTiet chiTiet : chiTiets) {
-
-                SanPhamChiTiet sp = sanPhamChiTietRepository.findByIdWithLock(chiTiet.getSanPhamChiTiet().getId())
-
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-
-                Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
-
-                if (soLuongTon < chiTiet.getSoLuong()) {
-
-                    String tenSp = sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + chiTiet.getSanPhamChiTiet().getId();
-
-                    loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ",
-
-                            tenSp, chiTiet.getSoLuong(), soLuongTon));
-
-                }
-
-            }
-
-
-
-            // Nếu có lỗi tồn kho -> KHÔNG xác nhận được, CHUYỂN sang "Cần xử lý"
-
-            if (loiTonKho.length() > 0) {
-
-                String lyDoHetHang = loiTonKho.toString();
-
-                hoaDon.setGhiChu("Không đủ tồn kho: " + lyDoHetHang);
-
-                hoaDon.setTrangThaiDonHang("CAN_XU_LY");
-
-                return convertToDTO(hoaDonRepository.save(hoaDon));
-
-            }
-
-
-
-            // Đủ tồn kho -> trừ kho và kiểm tra serial
-            for (HoaDonChiTiet chiTiet : chiTiets) {
-
-                sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
-
-            }
-            // Kiểm tra xem đơn đã có serial chưa
-            boolean hasAllSerials = hasAllSerialsAssigned(chiTiets);
-            if (!hasAllSerials) {
-                // Chưa có serial -> chuyển hướng đến trang chọn serial
-                hoaDon.setTrangThaiDonHang("DA_XAC_NHAN");
-                hoaDonRepository.save(hoaDon);
-                throw new SerialSelectionRequiredException(id);
-            }
-            // Có đủ serial -> tiếp tục
-        }
-
-
-
-        // Xử lý khi chuyển sang "Đã thanh toán" - trừ tồn kho nếu chưa trừ
-
-        if (isDaThanhToanCode(newStatus) && !isDaThanhToanCode(effectiveCurrent)) {
-
-            // Nếu đơn chưa xác nhận thì trừ kho ở đây
-
-            if (!"DA_XAC_NHAN".equals(effectiveCurrent)) {
-
-                List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
-
+            if (!daThanhToanTruoc) {
                 StringBuilder loiTonKho = new StringBuilder();
 
-
-
-                for (HoaDonChiTiet chiTiet : chiTiets) {
+                // Atomic check: gọi deductStock() - nếu return 0 nghĩa là không đủ tồn kho (race condition đã được xử lý nguyên tử)
+                // Không dùng findByIdWithLock + soLuongTon < soLuong vì giữa 2 lần đọc có race condition
+                for (HoaDonChiTiet chiTiet : chiTietsForConfirm) {
 
                     SanPhamChiTiet sp = sanPhamChiTietRepository.findByIdWithLock(chiTiet.getSanPhamChiTiet().getId())
 
                             .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
-                    Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
+                    // Gọi atomic deductStock - trả về 1 nếu thành công, 0 nếu không đủ hàng
+                    int result = sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
 
-                    if (soLuongTon < chiTiet.getSoLuong()) {
+                    if (result == 0) {
+                        // Không đủ tồn kho - rollback các sản phẩm đã trừ ở trên
+                        for (HoaDonChiTiet previous : chiTietsForConfirm) {
+                            if (previous.equals(chiTiet)) break;
+                            sanPhamChiTietRepository.restoreStock(previous.getSanPhamChiTiet().getId(), previous.getSoLuong());
+                        }
 
                         String tenSp = sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + chiTiet.getSanPhamChiTiet().getId();
-
+                        Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
                         loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ",
-
                                 tenSp, chiTiet.getSoLuong(), soLuongTon));
-
+                        break;
                     }
 
                 }
 
 
-
-                // Nếu có lỗi tồn kho -> KHÔNG thanh toán được, CHUYỂN sang "Cần xử lý"
-
+                // Nếu có lỗi tồn kho -> KHÔNG xác nhận được, CHUYỂN sang "Cần xử lý"
                 if (loiTonKho.length() > 0) {
 
                     String lyDoHetHang = loiTonKho.toString();
@@ -903,16 +871,94 @@ public class HoaDonServiceImpl implements HoaDonService {
 
                 }
 
+                // Đủ tồn kho (atomic check thành công) -> XÓA ghi chú cũ nếu có
+                hoaDon.setGhiChu(null);
+            }
+
+            // Kiểm tra serial
+            boolean hasAllSerials = hasAllSerialsAssigned(chiTietsForConfirm);
+            if (!hasAllSerials) {
+                // Chưa có serial -> chuyển hướng đến trang chọn serial
+                hoaDon.setTrangThaiDonHang("DA_XAC_NHAN");
+                hoaDonRepository.save(hoaDon);
+                throw new SerialSelectionRequiredException(id);
+            }
+            // Có đủ serial -> tiếp tục
+
+            // Đơn OFFLINE: cập nhật serial từ CHO_XAC_NHAN sang DA_BAN khi xác nhận
+            if ("OFFLINE".equals(hoaDon.getLoaiHoaDon())) {
+                LocalDateTime now = LocalDateTime.now();
+                for (HoaDonChiTiet chiTiet : chiTietsForConfirm) {
+                    List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
+                    for (SerialSanPham serial : serials) {
+                        if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_CHO_XAC_NHAN) {
+                            serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
+                            serial.setNgayXuatKho(now);
+                            serial.setNgayHetBaoHanh(now.plusMonths(12));
+                            serialSanPhamRepository.save(serial);
+                        }
+                    }
+                }
+            }
+        }
 
 
-                // Đủ tồn kho -> trừ kho
 
+        // Xử lý khi chuyển sang "Đã thanh toán" - trừ tồn kho nếu chưa trừ
+
+        if (isDaThanhToanCode(newStatus) && !isDaThanhToanCode(effectiveCurrent)) {
+
+            // Nếu đơn đã có trangThaiThanhToan = DA_THANH_TOAN (đơn bán tại quầy đã thanh toán) thì không trừ kho lại
+            // Chỉ trừ kho nếu chưa từng thanh toán
+            boolean daThanhToanTruoc = isDaThanhToanCode(hoaDon.getTrangThaiThanhToan());
+            
+            if (!"DA_XAC_NHAN".equals(effectiveCurrent) && !daThanhToanTruoc) {
+
+                List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(id);
+
+                StringBuilder loiTonKho = new StringBuilder();
+
+                // Atomic check: gọi deductStock() - nếu return 0 nghĩa là không đủ tồn kho (race condition đã được xử lý nguyên tử)
                 for (HoaDonChiTiet chiTiet : chiTiets) {
 
-                    sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
+                    SanPhamChiTiet sp = sanPhamChiTietRepository.findByIdWithLock(chiTiet.getSanPhamChiTiet().getId())
+
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+                    int result = sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
+
+                    if (result == 0) {
+                        // Rollback các sản phẩm đã trừ ở trên
+                        for (HoaDonChiTiet previous : chiTiets) {
+                            if (previous.equals(chiTiet)) break;
+                            sanPhamChiTietRepository.restoreStock(previous.getSanPhamChiTiet().getId(), previous.getSoLuong());
+                        }
+
+                        String tenSp = sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + chiTiet.getSanPhamChiTiet().getId();
+                        Integer soLuongTon = sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
+                        loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ",
+                                tenSp, chiTiet.getSoLuong(), soLuongTon));
+                        break;
+                    }
 
                 }
-                // KHÔNG gọi allocateSerialForOrderLines nữa - admin phải chọn serial thủ công
+
+
+                // Nếu có lỗi tồn kho -> KHÔNG thanh toán được, CHUYỂN sang "Cần xử lý"
+                if (loiTonKho.length() > 0) {
+
+                    String lyDoHetHang = loiTonKho.toString();
+
+                    hoaDon.setGhiChu("Không đủ tồn kho: " + lyDoHetHang);
+
+                    hoaDon.setTrangThaiDonHang("CAN_XU_LY");
+
+                    return convertToDTO(hoaDonRepository.save(hoaDon));
+
+                }
+
+                // Đủ tồn kho -> XÓA ghi chú cũ nếu có
+                hoaDon.setGhiChu(null);
             }
 
         }
@@ -933,7 +979,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         if ("DA_HUY".equals(newStatus) && !"DA_HUY".equals(effectiveCurrent)) {
 
-            if (isDaThanhToanCode(effectiveCurrent)) {
+            if (isDaThanhToan(hoaDon)) {
 
                 throw new RuntimeException("Không thể hủy đơn đã thanh toán.");
 
@@ -1097,7 +1143,11 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             document.add(new Paragraph("Loại hóa đơn: " + safe(dto.getLoaiHoaDon()), fontNormal));
 
-            document.add(new Paragraph("Phương thức thanh toán: " + safe(dto.getPhuongThucThanhToan()), fontNormal));
+            String ptttDisplay = safe(dto.getPhuongThucThanhToan());
+            if ("TIEN_MAT".equals(ptttDisplay)) ptttDisplay = "Tiền mặt";
+            else if ("VNPAY".equals(ptttDisplay)) ptttDisplay = "VNPay";
+            else if ("COD".equals(ptttDisplay)) ptttDisplay = "COD (Nhận hàng)";
+            document.add(new Paragraph("Phương thức thanh toán: " + ptttDisplay, fontNormal));
 
             if (dto.getMaVoucher() != null && !dto.getMaVoucher().isEmpty()) {
 

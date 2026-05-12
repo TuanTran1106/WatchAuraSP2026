@@ -252,6 +252,44 @@ ORDER BY h.ngayDat DESC
     @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
     Page<HoaDon> findByTrangThaiInAndLoaiAndKeyword(@Param("trangThaiList") Collection<String> trangThaiList, @Param("loaiHoaDon") String loaiHoaDon, @Param("q") String q, Pageable pageable);
 
+    // === Lọc theo phương thức thanh toán (COD / VNPAY) ===
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND h.phuongThucThanhToan = :phuongThucThanhToan")
+    Page<HoaDon> findActiveOrdersByPhuongThuc(@Param("phuongThucThanhToan") String phuongThucThanhToan, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND h.phuongThucThanhToan = :phuongThucThanhToan AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findActiveByPhuongThucAndKeyword(@Param("phuongThucThanhToan") String phuongThucThanhToan, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.phuongThucThanhToan = :phuongThucThanhToan")
+    Page<HoaDon> findByTrangThaiAndPhuongThuc(@Param("trangThai") String trangThai, @Param("phuongThucThanhToan") String phuongThucThanhToan, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.phuongThucThanhToan = :phuongThucThanhToan AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiAndPhuongThucAndKeyword(@Param("trangThai") String trangThai, @Param("phuongThucThanhToan") String phuongThucThanhToan, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.phuongThucThanhToan = :phuongThucThanhToan")
+    Page<HoaDon> findByTrangThaiInAndPhuongThuc(@Param("trangThaiList") Collection<String> trangThaiList, @Param("phuongThucThanhToan") String phuongThucThanhToan, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.phuongThucThanhToan = :phuongThucThanhToan AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiInAndPhuongThucAndKeyword(@Param("trangThaiList") Collection<String> trangThaiList, @Param("phuongThucThanhToan") String phuongThucThanhToan, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND h.loaiHoaDon = :loaiHoaDon AND h.phuongThucThanhToan = :phuongThucThanhToan")
+    Page<HoaDon> findActiveByLoaiAndPhuongThuc(@Param("loaiHoaDon") String loaiHoaDon, @Param("phuongThucThanhToan") String phuongThucThanhToan, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = true AND (h.trangThaiDonHang IS NULL OR h.trangThaiDonHang <> 'DRAFT_OFFLINE') AND h.loaiHoaDon = :loaiHoaDon AND h.phuongThucThanhToan = :phuongThucThanhToan AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findActiveByLoaiAndPhuongThucAndKeyword(@Param("loaiHoaDon") String loaiHoaDon, @Param("phuongThucThanhToan") String phuongThucThanhToan, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND h.phuongThucThanhToan = :phuongThucThanhToan")
+    Page<HoaDon> findByTrangThaiAndLoaiAndPhuongThuc(@Param("trangThai") String trangThai, @Param("loaiHoaDon") String loaiHoaDon, @Param("phuongThucThanhToan") String phuongThucThanhToan, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang = :trangThai AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND h.phuongThucThanhToan = :phuongThucThanhToan AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiAndLoaiAndPhuongThucAndKeyword(@Param("trangThai") String trangThai, @Param("loaiHoaDon") String loaiHoaDon, @Param("phuongThucThanhToan") String phuongThucThanhToan, @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND h.phuongThucThanhToan = :phuongThucThanhToan")
+    Page<HoaDon> findByTrangThaiInAndLoaiAndPhuongThuc(@Param("trangThaiList") Collection<String> trangThaiList, @Param("loaiHoaDon") String loaiHoaDon, @Param("phuongThucThanhToan") String phuongThucThanhToan, Pageable pageable);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThaiDonHang IN :trangThaiList AND h.trangThai = true AND h.trangThaiDonHang <> 'DRAFT_OFFLINE' AND h.loaiHoaDon = :loaiHoaDon AND h.phuongThucThanhToan = :phuongThucThanhToan AND (LOWER(h.maDonHang) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(h.tenKhachHang) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<HoaDon> findByTrangThaiInAndLoaiAndPhuongThucAndKeyword(@Param("trangThaiList") Collection<String> trangThaiList, @Param("loaiHoaDon") String loaiHoaDon, @Param("phuongThucThanhToan") String phuongThucThanhToan, @Param("q") String q, Pageable pageable);
+
 }
 
 

@@ -105,6 +105,21 @@ public class UserHoanTraController {
             request.setTenNganHang(tenNganHang);
             request.setTenChuTaiKhoan(tenChuTaiKhoan);
 
+            // Parse và set danh sách ảnh lỗi
+            if (hinhAnhJson != null && !hinhAnhJson.isEmpty()) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    List<String> danhSachAnh = mapper.readValue(
+                            hinhAnhJson,
+                            mapper.getTypeFactory().constructCollectionType(List.class, String.class)
+                    );
+                    request.setDanhSachAnhLoi(danhSachAnh);
+                } catch (Exception e) {
+                    // Nếu parse lỗi, thử parse từng ảnh riêng lẻ
+                    request.setDanhSachAnhLoi(java.util.Arrays.asList(hinhAnhJson));
+                }
+            }
+
             if (chiTietJson != null && !chiTietJson.isEmpty()) {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 java.util.List<Map<String, Object>> chiTietData = mapper.readValue(

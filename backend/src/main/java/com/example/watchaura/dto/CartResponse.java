@@ -1,17 +1,20 @@
 package com.example.watchaura.dto;
 
-import com.example.watchaura.entity.HoaDonChiTiet;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CartResponse {
 
-    private List<HoaDonChiTiet> items;
+    private List<CartItemResponse> items;
 
     private BigDecimal tamTinh;
 
@@ -19,11 +22,53 @@ public class CartResponse {
 
     private BigDecimal tongThanhToan;
 
-    /** Thông tin khách trên hóa đơn (POS). */
     private String tenKhachHang;
 
     private String sdtKhachHang;
 
     private String emailKhachHang;
 
+    /** Map: hoaDonChiTietId -> danh sách mã serial đã gán */
+    private List<SerialInfo> serials;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CartItemResponse {
+        private Integer id;
+        private Integer soLuong;
+        private BigDecimal donGia;
+        private String tenSanPham;
+        private String hinhAnh;
+        private MauSacInfo mauSac;
+        private KichThuocInfo kichThuoc;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MauSacInfo {
+        private Integer id;
+        private String tenMauSac;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KichThuocInfo {
+        private Integer id;
+        private String tenKichThuoc;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SerialInfo {
+        private Integer hoaDonChiTietId;
+        private List<String> maSerials;
+    }
 }

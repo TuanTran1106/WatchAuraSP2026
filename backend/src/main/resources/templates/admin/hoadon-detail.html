@@ -44,32 +44,49 @@
                                     thái đơn</label>
                                 <select name="trangThai" id="invoiceDetailTrangThai"
                                     class="invoice-detail__status-select" th:with="raw=${hoaDon.trangThaiDonHang},
-                                         cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_THANH_TOAN'},
-                                         isCho=${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'},
-                                         isPaid=${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'},
+                                         cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_XAC_NHAN'},
+                                         isCho=${cur == 'CHO_XAC_NHAN' or cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE'},
+                                         isDaXacNhan=${cur == 'DA_XAC_NHAN'},
+                                         isDangGiao=${cur == 'DANG_GIAO'},
+                                         isDaGiao=${cur == 'DA_GIAO'},
                                          isHuy=${cur == 'DA_HUY'},
-                                         isCanXuLy=${cur == 'CAN_XU_LY'}" th:disabled="${isHuy or isPaid}"
-                                    th:title="${isHuy} ? 'Đơn đã hủy, không đổi trạng thái' : (${isPaid} ? 'Đơn đã thanh toán, không đổi trạng thái' : 'Đổi trạng thái hóa đơn tại quầy')"
-                                    th:classappend="${isCanXuLy ? 'status--can-xu-ly' : (isHuy ? 'status--da-huy' : (isPaid ? 'status--da-giao' : 'status--cho-xac-nhan'))}">
+                                         isHoanThanh=${cur == 'HOAN_THANH'}"
+                                    th:disabled="${isHuy or isHoanThanh}"
+                                    th:title="${isHuy} ? 'Đơn đã hủy, không đổi trạng thái' : (${isHoanThanh} ? 'Đơn đã hoàn thành, không đổi trạng thái' : 'Đổi trạng thái hóa đơn tại quầy')"
+                                    th:classappend="${isHuy ? 'status--da-huy' : (isHoanThanh ? 'status--hoan-thanh' : (isDaGiao ? 'status--da-giao' : (isDangGiao ? 'status--dang-giao' : (isDaXacNhan ? 'status--da-xac-nhan' : 'status--cho-xac-nhan'))))}">
+                                    <!-- Chờ xác nhận -->
                                     <th:block th:if="${isCho}">
-                                        <option value="CHO_THANH_TOAN"
-                                            th:selected="${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'}"
-                                            th:text="'Chờ thanh toán'">Chờ thanh toán</option>
-                                        <option value="DA THANH TOAN" th:text="'Hoàn thành'">Hoàn thành</option>
+                                        <option value="CHO_XAC_NHAN"
+                                            th:selected="${cur == 'CHO_XAC_NHAN' or cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE'}"
+                                            th:text="'Chờ xác nhận'">Chờ xác nhận</option>
+                                        <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'">Đã xác nhận</option>
                                         <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
                                     </th:block>
-                                    <th:block th:if="${isPaid}">
-                                        <option value="DA THANH TOAN" th:selected="true" th:text="'Hoàn thành'">Hoàn
-                                            thành</option>
+                                    <!-- Đã xác nhận -->
+                                    <th:block th:if="${isDaXacNhan}">
+                                        <option value="DA_XAC_NHAN" th:selected="true" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                                        <option value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
+                                        <option value="DA_GIAO" th:text="'Đã giao'">Đã giao</option>
+                                        <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
                                     </th:block>
-                                    <th:block th:if="${isHuy and !isCho and !isPaid}">
+                                    <!-- Đang giao -->
+                                    <th:block th:if="${isDangGiao}">
+                                        <option value="DANG_GIAO" th:selected="true" th:text="'Đang giao'">Đang giao</option>
+                                        <option value="DA_GIAO" th:text="'Đã giao'">Đã giao</option>
+                                        <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
+                                    </th:block>
+                                    <!-- Đã giao -->
+                                    <th:block th:if="${isDaGiao}">
+                                        <option value="DA_GIAO" th:selected="true" th:text="'Đã giao'">Đã giao</option>
+                                        <option value="HOAN_THANH" th:text="'Hoàn thành'">Hoàn thành</option>
+                                    </th:block>
+                                    <!-- Hoàn thành -->
+                                    <th:block th:if="${isHoanThanh}">
+                                        <option value="HOAN_THANH" th:selected="true" disabled="disabled" th:text="'Hoàn thành'">Hoàn thành</option>
+                                    </th:block>
+                                    <!-- Đã hủy -->
+                                    <th:block th:if="${isHuy and !isCho and !isDaXacNhan and !isDangGiao and !isDaGiao and !isHoanThanh}">
                                         <option value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
-                                    </th:block>
-                                    <th:block th:if="${isCanXuLy}">
-                                        <option value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lý'">Cần xử lý
-                                        </option>
-                                        <option value="DA THANH TOAN" th:text="'Hoàn thành'">Hoàn thành</option>
-                                        <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
                                     </th:block>
                                 </select>
                             </div>
@@ -200,8 +217,10 @@
                         </div>
                         <div class="invoice-detail__item">
                             <span class="invoice-detail__label">Thanh toán</span>
-                            <span class="invoice-detail__value"
-                                th:text="${hoaDon.phuongThucThanhToan != null ? hoaDon.phuongThucThanhToan : '—'}">—</span>
+                            <th:block th:with="pttt=${hoaDon.phuongThucThanhToan}">
+                                <span class="invoice-detail__value"
+                                    th:text="${pttt == 'TIEN_MAT' ? 'Tiền mặt' : (pttt == 'VNPAY' ? 'VNPay' : (pttt == 'COD' ? 'COD (Nhận hàng)' : (pttt != null ? pttt : '—')))}">—</span>
+                            </th:block>
                         </div>
                         <div class="invoice-detail__item">
                             <span class="invoice-detail__label">Loại hóa đơn</span>
@@ -275,10 +294,22 @@
                 <!-- Tổng thanh toán -->
                 <section class="invoice-detail__summary" th:if="${hoaDon.items != null and !hoaDon.items.isEmpty()}">
                     <div class="invoice-detail__summary-row">
-                        <span class="invoice-detail__summary-label">Tạm tính (đơn giá gốc)</span>
+                        <span class="invoice-detail__summary-label">Tạm tính</span>
                         <span class="invoice-detail__summary-value"
-                            th:text="|${hoaDon.tongGiaGoc != null ? #numbers.formatDecimal(hoaDon.tongGiaGoc, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0
+                            th:text="|${hoaDon.tongTienTamTinh != null ? #numbers.formatDecimal(hoaDon.tongTienTamTinh, 0, 'COMMA', 0, 'POINT') : '0'} đ|">0
                             đ</span>
+                    </div>
+                    <div class="invoice-detail__summary-row invoice-detail__summary-row--stack"
+                        th:if="${hoaDon.tongTienGiamKhuyenMai != null and hoaDon.tongTienGiamKhuyenMai > 0}">
+                        <span class="invoice-detail__summary-label-wrap">
+                            <span class="invoice-detail__summary-label">Khuyến mãi</span>
+                            <span class="invoice-detail__summary-sublabel"
+                                th:text="${hoaDon.tenKhuyenMai != null and !hoaDon.tenKhuyenMai.isEmpty()} ? ${hoaDon.tenKhuyenMai} : 'Sản phẩm đang giảm giá'">—</span>
+                        </span>
+                        <span class="invoice-detail__summary-value invoice-detail__summary-value--discount">
+                            − <span th:text="|${#numbers.formatDecimal(hoaDon.tongTienGiamKhuyenMai, 0, 'COMMA', 0, 'POINT')} đ|">0
+                                đ</span>
+                        </span>
                     </div>
                     <div class="invoice-detail__summary-row invoice-detail__summary-row--stack"
                         th:if="${hoaDon.tienGiam != null and hoaDon.tienGiam > 0}">
@@ -291,18 +322,6 @@
                         </span>
                         <span class="invoice-detail__summary-value invoice-detail__summary-value--discount">
                             − <span th:text="|${#numbers.formatDecimal(hoaDon.tienGiam, 0, 'COMMA', 0, 'POINT')} đ|">0
-                                đ</span>
-                        </span>
-                    </div>
-                    <div class="invoice-detail__summary-row invoice-detail__summary-row--stack"
-                        th:if="${hoaDon.tongTienGiamKhuyenMai != null and hoaDon.tongTienGiamKhuyenMai > 0}">
-                        <span class="invoice-detail__summary-label-wrap">
-                            <span class="invoice-detail__summary-label">Khuyến mãi</span>
-                            <span class="invoice-detail__summary-sublabel"
-                                th:text="${hoaDon.tenKhuyenMai != null and !hoaDon.tenKhuyenMai.isEmpty()} ? ${hoaDon.tenKhuyenMai} : 'Sản phẩm đang giảm giá'">—</span>
-                        </span>
-                        <span class="invoice-detail__summary-value invoice-detail__summary-value--discount">
-                            − <span th:text="|${#numbers.formatDecimal(hoaDon.tongTienGiamKhuyenMai, 0, 'COMMA', 0, 'POINT')} đ|">0
                                 đ</span>
                         </span>
                     </div>
@@ -443,15 +462,57 @@
                         var currentSelected = select.querySelector('option[selected]');
                         select.dataset.prevValue = currentSelected ? currentSelected.value : '';
 
-                        // Nếu chọn "Đã xác nhận" -> chuyển sang trang chọn serial
+                        // Nếu chọn "Đã xác nhận" -> check tồn kho TRƯỚC
                         if (newVal === 'DA_XAC_NHAN') {
                             var actionParts = (form.getAttribute('action') || '').split('/');
                             var idIdx = actionParts.indexOf('hoa-don');
                             var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
-                            if (hoaDonId) {
-                                window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
-                                return;
-                            }
+                            if (!hoaDonId) return;
+
+                            // Gọi API check tồn kho
+                            fetch('/api/hoa-don/' + hoaDonId + '/check-ton-kho')
+                                .then(function (r) { return r.json(); })
+                                .then(function (data) {
+                                    if (data.du) {
+                                        // Đủ tồn kho -> chuyển sang trang chọn serial
+                                        window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
+                                    } else {
+                                        // Không đủ tồn kho -> submit form để chuyển CAN_XU_LY
+                                        var missingItems = (data.items || []).filter(function (i) { return !i.du; })
+                                            .map(function (i) {
+                                                return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
+                                            });
+                                        var msg = 'Tồn kho không đủ:\n' + missingItems.join('\n') +
+                                            '\n\nĐơn hàng sẽ chuyển sang trạng thái "Cần xử lý". Tiếp tục?';
+
+                                        if (typeof window.confirmModal === 'function') {
+                                            window.confirmModal({
+                                                title: 'Thiếu tồn kho',
+                                                message: msg,
+                                                confirmText: 'Tiếp tục',
+                                                cancelText: 'Hủy',
+                                                tone: 'danger'
+                                            }).then(function (ok) {
+                                                if (ok) {
+                                                    submitStatusFormViaAjax(form, select);
+                                                } else {
+                                                    select.value = select.dataset.prevValue;
+                                                }
+                                            });
+                                        } else {
+                                            if (window.confirm(msg)) {
+                                                submitStatusFormViaAjax(form, select);
+                                            } else {
+                                                select.value = select.dataset.prevValue;
+                                            }
+                                        }
+                                    }
+                                })
+                                .catch(function () {
+                                    showToastMessage('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
+                                    select.value = select.dataset.prevValue;
+                                });
+                            return;
                         }
 
                         // Xử lý AJAX cho các trạng thái khác

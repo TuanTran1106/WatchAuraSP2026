@@ -54,4 +54,7 @@ public class HoanTraDTO {
     private BigDecimal tongTienHoaDon;  // Tổng tiền hàng (tổng tiền sản phẩm + voucher đã áp, khuyến mãi)
     private BigDecimal phiGiaoHang;     // Phí giao hàng (sẽ trừ khi hoàn)
     private BigDecimal voucherGiam;      // Số tiền voucher đã giảm
+
+    // Danh sách ảnh lỗi sản phẩm
+    private List<String> danhSachAnhLoi;
 }

@@ -2,6 +2,7 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.dto.HoanTraDTO;
 import com.example.watchaura.dto.HoanTraRequest;
+import com.example.watchaura.repository.SerialLoiRepository;
 import com.example.watchaura.service.HoanTraService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import jakarta.servlet.http.HttpSession;
 public class HoanTraController {
 
     private final HoanTraService hoanTraService;
+    private final SerialLoiRepository serialLoiRepository;
 
     @GetMapping
     public String listHoanTra(
@@ -54,7 +56,10 @@ public class HoanTraController {
         model.addAttribute("statDaXuLy", daXuLy);
         model.addAttribute("statTuChoi", tuChoi);
 
-        
+        // Thống kê serial lỗi
+        long serialLoi = serialLoiRepository.countByTrangThai("CHUA_XU_LY");
+        model.addAttribute("statSerialLoi", serialLoi);
+
         model.addAttribute("statTongSo", (long) list.size());
 
         model.addAttribute("currentPage", page);
@@ -250,6 +255,7 @@ public class HoanTraController {
             result.put("trangThaiHienThi", updated.getTrangThaiHienThi());
             result.put("tenNhanVienXuLy", updated.getTenNhanVienXuLy());
             result.put("ngayXuLy", updated.getNgayXuLy() != null ? updated.getNgayXuLy().toString() : null);
+            result.put("ghiChuXuLy", updated.getGhiChuXuLy());
         } catch (Exception e) {
             result.put("success", false);
             result.put("message", e.getMessage());

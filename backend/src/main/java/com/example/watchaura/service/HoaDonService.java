@@ -30,7 +30,7 @@ public interface HoaDonService {
 
     List<HoaDonDTO> search(String keyword);
 
-    Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable, String loaiDon);
+    Page<HoaDonDTO> searchPage(String keyword, String trangThai, Pageable pageable, String loaiDon, String phuongThucThanhToan);
 
     HoaDonDTO getById(Integer id);
 

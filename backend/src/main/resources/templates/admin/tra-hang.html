@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/admin/admin.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/tra-hang.css">
+    <script src="/js/confirm-modal.js"></script>
 </head>
 <body>
 <div class="admin-layout" id="traHangAdminLayout">
@@ -601,6 +602,24 @@ document.getElementById('successModal').addEventListener('click', function(e) {
 });
 
 document.getElementById('btnConfirmRefund').addEventListener('click', executeRefund);
+
+function confirmLogout() {
+    if (typeof window.confirmModal === 'function') {
+        window.confirmModal({
+            title: 'Đăng xuất',
+            message: 'Bạn có chắc chắn muốn đăng xuất không?',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Hủy',
+            tone: 'logout'
+        }).then(function(ok) {
+            if (ok) window.location.href = '/nhan-vien/login';
+        });
+    } else {
+        if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+            window.location.href = '/nhan-vien/login';
+        }
+    }
+}
 </script>
 </div>
 </body>

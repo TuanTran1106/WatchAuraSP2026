@@ -24,7 +24,19 @@
                 <h1 class="serial-selection__title">Chọn Serial cho đơn hàng</h1>
                 <p class="serial-selection__subtitle">
                     Mã đơn: <strong th:text="${serialData.maDonHang}">—</strong>
-                    <span class="serial-selection__status" th:text="${serialData.trangThaiDonHang}">—</span>
+                    <span class="serial-selection__status" 
+      th:classappend="'status-' + ${serialData.trangThaiDonHang}">
+    <th:block th:switch="${serialData.trangThaiDonHang}">
+        <span th:case="'CAN_XU_LY'" th:text="'Cần xử lý'">Cần xử lý</span>
+        <span th:case="'CHO_XAC_NHAN'" th:text="'Chờ xác nhận'">Chờ xác nhận</span>
+        <span th:case="'DA_XAC_NHAN'" th:text="'Đã xác nhận'">Đã xác nhận</span>
+        <span th:case="'DANG_GIAO'" th:text="'Đang giao'">Đang giao</span>
+        <span th:case="'DA_GIAO'" th:text="'Đã giao'">Đã giao</span>
+        <span th:case="'DA_THANH_TOAN'" th:text="'Hoàn thành'">Hoàn thành</span>
+        <span th:case="'DA_HUY'" th:text="'Đã hủy'">Đã hủy</span>
+        <span th:case="*" th:text="${serialData.trangThaiDonHang}">—</span>
+    </th:block>
+</span>
                 </p>
             </header>
 
@@ -215,12 +227,53 @@
         }
 
         .serial-selection__status {
-            background: #fef3c7;
-            color: #92400e;
             padding: 2px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 500;
+        }
+
+        /* Status colors */
+        .status-CAN_XU_LY {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fbbf24;
+        }
+
+        .status-CHO_XAC_NHAN {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+
+        .status-DA_XAC_NHAN {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #3b82f6;
+        }
+
+        .status-DANG_GIAO {
+            background: #f5f3ff;
+            color: #5b21b6;
+            border: 1px solid #c4b5fd;
+        }
+
+        .status-DA_GIAO {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #6ee7b7;
+        }
+
+        .status-DA_THANH_TOAN {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #22c55e;
+        }
+
+        .status-DA_HUY {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
         }
 
         /* Info */

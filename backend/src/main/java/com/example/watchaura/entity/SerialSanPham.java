@@ -30,6 +30,7 @@ public class SerialSanPham {
     public static final int TRANG_THAI_BAO_HANH = 2;
     public static final int TRANG_THAI_DA_TRA_HANG = 3;
     public static final int TRANG_THAI_LOI = 4;
+    public static final int TRANG_THAI_CHO_XAC_NHAN = 5;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

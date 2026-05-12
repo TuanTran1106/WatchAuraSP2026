@@ -174,9 +174,10 @@
                                 <a th:if="${don.trangThaiDonHang == 'HOAN_THANH' || don.trangThaiDonHang == 'DA_HUY' || don.trangThaiDonHang == 'DA_THANH_TOAN_ONL'}" th:href="@{'/mua-lai/' + ${don.id}}" class="btn-order btn-order--rebuy">Mua lại</a>
                                 <th:block th:with="daDanhGia=${daDanhGiaMap != null ? daDanhGiaMap.get(don.id) : false},
                                                   coHoanTra=${hoanTraMap != null and hoanTraMap.get(don.id) != null},
+                                                  coThanhToan=${don.trangThaiThanhToan == 'DA THANH TOAN' or don.trangThaiThanhToan == 'DA_THANH_TOAN'},
                                                   hoanTraInfo=${hoanTraMap != null ? hoanTraMap.get(don.id) : null}">
                                     <!-- Nếu chưa có yêu cầu hoàn trả: hiện nút Trả/Đổi hàng -->
-                                    <a th:if="${(don.trangThaiDonHang == 'HOAN_THANH' or don.trangThaiDonHang == 'DA_THANH_TOAN_ONL') and !coHoanTra}"
+                                    <a th:if="${(don.trangThaiDonHang == 'HOAN_THANH' or don.trangThaiDonHang == 'DA_THANH_TOAN_ONL') and coThanhToan and !coHoanTra}"
                                        th:href="@{'/khach-hang/hoan-tra/tao-moi/' + ${don.id}}"
                                        class="btn-order btn-order--return">Trả/Đổi hàng</a>
                                     <!-- Nếu đã có yêu cầu hoàn trả: hiện nút Lịch sử trả hàng -->

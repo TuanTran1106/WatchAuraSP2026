@@ -733,8 +733,9 @@
                     // Fallback: tính bằng JS
                     var tongTienHangHoan = parseFloat(totalRefundEl.closest('.return-summary-card__row')
                         .previousElementSibling.querySelector('#tongTienHangHoan').textContent.replace(/[^\d]/g, '')) || 0;
-                    var tyLeVoucher = tongTienHangHoan / (parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 1);
-                    var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLeVoucher);
+                    var tongTienTamTinh = parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 1;
+                    // Tính trực tiếp: (tongTienHangHoan * voucherGiam) / tongTienTamTinh
+                    var voucherGiamTheoTyLe = Math.round((tongTienHangHoan * voucherGiam) / tongTienTamTinh);
                     var soTienHoan = tongTienHangHoan - voucherGiamTheoTyLe - phiGiao;
                     if (soTienHoan < 0) soTienHoan = 0;
                     totalRefundEl.innerHTML = '<span>' + formatCurrency(soTienHoan) + '</span>';
@@ -747,8 +748,9 @@
                 document.querySelectorAll('input.return-serial-checkbox__input:checked').forEach(function(cb) {
                     tongTienHangHoan += parseFloat(cb.getAttribute('data-don-gia')) || 0;
                 });
-                var tyLeVoucher = tongTienHangHoan / (parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 1);
-                var voucherGiamTheoTyLe = Math.round(voucherGiam * tyLeVoucher);
+                var tongTienTamTinh = parseFloat(totalRefundEl.getAttribute('data-tong-tien')) || 1;
+                // Tính trực tiếp: (tongTienHangHoan * voucherGiam) / tongTienTamTinh
+                var voucherGiamTheoTyLe = Math.round((tongTienHangHoan * voucherGiam) / tongTienTamTinh);
                 var soTienHoan = tongTienHangHoan - voucherGiamTheoTyLe - phiGiao;
                 if (soTienHoan < 0) soTienHoan = 0;
                 totalRefundEl.innerHTML = '<span>' + formatCurrency(soTienHoan) + '</span>';

@@ -39,6 +39,7 @@ public class HoanTraServiceImpl implements HoanTraService {
     private final KhachHangRepository khachHangRepository;
     private final SanPhamChiTietRepository sanPhamChiTietRepository;
     private final SerialSanPhamRepository serialSanPhamRepository;
+    private final SerialLoiRepository serialLoiRepository;
     private final ExcelService excelService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -221,6 +222,11 @@ public class HoanTraServiceImpl implements HoanTraService {
         hoanTra.setSoTienHoanTra(BigDecimal.ZERO);
         hoanTra.setNgayYeuCau(LocalDateTime.now());
 
+        // Lưu danh sách ảnh lỗi
+        if (request.getDanhSachAnhLoi() != null && !request.getDanhSachAnhLoi().isEmpty()) {
+            hoanTra.setDanhSachAnhLoi(toAnhLoiJson(request.getDanhSachAnhLoi()));
+        }
+
         hoanTra = hoanTraRepository.save(hoanTra);
 
         // Tính tổng số tiền hoàn từ các chi tiết (không bao gồm phí ship)
@@ -276,8 +282,10 @@ public class HoanTraServiceImpl implements HoanTraService {
         BigDecimal tongTienHoan = tongTienTuChiTiet;
         // Áp dụng tỷ lệ giảm giá nếu có
         if (tongTienTamTinh.compareTo(BigDecimal.ZERO) > 0 && tienGiam.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal tiLeGiam = tienGiam.divide(tongTienTamTinh, 4, java.math.RoundingMode.HALF_UP);
-            BigDecimal soTienDuocGiam = tongTienTuChiTiet.multiply(tiLeGiam).setScale(0, java.math.RoundingMode.HALF_UP);
+            // Tính trực tiếp: (tongTienChiTiet * tienGiam) / tongTienTamTinh
+            // Đảm bảo chia hết khi hoàn theo tỷ lệ sản phẩm
+            BigDecimal soTienDuocGiam = tongTienTuChiTiet.multiply(tienGiam)
+                    .divide(tongTienTamTinh, 0, java.math.RoundingMode.HALF_UP);
             tongTienHoan = tongTienTuChiTiet.subtract(soTienDuocGiam);
         }
 
@@ -686,6 +694,8 @@ public class HoanTraServiceImpl implements HoanTraService {
                 .tongTienHoaDon(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTongTienTamTinh() : null)
                 .phiGiaoHang(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getPhiVanChuyen() : null)
                 .voucherGiam(hoanTra.getHoaDon() != null ? hoanTra.getHoaDon().getTienGiam() : null)
+                // Danh sách ảnh lỗi
+                .danhSachAnhLoi(parseAnhLoiJson(hoanTra.getDanhSachAnhLoi()))
                 .build();
 
         if (hoanTra.getChiTietList() != null && !hoanTra.getChiTietList().isEmpty()) {
@@ -752,19 +762,23 @@ public class HoanTraServiceImpl implements HoanTraService {
         List<String> serialsHoanTra = new ArrayList<>();
         List<HoanTraChiTietDTO.SerialInfo> serialsChiTiet = new ArrayList<>();
 
-        // Hiển thị serials đã trả hàng
-        if (chiTiet.getHoaDonChiTiet() != null && chiTiet.getHoaDonChiTiet().getSerialSanPhams() != null) {
-            for (SerialSanPham sp : chiTiet.getHoaDonChiTiet().getSerialSanPhams()) {
+        // Chỉ lấy serial thuộc HoanTraChiTiet này - dựa trên HoaDonChiTiet
+        if (chiTiet.getHoaDonChiTiet() != null) {
+            List<SerialSanPham> serials = serialSanPhamRepository
+                    .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
+            
+            // Chỉ lấy serial có trạng thái DA_TRA_HANG (serial thực sự được hoàn)
+            for (SerialSanPham sp : serials) {
                 if (sp.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
                     serialsHoanTra.add(sp.getMaSerial());
+                    HoanTraChiTietDTO.SerialInfo si = HoanTraChiTietDTO.SerialInfo.builder()
+                            .maSerial(sp.getMaSerial())
+                            .trangThai(String.valueOf(sp.getTrangThai()))
+                            .trangThaiHienThi(getSerialTrangThaiText(sp.getTrangThai()))
+                            .daDuocChon(true)
+                            .build();
+                    serialsChiTiet.add(si);
                 }
-                HoanTraChiTietDTO.SerialInfo si = HoanTraChiTietDTO.SerialInfo.builder()
-                        .maSerial(sp.getMaSerial())
-                        .trangThai(String.valueOf(sp.getTrangThai()))
-                        .trangThaiHienThi(getSerialTrangThaiText(sp.getTrangThai()))
-                        .daDuocChon(sp.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG)
-                        .build();
-                serialsChiTiet.add(si);
             }
         }
 
@@ -1087,6 +1101,11 @@ public class HoanTraServiceImpl implements HoanTraService {
 
         hoanTra.setNgayYeuCau(LocalDateTime.now());
 
+        // Lưu danh sách ảnh lỗi
+        if (request.getDanhSachAnhLoi() != null && !request.getDanhSachAnhLoi().isEmpty()) {
+            hoanTra.setDanhSachAnhLoi(toAnhLoiJson(request.getDanhSachAnhLoi()));
+        }
+
         hoanTra = hoanTraRepository.save(hoanTra);
 
         // Tính tổng số tiền hoàn từ các chi tiết (không bao gồm phí ship)
@@ -1159,8 +1178,10 @@ public class HoanTraServiceImpl implements HoanTraService {
         BigDecimal tongTienHoan = tongTienTuChiTiet;
         // Áp dụng tỷ lệ giảm giá nếu có
         if (tongTienTamTinh.compareTo(BigDecimal.ZERO) > 0 && tienGiam.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal tiLeGiam = tienGiam.divide(tongTienTamTinh, 4, java.math.RoundingMode.HALF_UP);
-            BigDecimal soTienDuocGiam = tongTienTuChiTiet.multiply(tiLeGiam).setScale(0, java.math.RoundingMode.HALF_UP);
+            // Tính trực tiếp: (tongTienChiTiet * tienGiam) / tongTienTamTinh
+            // Đảm bảo chia hết khi hoàn theo tỷ lệ sản phẩm
+            BigDecimal soTienDuocGiam = tongTienTuChiTiet.multiply(tienGiam)
+                    .divide(tongTienTamTinh, 0, java.math.RoundingMode.HALF_UP);
             tongTienHoan = tongTienTuChiTiet.subtract(soTienDuocGiam);
         }
 
@@ -1186,6 +1207,32 @@ public class HoanTraServiceImpl implements HoanTraService {
             case 2: return "Bảo hành";
             case 3: return "Đã hoàn trả";
             default: return "Không xác định";
+        }
+    }
+
+    private List<String> parseAnhLoiJson(String json) {
+        if (json == null || json.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        } catch (Exception e) {
+            log.warn("Lỗi khi parse danh sách ảnh lỗi: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private String toAnhLoiJson(List<String> anhLoiList) {
+        if (anhLoiList == null || anhLoiList.isEmpty()) {
+            return null;
+        }
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            return mapper.writeValueAsString(anhLoiList);
+        } catch (Exception e) {
+            log.warn("Lỗi khi tạo JSON cho danh sách ảnh lỗi: {}", e.getMessage());
+            return null;
         }
     }
 
@@ -1435,6 +1482,34 @@ public class HoanTraServiceImpl implements HoanTraService {
                         }
                     }
                 }
+            } else {
+                // Lưu serial không thể thêm vào kho vào danh sách serial lỗi
+                for (HoanTraChiTiet chiTiet : hoanTra.getChiTietList()) {
+                    if (chiTiet.getHoaDonChiTiet() != null) {
+                        SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
+                        String tenSanPham = spct != null && spct.getSanPham() != null 
+                                ? spct.getSanPham().getTenSanPham() : "Không xác định";
+                        
+                        List<SerialSanPham> serials = serialSanPhamRepository
+                                .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
+                        for (SerialSanPham serial : serials) {
+                            if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
+                                // Kiểm tra serial đã tồn tại trong danh sách lỗi chưa
+                                if (!serialLoiRepository.existsByMaSerial(serial.getMaSerial())) {
+                                    SerialLoi serialLoi = new SerialLoi();
+                                    serialLoi.setMaSerial(serial.getMaSerial());
+                                    serialLoi.setHoanTra(hoanTra);
+                                    serialLoi.setHoaDonChiTiet(chiTiet.getHoaDonChiTiet());
+                                    serialLoi.setSanPhamTen(tenSanPham);
+                                    serialLoi.setLyDo("Không thể thêm vào kho - Không tick chọn 'Thêm vào kho' khi hoàn tiền");
+                                    serialLoi.setTrangThai(SerialLoi.TRANG_THAI_CHUA_XU_LY);
+                                    serialLoi.setNguoiTao(nhanVien);
+                                    serialLoiRepository.save(serialLoi);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             hoanTra = hoanTraRepository.save(hoanTra);
@@ -1549,9 +1624,15 @@ public class HoanTraServiceImpl implements HoanTraService {
     }
 
     private void executeTransitionEffects(HoanTra hoanTra, String fromStatus, String toStatus, Boolean themVaoKho) {
+        // Convert themVaoKho to boolean (handle both Boolean and String "true"/"false")
+        boolean choPhepThemVaoKho = themVaoKho == null || Boolean.TRUE.equals(themVaoKho) || "true".equals(String.valueOf(themVaoKho));
+
         // If rejected (TU_CHOI), restore serial status
         if (HoanTra.TRANG_THAI_TU_CHOI.equals(toStatus)) {
-            List<HoanTraChiTiet> chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
+            List<HoanTraChiTiet> chiTietList = hoanTra.getChiTietList();
+            if (chiTietList == null || chiTietList.isEmpty()) {
+                chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
+            }
             for (HoanTraChiTiet chiTiet : chiTietList) {
                 if (chiTiet.getHoaDonChiTiet() != null) {
                     List<SerialSanPham> serials = serialSanPhamRepository
@@ -1567,24 +1648,63 @@ public class HoanTraServiceImpl implements HoanTraService {
             }
         }
 
-        // If transitioning to DA_HOAN_TIEN and themVaoKho is true, add products back to stock
-        if (HoanTra.TRANG_THAI_DA_HOAN_TIEN.equals(toStatus) && Boolean.TRUE.equals(themVaoKho)) {
-            List<HoanTraChiTiet> chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
-            for (HoanTraChiTiet chiTiet : chiTietList) {
-                SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
-                int currentStock = sanPhamChiTiet.getSoLuongTon() != null ? sanPhamChiTiet.getSoLuongTon() : 0;
-                sanPhamChiTiet.setSoLuongTon(currentStock + chiTiet.getSoLuongHoanTra());
-                sanPhamChiTietRepository.save(sanPhamChiTiet);
+        // If transitioning to DA_HOAN_TIEN
+        if (HoanTra.TRANG_THAI_DA_HOAN_TIEN.equals(toStatus)) {
+            if (choPhepThemVaoKho) {
+                // Thêm vào kho
+                List<HoanTraChiTiet> chiTietList = hoanTra.getChiTietList();
+                if (chiTietList == null || chiTietList.isEmpty()) {
+                    chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
+                }
+                for (HoanTraChiTiet chiTiet : chiTietList) {
+                    SanPhamChiTiet sanPhamChiTiet = chiTiet.getSanPhamChiTiet();
+                    int currentStock = sanPhamChiTiet.getSoLuongTon() != null ? sanPhamChiTiet.getSoLuongTon() : 0;
+                    sanPhamChiTiet.setSoLuongTon(currentStock + chiTiet.getSoLuongHoanTra());
+                    sanPhamChiTietRepository.save(sanPhamChiTiet);
 
-                // Also update serial status back to in-stock
-                if (chiTiet.getHoaDonChiTiet() != null) {
-                    List<SerialSanPham> serials = serialSanPhamRepository
-                            .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
-                    for (SerialSanPham serial : serials) {
-                        if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
-                            serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
-                            serial.setHoaDonChiTiet(null);
-                            serialSanPhamRepository.save(serial);
+                    // Also update serial status back to in-stock
+                    if (chiTiet.getHoaDonChiTiet() != null) {
+                        List<SerialSanPham> serials = serialSanPhamRepository
+                                .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
+                        for (SerialSanPham serial : serials) {
+                            if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
+                                serial.setTrangThai(SerialSanPham.TRANG_THAI_TRONG_KHO);
+                                serial.setHoaDonChiTiet(null);
+                                serialSanPhamRepository.save(serial);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Lưu serial vào danh sách lỗi (không thêm vào kho)
+                List<HoanTraChiTiet> chiTietList = hoanTra.getChiTietList();
+                if (chiTietList == null || chiTietList.isEmpty()) {
+                    chiTietList = hoanTraChiTietRepository.findByHoanTraId(hoanTra.getId());
+                }
+                for (HoanTraChiTiet chiTiet : chiTietList) {
+                    if (chiTiet.getHoaDonChiTiet() != null) {
+                        SanPhamChiTiet spct = chiTiet.getSanPhamChiTiet();
+                        String tenSanPham = spct != null && spct.getSanPham() != null
+                                ? spct.getSanPham().getTenSanPham() : "Không xác định";
+
+                        List<SerialSanPham> serials = serialSanPhamRepository
+                                .findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getHoaDonChiTiet().getId());
+                        for (SerialSanPham serial : serials) {
+                            if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_DA_TRA_HANG) {
+                                // Kiểm tra serial đã tồn tại trong danh sách lỗi chưa
+                                if (!serialLoiRepository.existsByMaSerial(serial.getMaSerial())) {
+                                    SerialLoi serialLoi = new SerialLoi();
+                                    serialLoi.setMaSerial(serial.getMaSerial());
+                                    serialLoi.setHoanTra(hoanTra);
+                                    serialLoi.setHoaDonChiTiet(chiTiet.getHoaDonChiTiet());
+                                    serialLoi.setSanPhamTen(tenSanPham);
+                                    // Lấy lý do từ HoanTra mà user đã gửi khi tạo yêu cầu hoàn trả
+                                    serialLoi.setLyDo(hoanTra.getLyDo());
+                                    serialLoi.setTrangThai(SerialLoi.TRANG_THAI_CHUA_XU_LY);
+                                    serialLoi.setNguoiTao(hoanTra.getNhanVienXuLy());
+                                    serialLoiRepository.save(serialLoi);
+                                }
+                            }
                         }
                     }
                 }
@@ -1648,8 +1768,10 @@ public class HoanTraServiceImpl implements HoanTraService {
         // Tính voucher giảm theo tỷ lệ
         BigDecimal tienVoucherGiam = BigDecimal.ZERO;
         if (tongTienTamTinhGoc.compareTo(BigDecimal.ZERO) > 0 && tienGiamGoc.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal tiLe = tongTienMatHangHoan.divide(tongTienTamTinhGoc, 4, java.math.RoundingMode.HALF_UP);
-            tienVoucherGiam = tienGiamGoc.multiply(tiLe).setScale(0, java.math.RoundingMode.HALF_UP);
+            // Tính trực tiếp: (tongTienMatHang * tienGiam) / tongTienTamTinh
+            // Đảm bảo chia hết khi hoàn theo tỷ lệ sản phẩm
+            tienVoucherGiam = tongTienMatHangHoan.multiply(tienGiamGoc)
+                    .divide(tongTienTamTinhGoc, 0, java.math.RoundingMode.HALF_UP);
         }
 
         // Tính số tiền hoàn ước tính = tổng tiền hàng hoàn - voucher giảm (tỷ lệ) - phí vận chuyển

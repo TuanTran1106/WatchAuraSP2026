@@ -45,11 +45,17 @@
     return modal;
   }
 
-  function setTone(modal, tone) {
+function setTone(modal, tone) {
     tone = tone || 'info';
-    modal.classList.remove('confirm-modal--info', 'confirm-modal--danger');
-    modal.classList.add(tone === 'danger' ? 'confirm-modal--danger' : 'confirm-modal--info');
-  }
+    modal.classList.remove('confirm-modal--info', 'confirm-modal--danger', 'confirm-modal--logout');
+    if (tone === 'danger') {
+        modal.classList.add('confirm-modal--danger');
+    } else if (tone === 'logout') {
+        modal.classList.add('confirm-modal--logout');
+    } else {
+        modal.classList.add('confirm-modal--info');
+    }
+}
 
   function openModal(opts) {
     var modal = ensureModal();

@@ -44,12 +44,7 @@
                     <div class="invoice-detail__status-field">
                         <label for="hoanTraStatus" class="invoice-detail__status-field-label">Trạng thái</label>
                         <select name="trangThai" id="hoanTraStatus" class="invoice-detail__status-select"
-                            th:with="cur=${hoanTra.trangThai != null ? hoanTra.trangThai : 'CHO_XU_LY'},
-                                     _class=${cur == 'CHO_XU_LY' ? 'status--cho-xu-ly' :
-                                      (cur == 'DA_DUYET' ? 'status--da-duyet' :
-                                      (cur == 'DA_NHAN_HANG' ? 'status--da-nhan-hang' :
-                                      (cur == 'DA_HOAN_TIEN' ? 'status--da-hoan-tien' :
-                                      (cur == 'TU_CHOI' ? 'status--tu-choi' : '')))}"
+                            th:with="cur=${hoanTra.trangThai != null ? hoanTra.trangThai : 'CHO_XU_LY'},_class=${cur == 'CHO_XU_LY' ? 'status--cho-xu-ly' : (cur == 'DA_DUYET' ? 'status--da-duyet' : (cur == 'DA_NHAN_HANG' ? 'status--da-nhan-hang' : (cur == 'DA_HOAN_TIEN' ? 'status--da-hoan-tien' : (cur == 'TU_CHOI' ? 'status--tu-choi' : ''))))}"
                             th:classappend="${_class}">
 
                             <!-- ==================== TRA HANG WORKFLOW ==================== -->
@@ -248,6 +243,26 @@
             </div>
         </section>
 
+        <!-- Hinh anh loi san pham -->
+        <section class="invoice-detail__section" th:if="${hoanTra.danhSachAnhLoi != null and !hoanTra.danhSachAnhLoi.isEmpty()}">
+            <h2 class="invoice-detail__section-title">
+                <i class="fa-solid fa-camera-retro" style="color: #ef4444;"></i>
+                Hình ảnh lỗi sản phẩm
+                <span class="invoice-detail__section-badge" th:text="${hoanTra.danhSachAnhLoi.size()} + ' ảnh'">0 ảnh</span>
+            </h2>
+            <div class="invoice-detail__images-grid">
+                <th:block th:each="anhLoi, stat : ${hoanTra.danhSachAnhLoi}">
+                    <div class="invoice-detail__image-item" onclick="openAdminImageModal(this)" th:data-src="${anhLoi}" th:data-index="${stat.index}">
+                        <img th:src="${anhLoi}" th:alt="'Ảnh lỗi ' + ${stat.index + 1}"
+                             onerror="this.parentElement.style.display='none'">
+                        <div class="invoice-detail__image-overlay">
+                            <i class="fa-solid fa-search-plus"></i>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+        </section>
+
         <!-- Tong tien hoan tra - Chi tiet -->
         <section class="invoice-detail__summary" th:if="${hoanTra.chiTietList != null and !hoanTra.chiTietList.isEmpty()}">
             <div class="invoice-detail__summary-row">
@@ -282,12 +297,6 @@
             </div>
 
             <!-- Ghi chu cong thuc tinh -->
-            <th:block th:if="${(hoanTra.voucherGiam != null and hoanTra.voucherGiam > 0)}">
-                <div class="invoice-detail__formula-note">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Công thức: Tổng mặt hàng - Voucher giảm = Số tiền hoàn trả
-                </div>
-            </th:block>
         </section>
 
         <script th:inline="javascript">
@@ -308,8 +317,10 @@
                     });
                 }
 
-                var tyLe = tongTienTamTinhGoc > 0 ? totalMatHang / tongTienTamTinhGoc : 0;
-                var voucherGiamTheoTyLe = Math.round(tienGiamGoc * tyLe);
+                // Tính trực tiếp: (totalMatHang * tienGiamGoc) / tongTienTamTinhGoc
+                var voucherGiamTheoTyLe = tongTienTamTinhGoc > 0
+                    ? Math.round((totalMatHang * tienGiamGoc) / tongTienTamTinhGoc)
+                    : 0;
                 var soTienHoanTra = totalMatHang - voucherGiamTheoTyLe;
                 if (soTienHoanTra < 0) soTienHoanTra = 0;
 
@@ -448,11 +459,10 @@
             .then(function (data) {
                 if (data.success) {
                     showToastMessage(data.message || 'Đổi trạng thái thành công!', 'success');
+                    // Cập nhật UI trước (sẽ cập nhật prevValue)
                     updateUIAfterStatusChange(data);
-                    // Reload page after short delay to get updated dropdown options
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1500);
+                    // Cập nhật lại options của select không cần reload
+                    rebuildStatusOptions(select, data.trangThaiMoi);
                 } else {
                     showToastMessage(data.message || 'Có lỗi xảy ra', 'error');
                     var prev = select.getAttribute('data-prev-value');
@@ -488,12 +498,16 @@
                 if (statusClass) {
                     select.classList.add(statusClass);
                 }
+
+                // Cập nhật giá trị prev-value để không trigger change khi chọn lại cùng giá trị
+                select.dataset.prevValue = data.trangThaiMoi;
             }
 
             // Update info section if present
             if (data.ngayXuLy) {
                 var ngayXuLyItem = document.querySelector('.invoice-detail__item[data-field="ngayXuLy"]');
                 if (ngayXuLyItem) {
+                    ngayXuLyItem.style.display = '';
                     var valueEl = ngayXuLyItem.querySelector('.invoice-detail__value');
                     if (valueEl) {
                         valueEl.textContent = formatDate(data.ngayXuLy);
@@ -504,9 +518,21 @@
             if (data.tenNhanVienXuLy) {
                 var nhanVienItem = document.querySelector('.invoice-detail__item[data-field="nhanVienXuLy"]');
                 if (nhanVienItem) {
+                    nhanVienItem.style.display = '';
                     var valueEl = nhanVienItem.querySelector('.invoice-detail__value');
                     if (valueEl) {
                         valueEl.textContent = data.tenNhanVienXuLy;
+                    }
+                }
+            }
+
+            if (data.ghiChuXuLy) {
+                var ghiChuItem = document.querySelector('.invoice-detail__item[data-field="ghiChuXuLy"]');
+                if (ghiChuItem) {
+                    ghiChuItem.style.display = '';
+                    var valueEl = ghiChuItem.querySelector('.invoice-detail__value');
+                    if (valueEl) {
+                        valueEl.textContent = data.ghiChuXuLy;
                     }
                 }
             }
@@ -545,6 +571,69 @@
             }
         }
 
+        // Rebuild status options dựa trên trạng thái mới (không cần reload trang)
+        function rebuildStatusOptions(select, newStatus) {
+            if (!select) return;
+
+            // Xóa tất cả options hiện tại (giữ lại option hiện tại đã được chọn)
+            var currentValue = select.value;
+            select.innerHTML = '';
+
+            // Định nghĩa workflow cho TRA_HANG
+            var workflow = [
+                { value: 'CHO_XU_LY', label: 'Chờ xử lý' },
+                { value: 'DA_DUYET', label: 'Đã duyệt' },
+                { value: 'DA_NHAN_HANG', label: 'Đã nhận hàng' },
+                { value: 'DA_HOAN_TIEN', label: 'Đã hoàn tiền' },
+                { value: 'TU_CHOI', label: 'Từ chối' }
+            ];
+
+            // Các bước tiếp theo từ mỗi trạng thái
+            var nextSteps = {
+                'CHO_XU_LY': ['DA_DUYET', 'TU_CHOI'],
+                'DA_DUYET': ['DA_NHAN_HANG', 'TU_CHOI'],
+                'DA_NHAN_HANG': ['DA_HOAN_TIEN'],
+                'DA_HOAN_TIEN': [],
+                'TU_CHOI': []
+            };
+
+            // Tạo map cho label
+            var labelMap = {};
+            workflow.forEach(function(w) {
+                labelMap[w.value] = w.label;
+            });
+
+            // Thêm option hiện tại (đã được chọn)
+            var currentOpt = document.createElement('option');
+            currentOpt.value = newStatus;
+            currentOpt.textContent = labelMap[newStatus] || newStatus;
+            currentOpt.selected = true;
+            select.appendChild(currentOpt);
+
+            // Thêm các bước tiếp theo
+            var steps = nextSteps[newStatus] || [];
+            steps.forEach(function(step) {
+                var opt = document.createElement('option');
+                opt.value = step;
+                opt.textContent = labelMap[step] || step;
+                select.appendChild(opt);
+            });
+
+            // Thêm class cho select dựa trên trạng thái mới
+            select.classList.remove('status--cho-xu-ly', 'status--da-duyet', 'status--da-nhan-hang',
+                'status--da-hoan-tien', 'status--tu-choi');
+            var statusClassMap = {
+                'CHO_XU_LY': 'status--cho-xu-ly',
+                'DA_DUYET': 'status--da-duyet',
+                'DA_NHAN_HANG': 'status--da-nhan-hang',
+                'DA_HOAN_TIEN': 'status--da-hoan-tien',
+                'TU_CHOI': 'status--tu-choi'
+            };
+            if (statusClassMap[newStatus]) {
+                select.classList.add(statusClassMap[newStatus]);
+            }
+        }
+
         // Status form change handler
         var currentForm = null;
         var currentSelect = null;
@@ -554,9 +643,9 @@
             var select = form.querySelector('select[name="trangThai"]');
             if (!select) return;
 
-            // Store initial value using closure
-            var initialValue = select.value;
-            console.log('DEBUG: Initial value stored:', initialValue);
+            // Store initial value using data attribute (để có thể cập nhật sau khi AJAX thành công)
+            select.dataset.prevValue = select.value;
+            console.log('DEBUG: Initial value stored:', select.dataset.prevValue);
 
             select.addEventListener('change', function () {
                 if (isSubmitting) {
@@ -565,7 +654,7 @@
                 }
 
                 var newVal = select.value;
-                var currentVal = initialValue; // Use closure variable
+                var currentVal = select.dataset.prevValue; // Use data attribute
 
                 console.log('DEBUG: newVal =', newVal, '| currentVal =', currentVal);
 
@@ -674,4 +763,354 @@
 
     })();
     </script>
+
+    <!-- Image Modal -->
+    <div class="image-modal-overlay" id="adminImageModal" style="display: none;">
+        <div class="image-modal">
+            <div class="image-modal__header">
+                <h3 class="image-modal__title">
+                    <i class="fa-solid fa-image"></i>
+                    Hình ảnh lỗi sản phẩm
+                    <span id="imageModalCounter"></span>
+                </h3>
+                <button class="image-modal__close" onclick="closeAdminImageModal()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="image-modal__body">
+                <button class="image-modal__nav image-modal__nav--prev" onclick="navigateAdminImage(-1)">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <img id="adminModalImage" src="" alt="">
+                <button class="image-modal__nav image-modal__nav--next" onclick="navigateAdminImage(1)">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var allAdminImages = [];
+        var currentAdminIndex = 0;
+
+        window.openAdminImageModal = function(el) {
+            var modal = document.getElementById('adminImageModal');
+            var img = document.getElementById('adminModalImage');
+            var counter = document.getElementById('imageModalCounter');
+
+            // Collect all images
+            allAdminImages = [];
+            document.querySelectorAll('.invoice-detail__images-grid .invoice-detail__image-item').forEach(function(item) {
+                allAdminImages.push(item.getAttribute('data-src'));
+            });
+
+            // Find current index
+            var src = el.getAttribute('data-src');
+            currentAdminIndex = allAdminImages.indexOf(src);
+            if (currentAdminIndex === -1) currentAdminIndex = 0;
+
+            // Update modal
+            img.src = src;
+            counter.textContent = (currentAdminIndex + 1) + ' / ' + allAdminImages.length;
+
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            updateAdminNavVisibility();
+        };
+
+        window.closeAdminImageModal = function() {
+            var modal = document.getElementById('adminImageModal');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        window.navigateAdminImage = function(direction) {
+            currentAdminIndex += direction;
+
+            if (currentAdminIndex < 0) {
+                currentAdminIndex = allAdminImages.length - 1;
+            } else if (currentAdminIndex >= allAdminImages.length) {
+                currentAdminIndex = 0;
+            }
+
+            var img = document.getElementById('adminModalImage');
+            var counter = document.getElementById('imageModalCounter');
+
+            img.src = allAdminImages[currentAdminIndex];
+            counter.textContent = (currentAdminIndex + 1) + ' / ' + allAdminImages.length;
+
+            updateAdminNavVisibility();
+        };
+
+        function updateAdminNavVisibility() {
+            var prevBtn = document.querySelector('.image-modal__nav--prev');
+            var nextBtn = document.querySelector('.image-modal__nav--next');
+
+            if (allAdminImages.length <= 1) {
+                if (prevBtn) prevBtn.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+            } else {
+                if (prevBtn) prevBtn.style.display = 'flex';
+                if (nextBtn) nextBtn.style.display = 'flex';
+            }
+        }
+
+        // Close modal when clicking outside content
+        document.getElementById('adminImageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAdminImageModal();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            var modal = document.getElementById('adminImageModal');
+            if (modal.style.display !== 'flex') return;
+
+            if (e.key === 'Escape') {
+                closeAdminImageModal();
+            } else if (e.key === 'ArrowLeft') {
+                navigateAdminImage(-1);
+            } else if (e.key === 'ArrowRight') {
+                navigateAdminImage(1);
+            }
+        });
+    })();
+    </script>
+
+    <style>
+        /* Image Grid Styles */
+        .invoice-detail__images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .invoice-detail__image-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+
+        .invoice-detail__image-item:hover {
+            border-color: #c9a227;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .invoice-detail__image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .invoice-detail__image-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .invoice-detail__image-item:hover .invoice-detail__image-overlay {
+            opacity: 1;
+        }
+
+        .invoice-detail__image-overlay i {
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        .invoice-detail__section-badge {
+            margin-left: auto;
+            background: #fee2e2;
+            color: #dc2626;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+        }
+
+        /* Image Modal Styles */
+        .image-modal-overlay {
+            position: fixed;
+            z-index: 9999;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: imageModalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes imageModalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .image-modal {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: imageModalSlideUp 0.3s ease-out;
+        }
+
+        @keyframes imageModalSlideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .image-modal__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: #1f2937;
+            color: #fff;
+        }
+
+        .image-modal__title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .image-modal__title i {
+            color: #ef4444;
+        }
+
+        #imageModalCounter {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .image-modal__close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .image-modal__close:hover {
+            background: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        .image-modal__body {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: #111;
+            min-height: 400px;
+        }
+
+        .image-modal__body img {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .image-modal__nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .image-modal__nav:hover {
+            background: #c9a227;
+            color: #fff;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .image-modal__nav--prev {
+            left: 1rem;
+        }
+
+        .image-modal__nav--next {
+            right: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .invoice-detail__images-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 0.75rem;
+            }
+
+            .image-modal {
+                max-width: 95%;
+                max-height: 95%;
+            }
+
+            .image-modal__nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .image-modal__nav--prev {
+                left: 0.5rem;
+            }
+
+            .image-modal__nav--next {
+                right: 0.5rem;
+            }
+        }
+    </style>
 </div>

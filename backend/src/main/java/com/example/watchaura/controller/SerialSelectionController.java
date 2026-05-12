@@ -4,6 +4,7 @@ import com.example.watchaura.annotation.RequiresRole;
 import com.example.watchaura.dto.AssignSerialRequest;
 import com.example.watchaura.dto.HoaDonDTO;
 import com.example.watchaura.dto.HoaDonSerialSelectionDTO;
+import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.SerialSanPhamService;
 import jakarta.validation.Valid;
@@ -24,13 +25,38 @@ public class SerialSelectionController {
 
     private final SerialSanPhamService serialSanPhamService;
     private final HoaDonService hoaDonService;
+    private final HoaDonRepository hoaDonRepository;
 
     /**
      * Hiển thị trang chọn serial cho hóa đơn
      */
     @GetMapping("/chon/{hoaDonId}")
-    public String showSerialSelectionPage(@PathVariable Integer hoaDonId, Model model) {
+    public String showSerialSelectionPage(@PathVariable Integer hoaDonId,
+                                          Model model,
+                                          RedirectAttributes redirect) {
         HoaDonSerialSelectionDTO data = serialSanPhamService.getSerialSelectionData(hoaDonId);
+
+        // Check tồn kho serial TRƯỚC KHI hiển thị trang
+        for (HoaDonSerialSelectionDTO.BienTheSerialGroup group : data.getBienTheGroups()) {
+            int soLuongKhaDung = group.getSerials() != null ? group.getSerials().size() : 0;
+            if (soLuongKhaDung < group.getSoLuongMua()) {
+                // Tự động chuyển đơn sang CAN_XU_LY
+                hoaDonRepository.findById(hoaDonId).ifPresent(hd -> {
+                    hd.setTrangThaiDonHang("CAN_XU_LY");
+                    hd.setGhiChu("Không đủ serial trong kho: " + group.getTenSanPham() +
+                        " " + group.getTenBienThe() + " - cần " + group.getSoLuongMua() +
+                        ", chỉ còn " + soLuongKhaDung);
+                    hoaDonRepository.save(hd);
+                });
+
+                redirect.addFlashAttribute("warning",
+                    "Không đủ serial trong kho cho sản phẩm '" + group.getTenSanPham() +
+                    " " + group.getTenBienThe() + "': cần " + group.getSoLuongMua() +
+                    ", chỉ còn " + soLuongKhaDung + ". Đơn hàng đã được chuyển sang trạng thái Cần xử lý.");
+                return "redirect:/admin/hoa-don/" + hoaDonId;
+            }
+        }
+
         model.addAttribute("title", "Chọn Serial - " + data.getMaDonHang());
         model.addAttribute("content", "admin/serial-selection");
         model.addAttribute("serialData", data);

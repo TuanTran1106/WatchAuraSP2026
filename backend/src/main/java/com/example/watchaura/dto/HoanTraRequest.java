@@ -41,6 +41,9 @@ public class HoanTraRequest {
     @NotBlank(message = "Tên chủ tài khoản không được để trống")
     private String tenChuTaiKhoan;
 
+    // Danh sách ảnh lỗi sản phẩm
+    private List<String> danhSachAnhLoi;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

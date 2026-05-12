@@ -40,26 +40,21 @@
 
     <div th:if="${error}" class="admin-toast-payload" th:attr="data-admin-toast-message=${error}, data-admin-toast-type='error'" aria-hidden="true"></div>
 
-
-
     <section class="card card--full" id="listHoaDon">
 
         <h2 class="card__title">Danh sách hóa đơn</h2>
-
-
 
         <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
 
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
             <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-            <label class="toolbar__label">Trạng thái:</label>
+            <label class="toolbar__label">Trạng thái hoá đơn:</label>
 
             <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
 
                 <option value="">Tất cả</option>
                 <option value="CAN_XU_LY" th:text="'Cần xử lý'" th:selected="${filterTrangThai == 'CAN_XU_LY'}">Cần xử lý</option>
                 <option value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'" th:selected="${filterTrangThai == 'CHO_XAC_NHAN'}">Chờ xác nhận</option>
-                <option value="DA_THANH_TOAN_ONL" th:text="'TT VnPay OK'" th:selected="${filterTrangThai == 'DA_THANH_TOAN_ONL'}">TT VnPay thành công</option>
                 <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'" th:selected="${filterTrangThai == 'DA_XAC_NHAN'}">Đã xác nhận</option>
                 <option value="DANG_GIAO" th:text="'Đang giao'" th:selected="${filterTrangThai == 'DANG_GIAO'}">Đang giao</option>
                 <option value="DA_GIAO" th:text="'Đã giao'" th:selected="${filterTrangThai == 'DA_GIAO'}">Đã giao</option>
@@ -81,8 +76,17 @@
 
             </select>
 
-        </form>
+            <label class="toolbar__label">Thanh toán:</label>
 
+            <select name="phuongThucThanhToan" class="toolbar__select" onchange="this.form.submit()">
+
+                <option value="">Tất cả</option>
+                <option value="COD" th:selected="${filterPhuongThucThanhToan == 'COD'}">COD</option>
+                <option value="VNPAY" th:selected="${filterPhuongThucThanhToan == 'VNPAY'}">VNPay</option>
+
+            </select>
+
+        </form>
 
         <table class="table">
 
@@ -130,7 +134,7 @@
 
                     <td>
 
-                        <!-- OFFLINE -->
+                        <!-- OFFLINE - Đơn bán tại quầy -->
                         <form th:if="${item.loaiHoaDon == 'OFFLINE'}"
                               th:action="@{/admin/hoa-don/{id}/trang-thai(id=${item.id})}"
                               method="post"
@@ -150,114 +154,91 @@
                             <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
 
                             <input type="hidden" name="loaiDon" th:value="${filterLoaiDon != null ? filterLoaiDon : ''}" />
+                            <input type="hidden" name="phuongThucThanhToan" th:value="${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''}" />
 
                             <select name="trangThai" class="form__select form__select--sm table-status-select"
+                                    th:with="cur=${item.trangThaiDonHang != null and !#strings.isEmpty(item.trangThaiDonHang) ? item.trangThaiDonHang : 'CHO_XAC_NHAN'},
+                                             isDaGiao=${cur == 'DA_GIAO'},
+                                             isDaHuy=${cur == 'DA_HUY'},
+                                             isHoanThanh=${cur == 'HOAN_THANH'},
+                                             isDaXacNhan=${cur == 'DA_XAC_NHAN'},
+                                             isDangGiao=${cur == 'DANG_GIAO'},
+                                             statusCls=${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : (cur == 'DA_GIAO' ? 'status--da-giao' : (cur == 'HOAN_THANH' ? 'status--hoan-thanh' : (cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN' ? 'status--da-giao' : 'status--da-huy'))))))}"
+                                    th:disabled="${isDaHuy or isHoanThanh}"
+                                    th:classappend="${statusCls}">
 
-                                    th:with="raw=${item.trangThaiDonHang},
+                                <!-- Đã hủy - không cho đổi -->
+                                <option th:if="${isDaHuy}" th:value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
 
-                                             cur=${raw != null and !#strings.isEmpty(raw) ? raw : 'CHO_THANH_TOAN'},
+                                <!-- Cần xử lý -->
+                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lí'">Cần xử lí</option>
+                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
+                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
 
-                                             isCho=${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'},
+                                <!-- Chờ xác nhận -->
+                                <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="true" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
+                                <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="DA_XAC_NHAN" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                                <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
 
-                                             isPaid=${cur == 'DA_THANH_TOAN' or cur == 'DA THANH TOAN'},
+                                <!-- Đã xác nhận -->
+                                <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DA_XAC_NHAN" th:selected="true" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                                <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
+                                <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DA_GIAO" th:text="'Đã giao'">Đã giao</option>
+                                <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
 
-                                             isHuy=${cur == 'DA_HUY'},
+                                <!-- Đang giao -->
+                                <option th:if="${cur == 'DANG_GIAO'}" th:value="DANG_GIAO" th:selected="true" th:text="'Đang giao'">Đang giao</option>
+                                <option th:if="${cur == 'DANG_GIAO'}" th:value="DA_GIAO" th:text="'Đã giao'">Đã giao</option>
 
-                                             isCanXuLy=${cur == 'CAN_XU_LY'}"
+                                <!-- Đã giao - có thể chuyển sang Hoàn thành -->
+                                <option th:if="${cur == 'DA_GIAO'}" th:value="DA_GIAO" th:selected="true" th:text="'Đã giao'">Đã giao</option>
+                                <option th:if="${cur == 'DA_GIAO'}" th:value="HOAN_THANH" th:text="'Hoàn thành'">Hoàn thành</option>
 
-                                    th:disabled="${isHuy or isPaid}"
-
-                                    th:title="${isHuy} ? 'Đơn đã hủy, không đổi trạng thái' : (${isPaid} ? 'Đơn đã thanh toán, không đổi trạng thái' : 'Đổi trạng thái hóa đơn tại quầy')"
-
-                                    th:classappend="${isCanXuLy ? 'status--can-xu-ly' : (isHuy ? 'status--da-huy' : (isPaid ? 'status--da-giao' : 'status--cho-xac-nhan'))}">
-
-                                <th:block th:if="${isCho}">
-
-                                    <option value="CHO_THANH_TOAN" th:selected="${cur == 'CHO_THANH_TOAN' or cur == 'DRAFT_OFFLINE' or cur == 'CHO_XAC_NHAN'}" th:text="'Chờ thanh toán'">Chờ thanh toán</option>
-
-                                    <option value="DA_THANH_TOAN" th:text="'Hoàn thành'">Hoàn thành</option>
-
-                                    <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
-
-                                </th:block>
-
-                                <th:block th:if="${isPaid}">
-
-                                    <option value="DA_THANH_TOAN" th:selected="true" th:text="'Hoàn thành'">Hoàn thành</option>
-
-                                </th:block>
-
-                                <th:block th:if="${isHuy and !isCho and !isPaid}">
-
-                                    <option value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
-
-                                </th:block>
-
-                                <th:block th:if="${isCanXuLy}">
-
-                                    <option value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lí'">Cần xử lí</option>
-
-                                    <option value="DA_THANH_TOAN" th:text="'Đã thanh toán'">Đã thanh toán</option>
-
-                                    <option value="DA_HUY" th:text="'Đã hủy'">Đã hủy</option>
-
+                                <!-- Hoàn thành - chỉ hiển thị khi đơn đã ở trạng thái này -->
+                                <th:block th:if="${isHoanThanh}">
+                                    <option th:value="HOAN_THANH" th:selected="true" disabled="disabled" th:text="'Hoàn thành'">Hoàn thành</option>
                                 </th:block>
 
                             </select>
 
                         </form>
 
-
-
+                        <!-- ONLINE -->
                         <form th:unless="${item.loaiHoaDon == 'OFFLINE'}"
-
                               th:action="@{/admin/hoa-don/{id}/trang-thai(id=${item.id})}"
-
                               method="post"
-
                               style="display:inline;"
-
                               class="status-form js-admin-ajax-form"
-
                               data-ajax="true"
-
                               data-confirm="Bạn có chắc chắn muốn đổi trạng thái đơn hàng này?"
-
                               data-confirm-title="Đổi trạng thái đơn hàng"
-
                               data-confirm-ok="Đổi trạng thái"
-
                               data-confirm-cancel="Hủy"
-
                               data-confirm-tone="info">
 
                             <input type="hidden" name="page" th:value="${page != null ? page.number : 0}" />
-
                             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
-
                             <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
-
                             <input type="hidden" name="loaiDon" th:value="${filterLoaiDon != null ? filterLoaiDon : ''}" />
+                            <input type="hidden" name="phuongThucThanhToan" th:value="${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''}" />
 
                             <select name="trangThai" class="form__select form__select--sm table-status-select"
+                                    th:with="cur=${item.trangThaiDonHang != null and !#strings.isEmpty(item.trangThaiDonHang) ? item.trangThaiDonHang : 'CHO_XAC_NHAN'},
+                                             isDaGiao=${cur == 'DA_GIAO'},
+                                             isDaHuy=${cur == 'DA_HUY'},
+                                             isDaThanhToan=${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'},
+                                             isHoanThanh=${cur == 'HOAN_THANH'},
+                                             statusCls=${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : (cur == 'DA_GIAO' ? 'status--da-giao' : (cur == 'DA THANH TOAN' ? 'status--da-giao' : (cur == 'DA_THANH_TOAN' ? 'status--da-giao' : (cur == 'HOAN_THANH' ? 'status--hoan-thanh' : 'status--da-huy')))))))}"
+                                th:disabled="${isDaHuy or isDaThanhToan or isHoanThanh}"
+                                th:classappend="${statusCls}">
 
-                                    th:with="cur=${item.trangThaiDonHang != null and !#strings.isEmpty(item.trangThaiDonHang) ? item.trangThaiDonHang : 'CHO_XAC_NHAN'}"
+                                <option th:if="${isDaHuy}" th:value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
 
-                                th:title="${cur == 'DA_GIAO'} ? 'Đơn đã giao, không đổi trạng thái' : (${cur == 'DA_HUY'} ? 'Đơn đã hủy, không đổi trạng thái' : (${(cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN')} ? 'Đơn đã thanh toán, không đổi trạng thái' : (${cur == 'HOAN_THANH'} ? 'Đơn đã hoàn thành, không đổi trạng thái' : (${cur == 'DA_THANH_TOAN_ONL'} ? 'Đơn đã thanh toán online, không đổi trạng thái' : 'Đổi trạng thái đơn hàng'))))"
+                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="true" th:text="'Cần xử lí'">Cần xử lí</option>
 
-                                th:disabled="${cur == 'DA_HUY' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN' or cur == 'HOAN_THANH' or cur == 'DA_THANH_TOAN_ONL'}"
+                                <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="true" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
 
-                                th:classappend="${cur == 'CAN_XU_LY' ? 'status--can-xu-ly' : (cur == 'CHO_XAC_NHAN' ? 'status--cho-xac-nhan' : (cur == 'DA_THANH_TOAN_ONL' ? 'status--da-thanh-toan-onl' : (cur == 'DA_XAC_NHAN' ? 'status--da-xac-nhan' : (cur == 'DANG_GIAO' ? 'status--dang-giao' : (cur == 'DA_GIAO' ? 'status--da-giao' : ((cur == 'DA_THANH_TOAN' or cur == 'DA THANH TOAN') ? 'status--da-giao' : ((cur == 'HOAN_THANH') ? 'status--hoan-thanh' : 'status--da-huy')))))))}">
-
-                                <option th:if="${cur == 'DA_HUY'}" th:value="DA_HUY" th:selected="true" th:text="'Đã hủy'">Đã hủy</option>
-
-                                <option th:if="${cur == 'CAN_XU_LY'}" th:value="CAN_XU_LY" th:selected="${cur == 'CAN_XU_LY'}" th:text="'Cần xử lí'">Cần xử lí</option>
-
-                                <option th:if="${cur == 'CHO_XAC_NHAN'}" th:value="CHO_XAC_NHAN" th:selected="${cur == 'CHO_XAC_NHAN'}" th:text="'Chờ xác nhận'">Chờ xác nhận</option>
-
-                                <option th:if="${cur == 'DA_THANH_TOAN_ONL'}" th:value="DA_THANH_TOAN_ONL" th:selected="true" th:text="'TT Vn Pay thành công'">TT Vn Pay thành công</option>
-
-                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY' or cur == 'DA_THANH_TOAN_ONL'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
+                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY'}" th:value="DA_XAC_NHAN" th:selected="${cur == 'DA_XAC_NHAN'}" th:text="'Đã xác nhận'">Đã xác nhận</option>
 
                                 <option th:if="${cur == 'DA_XAC_NHAN'}" th:value="DANG_GIAO" th:text="'Đang giao'">Đang giao</option>
 
@@ -267,11 +248,11 @@
 
                                 <option th:if="${cur == 'DA_GIAO'}" th:value="HOAN_THANH" th:text="'Hoàn thành'">Hoàn thành</option>
 
-                                <option th:if="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA THANH TOAN" th:selected="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:text="'Hoàn thành'">Hoàn thành</option>
+                                <option th:if="${cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN'}" th:value="DA THANH TOAN" th:selected="true" th:text="'Hoàn thành'">Hoàn thành</option>
 
                                 <option th:if="${cur == 'HOAN_THANH'}" th:value="HOAN_THANH" th:selected="true" disabled="disabled" th:text="'Hoàn thành'">Hoàn thành</option>
 
-                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY' or cur == 'DA_THANH_TOAN' or cur == 'DA THANH TOAN' or cur == 'DA_THANH_TOAN_ONL'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
+                                <option th:if="${cur == 'CHO_XAC_NHAN' or cur == 'DA_XAC_NHAN' or cur == 'CAN_XU_LY' or cur == 'DA_THANH_TOAN' or cur == 'DA THANH TOAN'}" th:value="DA_HUY" th:selected="${cur == 'DA_HUY'}" th:text="'Đã hủy'">Đã hủy</option>
 
                             </select>
 
@@ -281,12 +262,9 @@
 
                     <td>
                         <span th:with="trangThaiDon=${item.trangThaiDonHang},
-                                       isHoanThanh=${trangThaiDon == 'HOAN_THANH' or trangThaiDon == 'DA THANH TOAN' or trangThaiDon == 'DA_THANH_TOAN'},
-                                       isDaHuy=${trangThaiDon == 'DA_HUY'},
-                                       curTT=${item.trangThaiThanhToan != null ? item.trangThaiThanhToan : 'CHUA_THANH_TOAN'}">
-                            <!-- Dropdown chỉ mở khi đơn hoàn thành hoặc đã hủy -->
-                            <form th:if="${isHoanThanh or isDaHuy}"
-                                  th:action="@{/admin/hoa-don/{id}/trang-thai-thanh-toan(id=${item.id})}"
+                                       trangThaiTT=${item.trangThaiThanhToan},
+                                       isDaHuy=${trangThaiDon == 'DA_HUY'}">
+                            <form th:action="@{/admin/hoa-don/{id}/trang-thai-thanh-toan(id=${item.id})}"
                                   method="post"
                                   style="display:inline;"
                                   class="payment-status-form js-admin-ajax-form"
@@ -296,25 +274,19 @@
                                 <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
                                 <input type="hidden" name="trangThaiFilter" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
                                 <input type="hidden" name="loaiDon" th:value="${filterLoaiDon != null ? filterLoaiDon : ''}" />
+                                <input type="hidden" name="phuongThucThanhToan" th:value="${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''}" />
 
                                 <select name="trangThaiThanhToan"
                                         class="form__select form__select--sm payment-status-select"
-                                        th:classappend="${curTT == 'DA_THANH_TOAN'} ? 'status--da-thanh-toan' : (${curTT == 'THANH_TOAN_LOI'} ? 'status--thanh-toan-loi' : 'status--chua-thanh-toan')"
-                                        th:disabled="${curTT == 'DA_THANH_TOAN' or curTT == 'THANH_TOAN_LOI'}">
+                                        th:classappend="${trangThaiTT == 'DA_THANH_TOAN'} ? 'status--da-thanh-toan' : (${trangThaiTT == 'THANH_TOAN_LOI'} ? 'status--thanh-toan-loi' : 'status--chua-thanh-toan')"
+                                        th:disabled="${trangThaiTT == 'DA_THANH_TOAN' or trangThaiTT == 'THANH_TOAN_LOI' or trangThaiDon == 'DA_HUY' or trangThaiDon == 'CAN_XU_LY' or trangThaiDon == 'CHO_XAC_NHAN' or trangThaiDon == 'DA_XAC_NHAN' or trangThaiDon == 'DANG_GIAO' or trangThaiDon == 'DA_GIAO'}">
 
-                                    <option value="CHUA_THANH_TOAN" th:selected="${curTT == 'CHUA_THANH_TOAN'}" th:text="'Chưa thanh toán'">Chưa thanh toán</option>
-                                    <option value="DA_THANH_TOAN" th:selected="${curTT == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'" disabled="disabled">Đã thanh toán</option>
-                                    <option value="THANH_TOAN_LOI" th:selected="${curTT == 'THANH_TOAN_LOI'}" th:text="'Thanh toán lỗi'" disabled="disabled">Thanh toán lỗi</option>
+                                    <option value="CHUA_THANH_TOAN" th:selected="${trangThaiTT == 'CHUA_THANH_TOAN' or trangThaiTT == null}" th:text="'Chưa thanh toán'">Chưa thanh toán</option>
+                                    <option value="DA_THANH_TOAN" th:selected="${trangThaiTT == 'DA_THANH_TOAN'}" th:text="'Đã thanh toán'">Đã thanh toán</option>
+                                    <option value="THANH_TOAN_LOI" th:selected="${trangThaiTT == 'THANH_TOAN_LOI'}" th:text="'Thanh toán lỗi'">Thanh toán lỗi</option>
 
                                 </select>
                             </form>
-
-                            <!-- Hiển thị badge khi không phải hoàn thành/hủy -->
-                            <span th:unless="${isHoanThanh or isDaHuy}">
-                                <span class="badge badge--payment-pending">
-                                    Chưa thanh toán
-                                </span>
-                            </span>
                         </span>
                     </td>
 
@@ -342,35 +314,31 @@
 
                 <li th:if="${page.first}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.first}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=0, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Trang Đầu"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.first}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=0, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''}, phuongThucThanhToan=${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''})}" title="Trang Đầu"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></a></li>
 
                 <li th:if="${page.first}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.first}"><a class="pagination__link pagination__link--prev" th:href="@{/admin/hoa-don(page=${page.number - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Trang Trước"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.first}"><a class="pagination__link pagination__link--prev" th:href="@{/admin/hoa-don(page=${page.number - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''}, phuongThucThanhToan=${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''})}" title="Trang Trước"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
 
                 <li th:each="pi : ${paginationItems}">
 
                     <span th:if="${pi.ellipsis}" class="pagination__ellipsis" aria-hidden="true">&hellip;</span>
 
                     <a th:unless="${pi.ellipsis}"
-
                        class="pagination__link"
-
                        th:classappend="${pi.pageIndex == page.number} ? 'pagination__link--active'"
-
-                       th:href="@{/admin/hoa-don(page=${pi.pageIndex}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}"
-
+                       th:href="@{/admin/hoa-don(page=${pi.pageIndex}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''}, phuongThucThanhToan=${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''})}"
                        th:text="${pi.pageIndex + 1}">1</a>
 
                 </li>
 
                 <li th:if="${page.last}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.last}"><a class="pagination__link pagination__link--next" th:href="@{/admin/hoa-don(page=${page.number + 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.last}"><a class="pagination__link pagination__link--next" th:href="@{/admin/hoa-don(page=${page.number + 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''}, phuongThucThanhToan=${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''})}" title="Sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
 
                 <li th:if="${page.last}"><span class="pagination__link pagination__link--disabled"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></span></li>
 
-                <li th:unless="${page.last}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=${page.totalPages - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''})}" title="Trang Cuối"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></a></li>
+                <li th:unless="${page.last}"><a class="pagination__link" th:href="@{/admin/hoa-don(page=${page.totalPages - 1}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''}, loaiDon=${filterLoaiDon != null ? filterLoaiDon : ''}, phuongThucThanhToan=${filterPhuongThucThanhToan != null ? filterPhuongThucThanhToan : ''})}" title="Trang Cuối"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></a></li>
 
             </ul>
 
@@ -378,51 +346,28 @@
 
     </section>
 
-
-
     <script>
-
     (function () {
 
         function submitStatusFormViaAjax(form, select) {
-
             var action = form.getAttribute('action');
-
             var formData = new FormData(form);
-
-            var headers = {
-
-                'X-Requested-With': 'XMLHttpRequest'
-
-            };
-
-
+            var headers = { 'X-Requested-With': 'XMLHttpRequest' };
 
             select.disabled = true;
-
             select.classList.add('is-loading');
 
-
-
             fetch(action, {
-
                 method: 'POST',
-
                 headers: headers,
-
                 body: formData
-
             })
-
             .then(function (res) {
-                // Kiểm tra redirect header từ backend
                 var redirectUrl = res.headers.get('X-Redirect-Url');
                 if (redirectUrl) {
                     window.location.href = redirectUrl;
                     return Promise.resolve('');
                 }
-
-                // Kiểm tra JSON response có redirect không
                 var contentType = res.headers.get('content-type');
                 if (contentType && contentType.indexOf('application/json') !== -1) {
                     return res.json().then(function(data) {
@@ -433,132 +378,161 @@
                         throw new Error(data.message || 'Có lỗi xảy ra');
                     });
                 }
-
                 if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái');
                 return res.text();
             })
-
             .then(function (html) {
-
                 var parser = new DOMParser();
-
                 var doc = parser.parseFromString(html, 'text/html');
 
-
-
                 var toastPayloads = doc.querySelectorAll('[data-admin-toast-message]');
-
                 toastPayloads.forEach(function(el) {
-
                     var msg = el.getAttribute('data-admin-toast-message');
-
                     var toastType = el.getAttribute('data-admin-toast-type') || 'success';
-
                     if (msg && window.showAdminToast) {
-
                         window.showAdminToast(msg, toastType);
-
                     }
-
                 });
 
-
-
                 var newTableBody = doc.querySelector('table.table tbody');
-
                 var currentTableBody = document.querySelector('table.table tbody');
-
                 if (newTableBody && currentTableBody) {
-
                     currentTableBody.innerHTML = newTableBody.innerHTML;
-
                     bindStatusChangeEvents();
-                    bindPaymentStatusEvents();
-
-
+                    bindPaymentStatusChangeEvents();
 
                     var newPagination = doc.querySelector('nav.pagination');
-
                     var currentPagination = document.querySelector('nav.pagination');
-
                     if (newPagination && currentPagination) {
-
                         currentPagination.innerHTML = newPagination.innerHTML;
-
                         bindPaginationLinks();
-
                     }
-
                 }
-
             })
-
             .catch(function (err) {
-
                 console.error('Lỗi AJAX:', err);
-
                 if (window.showAdminToast) {
-
                     window.showAdminToast('Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại.', 'error');
-
                 }
-
                 var prev = select.getAttribute('data-prev-value');
-
                 if (prev) select.value = prev;
-
             })
-
             .finally(function () {
-
                 select.disabled = false;
-
                 select.classList.remove('is-loading');
-
             });
-
         }
 
-
-
         function bindStatusChangeEvents() {
-
             document.querySelectorAll('form[action*="/trang-thai"]:not([enctype])').forEach(function (form) {
-
                 var select = form.querySelector('select[name="trangThai"]');
-
                 if (!select || select.dataset.bound) return;
-
                 select.dataset.bound = 'true';
 
-
-
                 select.addEventListener('change', function () {
-
                     var newVal = select.value;
-
                     var currentSelected = select.querySelector('option[selected]');
                     select.dataset.prevValue = currentSelected ? currentSelected.value : '';
 
-                    // Nếu chọn "Đã xác nhận" -> chuyển sang trang chọn serial
+                    var actionParts = (form.getAttribute('action') || '').split('/');
+                    var idIdx = actionParts.indexOf('hoa-don');
+                    var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
+
+                    // Xử lý xác nhận cho trạng thái Đã xác nhận
                     if (newVal === 'DA_XAC_NHAN') {
-                        var actionParts = (form.getAttribute('action') || '').split('/');
-                        var idIdx = actionParts.indexOf('hoa-don');
-                        var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
                         if (hoaDonId) {
-                            window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
-                            return;
+                            var confirmMsg = 'Bạn có chắc chắn muốn xác nhận đơn hàng này? Sau khi xác nhận, bạn sẽ được chuyển đến trang chọn số serial.';
+                            if (typeof window.confirmModal === 'function') {
+                                window.confirmModal({
+                                    title: 'Xác nhận đơn hàng',
+                                    message: confirmMsg,
+                                    confirmText: 'Xác nhận',
+                                    cancelText: 'Hủy',
+                                    tone: 'info'
+                                }).then(function (ok) {
+                                    if (ok) {
+                                        window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
+                                    } else {
+                                        select.value = select.dataset.prevValue;
+                                    }
+                                });
+                            } else {
+                                if (window.confirm(confirmMsg)) {
+                                    window.location.href = '/admin/hoa-don/' + hoaDonId + '/serial';
+                                } else {
+                                    select.value = select.dataset.prevValue;
+                                }
+                            }
                         }
+                        return;
+                    }
+
+                    // Xác nhận chuyển sang Đang giao
+                    if (newVal === 'DANG_GIAO') {
+                        var confirmMsg = 'Bạn có chắc chắn muốn chuyển đơn hàng sang trạng thái "Đang giao"?';
+                        if (typeof window.confirmModal === 'function') {
+                            window.confirmModal({
+                                title: 'Xác nhận giao hàng',
+                                message: confirmMsg,
+                                confirmText: 'Xác nhận',
+                                cancelText: 'Hủy',
+                                tone: 'info'
+                            }).then(function (ok) {
+                                if (ok) { submitStatusFormViaAjax(form, select); }
+                                else { select.value = select.dataset.prevValue; }
+                            });
+                        } else {
+                            if (window.confirm(confirmMsg)) { submitStatusFormViaAjax(form, select); }
+                            else { select.value = select.dataset.prevValue; }
+                        }
+                        return;
+                    }
+
+                    // Xác nhận chuyển sang Đã giao
+                    if (newVal === 'DA_GIAO') {
+                        var confirmMsg = 'Bạn có chắc chắn muốn chuyển đơn hàng sang trạng thái "Đã giao"?';
+                        if (typeof window.confirmModal === 'function') {
+                            window.confirmModal({
+                                title: 'Xác nhận đã giao',
+                                message: confirmMsg,
+                                confirmText: 'Xác nhận',
+                                cancelText: 'Hủy',
+                                tone: 'info'
+                            }).then(function (ok) {
+                                if (ok) { submitStatusFormViaAjax(form, select); }
+                                else { select.value = select.dataset.prevValue; }
+                            });
+                        } else {
+                            if (window.confirm(confirmMsg)) { submitStatusFormViaAjax(form, select); }
+                            else { select.value = select.dataset.prevValue; }
+                        }
+                        return;
+                    }
+
+                    // Xác nhận chuyển sang Hoàn thành
+                    if (newVal === 'HOAN_THANH') {
+                        var confirmMsg = 'Bạn có chắc chắn muốn chuyển đơn hàng sang trạng thái "Hoàn thành"?';
+                        if (typeof window.confirmModal === 'function') {
+                            window.confirmModal({
+                                title: 'Xác nhận hoàn thành',
+                                message: confirmMsg,
+                                confirmText: 'Xác nhận',
+                                cancelText: 'Hủy',
+                                tone: 'info'
+                            }).then(function (ok) {
+                                if (ok) { submitStatusFormViaAjax(form, select); }
+                                else { select.value = select.dataset.prevValue; }
+                            });
+                        } else {
+                            if (window.confirm(confirmMsg)) { submitStatusFormViaAjax(form, select); }
+                            else { select.value = select.dataset.prevValue; }
+                        }
+                        return;
                     }
 
                     var needCheck = (newVal === 'DA THANH TOAN' || newVal === 'DA_THANH_TOAN');
-
-
-
                     var actionParts = (form.getAttribute('action') || '').split('/');
-
                     var idIdx = actionParts.indexOf('hoa-don');
-
                     var hoaDonId = idIdx >= 0 ? actionParts[idIdx + 1] : null;
 
                     if (!hoaDonId) return;
@@ -569,278 +543,185 @@
                     }
 
                     fetch('/api/hoa-don/' + hoaDonId + '/check-ton-kho')
-
                         .then(function (r) { return r.json(); })
-
                         .then(function (data) {
-
                             if (data.du) {
-
                                 submitStatusFormViaAjax(form, select);
-
                                 return;
-
                             }
-
-
-
                             var missingItems = (data.items || []).filter(function (i) { return !i.du; })
-
                                 .map(function (i) {
-
                                     return i.tenSanPham + ': cần ' + i.soLuongCan + ', còn ' + i.soLuongTon;
-
                                 });
-
-
-
                             var msg = 'Tồn kho không đủ:\n' + missingItems.join('\n') +
-
                                 '\n\nĐơn hàng sẽ chuyển sang trạng thái "Cần xử lý" và ghi chú cho khách. Tiếp tục?';
 
-
-
                             if (typeof window.confirmModal === 'function') {
-
                                 window.confirmModal({
-
                                     title: 'Thiếu tồn kho',
-
                                     message: msg,
-
                                     confirmText: 'Tiếp tục',
-
                                     cancelText: 'Hủy',
-
                                     tone: 'danger'
-
                                 }).then(function (ok) {
-
-                                    if (ok) {
-
-                                        submitStatusFormViaAjax(form, select);
-
-                                    } else {
-
-                                        select.value = select.dataset.prevValue;
-
-                                    }
-
+                                    if (ok) { submitStatusFormViaAjax(form, select); }
+                                    else { select.value = select.dataset.prevValue; }
                                 });
-
                             } else {
-
-                                if (window.confirm(msg)) {
-
-                                    submitStatusFormViaAjax(form, select);
-
-                                } else {
-
-                                    select.value = select.dataset.prevValue;
-
-                                }
-
+                                if (window.confirm(msg)) { submitStatusFormViaAjax(form, select); }
+                                else { select.value = select.dataset.prevValue; }
                             }
-
                         })
-
                         .catch(function () {
-
                             if (window.showAdminToast) {
-
                                 window.showAdminToast('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
-
                             }
-
                             select.value = select.dataset.prevValue;
-
                         });
-
                 });
-
             });
-
         }
-
-
 
         function bindPaginationLinks() {
-
             document.querySelectorAll('.pagination__link').forEach(function (link) {
-
                 if (link.dataset.bound) return;
-
                 link.dataset.bound = 'true';
-
                 link.addEventListener('click', function (e) {
-
                     e.preventDefault();
-
                     var href = link.getAttribute('href');
-
                     if (!href) return;
-
                     if (typeof loadAdminContent === 'function') {
-
                         loadAdminContent(href, { method: 'GET' });
-
                     } else {
-
                         window.location.href = href;
-
                     }
-
                 });
-
             });
-
         }
 
-
-
-        function submitPaymentStatus(select) {
-            var form = select.closest('form');
-            var action = form.getAttribute('action');
-            var formData = new FormData(form);
-
-            var newStatus = select.value;
-            var currentStatus = select.dataset.prevPaymentValue || select.querySelector('option[selected]')?.value || '';
-
-            var statusLabels = {
-                'CHUA_THANH_TOAN': 'Chưa thanh toán',
-                'DA_THANH_TOAN': 'Đã thanh toán',
-                'THANH_TOAN_LOI': 'Thanh toán lỗi'
-            };
-            var newLabel = statusLabels[newStatus] || newStatus;
-            var currentLabel = statusLabels[currentStatus] || currentStatus;
-
-            var confirmMsg = 'Bạn có chắc chắn muốn đổi trạng thái thanh toán từ "' + currentLabel + '" sang "' + newLabel + '" không?';
-
-            var doSubmit = function() {
-                select.disabled = true;
-                select.classList.add('is-loading');
-                // Cập nhật prevPaymentValue trước khi submit
-                select.dataset.prevPaymentValue = newStatus;
-
-                fetch(action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                })
-                .then(function (res) {
-                    var contentType = res.headers.get('content-type');
-                    if (contentType && contentType.indexOf('application/json') !== -1) {
-                        return res.json().then(function(data) {
-                            if (data.redirect) {
-                                window.location.href = data.redirect;
-                                return '';
-                            }
-                            throw new Error(data.message || 'Có lỗi xảy ra');
-                        });
-                    }
-                    if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái thanh toán');
-                    return res.text();
-                })
-                .then(function (html) {
-                    if (!html) return;
-
-                    var parser = new DOMParser();
-                    var doc = parser.parseFromString(html, 'text/html');
-
-                    var toastPayloads = doc.querySelectorAll('[data-admin-toast-message]');
-                    toastPayloads.forEach(function(el) {
-                        var msg = el.getAttribute('data-admin-toast-message');
-                        var toastType = el.getAttribute('data-admin-toast-type') || 'success';
-                        if (msg && window.showAdminToast) {
-                            window.showAdminToast(msg, toastType);
-                        }
-                    });
-
-                    var newTableBody = doc.querySelector('table.table tbody');
-                    var currentTableBody = document.querySelector('table.table tbody');
-                    if (newTableBody && currentTableBody) {
-                        currentTableBody.innerHTML = newTableBody.innerHTML;
-                        // Cập nhật lại prevPaymentValue sau khi thành công
-                        bindPaymentStatusEvents();
-                    }
-                })
-                .catch(function (err) {
-                    console.error('Lỗi AJAX:', err);
-                    if (window.showAdminToast) {
-                        window.showAdminToast('Đã xảy ra lỗi khi cập nhật trạng thái thanh toán. Vui lòng thử lại.', 'error');
-                    }
-                    select.value = select.dataset.prevPaymentValue;
-                })
-                .finally(function () {
-                    select.disabled = false;
-                    select.classList.remove('is-loading');
-                });
-            };
-
-            // Store current value before change
-            select.dataset.prevValue = currentStatus;
-
-            if (typeof window.confirmModal === 'function') {
-                window.confirmModal({
-                    title: 'Xác nhận đổi trạng thái thanh toán',
-                    message: confirmMsg,
-                    confirmText: 'Xác nhận',
-                    cancelText: 'Hủy',
-                    tone: 'info'
-                }).then(function (ok) {
-                    if (ok) {
-                        doSubmit();
-                    } else {
-                        select.value = currentStatus;
-                    }
-                });
-            } else {
-                if (window.confirm(confirmMsg)) {
-                    doSubmit();
-                } else {
-                    select.value = currentStatus;
-                }
-            }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                bindStatusChangeEvents();
+                bindPaymentStatusChangeEvents();
+            });
+        } else {
+            bindStatusChangeEvents();
+            bindPaymentStatusChangeEvents();
         }
 
+        function bindPaymentStatusChangeEvents() {
+            document.querySelectorAll('.payment-status-form select[name="trangThaiThanhToan"]').forEach(function(select) {
+                if (select.dataset.bound) return;
+                select.dataset.bound = 'true';
 
-
-        function bindPaymentStatusEvents() {
-            // Bind cho các select trạng thái thanh toán
-            document.querySelectorAll('form.payment-status-form select[name="trangThaiThanhToan"], form[action*="/trang-thai-thanh-toan"] select[name="trangThaiThanhToan"]').forEach(function(select) {
-                if (select.dataset.boundPayment) return;
-                select.dataset.boundPayment = 'true';
-
-                // Lưu giá trị ban đầu khi bind
                 var selectedOption = select.querySelector('option[selected]');
                 select.dataset.prevPaymentValue = selectedOption ? selectedOption.value : select.value;
 
                 select.addEventListener('change', function() {
-                    submitPaymentStatus(select);
+                    var newVal = select.value;
+                    var form = select.closest('form');
+                    if (!form) return;
+
+                    var currentVal = select.dataset.prevPaymentValue;
+                    var action = form.getAttribute('action');
+                    var formData = new FormData(form);
+
+                    var statusLabels = {
+                        'CHUA_THANH_TOAN': 'Chưa thanh toán',
+                        'DA_THANH_TOAN': 'Đã thanh toán',
+                        'THANH_TOAN_LOI': 'Thanh toán lỗi'
+                    };
+                    var newLabel = statusLabels[newVal] || newVal;
+                    var currentLabel = statusLabels[currentVal] || currentVal;
+                    var confirmMsg = 'Bạn có chắc chắn muốn đổi trạng thái thanh toán từ "' + currentLabel + '" sang "' + newLabel + '" không?';
+
+                    var doSubmit = function() {
+                        select.disabled = true;
+                        select.classList.add('is-loading');
+
+                        fetch(action, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            body: formData
+                        })
+                        .then(function(res) {
+                            var redirectUrl = res.headers.get('X-Redirect-Url');
+                            if (redirectUrl) {
+                                window.location.href = redirectUrl;
+                                return Promise.resolve('');
+                            }
+                            var contentType = res.headers.get('content-type');
+                            if (contentType && contentType.indexOf('application/json') !== -1) {
+                                return res.json().then(function(data) {
+                                    if (data.redirect) {
+                                        window.location.href = data.redirect;
+                                        return '';
+                                    }
+                                    throw new Error(data.message || 'Có lỗi xảy ra');
+                                });
+                            }
+                            if (!res.ok) throw new Error('Lỗi khi cập nhật trạng thái thanh toán');
+                            return res.text();
+                        })
+                        .then(function(html) {
+                            var parser = new DOMParser();
+                            var doc = parser.parseFromString(html, 'text/html');
+                            var toastPayloads = doc.querySelectorAll('[data-admin-toast-message]');
+                            toastPayloads.forEach(function(el) {
+                                var msg = el.getAttribute('data-admin-toast-message');
+                                var toastType = el.getAttribute('data-admin-toast-type') || 'success';
+                                if (msg && window.showAdminToast) {
+                                    window.showAdminToast(msg, toastType);
+                                }
+                            });
+
+                            var newTableBody = doc.querySelector('table.table tbody');
+                            var currentTableBody = document.querySelector('table.table tbody');
+                            if (newTableBody && currentTableBody) {
+                                currentTableBody.innerHTML = newTableBody.innerHTML;
+                                bindStatusChangeEvents();
+                                bindPaymentStatusChangeEvents();
+                            }
+                        })
+                        .catch(function(err) {
+                            console.error('Lỗi AJAX:', err);
+                            if (window.showAdminToast) {
+                                window.showAdminToast('Đã xảy ra lỗi khi cập nhật trạng thái thanh toán. Vui lòng thử lại.', 'error');
+                            }
+                            select.value = currentVal;
+                        })
+                        .finally(function() {
+                            select.disabled = false;
+                            select.classList.remove('is-loading');
+                            select.dataset.prevPaymentValue = newVal;
+                        });
+                    };
+
+                    if (typeof window.confirmModal === 'function') {
+                        window.confirmModal({
+                            title: 'Xác nhận đổi trạng thái thanh toán',
+                            message: confirmMsg,
+                            confirmText: 'Xác nhận',
+                            cancelText: 'Hủy',
+                            tone: 'info'
+                        }).then(function(ok) {
+                            if (ok) {
+                                doSubmit();
+                            } else {
+                                select.value = currentVal;
+                            }
+                        });
+                    } else {
+                        if (window.confirm(confirmMsg)) {
+                            doSubmit();
+                        } else {
+                            select.value = currentVal;
+                        }
+                    }
                 });
             });
         }
-
-
-
-        if (document.readyState === 'loading') {
-
-            document.addEventListener('DOMContentLoaded', function() {
-                bindStatusChangeEvents();
-                bindPaymentStatusEvents();
-            });
-
-        } else {
-
-            bindStatusChangeEvents();
-            bindPaymentStatusEvents();
-
-        }
-
     })();
-
     </script>
 
 </div>

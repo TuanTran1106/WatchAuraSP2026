@@ -97,6 +97,9 @@ public class HoanTra {
     @Column(name = "ten_chu_tai_khoan", length = 100)
     private String tenChuTaiKhoan;
 
+    @Column(name = "danh_sach_anh_loi", length = 2000)
+    private String danhSachAnhLoi;
+
     @OneToMany(mappedBy = "hoanTra", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HoanTraChiTiet> chiTietList = new ArrayList<>();
 }

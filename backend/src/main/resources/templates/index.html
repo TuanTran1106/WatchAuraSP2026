@@ -70,6 +70,13 @@
             margin-bottom: 4px;
         }
 
+        .sidebar-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
         .brand-name {
             font-size: 1.1rem;
             font-weight: 700;
@@ -210,10 +217,39 @@
             letter-spacing: 0.04em;
         }
 
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--accent2);
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+
+        .tb-btn:hover {
+            background: #e5e7eb;
+            border-color: #d1d5db;
+        }
+
         .topbar-sub {
             font-size: 0.73rem;
             color: var(--text-muted);
-            margin-left: auto;
         }
 
         /* messages */
@@ -463,6 +499,10 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
+            <div class="sidebar-actions">
+                <a href="/home" class="tb-btn" title="Về trang chủ"> Trang chủ</a>
+                <button type="button" class="tb-btn" id="resetChatBtn" onclick="resetChat()" title="Xóa đoạn chat và bắt đầu lại">↻ Làm mới</button>
+            </div>
             <div class="brand">
                 <div class="brand-name">Tư Vấn Đồng Hồ</div>
             </div>
@@ -520,7 +560,9 @@
     <main class="main">
         <div class="topbar">
             <div class="topbar-title">WATCHAURA AI</div>
-            <div class="topbar-sub">Powered by AI · Hỗ trợ 24/7</div>
+            <div class="topbar-right">
+                <div class="topbar-sub">Powered by AI · Hỗ trợ 24/7</div>
+            </div>
         </div>
 
         <div class="messages" id="messages">
@@ -560,9 +602,19 @@
 <script>
     const API_BASE = 'http://localhost:8080/api/chat';
     const messagesEl = document.getElementById('messages');
+    const INITIAL_MESSAGES_HTML = messagesEl.innerHTML;
     const inp = document.getElementById('inp');
     const sendBtn = document.getElementById('sendBtn');
     let isOnline = false;
+
+    function resetChat() {
+        messagesEl.innerHTML = INITIAL_MESSAGES_HTML;
+        inp.value = '';
+        inp.disabled = false;
+        sendBtn.disabled = false;
+        inp.focus();
+        messagesEl.scrollTop = 0;
+    }
 
     window.onload = () => { inp.focus(); checkConn(); };
     setInterval(checkConn, 30000);
