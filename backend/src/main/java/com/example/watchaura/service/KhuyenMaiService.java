@@ -2,6 +2,7 @@ package com.example.watchaura.service;
 
 import com.example.watchaura.entity.KhuyenMai;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +17,13 @@ public interface KhuyenMaiService {
 
     Page<KhuyenMai> searchPage(String q, Boolean trangThai, Pageable pageable);
 
+    Page<KhuyenMai> searchPage(String q,
+                              Boolean trangThai,
+                              LocalDate fromDate,
+                              LocalDate toDate,
+                              KhuyenMai.PhamViApDung phamViApDung,
+                              Pageable pageable);
+
     KhuyenMai findById(Integer id);
 
     KhuyenMai save(KhuyenMai khuyenMai);
@@ -25,6 +33,8 @@ public interface KhuyenMaiService {
     void delete(Integer id);
 
     void toggleTrangThai(Integer id);
+
+    void deactivate(Integer id);
 
     boolean existsByMaKhuyenMai(String maKhuyenMai);
 

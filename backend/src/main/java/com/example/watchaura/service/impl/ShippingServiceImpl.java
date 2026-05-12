@@ -60,7 +60,11 @@ public class ShippingServiceImpl implements ShippingService {
         body.put("length", safePositive(request.getLengthCm(), shippingProperties.getDefaultLengthCm()));
         body.put("width", safePositive(request.getWidthCm(), shippingProperties.getDefaultWidthCm()));
         body.put("height", safePositive(request.getHeightCm(), shippingProperties.getDefaultHeightCm()));
-        body.put("insurance_value", request.getInsuranceValue() != null && request.getInsuranceValue() > 0 ? request.getInsuranceValue() : 0);
+        long rawInsurance = request.getInsuranceValue() != null && request.getInsuranceValue() > 0
+          ? request.getInsuranceValue()
+          : 0L;
+  long cappedInsurance = Math.min(rawInsurance, 2_000_000L);
+  body.put("insurance_value", cappedInsurance);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

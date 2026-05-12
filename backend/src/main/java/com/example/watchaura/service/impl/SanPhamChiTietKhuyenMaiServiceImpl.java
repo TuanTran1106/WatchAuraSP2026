@@ -119,34 +119,52 @@ public class SanPhamChiTietKhuyenMaiServiceImpl implements SanPhamChiTietKhuyenM
         List<SanPhamChiTietKhuyenMai> links = sanPhamChiTietKhuyenMaiRepository
                 .findActiveKhuyenMaiBySpctId(sanPhamChiTietId, now);
 
-        Map<Integer, KhuyenMai> byId = new LinkedHashMap<>();
+        Map<Integer, KhuyenMai> skuCandidates = new LinkedHashMap<>();
+        Map<Integer, KhuyenMai> categoryCandidates = new LinkedHashMap<>();
+        Map<Integer, KhuyenMai> allCandidates = new LinkedHashMap<>();
+
         if (links != null) {
             for (SanPhamChiTietKhuyenMai link : links) {
                 KhuyenMai km = link.getKhuyenMai();
-                if (km != null && km.getId() != null) {
-                    byId.putIfAbsent(km.getId(), km);
+                if (km == null || km.getId() == null) {
+                    continue;
                 }
+                skuCandidates.putIfAbsent(km.getId(), km);
             }
         }
+
         if (catalog != null) {
             for (KhuyenMai km : catalog) {
                 if (km == null || km.getId() == null) {
                     continue;
                 }
-                if (!appliesToDanhMucApDung(km, tenDm)) {
-                    continue;
+                KhuyenMai.PhamViApDung scope = km.getPhamViApDung() != null
+                        ? km.getPhamViApDung()
+                        : KhuyenMai.PhamViApDung.ALL;
+                switch (scope) {
+                    case SKU -> {
+                        // SKU phải có link trực tiếp SPCT; không lấy từ catalog chung để tránh apply sai SKU.
+                    }
+                    case CATEGORY -> {
+                        if (appliesToDanhMucApDung(km, tenDm)) {
+                            categoryCandidates.putIfAbsent(km.getId(), km);
+                        }
+                    }
+                    case ALL -> allCandidates.putIfAbsent(km.getId(), km);
                 }
-                byId.putIfAbsent(km.getId(), km);
             }
         }
 
-        if (byId.isEmpty()) {
+        Map<Integer, KhuyenMai> pickedTier = !skuCandidates.isEmpty()
+                ? skuCandidates
+                : (!categoryCandidates.isEmpty() ? categoryCandidates : allCandidates);
+
+        if (pickedTier.isEmpty()) {
             return KhuyenMaiPriceResult.none(giaBanNiemyet);
         }
 
-        // Ưu tiên giá sau giảm thấp nhất (đúng cho khách); max(soTienGiam) tương đương khi cùng giá gốc
-        // nhưng min(giaSau) rõ ràng hơn và tránh nhầm khi làm tròn.
-        return byId.values().stream()
+        // Ưu tiên theo phạm vi: SKU > CATEGORY > ALL, sau đó mới chọn best price trong tier.
+        return pickedTier.values().stream()
                 .filter(km -> (km.getTrangThai() == null || Boolean.TRUE.equals(km.getTrangThai())))
                 .filter(km -> (km.getNgayBatDau() == null || !km.getNgayBatDau().isAfter(now)))
                 .filter(km -> (km.getNgayKetThuc() == null || !km.getNgayKetThuc().isBefore(now)))
@@ -184,12 +202,26 @@ public class SanPhamChiTietKhuyenMaiServiceImpl implements SanPhamChiTietKhuyenM
     }
 
     /**
-     * KM gắn theo danh mục: để trống = áp mọi sản phẩm; có giá trị = chỉ khi tên danh mục sản phẩm khớp.
+     * Ưu tiên phạm vi áp dụng theo enum:
+     * - ALL: áp toàn bộ
+     * - CATEGORY: khớp theo danh mục áp dụng
+     * - SKU: chỉ áp khi có link trực tiếp ở bảng SanPhamChiTietKhuyenMai
+     *   (hàm này dùng cho catalog-level nên trả false cho SKU)
      */
     private static boolean appliesToDanhMucApDung(KhuyenMai km, String tenDanhMucSanPham) {
+        KhuyenMai.PhamViApDung scope = km.getPhamViApDung();
+        if (scope == null) {
+            scope = KhuyenMai.PhamViApDung.ALL;
+        }
+        if (scope == KhuyenMai.PhamViApDung.ALL) {
+            return true;
+        }
+        if (scope == KhuyenMai.PhamViApDung.SKU) {
+            return false;
+        }
         String dm = km.getDanhMucApDung();
         if (dm == null || dm.isBlank()) {
-            return true;
+            return false;
         }
         if (tenDanhMucSanPham == null || tenDanhMucSanPham.isBlank()) {
             return false;

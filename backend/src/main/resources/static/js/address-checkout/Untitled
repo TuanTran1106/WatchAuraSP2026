@@ -1,0 +1,37 @@
+Role: Bạn là một Senior Business Analyst (BA) và Lead Architect chuyên ngành E-commerce.
+
+Task: Hãy phân tích hình ảnh giao diện "Quản lý khuyến mãi" tôi cung cấp và thực hiện các bước sau:
+
+Bước 1: Khám nghiệm hiện trạng (Reverse Engineering):
+
+Liệt kê các chức năng hiện có mà bạn quan sát được qua giao diện (Input, Filter, Table columns, Actions).
+
+Suy luận các logic nghiệp vụ (Business Logic) đang được áp dụng hiện tại (ví dụ: cách tính thời gian, loại giảm giá).
+
+Bước 2: Phân tích lỗ hổng (Gap Analysis):
+
+Đối chiếu với các hệ thống quản lý khuyến mãi chuyên nghiệp (như Shopee, Lazada, Shopify).
+
+Chỉ ra những điểm yếu về Nghiệp vụ (ví dụ: thiếu điều kiện áp dụng, giới hạn ngân sách...).
+
+Chỉ ra những điểm yếu về UX/UI (ví dụ: sự phân cấp thông tin, tính tiện dụng khi quản lý dữ liệu lớn).
+
+Chỉ ra những điểm yếu về Dữ liệu/API (ví dụ: nguy cơ xung đột mã, thiếu log lịch sử).
+
+Bước 3: Thiết lập rào cản kỹ thuật (Safety Boundaries):
+
+Mục tiêu là cải tiến nhưng KHÔNG làm thay đổi cấu trúc Layout chính, không ghi đè các hàm global, và không ảnh hưởng đến code của các thành viên khác trong team.
+
+Mọi đề xuất phải mang tính "Module hóa" (viết thêm hoặc mở rộng, không phá bỏ).
+
+Bước 4: Đầu ra (Output) - Bản kế hoạch hành động:
+
+Hãy lập một To-do List chi tiết, phân loại theo:
+
+Must-have (Bắt buộc phải có): Những logic nghiệp vụ cốt lõi đang thiếu để hệ thống vận hành thực tế.
+
+Should-have (Nên có): Cải thiện trải nghiệm admin và tính chuyên nghiệp.
+
+Nice-to-have (Mở rộng): Các tính năng cao cấp để ghi điểm (Analytics, Countdown...).
+
+Yêu cầu: Trình bày dưới dạng bảng hoặc danh sách gạch đầu dòng rõ ràng, súc tích, tập trung vào thực tế triển khai.

@@ -150,6 +150,16 @@ public final class KhuyenMaiPricing {
         if (km.getGiaTriGiam() == null || km.getGiaTriGiam().compareTo(BigDecimal.ZERO) <= 0) {
             return KhuyenMaiPriceResult.none(giaGoc);
         }
+        if (km.getDonToiThieu() != null && km.getDonToiThieu().compareTo(BigDecimal.ZERO) > 0
+                && giaGoc.compareTo(km.getDonToiThieu()) < 0) {
+            return KhuyenMaiPriceResult.none(giaGoc);
+        }
+        if (km.getGioiHanLuotDung() != null && km.getGioiHanLuotDung() > 0) {
+            int daDung = km.getSoLuotDaDung() != null ? km.getSoLuotDaDung() : 0;
+            if (daDung >= km.getGioiHanLuotDung()) {
+                return KhuyenMaiPriceResult.none(giaGoc);
+            }
+        }
 
         String loaiRawNorm = normalizeLoai(km.getLoaiGiam());
         boolean loaiDaChuanHoaTuAdmin = "TIEN".equals(loaiRawNorm) || "PHAN_TRAM".equals(loaiRawNorm);
