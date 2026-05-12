@@ -629,10 +629,19 @@
         }
 
         function switchTab(tabId) {
+            console.log('switchTab called with:', tabId);
             currentTabId = tabId;
             document.getElementById('hoaDonId').value = tabId > 0 ? tabId : 0;
-            if (tabId > 0) { loadCartForTab(tabId); }
-            else { cartItems = []; cartSerials = {}; cartDiscount = 0; updateCartUI(); clearCustomerFields(); }
+            if (tabId > 0) { 
+                loadCartForTab(tabId); 
+            }
+            else { 
+                cartItems = []; 
+                cartSerials = {}; 
+                cartDiscount = 0; 
+                updateCartUI(); 
+                clearCustomerFields(); 
+            }
             renderTabs();
             closeTabsDropdown();
         }
@@ -691,12 +700,30 @@
         }
 
         function loadCartForTab(tabId) {
+            console.log('loadCartForTab called with tabId:', tabId);
+            if (!tabId || tabId <= 0) {
+                console.log('Invalid tabId, clearing cart');
+                cartItems = [];
+                cartSerials = {};
+                cartDiscount = 0;
+                updateCartUI();
+                clearCustomerFields();
+                return;
+            }
+            
             safeJsonFetch('/ban-hang/cart/' + tabId)
                 .then(function(result) {
-                    if (!result.ok) return;
+                    console.log('loadCartForTab result:', result);
+                    if (!result.ok) {
+                        console.log('loadCartForTab failed - response not OK');
+                        showToast('Không thể tải dữ liệu giỏ hàng', 'error');
+                        return;
+                    }
                     var data = result.data;
+                    console.log('loadCartForTab data:', data);
                     cartItems = data.items || [];
                     cartDiscount = data.giamGia || 0;
+                    
                     // Lưu serial vào biến toàn cục - chuyển từ array sang map
                     cartSerials = {};
                     if (data.serials && Array.isArray(data.serials)) {
@@ -706,14 +733,29 @@
                             }
                         });
                     }
+                    
+                    // Cập nhật thông tin khách hàng
                     if (data.tenKhachHang) document.getElementById('customerName').value = data.tenKhachHang;
                     if (data.sdtKhachHang) document.getElementById('customerPhone').value = data.sdtKhachHang;
                     if (data.emailKhachHang) document.getElementById('customerEmail').value = data.emailKhachHang;
-                    if (cartItems.length === 0) { updateCartUI(); updateTabInfo(tabId, 0, 0); return; }
+                    
+                    if (cartItems.length === 0) { 
+                        console.log('Cart is empty');
+                        updateCartUI(); 
+                        updateTabInfo(tabId, 0, 0); 
+                        return; 
+                    }
+                    
                     updateCartUI();
                     updateTabInfo(tabId, cartItems.reduce(function(s, i) { return s + (i.soLuong || 0); }, 0), data.tongThanhToan);
                 })
-                .catch(function(e) { console.error(e); cartItems = []; cartSerials = {}; updateCartUI(); });
+                .catch(function(e) { 
+                    console.error('loadCartForTab error:', e); 
+                    showToast('Lỗi khi tải giỏ hàng: ' + e.message, 'error');
+                    cartItems = []; 
+                    cartSerials = {}; 
+                    updateCartUI(); 
+                });
         }
 
         function autoCloseTab() {
@@ -735,6 +777,44 @@
         function toggleTabsDropdown() { var el = document.getElementById('tabsDropdownMenu'); if (el) el.classList.toggle('show'); }
         function closeTabsDropdown() { var el = document.getElementById('tabsDropdownMenu'); if (el) el.classList.remove('show'); }
         function clearCustomerFields() { document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = ''; document.getElementById('customerEmail').value = ''; }
+        
+        // Lưu thông tin khách hàng vào hóa đơn khi có thay đổi
+        function saveCustomerInfo() {
+            var hoaDonId = document.getElementById('hoaDonId').value;
+            if (!hoaDonId || hoaDonId === '0' || hoaDonId === 'null') {
+                return; // Chưa có hóa đơn, không cần lưu
+            }
+            
+            var ten = document.getElementById('customerName').value || '';
+            var sdt = document.getElementById('customerPhone').value || '';
+            var email = document.getElementById('customerEmail').value || '';
+            
+            fetch('/ban-hang/cap-nhat-khach', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'hoaDonId=' + hoaDonId + '&tenKhachHang=' + encodeURIComponent(ten) + '&sdtKhachHang=' + encodeURIComponent(sdt) + '&emailKhachHang=' + encodeURIComponent(email)
+            })
+            .then(function(r) { return r.text(); })
+            .then(function(data) {
+                if (data !== 'OK') {
+                    console.log('Lỗi lưu khách hàng:', data);
+                } else {
+                    console.log('Đã lưu thông tin khách hàng');
+                }
+            })
+            .catch(function(e) { console.error('Lỗi khi lưu khách hàng:', e); });
+        }
+        
+        // Debounce function để tránh gọi API quá nhiều lần
+        var debounceTimeout;
+        function debounce(func, wait) {
+            return function(...args) {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(function() { func.apply(this, args); }, wait);
+            };
+        }
+        
+        var debouncedSaveCustomerInfo = debounce(saveCustomerInfo, 500);
 
         // Filter
         function filterProducts() {
@@ -750,6 +830,15 @@
             });
             productFilteredItems = visibleCards;
             renderProductPage(1);
+            
+            // Cập nhật số lượng sản phẩm tìm thấy
+            var countText = visibleCards.length + ' sản phẩm';
+            if (q) {
+                var countEl = document.getElementById('searchResultCount');
+                if (countEl) {
+                    countEl.textContent = countText;
+                }
+            }
         }
 
         document.querySelectorAll('.pos-category').forEach(function(cat) {
@@ -836,11 +925,14 @@
         // Cart actions
         function addToCart(productId) {
             var hoaDonId = document.getElementById('hoaDonId').value || '0';
+            console.log('addToCart called, productId:', productId, 'hoaDonId:', hoaDonId);
             fetch('/ban-hang/them-san-pham', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'hoaDonId=' + hoaDonId + '&sanPhamChiTietId=' + productId })
                 .then(function(r) { return r.text(); })
                 .then(function(data) {
+                    console.log('addToCart response:', data);
                     if (data.indexOf('NEW:') === 0) {
                         var id = parseInt(data.substring(4));
+                        console.log('New invoice created with id:', id);
                         document.getElementById('hoaDonId').value = id;
                         var existTab = tabsData.find(function(t) { return t.id === currentTabId && t.id < 0; });
                         if (existTab) { existTab.id = id; existTab.maDonHang = 'HD' + id; }
@@ -850,11 +942,18 @@
                         saveStoredTabs();
                         renderTabs();
                     }
+                    // Load lại giỏ hàng từ server để đảm bảo dữ liệu đúng
                     loadCart();
                     showToast('Đã thêm sản phẩm', 'success');
                 })
-                .catch(function() { showToast('Có lỗi xảy ra', 'error'); });
+                .catch(function(e) { 
+                    console.error('addToCart error:', e);
+                    showToast('Có lỗi xảy ra: ' + e.message, 'error'); 
+                });
         }
+        
+        // Enhanced filterProducts with debounce
+        var debouncedFilterProducts = debounce(filterProducts, 300);
 
         function loadCart() {
             var hoaDonId = document.getElementById('hoaDonId').value;
@@ -1695,9 +1794,43 @@
         window.addEventListener('DOMContentLoaded', function() {
             loadStoredTabs();
             var serverId = document.getElementById('hoaDonId').value;
+            console.log('Page loaded, initial hoaDonId:', serverId);
+            
             // Sync với server - xóa các đơn không còn tồn tại
             syncWithServer();
-            if (serverId && serverId !== '0' && serverId !== 'null') { currentTabId = parseInt(serverId); loadCartForTab(currentTabId); }
+            
+            // Load dữ liệu giỏ hàng từ server nếu có hoaDonId
+            if (serverId && serverId !== '0' && serverId !== 'null') { 
+                currentTabId = parseInt(serverId);
+                loadCartForTab(currentTabId);
+            } else {
+                // Khởi tạo UI giỏ hàng trống
+                cartItems = [];
+                cartSerials = {};
+                cartDiscount = 0;
+                updateCartUI();
+            }
+            
+            // Thêm event listeners để tự động lưu thông tin khách hàng khi nhập
+            var customerNameInput = document.getElementById('customerName');
+            var customerPhoneInput = document.getElementById('customerPhone');
+            var customerEmailInput = document.getElementById('customerEmail');
+            
+            if (customerNameInput) {
+                customerNameInput.addEventListener('input', function() {
+                    debouncedSaveCustomerInfo();
+                });
+            }
+            if (customerPhoneInput) {
+                customerPhoneInput.addEventListener('input', function() {
+                    debouncedSaveCustomerInfo();
+                });
+            }
+            if (customerEmailInput) {
+                customerEmailInput.addEventListener('input', function() {
+                    debouncedSaveCustomerInfo();
+                });
+            }
         });
 
         function syncWithServer() {
