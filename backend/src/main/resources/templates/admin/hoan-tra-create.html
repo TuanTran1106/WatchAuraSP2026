@@ -10,10 +10,11 @@
                     </h1>
                 </div>
 
-                <form id="hoanTraForm" method="post" th:action="@{/admin/hoan-tra/tao-moi}">
+                <form id="hoanTraForm" method="post" th:action="@{/admin/hoan-tra/tao-moi}" enctype="multipart/form-data">
                     <input type="hidden" name="idHoaDon" id="idHoaDon" value="">
                     <input type="hidden" name="chiTietJson" id="chiTietJson" value="">
                     <input type="hidden" name="loaiHoanTra" id="loaiHoanTra" value="TRA_HANG">
+                    <input type="hidden" name="danhSachAnhLoi" id="danhSachAnhLoi" value="">
 
                     <div class="htc-card">
                         <div class="htc-card__header">
@@ -55,6 +56,7 @@
                             <div class="htc-selected-order-info">
                                 <span class="htc-selected-order-code" id="selectedOrderCode"></span>
                                 <span class="htc-selected-order-customer" id="selectedOrderCustomer"></span>
+                                <span class="htc-selected-order-voucher" id="selectedOrderVoucher"></span>
                             </div>
                             <span class="htc-selected-order-change" onclick="clearSelection()">
                                 <i class="fas fa-times"></i> Đổi đơn hàng
@@ -84,7 +86,7 @@
                                             </div>
                                         </div>
                                     </label>
-                                                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -144,6 +146,65 @@
                             </div>
                         </div>
 
+                        <div class="htc-card">
+                            <div class="htc-card__header">
+                                <i class="fas fa-university"></i>
+                                <h2 class="htc-card__title">Bước 5: Thông tin tài khoản nhận hoàn tiền</h2>
+                            </div>
+                            <div class="htc-card__body">
+                                <div class="htc-bank-section">
+                                    <div class="htc-bank-field">
+                                        <label class="htc-bank-label" for="soTaiKhoan">
+                                            <i class="fas fa-credit-card"></i>
+                                            Số tài khoản ngân hàng
+                                        </label>
+                                        <input type="text" id="soTaiKhoan" name="soTaiKhoan" class="htc-input"
+                                               placeholder="Nhập số tài khoản...">
+                                    </div>
+                                    <div class="htc-bank-field">
+                                        <label class="htc-bank-label" for="tenNganHang">
+                                            <i class="fas fa-building-columns"></i>
+                                            Tên ngân hàng
+                                        </label>
+                                        <input type="text" id="tenNganHang" name="tenNganHang" class="htc-input"
+                                               placeholder="VD: Vietcombank, BIDV, Techcombank...">
+                                    </div>
+                                    <div class="htc-bank-field">
+                                        <label class="htc-bank-label" for="tenChuTaiKhoan">
+                                            <i class="fas fa-user"></i>
+                                            Tên chủ tài khoản
+                                        </label>
+                                        <input type="text" id="tenChuTaiKhoan" name="tenChuTaiKhoan" class="htc-input"
+                                               placeholder="Nhập tên chủ tài khoản...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="htc-card">
+                            <div class="htc-card__header">
+                                <i class="fas fa-camera-retro" style="color: #ef4444;"></i>
+                                <h2 class="htc-card__title">Bước 6: Hình ảnh lỗi sản phẩm <span style="color: #ef4444;">*</span></h2>
+                            </div>
+                            <div class="htc-card__body">
+                                <div class="htc-image-upload-section">
+                                    <div class="htc-image-upload-box" id="imageUploadBox">
+                                        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                                        <div class="htc-image-upload-placeholder" onclick="document.getElementById('imageInput').click()">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Click để chọn ảnh hoặc kéo thả ảnh vào đây</p>
+                                            <span class="htc-image-upload-hint">Hỗ trợ: JPG, PNG, GIF, WEBP (tối đa 5 ảnh)</span>
+                                        </div>
+                                        <div class="htc-image-preview-list" id="imagePreviewList"></div>
+                                    </div>
+                                    <div class="htc-image-error validation-error" id="imageError" style="display: none;">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span>Vui lòng chọn ít nhất 3 hình ảnh lỗi sản phẩm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="htc-summary">
                             <div class="htc-summary-row">
                                 <span class="htc-summary-label">Loại yêu cầu</span>
@@ -153,8 +214,16 @@
                                 <span class="htc-summary-label">Số serial/đơn vị hoàn trả</span>
                                 <span class="htc-summary-value" id="totalSerialsSelected">0</span>
                             </div>
+                            <div class="htc-summary-row">
+                                <span class="htc-summary-label">Tiền hàng hoàn(Đã trừ khuyến mãi)</span>
+                                <span class="htc-summary-value" id="tongTienHangHoan">0 ₫</span>
+                            </div>
+                            <div class="htc-summary-row" id="voucherRow" style="display: none;">
+                                <span class="htc-summary-label">Trừ voucher giảm</span>
+                                <span class="htc-summary-value" style="color: #059669;" id="voucherGiamTru">-0 ₫</span>
+                            </div>
                             <div class="htc-summary-row htc-summary-row--total">
-                                <span class="htc-summary-label" id="tongTienLabel">Tiền hoàn (nếu trả hàng)</span>
+                                <span class="htc-summary-label" id="tongTienLabel">Số tiền hoàn (ước tính)</span>
                                 <span class="htc-summary-value" id="totalRefundAmount">0 ₫</span>
                             </div>
                         </div>
@@ -171,13 +240,198 @@
                         </div>
                     </div>
                 </form>
-        </div>
 
-<script th:src="@{/admin/admin.js}"></script>
+                <!-- Custom Modal Notification -->
+                <div class="htc-custom-modal" id="customModal">
+                    <div class="htc-modal-content">
+                        <div class="htc-modal-icon" id="modalIcon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="htc-modal-message" id="modalMessage"></div>
+                        <button class="htc-modal-btn" onclick="closeCustomModal()">Đã hiểu</button>
+                    </div>
+                </div>
+
+<style>
+/* Image Upload Styles */
+.htc-image-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.htc-image-upload-box {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #f9fafb;
+    transition: all 0.2s;
+    min-height: 180px;
+}
+
+.htc-image-upload-box.dragover {
+    border-color: #c9a227;
+    background: #fefce8;
+}
+
+.htc-image-upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.htc-image-upload-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    color: #9ca3af;
+}
+
+.htc-image-upload-placeholder p {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.htc-image-upload-hint {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.htc-image-preview-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.htc-image-preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    background: #fff;
+}
+
+.htc-image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.htc-image-preview-item .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.9);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.htc-image-preview-item:hover .remove-btn {
+    opacity: 1;
+}
+
+.htc-image-upload-box.has-error {
+    border-color: #dc2626;
+}
+
+/* ===== Custom Modal ===== */
+.htc-custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.htc-custom-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.htc-modal-content {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.htc-custom-modal.show .htc-modal-content {
+    transform: scale(1);
+}
+
+.htc-modal-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    animation: modalIconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes modalIconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.htc-modal-message {
+    font-size: 1.1rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.htc-modal-btn {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+    color: #fff;
+    border: none;
+    padding: 0.875rem 2.5rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(30, 58, 95, 0.3);
+}
+
+.htc-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 58, 95, 0.4);
+}
+</style>
 <script>
 var currentHoaDonId = null;
 var currentOrderData = null;
 var currentLoaiHoanTra = 'TRA_HANG';
+var uploadedImages = []; // Lưu danh sách ảnh đã upload lên server
+var currentVoucherGiam = 0; // Lưu số tiền voucher giảm của đơn hàng hiện tại
+var currentTongTienHoaDon = 0; // Lưu tổng tiền hóa đơn (chưa voucher)
 
 function formatCurrency(value) {
     if (!value) return '0 ₫';
@@ -192,6 +446,142 @@ function formatDate(dateStr) {
     } catch (e) {
         return dateStr;
     }
+}
+
+// ========== IMAGE UPLOAD HANDLING ==========
+var imageInput = document.getElementById('imageInput');
+var imageUploadBox = document.getElementById('imageUploadBox');
+var imagePreviewList = document.getElementById('imagePreviewList');
+var imageError = document.getElementById('imageError');
+var maxImages = 5;
+
+function handleImageFiles(files) {
+    if (!files || files.length === 0) return;
+    
+    var remainingSlots = maxImages - uploadedImages.length;
+    if (remainingSlots <= 0) {
+        alert('Bạn chỉ có thể upload tối đa ' + maxImages + ' ảnh.');
+        return;
+    }
+    
+    // Giới hạn số ảnh được chọn
+    var filesToProcess = Array.from(files).slice(0, remainingSlots);
+    
+    Array.from(filesToProcess).forEach(function(file) {
+        if (!file.type.match('image.*')) {
+            alert('Chỉ chấp nhận file ảnh: ' + file.name);
+            return;
+        }
+        
+        // Upload ảnh lên server
+        uploadImage(file);
+    });
+}
+
+function uploadImage(file) {
+    var formData = new FormData();
+    formData.append('file', file);
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/hoan-tra/upload-image', true);
+    
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success && response.filePath) {
+                    uploadedImages.push(response.filePath);
+                    renderImagePreviews();
+                    validateImageRequired();
+                } else {
+                    alert('Lỗi upload ảnh: ' + (response.message || 'Không xác định'));
+                }
+            } catch (e) {
+                alert('Lỗi xử lý phản hồi từ server');
+            }
+        } else {
+            alert('Lỗi khi upload ảnh. Vui lòng thử lại.');
+        }
+    };
+    
+    xhr.onerror = function() {
+        alert('Lỗi kết nối. Vui lòng thử lại.');
+    };
+    
+    xhr.send(formData);
+}
+
+function renderImagePreviews() {
+    imagePreviewList.innerHTML = '';
+    
+    uploadedImages.forEach(function(path, index) {
+        var item = document.createElement('div');
+        item.className = 'htc-image-preview-item';
+        item.innerHTML = 
+            '<img src="' + path + '" alt="Ảnh ' + (index + 1) + '">' +
+            '<button type="button" class="remove-btn" onclick="removeImage(' + index + ')">' +
+            '<i class="fas fa-times"></i></button>';
+        imagePreviewList.appendChild(item);
+    });
+    
+    // Cập nhật số lượng ảnh trong placeholder
+    var placeholder = imageUploadBox.querySelector('.htc-image-upload-placeholder');
+    if (placeholder) {
+        if (uploadedImages.length > 0) {
+            placeholder.style.display = 'none';
+        } else {
+            placeholder.style.display = 'flex';
+        }
+    }
+}
+
+function removeImage(index) {
+    uploadedImages.splice(index, 1);
+    renderImagePreviews();
+    validateImageRequired();
+}
+
+function validateImageRequired() {
+    var hasImages = uploadedImages.length > 0;
+    
+    if (imageError) {
+        imageError.style.display = hasImages ? 'none' : 'flex';
+    }
+    
+    if (imageUploadBox) {
+        if (hasImages) {
+            imageUploadBox.classList.remove('has-error');
+        }
+    }
+    
+    return hasImages;
+}
+
+// Event listeners cho image upload
+if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+        handleImageFiles(e.target.files);
+        e.target.value = ''; // Reset input để có thể chọn lại cùng file
+    });
+}
+
+// Drag and drop
+if (imageUploadBox) {
+    imageUploadBox.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    imageUploadBox.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    
+    imageUploadBox.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        handleImageFiles(e.dataTransfer.files);
+    });
 }
 
 function setLoaiHoanTra(value) {
@@ -289,15 +679,77 @@ async function selectOrder(order) {
     currentHoaDonId = order.id;
     document.getElementById('idHoaDon').value = order.id;
 
+    // Store voucher info
+    currentVoucherGiam = order.voucherGiam || 0;
+    currentTongTienHoaDon = order.tongTienHoaDon || 0;
+
     var selectedCard = document.getElementById('selectedOrderCard');
     selectedCard.style.display = 'flex';
     document.getElementById('selectedOrderCode').textContent = order.maDonHang;
     document.getElementById('selectedOrderCustomer').textContent = order.tenKhachHang + ' - ' + order.sdtKhachHang;
 
+    // Show voucher info if exists
+    var voucherEl = document.getElementById('selectedOrderVoucher');
+    if (currentVoucherGiam > 0) {
+        voucherEl.textContent = 'Voucher: -' + formatCurrency(currentVoucherGiam);
+        voucherEl.style.display = 'inline-block';
+    } else {
+        voucherEl.style.display = 'none';
+    }
+
     document.getElementById('orderListContainer').style.display = 'none';
     document.getElementById('productSection').classList.add('active');
 
     await loadOrderDetails(order.id);
+}
+
+// Bind event listeners for dynamically created product elements
+function bindProductEvents() {
+    // Bind checkbox change events
+    document.querySelectorAll('.htc-serial-checkbox input[type="checkbox"]').forEach(function(checkbox) {
+        // Remove existing listeners to avoid duplicates
+        checkbox.removeEventListener('change', updateSelection);
+        checkbox.addEventListener('change', updateSelection);
+    });
+
+    // Bind quantity input events
+    document.querySelectorAll('.htc-qty-input').forEach(function(input) {
+        input.removeEventListener('change', handleQtyChange);
+        input.removeEventListener('input', handleQtyChange);
+        input.addEventListener('change', handleQtyChange);
+        input.addEventListener('input', handleQtyChange);
+    });
+
+    // Initial update after a small delay to ensure DOM is ready
+    setTimeout(function() {
+        updateSelection();
+        updateSummary();
+    }, 100);
+}
+
+function handleQtyChange(e) {
+    var input = e.target;
+    var itemIndex = input.getAttribute('data-index');
+    var donGia = parseFloat(input.getAttribute('data-don-gia')) || 0;
+    var qty = parseInt(input.value) || 0;
+    var max = parseInt(input.max) || 1;
+
+    if (qty > max) {
+        input.value = max;
+        qty = max;
+    }
+    if (qty < 1) {
+        input.value = 1;
+        qty = 1;
+    }
+
+    var total = donGia * qty;
+    var totalEl = document.getElementById('item-total-' + itemIndex);
+    if (totalEl) {
+        totalEl.querySelector('.htc-item-total-value').textContent = formatCurrency(total);
+    }
+
+    updateSummary();
 }
 
 async function loadOrderDetails(hoaDonId) {
@@ -311,6 +763,8 @@ async function loadOrderDetails(hoaDonId) {
         if (result.success) {
             currentOrderData = result;
             renderProducts(result);
+            // Re-bind event listeners for dynamically created elements
+            bindProductEvents();
         } else {
             productList.innerHTML = '<div class="htc-empty"><i class="fas fa-exclamation-triangle"></i><p>Lỗi: ' + result.message + '</p></div>';
         }
@@ -343,7 +797,7 @@ function renderProducts(data) {
             item.serials.forEach(function(serial) {
                 var disabled = !serial.coTheChon ? ' disabled' : '';
                 var selected = serial.daHoan ? ' selected' : '';
-                serialsHtml += 
+                serialsHtml +=
                     '<label class="htc-serial-checkbox' + disabled + selected + '">' +
                         '<input type="checkbox"' +
                             ' data-index="' + index + '"' +
@@ -353,7 +807,7 @@ function renderProducts(data) {
                             ' data-don-gia="' + item.donGia + '"' +
                             (serial.coTheChon ? ' onchange="updateSelection()"' : ' disabled') + '>' +
                         '<span class="htc-serial-box">' +
-                            (serial.daHoan ? '<i class="fas fa-check"></i>' : '<i class="fas fa-lock"></i>') +
+                            (serial.daHoan ? '<i class="fas fa-check"></i>' : '<i class="fas fa-check"></i>') +
                         '</span>' +
                         '<span class="htc-serial-code">' + serial.maSerial + '</span>' +
                         '<span class="htc-serial-status htc-serial-status--' + (serial.daHoan ? 'returned' : 'sold') + '">' +
@@ -421,16 +875,48 @@ function renderProducts(data) {
 }
 
 function updateSelection() {
-    document.querySelectorAll('.htc-serial-checkbox').forEach(function(label) {
-        var checkbox = label.querySelector('input[type="checkbox"]');
-        if (checkbox && !checkbox.disabled) {
-            if (checkbox.checked) {
-                label.classList.add('selected');
-            } else {
-                label.classList.remove('selected');
+    var productList = document.getElementById('productList');
+    var cards = productList.querySelectorAll('.htc-product-card');
+
+    cards.forEach(function(card, cardIndex) {
+        var totalAmount = 0;
+        var totalSerials = 0;
+
+        // Count checked serials
+        card.querySelectorAll('.htc-serial-checkbox input[type="checkbox"]:checked').forEach(function(cb) {
+            totalSerials++;
+            totalAmount += parseFloat(cb.getAttribute('data-don-gia')) || 0;
+        });
+
+        // Handle quantity inputs
+        var qtyInput = card.querySelector('.htc-qty-input');
+        if (qtyInput && !qtyInput.disabled) {
+            var qty = parseInt(qtyInput.value) || 0;
+            if (qty > 0) {
+                totalSerials += qty;
+                totalAmount += ((parseFloat(qtyInput.getAttribute('data-don-gia')) || 0) * qty);
             }
         }
+
+        // Update item total
+        var totalEl = card.querySelector('.htc-item-total');
+        if (totalEl) {
+            totalEl.querySelector('.htc-item-total-value').textContent = formatCurrency(totalAmount);
+        }
+
+        // Update serial checkbox visual states
+        card.querySelectorAll('.htc-serial-checkbox').forEach(function(label) {
+            var checkbox = label.querySelector('input[type="checkbox"]');
+            if (checkbox && !checkbox.disabled) {
+                if (checkbox.checked) {
+                    label.classList.add('selected');
+                } else {
+                    label.classList.remove('selected');
+                }
+            }
+        });
     });
+
     updateSummary();
 }
 
@@ -461,23 +947,61 @@ function updateQtySelection(input) {
 function updateSummary() {
     var totalSerials = 0;
     var totalAmount = 0;
+    var tongTienHangHoan = 0;
 
-    document.querySelectorAll('.htc-serial-checkbox input:checked').forEach(function(cb) {
-        totalSerials++;
-        totalAmount += parseFloat(cb.getAttribute('data-don-gia')) || 0;
+    // Count all checked serial checkboxes
+    document.querySelectorAll('.htc-product-card').forEach(function(card) {
+        card.querySelectorAll('.htc-serial-checkbox input[type="checkbox"]:checked').forEach(function(cb) {
+            if (!cb.disabled) {
+                totalSerials++;
+                var donGia = parseFloat(cb.getAttribute('data-don-gia')) || 0;
+                totalAmount += donGia;
+                tongTienHangHoan += donGia;
+            }
+        });
     });
 
+    // Handle quantity inputs
     document.querySelectorAll('.htc-qty-input:not(:disabled)').forEach(function(input) {
         var qty = parseInt(input.value) || 0;
         if (qty > 0) {
             totalSerials += qty;
-            totalAmount += (parseFloat(input.getAttribute('data-don-gia')) || 0) * qty;
+            var donGia = (parseFloat(input.getAttribute('data-don-gia')) || 0) * qty;
+            totalAmount += donGia;
+            tongTienHangHoan += donGia;
         }
     });
 
-    document.getElementById('totalSerialsSelected').textContent = totalSerials;
-    document.getElementById('totalRefundAmount').textContent = formatCurrency(totalAmount);
-    document.getElementById('btnSubmit').disabled = totalSerials === 0;
+    // Calculate voucher discount proportionally
+    var voucherGiamTru = 0;
+    if (currentTongTienHoaDon > 0 && currentVoucherGiam > 0) {
+        voucherGiamTru = Math.round((tongTienHangHoan / currentTongTienHoaDon) * currentVoucherGiam);
+    }
+
+    // Calculate refund amount
+    var soTienHoan = tongTienHangHoan - voucherGiamTru;
+    if (soTienHoan < 0) soTienHoan = 0;
+
+    // Update UI
+    var totalSerialsEl = document.getElementById('totalSerialsSelected');
+    var tongTienHangHoanEl = document.getElementById('tongTienHangHoan');
+    var voucherRow = document.getElementById('voucherRow');
+    var voucherGiamTruEl = document.getElementById('voucherGiamTru');
+    var totalAmountEl = document.getElementById('totalRefundAmount');
+    var btnSubmit = document.getElementById('btnSubmit');
+
+    if (totalSerialsEl) totalSerialsEl.textContent = totalSerials;
+    if (tongTienHangHoanEl) tongTienHangHoanEl.textContent = formatCurrency(tongTienHangHoan);
+
+    if (currentVoucherGiam > 0 && voucherRow) {
+        voucherRow.style.display = 'flex';
+        if (voucherGiamTruEl) voucherGiamTruEl.textContent = '-' + formatCurrency(voucherGiamTru);
+    } else if (voucherRow) {
+        voucherRow.style.display = 'none';
+    }
+
+    if (totalAmountEl) totalAmountEl.textContent = formatCurrency(soTienHoan);
+    if (btnSubmit) btnSubmit.disabled = totalSerials === 0;
 }
 
 function clearSelection() {
@@ -522,6 +1046,21 @@ document.getElementById('hoanTraForm').addEventListener('submit', function(e) {
         alert('Vui lòng chọn đơn hàng.');
         return false;
     }
+
+    // ========== VALIDATION HÌNH ẢNH BẮT BUỘC ==========
+    if (!validateImageRequired()) {
+        e.preventDefault();
+        showCustomModal('Vui lòng chọn ít nhất 1 hình ảnh lỗi sản phẩm!', 'warning');
+        imageUploadBox.classList.add('has-error');
+        imageError.style.display = 'flex';
+
+        // Scroll đến phần upload ảnh
+        imageUploadBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+
+    // Gán danh sách ảnh vào hidden field (dạng JSON)
+    document.getElementById('danhSachAnhLoi').value = JSON.stringify(uploadedImages);
 
     var chiTietList = [];
     var seenItems = {};
@@ -576,6 +1115,40 @@ document.getElementById('hoanTraForm').addEventListener('submit', function(e) {
     return true;
 });
 
+// ========== CUSTOM MODAL FUNCTIONS ==========
+function showCustomModal(message, type = 'error') {
+    var modal = document.getElementById('customModal');
+    var modalMessage = document.getElementById('modalMessage');
+    var modalIcon = document.getElementById('modalIcon');
+
+    modalMessage.textContent = message;
+
+    // Change icon based on type
+    if (type === 'success') {
+        modalIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+        modalIcon.style.color = '#059669';
+    } else if (type === 'warning') {
+        modalIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        modalIcon.style.color = '#f59e0b';
+    } else {
+        modalIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
+        modalIcon.style.color = '#ef4444';
+    }
+
+    modal.classList.add('show');
+}
+
+function closeCustomModal() {
+    document.getElementById('customModal').classList.remove('show');
+}
+
+// Close modal when clicking outside
+document.getElementById('customModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCustomModal();
+    }
+});
+
 document.getElementById('searchInput').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -584,3 +1157,4 @@ document.getElementById('searchInput').addEventListener('keypress', function(e) 
 });
 </script>
 </div>
+

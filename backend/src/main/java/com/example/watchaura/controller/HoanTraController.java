@@ -119,15 +119,49 @@ public class HoanTraController {
             @RequestParam(required = false) String chiTietJson,
             @RequestParam(required = false) String ghiChuXuLy,
             @RequestParam(required = false, defaultValue = "TRA_HANG") String loaiHoanTra,
+            @RequestParam(required = false) String danhSachAnhLoi,
+            @RequestParam(required = false) String soTaiKhoan,
+            @RequestParam(required = false) String tenNganHang,
+            @RequestParam(required = false) String tenChuTaiKhoan,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
-        
+
         try {
+            // ========== VALIDATION BẮT BUỘC HÌNH ẢNH ==========
+            if (danhSachAnhLoi == null || danhSachAnhLoi.isEmpty() || danhSachAnhLoi.equals("[]")) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất 1 hình ảnh lỗi sản phẩm.");
+                return "redirect:/admin/hoan-tra/tao-moi";
+            }
+
             HoanTraRequest request = new HoanTraRequest();
             request.setIdHoaDon(idHoaDon);
             request.setLyDo(lyDo);
             request.setGhiChuXuLy(ghiChuXuLy);
             request.setLoaiHoanTra(loaiHoanTra);
+            request.setSoTaiKhoan(soTaiKhoan);
+            request.setTenNganHang(tenNganHang);
+            request.setTenChuTaiKhoan(tenChuTaiKhoan);
+
+            // Parse danh sách ảnh lỗi
+            if (danhSachAnhLoi != null && !danhSachAnhLoi.isEmpty()) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    java.util.List<String> anhLoiList = mapper.readValue(
+                            danhSachAnhLoi,
+                            mapper.getTypeFactory().constructCollectionType(java.util.List.class, String.class)
+                    );
+                    request.setDanhSachAnhLoi(anhLoiList);
+                } catch (Exception ex) {
+                    // Nếu không parse được JSON, thử split theo dấu phẩy
+                    java.util.List<String> anhLoiList = new java.util.ArrayList<>();
+                    for (String item : danhSachAnhLoi.split(",")) {
+                        if (!item.trim().isEmpty()) {
+                            anhLoiList.add(item.trim());
+                        }
+                    }
+                    request.setDanhSachAnhLoi(anhLoiList);
+                }
+            }
 
             if (chiTietJson != null && !chiTietJson.isEmpty()) {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
