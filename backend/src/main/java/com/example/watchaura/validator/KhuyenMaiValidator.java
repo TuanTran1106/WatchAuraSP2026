@@ -53,19 +53,6 @@ public class KhuyenMaiValidator implements Validator {
             errors.rejectValue("donToiThieu", "range", "Đơn tối thiểu phải lớn hơn hoặc bằng 0.");
         }
 
-        if (req.getGioiHanLuotDung() != null && req.getGioiHanLuotDung() < 1) {
-            errors.rejectValue("gioiHanLuotDung", "range", "Giới hạn lượt dùng phải lớn hơn hoặc bằng 1.");
-        }
-
-        if (req.getSoLuotDaDung() != null && req.getSoLuotDaDung() < 0) {
-            errors.rejectValue("soLuotDaDung", "range", "Số lượt đã dùng không được âm.");
-        }
-
-        if (req.getGioiHanLuotDung() != null && req.getSoLuotDaDung() != null
-                && req.getSoLuotDaDung() > req.getGioiHanLuotDung()) {
-            errors.rejectValue("soLuotDaDung", "range", "Số lượt đã dùng không được vượt quá giới hạn lượt dùng.");
-        }
-
         // Phạm vi áp dụng có thể để trống từ form cũ; service sẽ mặc định ALL để tương thích dữ liệu hiện có.
     }
 }

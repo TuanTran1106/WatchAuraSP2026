@@ -15,10 +15,10 @@ import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import com.example.watchaura.util.ShippingFeeUtil;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@RequiredArgsConstructor
 public class CheckoutController {
 
     private static final Logger log = LoggerFactory.getLogger(CheckoutController.class);
@@ -45,6 +44,24 @@ public class CheckoutController {
     private final GuestCartViewService guestCartViewService;
     private final KhuyenMaiService khuyenMaiService;
     private final SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService;
+
+    @Autowired
+    public CheckoutController(
+            HoaDonRepository hoaDonRepository,
+            HoaDonChiTietRepository hoaDonChiTietRepository,
+            SanPhamChiTietRepository sanPhamChiTietRepository,
+            EmailService emailService,
+            GuestCartViewService guestCartViewService,
+            KhuyenMaiService khuyenMaiService,
+            SanPhamChiTietKhuyenMaiService sanPhamChiTietKhuyenMaiService) {
+        this.hoaDonRepository = hoaDonRepository;
+        this.hoaDonChiTietRepository = hoaDonChiTietRepository;
+        this.sanPhamChiTietRepository = sanPhamChiTietRepository;
+        this.emailService = emailService;
+        this.guestCartViewService = guestCartViewService;
+        this.khuyenMaiService = khuyenMaiService;
+        this.sanPhamChiTietKhuyenMaiService = sanPhamChiTietKhuyenMaiService;
+    }
 
     /**
      * Thanh toán khách (không đăng nhập): form nhập thông tin + COD.

@@ -271,7 +271,8 @@
       var formWrapper = adminContent.querySelector(cfg.wrapper);
       if (!formWrapper || !formWrapper.classList.contains('is-collapsed')) return;
       var hasErrors = formWrapper.querySelector('.form__error') !== null;
-      if (!hasErrors && !hadSuccessToast) return;
+      var shouldOpen = hasErrors || hadSuccessToast;
+      if (!shouldOpen) return;
       formWrapper.classList.remove('is-collapsed');
       var openBar = adminContent.querySelector(cfg.openBar);
       if (openBar) openBar.setAttribute('aria-hidden', 'true');
@@ -378,8 +379,31 @@
       var params = new URLSearchParams(new FormData(form)).toString();
       var url = action + (action.indexOf('?') === -1 ? '?' : '&') + params;
       loadAdminContent(url, { method: 'GET' });
+      return;
+    }
+    if (form.__adminSubmitting) {
+      return;
+    }
+    form.__adminSubmitting = true;
+    var submitBtns = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+    submitBtns.forEach(function (b) {
+      b.disabled = true;
+    });
+    var body = new FormData(form);
+    body.append('X-Requested-With', 'XMLHttpRequest');
+    var p = loadAdminContent(action, { method: method, body: body });
+    if (p && typeof p.finally === 'function') {
+      p.finally(function () {
+        form.__adminSubmitting = false;
+        submitBtns.forEach(function (b) {
+          b.disabled = false;
+        });
+      });
     } else {
-      loadAdminContent(action, { method: method, body: new FormData(form) });
+      form.__adminSubmitting = false;
+      submitBtns.forEach(function (b) {
+        b.disabled = false;
+      });
     }
   }
 
@@ -473,6 +497,18 @@
       return;
     }
     if (t.closest('#formVoucherOpenBtn')) {
+      var vOpenBtn = t.closest('#formVoucherOpenBtn');
+      var resetUrlRaw = vOpenBtn ? vOpenBtn.getAttribute('data-reset-url') : null;
+      var resetUrl = resetUrlRaw ? String(resetUrlRaw).trim() : '';
+      if (resetUrl) {
+        Promise.resolve(loadAdminContent(resetUrl, { method: 'GET' })).then(function () {
+          var vW3 = adminContent.querySelector('#formVoucherWrapper');
+          var vBar3 = adminContent.querySelector('#formVoucherOpenBar');
+          if (vW3) vW3.classList.remove('is-collapsed');
+          if (vBar3) vBar3.setAttribute('aria-hidden', 'true');
+        });
+        return;
+      }
       var vW2 = adminContent.querySelector('#formVoucherWrapper');
       var vBar2 = adminContent.querySelector('#formVoucherOpenBar');
       if (vW2) vW2.classList.remove('is-collapsed');
