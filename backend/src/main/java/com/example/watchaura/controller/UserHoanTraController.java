@@ -96,6 +96,12 @@ public class UserHoanTraController {
             return "redirect:/dang-nhap";
         }
 
+        // ========== VALIDATION BẮT BUỘC HÌNH ẢNH ==========
+        if (hinhAnhJson == null || hinhAnhJson.isEmpty() || hinhAnhJson.equals("[]") || hinhAnhJson.equals("[\"\"]")) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng chọn ít nhất 1 hình ảnh lỗi sản phẩm.");
+            return "redirect:/khach-hang/hoan-tra/tao-moi/" + idHoaDon;
+        }
+
         try {
             HoanTraRequest request = new HoanTraRequest();
             request.setIdHoaDon(idHoaDon);

@@ -1275,6 +1275,8 @@ public class HoanTraServiceImpl implements HoanTraService {
                     item.put("ngayDat", hd.getNgayDat());
                     item.put("trangThaiDonHang", hd.getTrangThaiDonHang());
                     item.put("tongTienThanhToan", hd.getTongTienThanhToan());
+                    item.put("tongTienHoaDon", hd.getTongTienTamTinh());
+                    item.put("voucherGiam", hd.getTienGiam() != null ? hd.getTienGiam() : 0);
                     
                     boolean daCoHoanTra = hoanTraRepository.existsByHoaDonId(hd.getId());
                     item.put("daCoHoanTra", daCoHoanTra);
