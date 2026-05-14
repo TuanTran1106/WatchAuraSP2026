@@ -82,11 +82,7 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
             khuyenMai.setDanhMucApDung("");
         }
         if (khuyenMai.getPhamViApDung() == null) {
-            khuyenMai.setPhamViApDung(
-                    (khuyenMai.getDanhMucApDung() != null && !khuyenMai.getDanhMucApDung().isBlank())
-                            ? KhuyenMai.PhamViApDung.CATEGORY
-                            : KhuyenMai.PhamViApDung.ALL
-            );
+            khuyenMai.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
         }
         if (khuyenMai.getDonToiThieu() == null) {
             khuyenMai.setDonToiThieu(java.math.BigDecimal.ZERO);
@@ -98,7 +94,6 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
-    @Transactional
     public KhuyenMai update(Integer id, KhuyenMai khuyenMai) {
         KhuyenMai existing = khuyenMaiRepository.findById(id).orElse(null);
         if (existing == null) {
@@ -110,11 +105,13 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         }
         existing.setTenChuongTrinh(khuyenMai.getTenChuongTrinh());
         existing.setMoTa(khuyenMai.getMoTa());
-        existing.setDanhMucApDung(khuyenMai.getDanhMucApDung() != null ? khuyenMai.getDanhMucApDung().trim() : "");
+        existing.setDanhMucApDung(khuyenMai.getDanhMucApDung() != null ? khuyenMai.getDanhMucApDung() : "");
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
         existing.setGiaTriGiam(khuyenMai.getGiaTriGiam());
         existing.setGiamToiDa(khuyenMai.getGiamToiDa());
         existing.setDonToiThieu(khuyenMai.getDonToiThieu());
+        existing.setGioiHanLuotDung(khuyenMai.getGioiHanLuotDung());
+        existing.setSoLuotDaDung(khuyenMai.getSoLuotDaDung());
         existing.setPhamViApDung(khuyenMai.getPhamViApDung());
         // Form datetime-local đôi khi gửi rỗng / không bind → null; DB cột NOT NULL → không được xóa ngày cũ.
         if (khuyenMai.getNgayBatDau() != null) {
@@ -124,29 +121,12 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
             existing.setNgayKetThuc(khuyenMai.getNgayKetThuc());
         }
         existing.setDonToiThieu(khuyenMai.getDonToiThieu());
+        existing.setGioiHanLuotDung(khuyenMai.getGioiHanLuotDung());
+        existing.setSoLuotDaDung(khuyenMai.getSoLuotDaDung());
+        existing.setPhamViApDung(khuyenMai.getPhamViApDung());
         existing.setTrangThai(khuyenMai.getTrangThai());
         if (existing.getTrangThai() == null) {
             existing.setTrangThai(Boolean.FALSE);
-        }
-        apGiaTriMacDinh(existing);
-        if (existing.getDanhMucApDung() == null) {
-            existing.setDanhMucApDung("");
-        }
-        if (existing.getPhamViApDung() == null) {
-            existing.setPhamViApDung(
-                    !existing.getDanhMucApDung().isBlank()
-                            ? KhuyenMai.PhamViApDung.CATEGORY
-                            : KhuyenMai.PhamViApDung.ALL
-            );
-        }
-        if (existing.getPhamViApDung() != KhuyenMai.PhamViApDung.SKU) {
-            sanPhamChiTietKhuyenMaiRepository.deleteByKhuyenMaiId(existing.getId());
-        }
-        if (existing.getPhamViApDung() == KhuyenMai.PhamViApDung.ALL) {
-            existing.setDanhMucApDung("");
-        }
-        if (existing.getPhamViApDung() == KhuyenMai.PhamViApDung.CATEGORY && existing.getDanhMucApDung().isBlank()) {
-            existing.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
         }
         apGiaTriMacDinh(existing);
         chuanHoaTruocKhiLuu(existing);

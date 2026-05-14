@@ -41,6 +41,10 @@ public class KhuyenMaiRequest {
 
     private BigDecimal donToiThieu;
 
+    private Integer gioiHanLuotDung;
+
+    private Integer soLuotDaDung;
+
     private KhuyenMai.PhamViApDung phamViApDung;
 
     private Boolean trangThai;

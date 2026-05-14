@@ -22,11 +22,7 @@ public interface VoucherService {
 
     void delete(Integer id);
 
-    /** Đặt trạng thái không hoạt động (giữ bản ghi, giống khuyến mãi «ngừng hoạt động»). */
-    void deactivate(Integer id);
-
-    /** @return null nếu thành công; ngược lại thông báo lỗi hiển thị cho admin */
-    String toggleTrangThai(Integer id);
+    void toggleTrangThai(Integer id);
 
     boolean existsByMaVoucher(String maVoucher);
 
