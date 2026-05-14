@@ -87,7 +87,7 @@ final class AdminDashboardData {
         LocalDate prevPeriodFrom = prevPeriodTo.minusDays(rangeDays - 1);
 
         String revenueScopeText = scopeLabelVi(presetNorm, rangeDays, chartFrom, chartTo);
-        String revenuePrimaryLabelVi = primaryLabelVi(presetNorm);
+        String revenuePrimaryLabelVi = primaryLabelVi(presetNorm, chartFrom, chartTo, endDate);
         String chartTitleVi = chartTitleVi(granularity);
 
         Map<LocalDate, BigDecimal> grossByDay = new HashMap<>();
@@ -638,7 +638,11 @@ final class AdminDashboardData {
         }
     }
 
-    private static String primaryLabelVi(String preset) {
+    private static String primaryLabelVi(String preset, LocalDate chartFrom, LocalDate chartTo, LocalDate endDate) {
+        long spanDays = ChronoUnit.DAYS.between(chartFrom, chartTo) + 1;
+        if (spanDays > 1L && !PR_TODAY.equals(preset) && !PR_YESTERDAY.equals(preset)) {
+            return "Ngày cuối kỳ (" + endDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ")";
+        }
         switch (preset) {
             case PR_TODAY:
                 return "Hôm nay";
@@ -800,8 +804,9 @@ final class AdminDashboardData {
             prevNet = netFullDay(orders, hoanTraList, prevDay);
             cmpLabel = "So với ngày trước";
         } else {
+            LocalDate lastDayPrevPeriod = chartFrom.minusDays(1);
             curNet = netFullDay(orders, hoanTraList, endDate);
-            prevNet = netFullDay(orders, hoanTraList, prevDay);
+            prevNet = netFullDay(orders, hoanTraList, lastDayPrevPeriod);
             cmpLabel = "So với ngày cuối kỳ trước";
         }
 
@@ -887,9 +892,12 @@ final class AdminDashboardData {
 
     private static Double percentChangeBDSpec(BigDecimal current, BigDecimal previous) {
         if (previous == null || current == null) return null;
-        if (previous.compareTo(BigDecimal.ZERO) == 0) {
-            if (current.compareTo(BigDecimal.ZERO) == 0) return 0d;
-            return 100d;
+        if (previous.compareTo(BigDecimal.ZERO) <= 0) {
+            if (previous.compareTo(BigDecimal.ZERO) == 0) {
+                if (current.compareTo(BigDecimal.ZERO) == 0) return 0d;
+                return 100d;
+            }
+            return null;
         }
         return current.subtract(previous).doubleValue() * 100.0d / previous.doubleValue();
     }
@@ -906,6 +914,9 @@ final class AdminDashboardData {
         BigDecimal p = previous != null ? previous : BigDecimal.ZERO;
         if (p.compareTo(BigDecimal.ZERO) == 0) {
             return c.compareTo(BigDecimal.ZERO) == 0 ? 0d : null;
+        }
+        if (p.compareTo(BigDecimal.ZERO) < 0) {
+            return null;
         }
         return c.subtract(p).doubleValue() * 100.0d / p.doubleValue();
     }
