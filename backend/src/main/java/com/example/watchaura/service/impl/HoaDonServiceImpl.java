@@ -1541,7 +1541,13 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        if (now.isBefore(voucher.getNgayBatDau()) || now.isAfter(voucher.getNgayKetThuc())) {
+        if (voucher.getNgayBatDau() != null && now.isBefore(voucher.getNgayBatDau())) {
+
+            return BigDecimal.ZERO;
+
+        }
+
+        if (voucher.getNgayKetThuc() != null && now.isAfter(voucher.getNgayKetThuc())) {
 
             return BigDecimal.ZERO;
 
@@ -1645,7 +1651,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
                 && tongTien.compareTo(voucher.getDonHangToiThieu()) < 0) {
 
-            throw new RuntimeException("�ơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher.");
+            throw new RuntimeException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher.");
 
         }
 
