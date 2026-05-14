@@ -2,98 +2,161 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="content">
-    <div th:if="${message}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
+    <style>
+        /* REDESIGN ONLY - no logic changed */
+        #formVoucherWrapper, #listVoucher{--wa-bg:#F7F7F5;--wa-card:#FFFFFF;--wa-border:#E8E8E8;--wa-primary:#534AB7;--wa-primary-focus:#7F77DD;--wa-text:#1A1A1A;--wa-secondary:#666666;--wa-muted:#999999}
+        #formVoucherWrapper .form-card,#listVoucher.card{background:var(--wa-card);border:1px solid #EBEBEB;border-radius:12px;box-shadow:0 10px 28px rgba(20,20,20,.04);overflow:hidden}
+        #formVoucherWrapper .form-card__header,#listVoucher>.card__title{padding:16px 24px;border-bottom:1px solid #F0F0F0;margin:0;color:var(--wa-text);font-size:18px;font-weight:700;letter-spacing:-.01em;background:#fff}
+        #formVoucherWrapper .form-card__body{padding:24px;background:#fff}
+        #formVoucherWrapper .form__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 18px;align-items:start}
+        #formVoucherWrapper .form__section{grid-column:1/-1;display:flex;align-items:center;gap:12px;margin:4px 0 0;color:var(--wa-primary);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+        #formVoucherWrapper .form__section::after{content:"";height:1px;background:#F0F0F0;flex:1}
+        #formVoucherWrapper .form__group--full{grid-column:1/-1}
+        #formVoucherWrapper .form__label{display:block;margin:0 0 6px;color:#555;font-size:13px;font-weight:500;line-height:1.3}
+        #formVoucherWrapper .form__input,#formVoucherWrapper .form__select,#formVoucherWrapper .form__textarea,#listVoucher .toolbar__input,#listVoucher .toolbar__select{width:100%;height:36px;border:1px solid #E0E0E0;border-radius:8px;background:#F5F5F5;color:var(--wa-text);font-size:13px;padding:0 11px;outline:none;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
+        #formVoucherWrapper .form__textarea{min-height:76px;height:auto;padding:10px 11px;resize:vertical}
+        #formVoucherWrapper .form__input:focus,#formVoucherWrapper .form__select:focus,#formVoucherWrapper .form__textarea:focus,#listVoucher .toolbar__input:focus,#listVoucher .toolbar__select:focus{border-color:#7F77DD;box-shadow:0 0 0 3px rgba(127,119,221,.12);background:#fff}
+        #formVoucherWrapper .form__error{display:block;margin-top:5px;color:#C2410C;font-size:12px;line-height:1.35}
+        #formVoucherWrapper .text-muted{display:block;margin-top:5px;color:var(--wa-muted);font-size:12px}
+        #formVoucherWrapper input[type="checkbox"]{width:16px;height:16px;accent-color:var(--wa-primary)}
+        #formVoucherWrapper .form__actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid #F0F0F0}
+        #formVoucherWrapper .btn,#listVoucher .btn{height:34px;border-radius:8px;padding:0 20px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border:1px solid transparent;cursor:pointer}
+        #formVoucherWrapper .btn--primary,#listVoucher .btn--primary{background:#534AB7;color:#fff;border-color:#534AB7}
+        #formVoucherWrapper .btn--secondary,#listVoucher .btn--secondary{background:transparent;color:#555;border-color:#ccc}
+        #formVoucherOpenBar.form-card--bar{margin-top:12px}
+        #formVoucherOpenBar .form-card__header{display:flex;align-items:center;justify-content:space-between}
+        #formVoucherWrapper .form-card__toggle{width:32px;height:32px;border-radius:8px;border:1px solid #E0E0E0;background:#F5F5F5;color:#555;font-size:18px;line-height:1;cursor:pointer}
+        #listVoucher{margin-top:22px;background:#fff;padding:0}
+        #listVoucher .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:18px 24px;border-bottom:1px solid #F0F0F0;margin:0}
+        #listVoucher .toolbar__input{max-width:270px;padding-left:34px;background:#F5F5F5 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center}
+        #listVoucher .toolbar__select{width:auto;min-width:160px}
+        #listVoucher .toolbar__label{font-size:13px;font-weight:500;color:#555;margin-left:4px}
+        #listVoucher .table{width:100%;border-collapse:collapse;border:0;background:#fff}
+        #listVoucher .table th{padding:12px 14px;border-bottom:1px solid #F0F0F0;color:#999;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:left;white-space:nowrap;background:#fff}
+        #listVoucher .table td{padding:13px 14px;border-bottom:1px solid #F0F0F0;color:#1A1A1A;font-size:13px;vertical-align:middle;background:#fff}
+        #listVoucher .table tr:hover td{background:#FAFAFA}
+        .km-num-col,.km-num-cell{text-align:right!important}
+        .km-status-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap}
+        .km-status--running{background:#E1F5EE;color:#0F6E56}.km-status--off{background:#F1EFE8;color:#5F5E5A}.km-status--upcoming{background:#EEF2FF;color:#534AB7}.km-status--ended{background:#FCE8E6;color:#A33A2B}
+        #listVoucher .table-actions{display:flex;align-items:center;gap:4px}
+        #listVoucher .btn-icon{width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:#666;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none}
+        #listVoucher .btn-icon:hover{background:#F0F0F0;color:#1A1A1A}
+        #listVoucher .pagination{padding:16px 24px}.pagination__list{display:flex;gap:6px;list-style:none;margin:0;padding:0;justify-content:flex-end}.pagination__link{min-width:32px;height:32px;border-radius:8px;border:1px solid #E8E8E8;color:#666;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:13px}.pagination__link--active{background:#534AB7!important;color:#fff!important;border-color:#534AB7!important}.pagination__link--disabled{opacity:.45;background:#F5F5F5}
+        @media(max-width:1100px){#formVoucherWrapper .form__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:720px){#formVoucherWrapper .form__grid{grid-template-columns:1fr}#listVoucher .toolbar{align-items:stretch}#listVoucher .toolbar__input,#listVoucher .toolbar__select,#listVoucher .toolbar__btn{max-width:none;width:100%}}
+    </style>
+    <div th:if="${toastError}" class="admin-toast-payload" th:attr="data-admin-toast-message=${toastError}, data-admin-toast-type='danger'" aria-hidden="true"></div>
+    <div th:if="${message}" th:unless="${toastError}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
 
     <div class="form-card-wrapper" id="formVoucherWrapper" th:classappend="${voucher == null or voucher.id == null} ? 'is-collapsed'">
-    <!-- Form luôn hiển thị phía trên, có nút đóng/mở -->
     <section class="card card--full card--form form-card" id="formVoucher">
         <div class="form-card__header">
             <h2 class="form-card__title" th:text="${voucher != null and voucher.id != null ? 'Sửa voucher' : 'Thêm voucher'}">Thêm voucher</h2>
             <button type="button" class="form-card__toggle form-card__toggle--close" id="formVoucherToggle" title="Đóng form" aria-label="Đóng form">×</button>
         </div>
         <div class="form-card__body">
-        <form class="form form--voucher js-admin-ajax-form" data-ajax="true" th:action="${formAction}" th:object="${voucher}" method="post">
+        <form class="form form--voucher js-admin-ajax-form" data-ajax="true" th:action="${formAction}" th:object="${voucher}" method="post"
+              th:attr="data-voucher-is-edit=${voucher != null and voucher.id != null}">
             <input type="hidden" name="q" th:value="${searchKeyword != null ? searchKeyword : ''}" />
             <input type="hidden" name="filterTrangThai" th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
             <input th:if="${voucher != null and voucher.id != null}" type="hidden" th:field="*{id}" />
+            <ul class="form__error mb-2 ps-3" th:if="${#fields.hasGlobalErrors()}">
+                <li th:each="e : ${#fields.globalErrors()}" th:text="${e}"></li>
+            </ul>
             <div class="form__grid">
+                <div class="form__section" aria-hidden="true">Thông tin cơ bản</div>
                 <div class="form__group">
                     <label class="form__label">Mã voucher</label>
-                    <input class="form__input" type="text" th:field="*{maVoucher}" required placeholder="VD: VC001" />
+                    <input class="form__input" type="text" th:field="*{maVoucher}" required placeholder="VD: VC001" autocomplete="off" maxlength="50" />
                     <span class="form__error" th:if="${#fields.hasErrors('maVoucher')}" th:errors="*{maVoucher}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Tên voucher</label>
-                    <input class="form__input" type="text" th:field="*{tenVoucher}" required placeholder="Tên voucher" />
+                    <input class="form__input" type="text" th:field="*{tenVoucher}" required placeholder="Tên voucher" maxlength="255" />
+                    <span class="form__error" th:if="${#fields.hasErrors('tenVoucher')}" th:errors="*{tenVoucher}"></span>
                 </div>
                 <div class="form__group form__group--full">
                     <label class="form__label">Mô tả</label>
-                    <textarea class="form__input form__textarea" th:field="*{moTa}" placeholder="Mô tả"></textarea>
+                    <textarea class="form__input form__textarea" th:field="*{moTa}" placeholder="Mô tả" maxlength="500"></textarea>
                 </div>
+                <div class="form__section" aria-hidden="true">Cài đặt giảm giá</div>
                 <div class="form__group">
                     <label class="form__label">Loại voucher</label>
-                    <select class="form__input form__select" th:field="*{loaiVoucher}">
+                    <select class="form__input form__select" id="voucherLoai" th:field="*{loaiVoucher}" required>
                         <option value="">-- Chọn loại --</option>
                         <option value="PHAN_TRAM">Giảm theo %</option>
                         <option value="TIEN">Giảm theo tiền</option>
                     </select>
+                    <span class="form__error" th:if="${#fields.hasErrors('loaiVoucher')}" th:errors="*{loaiVoucher}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('loaiVoucherHopLe')}" th:errors="*{loaiVoucherHopLe}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Giá trị</label>
-                    <input class="form__input" type="number" step="0.01" th:field="*{giaTri}" required placeholder="0" />
+                    <input class="form__input" type="number" step="0.01" min="0.01" th:field="*{giaTri}" required />
+                    <span class="form__error" th:if="${#fields.hasErrors('giaTri')}" th:errors="*{giaTri}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('giaTriPhanTramHopLe')}" th:errors="*{giaTriPhanTramHopLe}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('giaTriTienTrongNguong')}" th:errors="*{giaTriTienTrongNguong}"></span>
+                </div>
+                <div class="form__group" id="voucherGroupGiaTriToiDa">
+                    <label class="form__label">Giá trị tối đa (₫)</label>
+                    <input class="form__input" type="number" step="0.01" min="0.01" th:field="*{giaTriToiDa}" placeholder="Bắt buộc khi giảm %" />
+                    <small class="text-muted">Chỉ áp dụng khi loại là giảm %</small>
+                    <span class="form__error" th:if="${#fields.hasErrors('giaTriToiDa')}" th:errors="*{giaTriToiDa}"></span>
                 </div>
                 <div class="form__group">
-                    <label class="form__label">Giá trị tối đa</label>
-                    <input class="form__input" type="number" step="0.01" th:field="*{giaTriToiDa}" placeholder="0" />
+                    <label class="form__label">Đơn hàng tối thiểu (₫)</label>
+                    <input class="form__input" type="number" step="0.01" min="0.01" th:field="*{donHangToiThieu}" placeholder="Để trống = không yêu cầu" />
+                    <span class="form__error" th:if="${#fields.hasErrors('donHangToiThieu')}" th:errors="*{donHangToiThieu}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('donHangToiThieuHopLe')}" th:errors="*{donHangToiThieuHopLe}"></span>
                 </div>
-                <div class="form__group">
-                    <label class="form__label">Đơn hàng tối thiểu</label>
-                    <input class="form__input" type="number" step="0.01" th:field="*{donHangToiThieu}" placeholder="0" />
-                </div>
-                <div class="form__group">
-                    <label class="form__label">Số lượng tổng</label>
-                    <input class="form__input" type="number" th:field="*{soLuongTong}" min="0" placeholder="0" />
+
+                <div class="form__section" aria-hidden="true">Thời gian & thiết lập</div>
+                <div class="form__group form__group--full">
+                    <label class="form__label d-flex align-items-center gap-2">
+                        <input type="checkbox" th:field="*{gioiHanMoiUser}" />
+                        Giới hạn mỗi khách chỉ dùng 1 lần
+                    </label>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày bắt đầu</label>
-                    <input class="form__input" type="datetime-local" name="ngayBatDau" id="voucherNgayBatDau" min=""
-                           th:value="${voucher != null and voucher.ngayBatDau != null ? #temporals.format(voucher.ngayBatDau, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+                    <input class="form__input" type="datetime-local" id="voucherNgayBatDau" th:field="*{ngayBatDau}" />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayBatDau')}" th:errors="*{ngayBatDau}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('ngayBatDauHopLeKhiTao')}" th:errors="*{ngayBatDauHopLeKhiTao}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày kết thúc</label>
-                    <input class="form__input" type="datetime-local" name="ngayKetThuc" id="voucherNgayKetThuc" min=""
-                           th:value="${voucher != null and voucher.ngayKetThuc != null ? #temporals.format(voucher.ngayKetThuc, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+                    <input class="form__input" type="datetime-local" id="voucherNgayKetThuc" th:field="*{ngayKetThuc}" />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThuc')}" th:errors="*{ngayKetThuc}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('ngayKetThucHopLeKhiTao')}" th:errors="*{ngayKetThucHopLeKhiTao}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThucSauNgayBatDau')}" th:errors="*{ngayKetThucSauNgayBatDau}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('trangThaiKhongMoKhiHetHan')}" th:errors="*{trangThaiKhongMoKhiHetHan}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Trạng thái</label>
                     <select class="form__input form__select" th:field="*{trangThai}">
-                        <option value="">-- Chọn trạng thái --</option>
-                        <option value="false">Không Hoạt Động</option>
-                        <option value="true">Đang Hoạt Động</option>
+                        <option th:value="true">Đang hoạt động</option>
+                        <option th:value="false">Không hoạt động</option>
                     </select>
+                    <span class="form__error" th:if="${#fields.hasErrors('trangThai')}" th:errors="*{trangThai}"></span>
                 </div>
             </div>
             <div class="form__actions">
                 <button type="submit" class="btn btn--primary">Lưu</button>
-                <a th:href="@{/admin/voucher}" class="btn btn--secondary">Hủy</a>
+                <a th:href="@{/admin/voucher}" class="btn btn--secondary" id="voucherFormCancel">Hủy</a>
             </div>
         </form>
         </div>
     </section>
 
-    <!-- Thanh mở form khi đã đóng -->
     <div class="form-card form-card--bar" id="formVoucherOpenBar" th:attr="aria-hidden=${voucher != null and voucher.id != null ? 'true' : 'false'}">
         <div class="form-card__header">
             <span class="form-card__title">Thêm voucher</span>
-            <button type="button" class="form-card__toggle form-card__toggle--open" id="formVoucherOpenBtn" title="Mở form" aria-label="Mở form">+</button>
+            <button type="button" class="form-card__toggle form-card__toggle--open" id="formVoucherOpenBtn"
+                    th:attr="data-reset-url=@{/admin/voucher(page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
+                    title="Mở form thêm mới" aria-label="Mở form thêm mới">+</button>
         </div>
     </div>
     </div>
 
-    <!-- Danh sách bên dưới -->
     <section class="card card--full" id="listVoucher">
         <h2 class="card__title">Danh sách voucher</h2>
 
@@ -101,7 +164,7 @@
             <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
             <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
             <label class="toolbar__label">Trạng thái:</label>
-            <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
+            <select name="filterTrangThai" class="toolbar__select" onchange="this.form.submit()">
                 <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
                 <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
                 <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
@@ -115,53 +178,61 @@
                     <th>Mã</th>
                     <th>Tên voucher</th>
                     <th>Loại</th>
-                    <th>Giá trị</th>
+                    <th class="km-num-col">Giá trị</th>
                     <th>Ngày bắt đầu</th>
                     <th>Ngày kết thúc</th>
-                    <th>Trạng thái</th>
+                    <th>Trạng thái runtime</th>
                     <th>Thao tác</th>
                 </tr>
             </thead>
             <tbody>
-                <tr th:each="item : ${list}">
+                <tr th:each="item : ${list}" th:with="lv=${item.loaiVoucher != null ? #strings.toUpperCase(#strings.trim(item.loaiVoucher)) : ''}">
                     <td th:text="${item.id}"></td>
                     <td th:text="${item.maVoucher}"></td>
                     <td th:text="${item.tenVoucher}"></td>
-                    <td th:text="${item.loaiVoucher != null ? item.loaiVoucher : '—'}"></td>
-                    <td th:text="${item.giaTri != null ? #numbers.formatDecimal(item.giaTri, 1, 'POINT', 0, 'COMMA') : '—'}"></td>
+                    <td>
+                        <span th:if="${lv == 'PHAN_TRAM' or lv == 'PERCENT'}">Giảm theo %</span>
+                        <span th:if="${lv == 'TIEN'}">Giảm theo tiền</span>
+                        <span th:if="${lv != 'PHAN_TRAM' and lv != 'PERCENT' and lv != 'TIEN'}" th:text="${item.loaiVoucher != null ? item.loaiVoucher : '—'}">—</span>
+                    </td>
+                    <td class="km-num-cell">
+                        <th:block th:if="${item.giaTri != null and (lv == 'PHAN_TRAM' or lv == 'PERCENT')}">
+                            <span th:text="${#numbers.formatDecimal(item.giaTri, 1, 'POINT', 1, 'COMMA') + ' %'}">0 %</span>
+                        </th:block>
+                        <th:block th:if="${item.giaTri != null and lv == 'TIEN'}">
+                            <span th:text="${#numbers.formatDecimal(item.giaTri, 1, 'POINT', 0, 'COMMA') + ' ₫'}">0 ₫</span>
+                        </th:block>
+                        <th:block th:if="${item.giaTri != null and lv != 'PHAN_TRAM' and lv != 'PERCENT' and lv != 'TIEN'}">
+                            <span th:text="${#numbers.formatDecimal(item.giaTri, 1, 'POINT', 0, 'COMMA')}">0</span>
+                        </th:block>
+                        <th:block th:if="${item.giaTri == null}">—</th:block>
+                    </td>
                     <td th:text="${item.ngayBatDau != null ? #temporals.format(item.ngayBatDau, 'dd/MM/yyyy HH:mm') : '—'}"></td>
                     <td th:text="${item.ngayKetThuc != null ? #temporals.format(item.ngayKetThuc, 'dd/MM/yyyy HH:mm') : '—'}"></td>
                     <td>
-                        <form th:action="@{/admin/voucher/{id}/trang-thai(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
-                              method="post"
-                              style="display:inline;"
-                              class="js-admin-ajax-form"
-                              data-ajax="true"
-                              data-confirm="Bạn có chắc chắn muốn đổi trạng thái voucher này?"
-                              data-confirm-title="Đổi trạng thái"
-                              data-confirm-ok="Đồng ý"
-                              data-confirm-cancel="Hủy"
-                              data-confirm-tone="info">
-                            <button type="submit" class="btn-icon btn-icon--toggle" th:title="${item.trangThai != null and item.trangThai ? 'Đang hoạt động (bấm để tắt)' : 'Không hoạt động (bấm để bật)'}" aria-label="Đổi trạng thái">
-                                <i class="fa-solid fa-toggle-on" th:if="${item.trangThai != null and item.trangThai}" style="color: #16a34a; font-size: 1.35rem;"></i>
-                                <i class="fa-solid fa-toggle-off" th:if="${item.trangThai == null or !item.trangThai}" style="color: #94a3b8; font-size: 1.35rem;"></i>
-                            </button>
-                        </form>
+                        <span class="km-status-badge km-status--off"
+                              th:if="${item.trangThai == null or !item.trangThai}">Đã tắt</span>
+                        <span class="km-status-badge km-status--upcoming"
+                              th:if="${item.trangThai != null and item.trangThai and item.ngayBatDau != null and item.ngayBatDau > #temporals.createNow()}">Sắp diễn ra</span>
+                        <span class="km-status-badge km-status--ended"
+                              th:if="${item.trangThai != null and item.trangThai and item.ngayKetThuc != null and item.ngayKetThuc < #temporals.createNow()}">Đã kết thúc</span>
+                        <span class="km-status-badge km-status--running"
+                              th:if="${item.trangThai != null and item.trangThai and (item.ngayBatDau == null or item.ngayBatDau <= #temporals.createNow()) and (item.ngayKetThuc == null or item.ngayKetThuc >= #temporals.createNow())}">Đang chạy</span>
                     </td>
                     <td>
                         <div class="table-actions">
                             <a class="btn-icon btn-icon--edit js-admin-ajax-link" data-ajax="true" th:href="@{/admin/voucher/{id}/sua(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}" title="Sửa"><i class="fas fa-edit"></i></a>
-                            <form th:action="@{/admin/voucher/{id}/xoa(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
+                            <form th:action="@{/admin/voucher/{id}/ngung-hoat-dong(id=${item.id}, page=${page != null ? page.number : 0}, q=${searchKeyword != null ? searchKeyword : ''}, trangThai=${filterTrangThai != null ? filterTrangThai : ''})}"
                                   method="post"
                                   style="display:inline;"
                                   class="js-admin-ajax-form"
                                   data-ajax="true"
-                                  data-confirm="Xóa voucher này? Hành động này không thể hoàn tác."
-                                  data-confirm-title="Xóa voucher"
-                                  data-confirm-ok="Xóa"
+                                  data-confirm="Bạn có chắc muốn ngừng hoạt động voucher này? Bạn có thể bật lại trong form sửa (Trạng thái: Đang hoạt động)."
+                                  data-confirm-title="Ngừng hoạt động voucher"
+                                  data-confirm-ok="Ngừng hoạt động"
                                   data-confirm-cancel="Hủy"
-                                  data-confirm-tone="danger">
-                                <button type="submit" class="btn-icon btn-icon--delete" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                                  data-confirm-tone="warning">
+                                <button type="submit" class="btn-icon btn-icon--delete" title="Ngừng hoạt động"><i class="fa-solid fa-ban"></i></button>
                             </form>
                         </div>
                     </td>
@@ -189,19 +260,67 @@
         (function() {
             var form = document.querySelector('.form--voucher');
             if (!form) return;
+            var isEdit = form.getAttribute('data-voucher-is-edit') === 'true';
             var ngayBatDau = document.getElementById('voucherNgayBatDau');
             var ngayKetThuc = document.getElementById('voucherNgayKetThuc');
-            if (!ngayBatDau || !ngayKetThuc) return;
-            var now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            var minStr = now.toISOString().slice(0, 16);
-            ngayBatDau.setAttribute('min', minStr);
-            function setNgayKetThucMin() {
-                var startVal = ngayBatDau.value;
-                ngayKetThuc.setAttribute('min', startVal || minStr);
+            var loai = document.getElementById('voucherLoai');
+            var grpMax = document.getElementById('voucherGroupGiaTriToiDa');
+            var cancel = document.getElementById('voucherFormCancel');
+
+            var inputMax = grpMax ? grpMax.querySelector('input[type="number"]') : null;
+
+            function syncMaxGroup() {
+                if (!loai || !grpMax) return;
+                var v = loai.value || '';
+                if (v === 'TIEN') {
+                    grpMax.style.display = 'none';
+                    if (inputMax) {
+                        inputMax.disabled = true;
+                    }
+                } else {
+                    grpMax.style.display = '';
+                    if (inputMax) {
+                        inputMax.disabled = false;
+                    }
+                }
             }
-            setNgayKetThucMin();
-            ngayBatDau.addEventListener('change', setNgayKetThucMin);
+            if (loai) {
+                loai.addEventListener('change', syncMaxGroup);
+                syncMaxGroup();
+            }
+            if (form) {
+                form.addEventListener('submit', function() {
+                    syncMaxGroup();
+                });
+            }
+
+            if (ngayBatDau && ngayKetThuc) {
+                if (!isEdit) {
+                    var now = new Date();
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    var minStr = now.toISOString().slice(0, 16);
+                    ngayBatDau.setAttribute('min', minStr);
+                }
+                function setNgayKetThucMin() {
+                    var floor = ngayBatDau.getAttribute('min') || '';
+                    var startVal = ngayBatDau.value;
+                    ngayKetThuc.setAttribute('min', startVal || floor);
+                }
+                setNgayKetThucMin();
+                ngayBatDau.addEventListener('change', setNgayKetThucMin);
+            }
+
+            if (form && cancel) {
+                var dirty = false;
+                form.addEventListener('input', function() { dirty = true; });
+                form.addEventListener('change', function() { dirty = true; });
+                cancel.addEventListener('click', function(ev) {
+                    if (!dirty) return;
+                    if (!window.confirm('Bỏ qua thay đổi chưa lưu?')) {
+                        ev.preventDefault();
+                    }
+                });
+            }
         })();
     </script>
 </div>
