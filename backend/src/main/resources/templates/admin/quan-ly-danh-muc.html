@@ -208,36 +208,52 @@
             .form-group {
                 display: flex;
                 flex-direction: column;
-                margin-bottom: 20px;
+                margin-bottom: 16px;
             }
 
             .form-group label {
-                font-weight: 600;
+                font-weight: 500;
                 margin-bottom: 8px;
-                color: #333;
-                font-size: 14px;
+                color: #555;
+                font-size: 13px;
             }
 
             .form-group input,
             .form-group textarea {
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                font-size: 14px;
+                padding: 0 11px;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                font-size: 13px;
                 font-family: inherit;
-                transition: border-color 0.3s ease;
+                transition: border-color 0.16s ease, box-shadow 0.16s ease;
+                background: #f5f5f5;
+                min-height: 36px;
             }
 
             .form-group input:focus,
             .form-group textarea:focus {
                 outline: none;
-                border-color: #2c3e50;
-                box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+                border-color: #7f77dd;
+                box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.12);
+                background: #fff;
             }
 
             .form-group textarea {
                 resize: vertical;
                 min-height: 100px;
+                padding-top: 10px;
+            }
+
+            .field-error {
+                display: none;
+                margin-top: 6px;
+                color: #dc3545;
+                font-size: 12px;
+                line-height: 1.35;
+            }
+
+            .field-error.is-visible {
+                display: block;
             }
 
             .form-hint {
@@ -264,37 +280,38 @@
                 gap: 10px;
                 margin-top: 25px;
                 padding-top: 20px;
-                border-top: 2px solid #f0f0f0;
+                border-top: 1px solid #f0f0f0;
             }
 
             .modal-actions button {
                 flex: 1;
-                padding: 12px;
+                padding: 0 20px;
+                min-height: 34px;
                 border: none;
-                border-radius: 6px;
-                font-size: 16px;
+                border-radius: 8px;
+                font-size: 13px;
                 font-weight: 600;
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.16s ease;
             }
 
             .modal-actions .btn-save {
-                background: #53a5fb;
+                background: #534ab7;
                 color: white;
             }
 
             .modal-actions .btn-save:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+                box-shadow: 0 6px 18px rgba(83, 74, 183, 0.2);
             }
 
             .modal-actions .btn-cancel {
-                background: #f0f0f0;
-                color: #333;
+                background: transparent;
+                color: #555;
+                border: 1px solid #ccc;
             }
 
             .modal-actions .btn-cancel:hover {
-                background: #e0e0e0;
+                background: #f5f5f5;
             }
 
             .toast {
@@ -466,6 +483,7 @@
                     <div class="form-group">
                         <label for="tenDanhMuc">Tên danh mục *</label>
                         <input type="text" id="tenDanhMuc" required>
+                        <div class="field-error" id="tenDanhMucError"></div>
                     </div>
 
                     <div class="form-group form-group--image">
@@ -605,9 +623,30 @@
                 }
             }
 
+            function clearDanhMucErrors() {
+                const err = document.getElementById('tenDanhMucError');
+                if (err) {
+                    err.textContent = '';
+                    err.classList.remove('is-visible');
+                }
+            }
+
+            function applyDanhMucErrors(errors) {
+                clearDanhMucErrors();
+                if (errors && errors.tenDanhMuc) {
+                    const err = document.getElementById('tenDanhMucError');
+                    if (err) {
+                        err.textContent = errors.tenDanhMuc;
+                        err.classList.add('is-visible');
+                    }
+                }
+            }
+
             // Submit form (Thêm/Sửa)
             document.getElementById('danhMucForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
+
+                clearDanhMucErrors();
 
                 const id = document.getElementById('danhMucId').value;
                 const fileInput = document.getElementById('hinhAnhFile');
@@ -671,8 +710,14 @@
                         closeModal();
                         loadDanhMuc();
                     } else {
-                        const error = await response.text();
-                        showToast('Lỗi: ' + error, 'error');
+                        const error = await response.json().catch(() => null);
+                        if (error && error.errors) {
+                            applyDanhMucErrors(error.errors);
+                            showToast(error.message || 'Vui lòng kiểm tra lại dữ liệu.', 'error');
+                        } else {
+                            const text = await response.text();
+                            showToast('Lỗi: ' + text, 'error');
+                        }
                     }
                 } catch (error) {
                     console.error('Lỗi:', error);
@@ -688,6 +733,7 @@
 
                     document.getElementById('danhMucId').value = danhMuc.id;
                     document.getElementById('tenDanhMuc').value = danhMuc.tenDanhMuc;
+                    clearDanhMucErrors();
                     document.getElementById('hinhAnh').value = danhMuc.hinhAnh || '';
                     const previewContainer = document.getElementById('previewContainer');
                     const previewImage = document.getElementById('previewImage');

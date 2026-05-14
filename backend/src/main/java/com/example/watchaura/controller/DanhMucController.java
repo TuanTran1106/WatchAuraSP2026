@@ -67,13 +67,17 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.DanhMuc;
 import com.example.watchaura.service.DanhMucService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/api/danh-muc")
@@ -99,8 +103,13 @@ public class DanhMucController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<DanhMuc> create(
-            @RequestBody DanhMuc danhMuc) {
+    public ResponseEntity<?> create(
+            @Valid @RequestBody DanhMuc danhMuc,
+            BindingResult bindingResult) {
+
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(buildFieldErrors(bindingResult));
+        }
 
         DanhMuc saved = danhMucService.create(danhMuc);
 
@@ -111,9 +120,14 @@ public class DanhMucController {
 
     @PutMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<DanhMuc> update(
+    public ResponseEntity<?> update(
             @PathVariable Integer id,
-            @RequestBody DanhMuc danhMuc) {
+            @Valid @RequestBody DanhMuc danhMuc,
+            BindingResult bindingResult) {
+
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(buildFieldErrors(bindingResult));
+        }
 
         return ResponseEntity.ok(
                 danhMucService.update(id, danhMuc)
@@ -127,5 +141,13 @@ public class DanhMucController {
 
         danhMucService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, String> buildFieldErrors(BindingResult bindingResult) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (var fieldError : bindingResult.getFieldErrors()) {
+            errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+        return errors;
     }
 }

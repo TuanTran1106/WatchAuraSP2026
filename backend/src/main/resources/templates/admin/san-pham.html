@@ -15,14 +15,234 @@
             style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
         </div>
         <style>
-            .content * {
-                box-sizing: border-box;
+            .content * { box-sizing: border-box; }
+
+            .content .container {
+                max-width: 1440px;
+                margin: 0 auto;
+                padding: 0;
+            }
+
+            .content-section {
+                display: grid;
+                gap: 1.1rem;
             }
 
             .content .container {
-                max-width: 1400px;
+                max-width: 1440px;
                 margin: 0 auto;
                 padding: 0;
+            }
+
+            .section-title {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 1rem 1.15rem;
+                border-radius: 18px;
+                background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(251,248,244,0.96));
+                border: 1px solid #eadfce;
+                box-shadow: 0 10px 24px rgba(31, 41, 55, 0.05);
+                font-size: 1.02rem;
+                font-weight: 700;
+                color: #1f2937;
+            }
+
+            .section-title i { color: #8b6b4f; }
+            .section-title .btn { margin-left: auto; }
+
+            .toolbar.toolbar--sanpham {
+                display: flex;
+                align-items: end;
+                justify-content: space-between;
+                gap: 1rem;
+                padding: 1rem 1.1rem;
+                border-radius: 18px;
+                background: rgba(255,255,255,0.9);
+                border: 1px solid #eadfce;
+                box-shadow: 0 10px 24px rgba(31, 41, 55, 0.04);
+            }
+
+            .toolbar.toolbar--sanpham {
+                display: flex;
+                align-items: end;
+                justify-content: space-between;
+                gap: 1rem;
+                padding: 1rem 1.1rem;
+                border-radius: 18px;
+                background: rgba(255,255,255,0.9);
+                border: 1px solid #eadfce;
+                box-shadow: 0 10px 24px rgba(31, 41, 55, 0.04);
+            }
+
+            .search-bar, .filter-bar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+            .search-bar { flex: 1; }
+            .search-bar__input {
+                min-width: min(480px, 100%);
+                flex: 1;
+            }
+            .search-bar__input,
+            .filter-bar__select {
+                min-height: 46px;
+                padding: 0.78rem 1rem;
+                border-radius: 14px;
+                border: 1px solid #e2d7c7;
+                background: #fff;
+            }
+
+            .table-wrapper {
+                overflow: hidden;
+                border-radius: 22px;
+                border: 1px solid #eadfce;
+                background: rgba(255,255,255,0.94);
+                box-shadow: 0 16px 36px rgba(31, 41, 55, 0.05);
+            }
+
+            .table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+
+            .table thead th {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                background: linear-gradient(180deg, #faf6f1 0%, #f4ece2 100%);
+                color: #4b5563;
+                text-transform: uppercase;
+                font-size: 0.78rem;
+                letter-spacing: 0.06em;
+                padding: 0.95rem 0.9rem;
+                border-bottom: 1px solid #e7dccb;
+            }
+
+            .table tbody td {
+                padding: 0.95rem 0.9rem;
+                border-bottom: 1px solid #f1e7db;
+                vertical-align: top;
+                color: #1f2937;
+            }
+
+            .table tbody tr:hover { background: rgba(198, 165, 123, 0.055); }
+            .table tbody tr:last-child td { border-bottom: none; }
+
+            .product-card {
+                margin-top: 0.25rem;
+                border-radius: 20px;
+                border: 1px solid #eadfce;
+                background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(251,248,244,0.98));
+                box-shadow: 0 12px 28px rgba(31, 41, 55, 0.05);
+            }
+
+            .product-meta {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.55rem;
+            }
+
+            .product-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.38rem 0.75rem;
+                border-radius: 999px;
+                font-size: 0.76rem;
+                font-weight: 700;
+                border: 1px solid transparent;
+            }
+
+            .product-badge--active { background: #ecfdf3; color: #166534; border-color: #bbf7d0; }
+            .product-badge--inactive { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+            .product-badge--km { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+            .product-badge--muted { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+
+            .product-image {
+                width: 56px;
+                height: 56px;
+                object-fit: cover;
+                border-radius: 14px;
+                border: 1px solid #e2d7c7;
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+                background: #fff;
+            }
+
+            .price-highlight {
+                color: #8b6b4f;
+                font-weight: 800;
+                font-size: 15px;
+                white-space: nowrap;
+                vertical-align: top;
+            }
+
+            .variant-list-row td {
+                padding-top: 0.25rem;
+                padding-bottom: 1.1rem;
+                background: transparent;
+            }
+
+            .variant-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 12px;
+                width: 100%;
+            }
+
+            .variant-item {
+                background: #fff;
+                border: 1px solid #eadfce;
+                border-radius: 18px;
+                padding: 14px;
+                box-shadow: 0 10px 20px rgba(31, 41, 55, 0.04);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            }
+
+            .variant-item:hover {
+                border-color: #d7c1a6;
+                box-shadow: 0 14px 24px rgba(31, 41, 55, 0.08);
+                transform: translateY(-2px);
+            }
+
+            .variant-item .variant-name { display: flex; gap: 8px; flex-wrap: wrap; font-weight: 700; color: #111827; margin-bottom: 10px; }
+            .variant-item .variant-name span { background: #f7f2eb; padding: 5px 10px; border-radius: 999px; font-size: 12px; border: 1px solid #eadfce; }
+            .variant-item .variant-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #64748b; margin-bottom: 10px; }
+            .variant-item .detail-row { display: flex; justify-content: space-between; gap: 8px; }
+            .variant-item .detail-row .label { font-weight: 600; color: #475569; }
+            .variant-item .detail-row .value { color: #1e293b; font-weight: 700; }
+            .variant-item .variant-price { color: #8b6b4f; font-size: 14px; font-weight: 800; padding-top: 10px; border-top: 1px solid #efe4d4; }
+            .variant-item .variant-status { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #efe4d4; }
+
+            .actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: nowrap;
+                align-items: center;
+            }
+
+            .actions .btn,
+            .actions .btn-icon { border-radius: 12px; }
+
+            .toggle-switch { transform: scale(0.95); transform-origin: center; }
+            .toggle-switch-small { transform: scale(0.9); transform-origin: center; }
+
+            .section-hint {
+                margin: 0.35rem 0 0;
+                font-size: 0.85rem;
+                color: #64748b;
+                line-height: 1.45;
+                font-weight: 400;
+            }
+
+            .badge-km {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                background: #fff7ed;
+                color: #9a3412;
+                border: 1px solid #fed7aa;
             }
 
             /* Toast notification */
@@ -1106,8 +1326,8 @@
                     <div class="filter-bar">
                         <label class="filter-bar__label">Trạng thái:</label>
                         <select id="filterTrangThai" class="form__select filter-bar__select">
+                            <option value="true" selected>Hoạt động</option>
                             <option value="">Tất cả</option>
-                            <option value="true">Hoạt động</option>
                             <option value="false">Không hoạt động</option>
                         </select>
                     </div>
@@ -1236,43 +1456,6 @@
                         </div>
                     </div>
 
-                    <div class="section-divider" style="margin-top: 24px;">
-                        <h3><i class="fas fa-tags"></i> Khuyến mãi gắn sản phẩm</h3>
-                        <p class="section-hint">Giảm thêm trên giá niêm yết từng biến thể (nếu bật và trong khung thời
-                            gian).
-                            Hệ thống chọn deal tốt nhất giữa KM chương trình (admin → Khuyến mãi / gắn biến thể), KM
-                            theo danh mục, và KM cấp sản phẩm này.</p>
-                    </div>
-                    <div class="modal-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="modal-form-group" style="grid-column: 1 / -1;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" id="trangThaiKhuyenMaiSp">
-                                <span>Bật giảm giá cấp sản phẩm</span>
-                            </label>
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="loaiKhuyenMaiSp">Loại giảm</label>
-                            <select id="loaiKhuyenMaiSp">
-                                <option value="">— Không chọn —</option>
-                                <option value="PHAN_TRAM">Giảm theo %</option>
-                                <option value="TIEN">Giảm số tiền (VNĐ)</option>
-                            </select>
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="giaTriKhuyenMaiSp">Giá trị giảm</label>
-                            <input type="number" id="giaTriKhuyenMaiSp" step="0.01" min="0"
-                                placeholder="% hoặc VNĐ tùy loại">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="ngayBatDauKmSp">Ngày giờ bắt đầu</label>
-                            <input type="datetime-local" id="ngayBatDauKmSp">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="ngayKetThucKmSp">Ngày giờ kết thúc</label>
-                            <input type="datetime-local" id="ngayKetThucKmSp">
-                        </div>
-                    </div>
-
                     <!-- PHẦN 2: CHI TIẾT SẢN PHẨM (BIẾN THỂ) -->
                     <div class="section-divider" style="margin-top: 30px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1317,7 +1500,6 @@
             }
 
             function buildSanPhamKmPayload() {
-                // Khuyến mãi sản phẩm đang bị ẩn (commented out)
                 return {
                     loaiKhuyenMai: null,
                     giaTriKhuyenMai: null,
@@ -1486,7 +1668,6 @@
                 document.getElementById('variantContainer').innerHTML = '';
                 document.getElementById('maSanPhamError').style.display = 'none';
                 deletedVariantIds.clear(); // Reset danh sách variant đã xóa
-                addVariantRow(); // Thêm 1 dòng biến thể mặc định
             }
 
             // Thêm dòng biến thể mới
@@ -1709,6 +1890,7 @@
 
                     if (result.success === false && result.errorSerials && result.errorSerials.length > 0) {
                         // Có lỗi trong file
+                        variantRow.dataset.serialStatus = 'error';
                         serialCount.textContent = `${result.totalSerials} serial (${result.errorCount} lỗi)`;
                         serialCount.style.color = '#dc2626';
                         serialList.innerHTML = result.errorSerials.slice(0, 20).map(err =>
@@ -1722,6 +1904,7 @@
                         serialCount.textContent = `${result.totalSerials} serial hợp lệ`;
                         serialCount.style.color = '#10b981';
 
+                        variantRow.dataset.serialStatus = 'ok';
                         // Lưu số serial hợp lệ vào hidden field
                         let hiddenValidCount = variantRow.querySelector('.variant-valid-serial-count');
                         if (!hiddenValidCount) {
@@ -1807,14 +1990,71 @@
                 const validSerials = parseInt(hiddenValidCount.value) || 0;
 
                 if (soLuongTon > validSerials) {
-                    // Cảnh báo nhưng vẫn cho lưu, sẽ lấy đủ serial
                     return {
-                        valid: true,
-                        warning: `Số lượng tồn (${soLuongTon}) lớn hơn số serial trong file (${validSerials}). Sẽ chỉ lưu ${validSerials} serial.`,
-                        usedSerials: validSerials
+                        valid: false,
+                        message: `Số lượng tồn (${soLuongTon}) lớn hơn số serial hợp lệ trong file (${validSerials}). Vui lòng giảm số lượng tồn hoặc nạp đủ serial.`
                     };
                 }
                 return { valid: true, usedSerials: soLuongTon };
+            }
+
+            function validateVariantSerialPayload() {
+                const variantRows = document.querySelectorAll('.variant-row');
+                const errors = [];
+
+                variantRows.forEach((row, index) => {
+                    const fileInput = row.querySelector('.variant-serial-file');
+                    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+                    if (!hasFile) return;
+
+                    const serialStatus = row.dataset.serialStatus || 'unknown';
+                    if (serialStatus === 'error') {
+                        errors.push(`Biến thể ${index + 1}: file serial đang có lỗi. Hãy sửa file trước khi lưu.`);
+                        return;
+                    }
+
+                    const validation = validateSerialCount(row);
+                    if (!validation.valid) {
+                        errors.push(`Biến thể ${index + 1}: ${validation.message}`);
+                    }
+
+                    const hiddenSerials = row.querySelector('.variant-serialized-serials');
+                    const hiddenValidCount = row.querySelector('.variant-valid-serial-count');
+                    if (!hiddenSerials || !hiddenValidCount) {
+                        errors.push(`Biến thể ${index + 1}: chưa có dữ liệu serial hợp lệ. Vui lòng tải lại file.`);
+                    }
+                });
+
+                return errors;
+            }
+
+            function validateVariantStructure() {
+                const variantRows = document.querySelectorAll('.variant-row');
+                const errors = [];
+
+                if (!variantRows.length) {
+                    return ['Vui lòng thêm ít nhất 1 biến thể trước khi lưu sản phẩm.'];
+                }
+
+                variantRows.forEach((row, index) => {
+                    const mauSac = getVariantValue(row, '.variant-mauSac').trim();
+                    const kichThuoc = getVariantValue(row, '.variant-kichThuoc').trim();
+                    const chatLieuDay = getVariantValue(row, '.variant-chatLieuDay').trim();
+                    const giaBan = getVariantValue(row, '.variant-giaBan').trim();
+                    const soLuongTon = getVariantValue(row, '.variant-soLuongTon').trim();
+
+                    if (!mauSac || !kichThuoc || !chatLieuDay) {
+                        errors.push(`Biến thể ${index + 1}: hãy chọn đủ Màu sắc, Kích thước và Chất liệu dây.`);
+                    }
+                    if (!giaBan) {
+                        errors.push(`Biến thể ${index + 1}: vui lòng nhập Giá bán.`);
+                    }
+                    if (!soLuongTon) {
+                        errors.push(`Biến thể ${index + 1}: vui lòng nhập Số lượng tồn.`);
+                    }
+                });
+
+                return errors;
             }
 
             // Escape HTML để tránh XSS
@@ -2155,32 +2395,27 @@
                 if (duplicateIndices.length > 0) {
 
                     showToast(`Các biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây: Hàng ${duplicateIndices.map(i => i + 1).join(', ')}. Vui lòng sửa lại trước khi lưu.`, 'error', 'Lỗi: Biến thể bị trùng lặp!');
+                    return;
+                }
 
-                    alert(`Lỗi: Biến thể bị trùng lặp!\n\nCác biến thể sau có cùng kết hợp Màu sắc + Kích thước + Chất liệu dây:\n- Hàng ${duplicateIndices.map(i => i + 1).join(', ')}\n\nVui lòng sửa lại trước khi lưu.`);
-
+                // Validate cấu trúc và dữ liệu biến thể trước khi upload/lưu
+                const structureErrors = validateVariantStructure();
+                if (structureErrors.length > 0) {
+                    showToast(structureErrors[0], 'error', 'Lỗi dữ liệu biến thể');
                     return;
                 }
 
                 // Validate các trường số biến thể không được nhỏ hơn 0
                 const variantError = validateVariantNumbers();
                 if (variantError) {
-                    showToast(variantError, 'error');
+                    showToast(variantError, 'error', 'Lỗi dữ liệu');
                     return;
                 }
 
-                // Validate số serial so với số lượng tồn
-                const variantRows = document.querySelectorAll('.variant-row');
-                for (let i = 0; i < variantRows.length; i++) {
-                    const row = variantRows[i];
-                    const fileInput = row.querySelector('.variant-serial-file');
-                    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
-
-                    if (hasFile) {
-                        const validation = validateSerialCount(row);
-                        if (validation.warning) {
-                            showToast(`Biến thể hàng ${i + 1}: ${validation.warning}`, 'warning', 'Cảnh báo serial!');
-                        }
-                    }
+                const serialErrors = validateVariantSerialPayload();
+                if (serialErrors.length > 0) {
+                    showToast(serialErrors[0], 'error', 'Lỗi serial');
+                    return;
                 }
 
                 const id = document.getElementById('productId').value;
@@ -2275,11 +2510,13 @@
 
                     if (!response.ok) {
                         const error = await response.text();
-                        showToast('Lỗi lưu sản phẩm: ' + error, 'error');
+                        showToast('Lỗi lưu sản phẩm: ' + error, 'error', isEditing ? 'Cập nhật thất bại' : 'Thêm thất bại');
                         return;
                     }
 
                     // Lưu các biến thể
+                    let hasVariantSaveError = false;
+                    let variantSaveErrorMessage = '';
 
                     // Xử lý xóa các variant đang chờ (nếu có)
                     if (deletedVariantIds.size > 0 && isEditing) {
@@ -2351,7 +2588,9 @@
 
                                 if (!updateResponse.ok) {
                                     const err = await updateResponse.text();
-                                    console.warn('Lỗi cập nhật biến thể:', err);
+                                    hasVariantSaveError = true;
+                                    variantSaveErrorMessage = 'Lỗi cập nhật biến thể: ' + err;
+                                    break;
                                 }
 
                                 // 2. Import serial từ file Excel
@@ -2368,7 +2607,13 @@
                                 if (serialResult.success) {
                                     showToast(`Đã import ${serialResult.successCount} serial cho biến thể`, 'success');
                                 } else if (serialResult.errorSerials && serialResult.errorSerials.length > 0) {
-                                    showToast(`Import ${serialResult.successCount} serial thành công, ${serialResult.errorCount} lỗi`, 'warning');
+                                    hasVariantSaveError = true;
+                                    variantSaveErrorMessage = `Import ${serialResult.successCount} serial thành công, ${serialResult.errorCount} lỗi`;
+                                    break;
+                                } else {
+                                    hasVariantSaveError = true;
+                                    variantSaveErrorMessage = 'Lỗi import serial cho biến thể.';
+                                    break;
                                 }
                             } else {
                                 // Thêm variant mới với file Excel
@@ -2393,7 +2638,9 @@
 
                                 if (!variantResponse.ok) {
                                     const error = await variantResponse.text();
-                                    console.warn('Lỗi lưu biến thể:', error);
+                                    hasVariantSaveError = true;
+                                    variantSaveErrorMessage = 'Lỗi lưu biến thể: ' + error;
+                                    break;
                                 } else {
                                     // Lấy variantId từ response để cập nhật vào DOM
                                     const variantResult = await variantResponse.json();
@@ -2441,12 +2688,19 @@
 
                             if (!variantResponse.ok) {
                                 const error = await variantResponse.text();
-                                console.warn('Lỗi lưu biến thể:', error);
+                                hasVariantSaveError = true;
+                                variantSaveErrorMessage = 'Lỗi lưu biến thể: ' + error;
+                                break;
                             }
                         }
                     }
 
-                    showToast(isEditing ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!', 'success');
+                    if (hasVariantSaveError) {
+                        showToast(variantSaveErrorMessage || 'Có lỗi xảy ra khi lưu biến thể. Vui lòng thử lại.', 'error', isEditing ? 'Cập nhật thất bại' : 'Thêm thất bại');
+                        return;
+                    }
+
+                    showToast(isEditing ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!', 'success', isEditing ? 'Cập nhật thành công' : 'Thêm thành công');
                     closeModal();
                     // Sau khi thêm mới, reset filter trạng thái về tất cả và load trang 1
                     if (!isEditing) {
@@ -2457,7 +2711,7 @@
                     }
                 } catch (error) {
                     console.error('Lỗi:', error);
-                    showToast('Có lỗi xảy ra!', 'error');
+                    showToast('Có lỗi xảy ra! Vui lòng thử lại.', 'error', isEditing ? 'Cập nhật thất bại' : 'Thêm thất bại');
                 }
             });
 
@@ -2650,6 +2904,10 @@
                         addVariantRow();
                     }
 
+                    if (!document.querySelectorAll('.variant-row').length) {
+                        addVariantRow();
+                    }
+
                     document.getElementById('modalTitle').innerText = 'Cập nhật sản phẩm';
                     isEditing = true;
 
@@ -2833,6 +3091,10 @@
             // Khởi tạo khi trang load
             window.addEventListener('DOMContentLoaded', function () {
                 loadAttributeCache().then(() => {
+                    const filterEl = document.getElementById('filterTrangThai');
+                    if (filterEl && !filterEl.value) {
+                        filterEl.value = 'true';
+                    }
                     loadProducts(0);
                 });
                 loadThuongHieu();

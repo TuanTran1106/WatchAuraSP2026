@@ -70,13 +70,17 @@ package com.example.watchaura.controller;
 
 import com.example.watchaura.entity.ThuongHieu;
 import com.example.watchaura.service.ThuongHieuService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/api/thuong-hieu")
@@ -101,8 +105,13 @@ public class ThuongHieuController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<ThuongHieu> create(
-            @RequestBody ThuongHieu thuongHieu) {
+    public ResponseEntity<?> create(
+            @Valid @RequestBody ThuongHieu thuongHieu,
+            BindingResult bindingResult) {
+
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(buildFieldErrors(bindingResult));
+        }
 
         ThuongHieu saved = thuongHieuService.create(thuongHieu);
 
@@ -113,9 +122,14 @@ public class ThuongHieuController {
 
     @PutMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<ThuongHieu> update(
+    public ResponseEntity<?> update(
             @PathVariable Integer id,
-            @RequestBody ThuongHieu thuongHieu) {
+            @Valid @RequestBody ThuongHieu thuongHieu,
+            BindingResult bindingResult) {
+
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(buildFieldErrors(bindingResult));
+        }
 
         return ResponseEntity.ok(
                 thuongHieuService.update(id, thuongHieu)
@@ -129,6 +143,14 @@ public class ThuongHieuController {
 
         thuongHieuService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, String> buildFieldErrors(BindingResult bindingResult) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (var fieldError : bindingResult.getFieldErrors()) {
+            errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+        return errors;
     }
 }
 
