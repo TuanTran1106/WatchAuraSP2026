@@ -129,12 +129,9 @@ public class KhuyenMaiController {
         km.setNgayBatDau(req.getNgayBatDau());
         km.setNgayKetThuc(req.getNgayKetThuc());
         km.setDonToiThieu(req.getDonToiThieu());
-        KhuyenMai.PhamViApDung phamVi = req.getPhamViApDung();
-        String danhMuc = req.getDanhMucApDung() != null ? req.getDanhMucApDung().trim() : "";
-        if (phamVi == null) {
-            phamVi = danhMuc.isBlank() ? KhuyenMai.PhamViApDung.ALL : KhuyenMai.PhamViApDung.CATEGORY;
-        }
-        km.setPhamViApDung(phamVi);
+        km.setGioiHanLuotDung(req.getGioiHanLuotDung());
+        km.setSoLuotDaDung(req.getSoLuotDaDung());
+        km.setPhamViApDung(req.getPhamViApDung());
         km.setTrangThai(req.getTrangThai());
         return km;
     }
@@ -153,6 +150,8 @@ public class KhuyenMaiController {
         req.setNgayBatDau(km.getNgayBatDau());
         req.setNgayKetThuc(km.getNgayKetThuc());
         req.setDonToiThieu(km.getDonToiThieu());
+        req.setGioiHanLuotDung(km.getGioiHanLuotDung());
+        req.setSoLuotDaDung(km.getSoLuotDaDung());
         req.setPhamViApDung(km.getPhamViApDung());
         req.setTrangThai(km.getTrangThai());
         return req;

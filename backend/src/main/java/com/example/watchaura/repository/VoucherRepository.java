@@ -13,9 +13,9 @@ import java.util.Optional;
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
 
-    boolean existsByMaVoucherIgnoreCase(String maVoucher);
+    boolean existsByMaVoucher(String maVoucher);
 
-    boolean existsByMaVoucherIgnoreCaseAndIdNot(String maVoucher, Integer id);
+    boolean existsByMaVoucherAndIdNot(String maVoucher, Integer id);
 
     @Query("SELECT v FROM Voucher v WHERE " +
             "(:q IS NULL OR :q = '' OR LOWER(v.maVoucher) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(v.tenVoucher) LIKE LOWER(CONCAT('%', :q, '%'))) AND " +
