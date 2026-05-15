@@ -19,6 +19,7 @@
             justify-content: center;
             min-width: 150px;
         }
+
         .customer-name,
         .customer-phone {
             display: flex;
@@ -32,6 +33,209 @@
             font-size: 11px;
             color: #777;
         }
+
+        .hoa-don-filters {
+            display: grid;
+            gap: 0.95rem;
+            padding: 1.1rem 1.15rem 1.15rem;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,250,252,0.95));
+            border: 1px solid #dbe3ee;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            margin-bottom: 1rem;
+        }
+
+        .hoa-don-filters__row {
+            display: grid;
+            gap: 0.75rem;
+            align-items: end;
+        }
+
+        .hoa-don-filters__row--primary {
+            grid-template-columns: minmax(0, 7fr) minmax(180px, 3fr);
+        }
+
+        .hoa-don-filters__row--secondary {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .hoa-don-filter-field {
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .hoa-don-filter-field__label {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #475569;
+            letter-spacing: 0.02em;
+        }
+
+        .hoa-don-filters .toolbar__input,
+        .hoa-don-filters .toolbar__select {
+            min-height: 46px;
+            border-radius: 14px;
+            border: 1px solid #d7e0ea;
+            background: #fff;
+            padding: 0.78rem 1rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .hoa-don-filters .toolbar__input:focus,
+        .hoa-don-filters .toolbar__select:focus {
+            outline: none;
+            border-color: #1e3a5f;
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12);
+        }
+
+        .hoa-don-filters .toolbar__btn {
+            min-height: 46px;
+            border-radius: 14px;
+            padding: 0 1rem;
+            white-space: nowrap;
+            background: #1f3b5b;
+            border-color: #1f3b5b;
+            box-shadow: 0 8px 18px rgba(31, 59, 91, 0.18);
+        }
+
+        .hoa-don-filters .toolbar__btn:hover {
+            background: #172c43;
+            border-color: #172c43;
+        }
+
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.9rem 0.85rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table tbody tr:nth-child(even) { background: #fcfdff; }
+        .table tbody tr:hover { background: #f6f9fc; }
+        .table tbody td {
+            padding: 0.8rem 0.85rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .table tbody td:nth-child(1), .table tbody td:nth-child(8) { text-align: center; }
+        .table tbody td:nth-child(2) { font-family: Consolas, 'Courier New', monospace; color: #0f172a; }
+        .table tbody td:nth-child(5) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .table tbody td:nth-child(3) { min-width: 190px; }
+
+        .table-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            justify-content: center;
+        }
+
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            border: 1px solid #dbe3ee;
+            background: #fff;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .btn-icon--edit { color: #0f766e; }
+        .btn-icon--pdf { color: #b91c1c; }
+
+        .table-status-stack {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            justify-content: center;
+            margin-bottom: 0.3rem;
+            flex-wrap: wrap;
+        }
+
+        .table-status-stack--payment { margin-bottom: 0; }
+
+        .table-status-badge,
+        .payment-status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 86px;
+            padding: 0.34rem 0.62rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-weight: 700;
+            font-size: 0.72rem;
+            line-height: 1.15;
+            white-space: nowrap;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+        }
+
+        .status--cho-xac-nhan,
+        .status--can-xu-ly { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+        .status--da-xac-nhan,
+        .status--dang-giao { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+        .status--da-giao,
+        .status--hoan-thanh { background: #dcfce7; border-color: #86efac; color: #166534; }
+        .status--da-thanh-toan { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+        .status--da-huy,
+        .status--thanh-toan-loi { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+        .status--chua-thanh-toan { background: #e5e7eb; border-color: #d1d5db; color: #6b7280; }
+
+        .table-status-select,
+        .payment-status-select {
+            min-height: 30px;
+            padding: 0.22rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid #dbe3ee;
+            background: #fff;
+            font-size: 0.74rem;
+            max-width: 102px;
+        }
+
+        .status-form--inline { display: inline-flex; align-items: center; }
+
+        .table-actions {
+            display: flex;
+            flex-direction: row;
+            gap: 0.35rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 10px;
+            border: 1px solid #dbe3ee;
+            background: #fff;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            font-size: 0.78rem;
+        }
+
+        .btn-icon--edit { color: #8b6b4f; }
+        .btn-icon--pdf { color: #9a3412; }
+
+        @media (max-width: 992px) {
+            .hoa-don-filters__row--primary,
+            .hoa-don-filters__row--secondary { grid-template-columns: 1fr; }
+            .table { min-width: 1040px; }
+        }
     </style>
 
     <div th:if="${message}" class="admin-toast-payload" th:attr="data-admin-toast-message=${message}, data-admin-toast-type='success'" aria-hidden="true"></div>
@@ -44,49 +248,49 @@
 
         <h2 class="card__title">Danh sách hóa đơn</h2>
 
-        <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
+        <div class="hoa-don-filters">
+            <form th:action="@{/admin/hoa-don}" method="get" class="js-admin-ajax-form hoa-don-filters__row hoa-don-filters__row--primary" data-ajax="true">
+                <div class="hoa-don-filter-field">
+                    <label class="hoa-don-filter-field__label" for="hoaDonSearch">Tìm kiếm</label>
+                    <input id="hoaDonSearch" type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên hóa đơn..." class="toolbar__input" />
+                </div>
+                <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
+            </form>
 
-            <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
-            <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-            <label class="toolbar__label">Trạng thái hoá đơn:</label>
+            <form th:action="@{/admin/hoa-don}" method="get" class="js-admin-ajax-form hoa-don-filters__row hoa-don-filters__row--secondary" data-ajax="true">
+                <div class="hoa-don-filter-field">
+                    <label class="hoa-don-filter-field__label" for="hoaDonTrangThai">Trạng thái</label>
+                    <select id="hoaDonTrangThai" name="trangThai" class="toolbar__select" onchange="this.form.submit()">
+                        <option value="">Tất cả</option>
+                        <option value="CAN_XU_LY" th:text="'Cần xử lý'" th:selected="${filterTrangThai == 'CAN_XU_LY'}">Cần xử lý</option>
+                        <option value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'" th:selected="${filterTrangThai == 'CHO_XAC_NHAN'}">Chờ xác nhận</option>
+                        <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'" th:selected="${filterTrangThai == 'DA_XAC_NHAN'}">Đã xác nhận</option>
+                        <option value="DANG_GIAO" th:text="'Đang giao'" th:selected="${filterTrangThai == 'DANG_GIAO'}">Đang giao</option>
+                        <option value="DA_GIAO" th:text="'Đã giao'" th:selected="${filterTrangThai == 'DA_GIAO'}">Đã giao</option>
+                        <option value="DA_THANH_TOAN" th:text="'Hoàn thành'" th:selected="${filterTrangThai == 'DA_THANH_TOAN'}">Hoàn thành</option>
+                        <option value="DA_HUY" th:text="'Đã hủy'" th:selected="${filterTrangThai == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
 
-            <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
+                <div class="hoa-don-filter-field">
+                    <label class="hoa-don-filter-field__label" for="hoaDonLoaiDon">Loại đơn</label>
+                    <select id="hoaDonLoaiDon" name="loaiDon" class="toolbar__select" onchange="this.form.submit()">
+                        <option value="">Tất cả</option>
+                        <option value="OFFLINE" th:selected="${filterLoaiDon == 'OFFLINE'}">Tại quầy</option>
+                        <option value="ONLINE" th:selected="${filterLoaiDon == 'ONLINE'}">Online</option>
+                    </select>
+                </div>
 
-                <option value="">Tất cả</option>
-                <option value="CAN_XU_LY" th:text="'Cần xử lý'" th:selected="${filterTrangThai == 'CAN_XU_LY'}">Cần xử lý</option>
-                <option value="CHO_XAC_NHAN" th:text="'Chờ xác nhận'" th:selected="${filterTrangThai == 'CHO_XAC_NHAN'}">Chờ xác nhận</option>
-                <option value="DA_XAC_NHAN" th:text="'Đã xác nhận'" th:selected="${filterTrangThai == 'DA_XAC_NHAN'}">Đã xác nhận</option>
-                <option value="DANG_GIAO" th:text="'Đang giao'" th:selected="${filterTrangThai == 'DANG_GIAO'}">Đang giao</option>
-                <option value="DA_GIAO" th:text="'Đã giao'" th:selected="${filterTrangThai == 'DA_GIAO'}">Đã giao</option>
-                <option value="DA_THANH_TOAN" th:text="'Hoàn thành'" th:selected="${filterTrangThai == 'DA_THANH_TOAN'}">Hoàn thành</option>
-                <option value="DA_HUY" th:text="'Đã hủy'" th:selected="${filterTrangThai == 'DA_HUY'}">Đã hủy</option>
-            </select>
-
-        </form>
-
-        <form th:action="@{/admin/hoa-don}" method="get" class="toolbar toolbar--filter-row js-admin-ajax-form" data-ajax="true">
-
-            <label class="toolbar__label">Loại đơn:</label>
-
-            <select name="loaiDon" class="toolbar__select" onchange="this.form.submit()">
-
-                <option value="">Tất cả</option>
-                <option value="OFFLINE" th:selected="${filterLoaiDon == 'OFFLINE'}">Tại quầy</option>
-                <option value="ONLINE" th:selected="${filterLoaiDon == 'ONLINE'}">Online</option>
-
-            </select>
-
-            <label class="toolbar__label">Thanh toán:</label>
-
-            <select name="phuongThucThanhToan" class="toolbar__select" onchange="this.form.submit()">
-
-                <option value="">Tất cả</option>
-                <option value="COD" th:selected="${filterPhuongThucThanhToan == 'COD'}">COD</option>
-                <option value="VNPAY" th:selected="${filterPhuongThucThanhToan == 'VNPAY'}">VNPay</option>
-
-            </select>
-
-        </form>
+                <div class="hoa-don-filter-field">
+                    <label class="hoa-don-filter-field__label" for="hoaDonThanhToan">Thanh toán</label>
+                    <select id="hoaDonThanhToan" name="phuongThucThanhToan" class="toolbar__select" onchange="this.form.submit()">
+                        <option value="">Tất cả</option>
+                        <option value="COD" th:selected="${filterPhuongThucThanhToan == 'COD'}">COD</option>
+                        <option value="VNPAY" th:selected="${filterPhuongThucThanhToan == 'VNPAY'}">VNPay</option>
+                    </select>
+                </div>
+            </form>
+        </div>
 
         <table class="table">
 
