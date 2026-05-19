@@ -58,7 +58,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.BaseFont;
 
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 
 import org.springframework.data.domain.PageRequest;
@@ -87,6 +87,7 @@ import java.util.stream.Collectors;
 
 
 
+@Slf4j
 @Service
 
 @RequiredArgsConstructor
@@ -671,7 +672,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     private static boolean isDaThanhToanCode(String s) {
 
-        return "DA THANH TOAN".equals(s) || "DA_THANH_TOAN".equals(s);
+        return "DA THANH TOAN".equals(s) || "DA_THANH_TOAN".equals(s) || "DA_THANH_TOAN_ONL".equals(s);
 
     }
 
@@ -752,7 +753,8 @@ public class HoaDonServiceImpl implements HoaDonService {
 
 
 
-        // Xử lý khi thanh toán online thành công (DA_THANH_TOAN_ONL) - trừ kho ngay và khóa trạng thái
+        // Xử lý khi thanh toán online thành công (DA_THANH_TOAN_ONL) - chỉ trừ số lượng, KHÔNG kiểm tra serial
+        // Serial sẽ được gán khi admin xác nhận đơn
 
         if ("DA_THANH_TOAN_ONL".equals(newStatus) && !"DA_THANH_TOAN_ONL".equals(effectiveCurrent)) {
 
@@ -801,32 +803,23 @@ public class HoaDonServiceImpl implements HoaDonService {
 
             // Đủ tồn kho (atomic check thành công) -> XÓA ghi chú cũ nếu có
             hoaDon.setGhiChu(null);
-
-            // Kiểm tra serial
-            boolean hasAllSerials = hasAllSerialsAssigned(chiTiets);
-            if (!hasAllSerials) {
-                // Chưa có serial -> chuyển hướng đến trang chọn serial
-                hoaDon.setTrangThaiDonHang("DA_XAC_NHAN");
-                hoaDonRepository.save(hoaDon);
-                throw new SerialSelectionRequiredException(id);
-            }
-            // Có đủ serial -> tiếp tục lưu trạng thái
+            // KHÔNG kiểm tra serial ở đây - serial sẽ được gán khi admin xác nhận đơn
         }
 
 
 
-        // Xử lý khi xác nhận đơn (DA_XAC_NHAN) - trừ tồn kho ngay khi xác nhận (FIFO)
-
-        // Chỉ cho phép từ CHO_XAC_NHAN chuyển sang DA_XAC_NHAN
-        // Nếu đơn đã thanh toán (bán tại quầy) thì không trừ kho lại
+        // Xử lý khi xác nhận đơn (DA_XAC_NHAN)
+        // - Đơn đã thanh toán online: KHÔNG trừ số lượng (đã trừ khi thanh toán), CẦN gán serial
+        // - Đơn OFFLINE (bán tại quầy): trừ số lượng + gán serial
 
         if ("DA_XAC_NHAN".equals(newStatus) && !"DA_XAC_NHAN".equals(effectiveCurrent)) {
 
             List<HoaDonChiTiet> chiTietsForConfirm = hoaDonChiTietRepository.findByHoaDonId(id);
 
-            // Kiểm tra đơn đã thanh toán chưa (để không trừ kho lại)
+            // Kiểm tra đơn đã thanh toán chưa (để không trừ kho lại với đơn online)
             boolean daThanhToanTruoc = isDaThanhToan(hoaDon);
 
+            // Chỉ trừ số lượng nếu đơn chưa thanh toán (đơn OFFLINE/bán tại quầy)
             if (!daThanhToanTruoc) {
                 StringBuilder loiTonKho = new StringBuilder();
 
@@ -875,7 +868,9 @@ public class HoaDonServiceImpl implements HoaDonService {
                 hoaDon.setGhiChu(null);
             }
 
-            // Kiểm tra serial
+            // Kiểm tra serial - CẦN THIẾT cho cả đơn ONLINE và OFFLINE
+            // Đơn online đã thanh toán: serial được gán ở bước này
+            // Đơn offline: serial cũng được gán ở bước này
             boolean hasAllSerials = hasAllSerialsAssigned(chiTietsForConfirm);
             if (!hasAllSerials) {
                 // Chưa có serial -> chuyển hướng đến trang chọn serial
@@ -885,18 +880,21 @@ public class HoaDonServiceImpl implements HoaDonService {
             }
             // Có đủ serial -> tiếp tục
 
-            // Đơn OFFLINE: cập nhật serial từ CHO_XAC_NHAN sang DA_BAN khi xác nhận
-            if ("OFFLINE".equals(hoaDon.getLoaiHoaDon())) {
-                LocalDateTime now = LocalDateTime.now();
-                for (HoaDonChiTiet chiTiet : chiTietsForConfirm) {
-                    List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
-                    for (SerialSanPham serial : serials) {
-                        if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_CHO_XAC_NHAN) {
-                            serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
-                            serial.setNgayXuatKho(now);
-                            serial.setNgayHetBaoHanh(now.plusMonths(12));
-                            serialSanPhamRepository.save(serial);
-                        }
+            // Cập nhật serial: đánh dấu serial đã gán cho đơn hàng là DA_BAN khi xác nhận
+            // Áp dụng cho cả đơn ONLINE và OFFLINE
+            // Serial sau khi gán qua assignSerialsToOrder vẫn ở TRONG_KHO, cần cập nhật sang DA_BAN
+            LocalDateTime now = LocalDateTime.now();
+            for (HoaDonChiTiet chiTiet : chiTietsForConfirm) {
+                List<SerialSanPham> serials = serialSanPhamRepository.findByHoaDonChiTietIdOrderByIdAsc(chiTiet.getId());
+                for (SerialSanPham serial : serials) {
+                    // Serial đã được gán cho HoaDonChiTiet nhưng vẫn ở TRONG_KHO hoặc CHO_XAC_NHAN
+                    // Cần cập nhật sang DA_BAN khi admin xác nhận đơn
+                    if (serial.getTrangThai() == SerialSanPham.TRANG_THAI_TRONG_KHO
+                            || serial.getTrangThai() == SerialSanPham.TRANG_THAI_CHO_XAC_NHAN) {
+                        serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
+                        serial.setNgayXuatKho(now);
+                        serial.setNgayHetBaoHanh(now.plusMonths(12));
+                        serialSanPhamRepository.save(serial);
                     }
                 }
             }
@@ -2649,6 +2647,62 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         hoaDon.setTrangThaiThanhToan(trangThaiThanhToan);
         return convertToDTO(hoaDonRepository.save(hoaDon));
+    }
+
+    @Override
+    @Transactional
+    public boolean deductStockForVnPay(Integer hoaDonId) {
+        log.info("[VNPAY] Bắt đầu deductStockForVnPay cho hoaDonId={}", hoaDonId);
+        
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + hoaDonId));
+
+        log.info("[VNPAY] Tìm thấy hóa đơn: maDonHang={}, trangThaiDonHang={}", 
+                hoaDon.getMaDonHang(), hoaDon.getTrangThaiDonHang());
+
+        List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
+        log.info("[VNPAY] Số chi tiết hóa đơn: {}", chiTiets.size());
+        
+        StringBuilder loiTonKho = new StringBuilder();
+
+        // Atomic check: trừ số lượng cho từng sản phẩm
+        for (HoaDonChiTiet chiTiet : chiTiets) {
+            int result = sanPhamChiTietRepository.deductStock(chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
+            if (result == 0) {
+                // Rollback các sản phẩm đã trừ
+                for (HoaDonChiTiet previous : chiTiets) {
+                    if (previous.equals(chiTiet)) break;
+                    sanPhamChiTietRepository.restoreStock(previous.getSanPhamChiTiet().getId(), previous.getSoLuong());
+                }
+
+                SanPhamChiTiet sp = sanPhamChiTietRepository.findById(chiTiet.getSanPhamChiTiet().getId()).orElse(null);
+                String tenSp = sp != null && sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + chiTiet.getSanPhamChiTiet().getId();
+                Integer soLuongTon = sp != null && sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
+                loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ", tenSp, chiTiet.getSoLuong(), soLuongTon));
+                log.warn("[VNPAY] Trừ tồn kho thất bại: spctId={}, soLuong={}, soLuongTon={}", chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong(), soLuongTon);
+                break;
+            } else {
+                log.info("[VNPAY] Trừ tồn kho thành công: spctId={}, soLuong={}", chiTiet.getSanPhamChiTiet().getId(), chiTiet.getSoLuong());
+            }
+        }
+
+        // Nếu có lỗi tồn kho -> chuyển sang CAN_XU_LY
+        if (loiTonKho.length() > 0) {
+            hoaDon.setGhiChu("Không đủ tồn kho: " + loiTonKho.toString());
+            hoaDon.setTrangThaiDonHang("CAN_XU_LY");
+            hoaDonRepository.save(hoaDon);
+            log.warn("[VNPAY] Đơn hàng {} chuyển sang CAN_XU_LY vì không đủ tồn kho: {}", hoaDonId, loiTonKho);
+            return false;
+        }
+
+        // Xóa ghi chú cũ nếu có
+        hoaDon.setGhiChu(null);
+        hoaDonRepository.save(hoaDon);
+
+        log.info("[VNPAY] Hoàn tất deductStockForVnPay cho hoaDonId={}, trạng thái vẫn giữ nguyên", hoaDonId);
+        
+        // KHÔNG thay đổi trạng thái đơn hàng - giữ nguyên CHỜ XÁC NHẬN
+        return true;
     }
 
 }

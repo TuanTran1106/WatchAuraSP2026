@@ -383,6 +383,20 @@ public class BanHangTaiQuayController {
             }
         }
 
+        // Lấy thông tin voucher nếu có
+        CartResponse.VoucherInfo voucherInfo = null;
+        Voucher voucher = hoaDon.getVoucher();
+        if (voucher != null) {
+            voucherInfo = CartResponse.VoucherInfo.builder()
+                    .maVoucher(voucher.getMaVoucher())
+                    .tenVoucher(voucher.getTenVoucher())
+                    .loaiVoucher(voucher.getLoaiVoucher())
+                    .giaTri(voucher.getGiaTri())
+                    .giaTriToiDa(voucher.getGiaTriToiDa())
+                    .donHangToiThieu(voucher.getDonHangToiThieu())
+                    .build();
+        }
+
         return CartResponse.builder()
                 .items(itemDTOs)
                 .tamTinh(hoaDon.getTongTienTamTinh())
@@ -392,6 +406,7 @@ public class BanHangTaiQuayController {
                 .sdtKhachHang(hoaDon.getSdtKhachHang() != null ? hoaDon.getSdtKhachHang() : "")
                 .emailKhachHang(hoaDon.getEmail() != null ? hoaDon.getEmail() : "")
                 .serials(serialInfos)
+                .voucherInfo(voucherInfo)
                 .build();
     }
 
@@ -1186,6 +1201,8 @@ public class BanHangTaiQuayController {
             // Giải phóng và gán serial
             List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
 
+            // Lưu ý: Ở trang bán hàng tại quầy, cho phép thay đổi serial thoải mái
+            // (giải phóng serial cũ và gán serial mới)
             for (HoaDonChiTiet chiTiet : chiTiets) {
                 Integer hoaDonChiTietId = chiTiet.getId();
                 int soLuongMua = chiTiet.getSoLuong() != null ? chiTiet.getSoLuong() : 0;

@@ -127,5 +127,15 @@ public interface HoaDonService {
      */
     HoaDonDTO updateTrangThaiThanhToan(Integer id, String trangThaiThanhToan);
 
+    /**
+     * Trừ số lượng sản phẩm khi thanh toán VNPay thành công.
+     * KHÔNG thay đổi trạng thái đơn hàng - giữ nguyên CHỜ XÁC NHẬN.
+     * KHÔNG kiểm tra serial - serial sẽ được gán khi admin xác nhận đơn.
+     *
+     * @param hoaDonId ID hóa đơn
+     * @return true nếu trừ thành công, false nếu không đủ tồn kho
+     */
+    boolean deductStockForVnPay(Integer hoaDonId);
+
 }
 

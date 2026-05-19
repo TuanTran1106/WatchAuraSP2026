@@ -21,6 +21,7 @@ import com.example.watchaura.service.VNPayService;
 import com.example.watchaura.service.VoucherService;
 import com.example.watchaura.service.DiaChiService;
 import com.example.watchaura.service.ShippingService;
+import com.example.watchaura.service.SerialSelectionRequiredException;
 import com.example.watchaura.util.ShippingFeeUtil;
 import com.example.watchaura.entity.DiaChi;
 import com.example.watchaura.entity.Voucher;
@@ -29,6 +30,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -50,6 +52,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/thanh-toan")
 @RequiredArgsConstructor
+@Slf4j
 @RequiresRole(value = {}, requireAuth = true)
 public class UserCheckoutController {
 
@@ -522,8 +525,19 @@ public class UserCheckoutController {
             Integer pendingCartId = (Integer) session.getAttribute("pendingVnPayCartId");
 
             if (vnPayService.verifyReturn(request)) {
-                // Trạng thái thanh toán đã được set khi tạo đơn (DA_THANH_TOAN)
-                // Trạng thái đơn hàng giữ nguyên là CHO_XAC_NHAN để admin xử lý
+                log.info("[VNPAY] Thanh toán thành công cho đơn: {}", vnpTxnRef);
+                
+                // Thanh toán VNPay thành công
+                // Trừ số lượng sản phẩm nhưng KHÔNG thay đổi trạng thái đơn hàng
+                // Trạng thái vẫn giữ nguyên CHỜ XÁC NHẬN để admin xác nhận và gán serial
+                log.info("[VNPAY] Gọi deductStockForVnPay cho hoaDonId: {}", hoaDonDTO.getId());
+                boolean success = hoaDonService.deductStockForVnPay(hoaDonDTO.getId());
+                if (!success) {
+                    // Không đủ tồn kho - đơn đã được chuyển sang CAN_XU_LY trong service
+                    log.warn("[VNPAY] Đơn {} không đủ tồn kho, đã chuyển sang CAN_XU_LY", vnpTxnRef);
+                } else {
+                    log.info("[VNPAY] Đơn {} đã trừ số lượng thành công", vnpTxnRef);
+                }
 
                 if (pendingCartId != null && userId != null) {
                     GioHangDTO cart = gioHangService.getOrCreateCart(userId);
@@ -549,6 +563,7 @@ public class UserCheckoutController {
             model.addAttribute("maDonHang", vnpTxnRef);
             return "layout/user-layout";
         } catch (Exception e) {
+            log.error("[VNPAY] Lỗi xử lý return: {}", e.getMessage(), e);
             redirect.addFlashAttribute("error", "Xử lý kết quả thanh toán thất bại: " + (e.getMessage() != null ? e.getMessage() : "Vui lòng liên hệ hỗ trợ."));
             return "redirect:/thanh-toan";
         }

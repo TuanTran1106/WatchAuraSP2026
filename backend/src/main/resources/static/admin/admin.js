@@ -221,17 +221,58 @@
 
   function showAdminToast(message, type) {
     var t = type || 'success';
+
+    // Remove existing toast
+    var existingToast = document.querySelector('.toast');
+    if (existingToast) existingToast.remove();
+
+    var bgColor = '#f0fdf4';
+    var borderColor = '#bbf7d0';
+    var iconColor = '#15803d';
+
+    if (t === 'error') {
+      bgColor = '#fef2f2';
+      borderColor = '#fecaca';
+      iconColor = '#dc2626';
+    } else if (t === 'warning') {
+      bgColor = '#fffbeb';
+      borderColor = '#fde68a';
+      iconColor = '#ca8a04';
+    } else if (t === 'info') {
+      bgColor = '#eff6ff';
+      borderColor = '#bfdbfe';
+      iconColor = '#2563eb';
+    }
+
     var toast = document.createElement('div');
-    toast.className = 'toast toast--' + t;
+    toast.className = 'toast ' + t;
     toast.setAttribute('role', 'status');
-    toast.textContent = message || '';
+    toast.innerHTML =
+      '<div class="toast-icon" style="color:' + iconColor + '"><i class="fa-solid fa-check-circle"></i></div>' +
+      '<div class="toast-content"><p class="toast-message">' + (message || '') + '</p></div>' +
+      '<button class="toast-close" onclick="this.closest(\'.toast\').remove()"><i class="fa-solid fa-xmark"></i></button>';
+
+    // Apply inline styles to override admin.css
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;padding:14px 16px;border-radius:14px;border:1px solid ' + borderColor + ';background:' + bgColor + ';box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:320px;max-width:420px;display:flex;align-items:flex-start;gap:12px;animation:toastIn 0.3s ease-out';
+
     document.body.appendChild(toast);
-    setTimeout(function () {
-      toast.classList.add('toast--leaving');
-      setTimeout(function () {
-        if (toast.parentNode) toast.parentNode.removeChild(toast);
-      }, 300);
-    }, 4000);
+
+    var autoCloseTimeout = setTimeout(function() {
+      closeToast(toast);
+    }, 3500);
+
+    toast.querySelector('.toast-close').addEventListener('click', function() {
+      clearTimeout(autoCloseTimeout);
+      closeToast(toast);
+    });
+
+    function closeToast(el) {
+      if (!el || !el.parentNode) return;
+      el.classList.add('removing');
+      setTimeout(function() {
+        if (el.parentNode) el.remove();
+      }, 200);
+    }
   }
 
   // Expose to window for use in other scripts
