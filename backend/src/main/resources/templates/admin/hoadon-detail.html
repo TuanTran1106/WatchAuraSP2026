@@ -4,6 +4,54 @@
 <body>
     <div th:fragment="content">
         <style>
+            /* Toast notification styles */
+            .toast {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 99999;
+                padding: 14px 24px;
+                border-radius: 10px;
+                font-weight: 600;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                animation: toastSlideIn 0.3s ease;
+                max-width: 400px;
+            }
+            .toast--success {
+                background: #dcfce7;
+                color: #166534;
+                border: 1px solid #86efac;
+            }
+            .toast--error {
+                background: #fee2e2;
+                color: #b91c1c;
+                border: 1px solid #fca5a5;
+            }
+            .toast--warning {
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #fcd34d;
+            }
+            .toast--leaving {
+                animation: toastSlideOut 0.3s ease forwards;
+            }
+            .toast i {
+                font-size: 18px;
+            }
+            @keyframes toastSlideIn {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+            @keyframes toastSlideOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100px); }
+            }
+
             .invoice-detail {
                 display: grid;
                 gap: 1rem;
@@ -576,7 +624,85 @@
         </div>
 
         <script>
+            // Hàm toast/popup thông báo toàn cục
+            window.showStatusToast = function(message, type) {
+                var title = 'Thông báo';
+                if (type === 'success') title = 'Thành công';
+                else if (type === 'error') title = 'Lỗi';
+                else if (type === 'warning') title = 'Cảnh báo';
+
+                var bgColor = '#3b82f6';
+                var iconClass = 'fa-info-circle';
+                if (type === 'success') {
+                    bgColor = '#22c55e';
+                    iconClass = 'fa-check-circle';
+                } else if (type === 'error') {
+                    bgColor = '#ef4444';
+                    iconClass = 'fa-times-circle';
+                } else if (type === 'warning') {
+                    bgColor = '#f59e0b';
+                    iconClass = 'fa-exclamation-circle';
+                }
+
+                // Tạo overlay
+                var overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
+
+                // Tạo modal
+                var modal = document.createElement('div');
+                modal.style.cssText = 'background:#fff;border-radius:16px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp 0.3s ease-out;text-align:center;';
+
+                modal.innerHTML = '<div style="width:64px;height:64px;border-radius:50%;background:' + bgColor + ';display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">' +
+                    '<i class="fas ' + iconClass + '" style="color:#fff;font-size:32px;"></i></div>' +
+                    '<h3 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1f2937;">' + title + '</h3>' +
+                    '<p style="margin:0 0 20px;color:#4b5563;font-size:14px;line-height:1.6;">' + message + '</p>' +
+                    '<button style="padding:12px 32px;background:' + bgColor + ';color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Đóng</button>';
+
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+
+                var closeModal = function() {
+                    overlay.style.animation = 'fadeOut 0.2s ease-out forwards';
+                    setTimeout(function() {
+                        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    }, 200);
+                };
+
+                modal.querySelector('button').addEventListener('click', closeModal);
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) closeModal();
+                });
+
+                // Auto close sau 3 giây
+                setTimeout(closeModal, 3000);
+            };
+
             (function () {
+                // ========== Toast từ URL parameter ==========
+                (function() {
+                    var params = new URLSearchParams(window.location.search);
+                    var msg = params.get('message');
+                    if (msg) {
+                        var decodedMsg = decodeURIComponent(msg);
+                        window.showStatusToast(decodedMsg, 'success');
+                        // Xóa param khỏi URL để không hiện lại khi refresh
+                        var cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }
+                })();
+
+                // ========== Toast từ server (admin-toast-payload) ==========
+                (function() {
+                    var toastPayload = document.querySelector('[data-admin-toast-message]');
+                    if (toastPayload) {
+                        var message = toastPayload.getAttribute('data-admin-toast-message');
+                        var type = toastPayload.getAttribute('data-admin-toast-type') || 'success';
+                        if (message) {
+                            window.showStatusToast(message, type);
+                        }
+                    }
+                })();
+
                 function submitStatusFormViaAjax(form, select) {
                     var action = form.getAttribute('action');
                     var formData = new FormData(form);
@@ -625,27 +751,23 @@
                             var parser = new DOMParser();
                             var doc = parser.parseFromString(html, 'text/html');
 
-                            var msgEl = doc.querySelector('[data-admin-toast-message]');
-                            var warnEl = doc.querySelector('[data-admin-toast-type="warning"]');
-                            var errEl = doc.querySelector('[data-admin-toast-type="error"]');
+                            var statusLabels = {
+                                'CHO_THANH_TOAN': 'Chờ thanh toán',
+                                'CHO_XAC_NHAN': 'Chờ xác nhận',
+                                'DA_XAC_NHAN': 'Đã xác nhận',
+                                'DANG_GIAO': 'Đang giao',
+                                'DA_GIAO': 'Đã giao',
+                                'DA_THANH_TOAN': 'Hoàn thành',
+                                'DA THANH TOAN': 'Hoàn thành',
+                                'DA_HUY': 'Đã hủy',
+                                'HOAN_THANH': 'Hoàn thành',
+                                'CAN_XU_LY': 'Cần xử lý',
+                                'DA_THANH_TOAN_ONL': 'TT VnPay thành công'
+                            };
+                            message = 'Đã cập nhật trạng thái đơn hàng';
+                            messageType = 'success';
 
-                            var message = null;
-                            var messageType = null;
-
-                            if (errEl) {
-                                message = errEl.textContent;
-                                messageType = 'error';
-                            } else if (warnEl) {
-                                message = warnEl.textContent;
-                                messageType = 'warning';
-                            } else if (msgEl) {
-                                message = msgEl.textContent;
-                                messageType = 'success';
-                            }
-
-                            if (message) {
-                                showToastMessage(message, messageType);
-                            }
+                            window.showStatusToast(message, messageType);
 
                             // Update status select from response
                             var newSelect = doc.querySelector('.invoice-detail__status-select');
@@ -662,7 +784,7 @@
                         })
                         .catch(function (err) {
                             console.error('Lỗi AJAX:', err);
-                            showToastMessage('Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại.', 'error');
+                            window.showStatusToast('Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại.', 'error');
                             var prev = select.getAttribute('data-prev-value');
                             if (prev) select.value = prev;
                         })
@@ -730,7 +852,7 @@
                                     }
                                 })
                                 .catch(function () {
-                                    showToastMessage('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
+                                    window.showStatusToast('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
                                     select.value = select.dataset.prevValue;
                                 });
                             return;
@@ -822,23 +944,10 @@
                                 }
                             })
                             .catch(function () {
-                                showToastMessage('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
+                                window.showStatusToast('Không thể kiểm tra tồn kho. Vui lòng thử lại.', 'error');
                                 select.value = select.dataset.prevValue;
                             });
                     });
-                }
-
-                function showToastMessage(message, type) {
-                    var toast = document.createElement('div');
-                    toast.className = 'toast toast--' + (type || 'success');
-                    toast.textContent = message;
-                    document.body.appendChild(toast);
-                    setTimeout(function () {
-                        toast.classList.add('toast--leaving');
-                        setTimeout(function () {
-                            if (toast.parentNode) toast.parentNode.removeChild(toast);
-                        }, 300);
-                    }, 4000);
                 }
 
                 document.querySelectorAll('.invoice-detail__status-form').forEach(function (form) {
@@ -898,13 +1007,13 @@
                         .then(function(result) {
                             if (result.isJson) {
                                 if (result.data.message) {
-                                    showToastMessage(result.data.message, result.data.error ? 'error' : 'success');
+                                    window.showStatusToast(result.data.message, result.data.error ? 'error' : 'success');
                                 }
                                 if (result.data.error) {
                                     select.value = currentStatus;
                                     select.dataset.prevPaymentValue = currentStatus;
                                 } else {
-                                    showToastMessage('Cập nhật trạng thái thanh toán thành công!', 'success');
+                                    window.showStatusToast('Cập nhật trạng thái thanh toán thành công!', 'success');
                                 }
                                 return;
                             }
@@ -929,11 +1038,13 @@
                             } else if (msgEl) {
                                 message = msgEl.textContent;
                                 messageType = 'success';
+                            } else {
+                                // Không có message từ server -> hiển thị thông báo thành công mặc định
+                                message = 'Cập nhật trạng thái thanh toán thành công!';
+                                messageType = 'success';
                             }
 
-                            if (message) {
-                                showToastMessage(message, messageType);
-                            }
+                            window.showStatusToast(message, messageType);
 
                             // Update payment status select from response
                             var newSelect = doc.querySelector('.invoice-detail__payment-select');
@@ -947,7 +1058,7 @@
                         })
                         .catch(function (err) {
                             console.error('Lỗi AJAX:', err);
-                            showToastMessage('Đã xảy ra lỗi khi cập nhật trạng thái thanh toán. Vui lòng thử lại.', 'error');
+                            window.showStatusToast('Đã xảy ra lỗi khi cập nhật trạng thái thanh toán. Vui lòng thử lại.', 'error');
                             select.value = select.dataset.prevPaymentValue;
                         })
                         .finally(function () {

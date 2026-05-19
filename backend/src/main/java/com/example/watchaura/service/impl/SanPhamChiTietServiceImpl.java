@@ -207,7 +207,9 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
         dto.setTrongLuong(spct.getTrongLuong());
         dto.setTrangThai(spct.getTrangThai());
         if (spct.getSerialSanPhams() != null) {
-            int soLuongTon = spct.getSoLuongTon() != null ? spct.getSoLuongTon() : 0;
+            // Đếm tất cả serial đang ở trạng thái TRONG_KHO và chưa được gán cho đơn hàng nào
+            // KHÔNG giới hạn bởi soLuongTon vì soLuongTon có thể bị trừ khi đặt hàng online
+            // nhưng serial vẫn chưa được gán (sẽ được gán khi admin xác nhận đơn)
             List<String> serialTrongKho = spct.getSerialSanPhams().stream()
                     .filter(s -> s != null && s.getTrangThai() != null
                             && s.getTrangThai() == SerialSanPham.TRANG_THAI_TRONG_KHO
@@ -218,9 +220,9 @@ public class SanPhamChiTietServiceImpl implements SanPhamChiTietService {
                     .filter(s -> !s.isEmpty())
                     .sorted()
                     .collect(Collectors.toList());
-            int soLuongHienThi = Math.min(serialTrongKho.size(), Math.max(soLuongTon, 0));
-            dto.setSoLuongSerialTrongKho(soLuongHienThi);
-            dto.setSerials(serialTrongKho.stream().limit(soLuongHienThi).collect(Collectors.toList()));
+            // Hiển thị đúng số serial trong kho thực tế (không giới hạn bởi soLuongTon)
+            dto.setSoLuongSerialTrongKho(serialTrongKho.size());
+            dto.setSerials(serialTrongKho.stream().limit(serialTrongKho.size()).collect(Collectors.toList()));
         }
 
         if (spct.getSanPham() != null) {

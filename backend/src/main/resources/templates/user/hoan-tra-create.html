@@ -398,6 +398,18 @@
     <script th:inline="javascript">
         var uploadedImages = [];
         var currentLoaiHoanTra = 'TRA_HANG';
+        var imageUploadController = null;
+        var tinhTienController = null;
+
+        // Hủy các request đang chờ khi rời trang
+        window.addEventListener('beforeunload', function() {
+            if (imageUploadController) {
+                imageUploadController.abort();
+            }
+            if (tinhTienController) {
+                tinhTienController.abort();
+            }
+        });
 
         function formatCurrency(value) {
             if (!value) return '0 ₫';
@@ -461,14 +473,23 @@
         }
 
         function uploadImage(file) {
+            if (!imageUploadController) {
+                imageUploadController = new AbortController();
+            }
             var formData = new FormData();
             formData.append('file', file);
 
             fetch('/api/hoan-tra/upload-image', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                signal: imageUploadController.signal
             })
-            .then(function(response) { return response.json(); })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+                return response.json();
+            })
             .then(function(data) {
                 if (data.success) {
                     uploadedImages.push(data.filePath);
@@ -480,6 +501,9 @@
                 }
             })
             .catch(function(error) {
+                if (error.name === 'AbortError') {
+                    return; // Bỏ qua lỗi khi request bị hủy do rời trang
+                }
                 alert('Lỗi khi upload ảnh: ' + error.message);
             });
         }
@@ -735,6 +759,11 @@ function validateImageRequired() {
         }
 
         function tinhTienHoanTuApi(hoaDonId, chiTietList, totalRefundEl) {
+            if (tinhTienController) {
+                tinhTienController.abort();
+            }
+            tinhTienController = new AbortController();
+
             var phiGiao = parseFloat(totalRefundEl.getAttribute('data-phi-giao')) || 0;
             var voucherGiam = parseFloat(totalRefundEl.getAttribute('data-voucher-giam')) || 0;
 
@@ -746,9 +775,15 @@ function validateImageRequired() {
                 body: JSON.stringify({
                     hoaDonId: hoaDonId,
                     chiTietList: chiTietList
-                })
+                }),
+                signal: tinhTienController.signal
             })
-            .then(function(response) { return response.json(); })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                return response.json();
+            })
             .then(function(data) {
                 if (data.success && data.data) {
                     var result = data.data;
@@ -774,6 +809,9 @@ function validateImageRequired() {
                 }
             })
             .catch(function(error) {
+                if (error.name === 'AbortError') {
+                    return; // Bỏ qua lỗi khi request bị hủy do rời trang hoặc gọi lại
+                }
                 console.log('Lỗi khi gọi API tính tiền hoàn:', error);
                 // Fallback: tính bằng JS
                 var tongTienHangHoan = 0;

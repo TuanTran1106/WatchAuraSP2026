@@ -16,6 +16,7 @@ public class HoaDonSerialSelectionDTO {
     private Integer hoaDonId;
     private String maDonHang;
     private String trangThaiDonHang;
+    private String loaiHoaDon; // OFFLINE hoặc ONLINE - để biết có phải đơn tại quầy không
     private List<BienTheSerialGroup> bienTheGroups;
 
     @Data

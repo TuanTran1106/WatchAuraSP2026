@@ -31,6 +31,22 @@ public class CartResponse {
     /** Map: hoaDonChiTietId -> danh sách mã serial đã gán */
     private List<SerialInfo> serials;
 
+    /** Thông tin voucher đang được áp dụng (nếu có) */
+    private VoucherInfo voucherInfo;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VoucherInfo {
+        private String maVoucher;
+        private String tenVoucher;
+        private String loaiVoucher;
+        private BigDecimal giaTri;
+        private BigDecimal giaTriToiDa;
+        private BigDecimal donHangToiThieu;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

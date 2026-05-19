@@ -96,15 +96,19 @@
     <section class="card card--full" id="listKhachHang">
         <h2 class="card__title">Danh sách khách hàng</h2>
 
-        <form th:action="@{/admin/khach-hang}" method="get" class="toolbar toolbar--search-row js-admin-ajax-form" data-ajax="true">
-            <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
-            <button type="submit" class="btn btn--primary toolbar__btn"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
-            <label class="toolbar__label">Trạng thái:</label>
-            <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
-                <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
-                <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
-                <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
-            </select>
+        <form th:action="@{/admin/khach-hang}" method="get" class="toolbar js-admin-ajax-form" data-ajax="true">
+            <div class="toolbar__search-group">
+                <input type="text" name="q" th:value="${searchKeyword}" placeholder="Tìm theo mã hoặc tên..." class="toolbar__input" />
+                <button type="submit" class="btn btn--primary"><i class="fa-solid fa-search"></i> Tìm kiếm</button>
+            </div>
+            <div class="toolbar__filter-group">
+                <label class="toolbar__label">Trạng thái:</label>
+                <select name="trangThai" class="toolbar__select" onchange="this.form.submit()">
+                    <option value="" th:selected="${filterTrangThai == null or filterTrangThai == ''}">Tất cả</option>
+                    <option value="true" th:selected="${filterTrangThai == 'true'}">Hoạt động</option>
+                    <option value="false" th:selected="${filterTrangThai == 'false'}">Không hoạt động</option>
+                </select>
+            </div>
         </form>
 
         <table class="table">

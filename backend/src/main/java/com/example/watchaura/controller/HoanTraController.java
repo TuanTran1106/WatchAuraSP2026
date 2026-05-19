@@ -129,7 +129,7 @@ public class HoanTraController {
         try {
             // ========== VALIDATION BẮT BUỘC HÌNH ẢNH ==========
             if (danhSachAnhLoi == null || danhSachAnhLoi.isEmpty() || danhSachAnhLoi.equals("[]")) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất 1 hình ảnh lỗi sản phẩm.");
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất 3 hình ảnh lỗi sản phẩm.");
                 return "redirect:/admin/hoan-tra/tao-moi";
             }
 

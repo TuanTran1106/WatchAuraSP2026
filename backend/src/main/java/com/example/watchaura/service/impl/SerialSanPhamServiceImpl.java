@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -106,6 +107,7 @@ public class SerialSanPhamServiceImpl implements SerialSanPhamService {
                 .hoaDonId(hoaDonId)
                 .maDonHang(hoaDon.getMaDonHang())
                 .trangThaiDonHang(getTrangThaiHienThi(hoaDon.getTrangThaiDonHang()))
+                .loaiHoaDon(hoaDon.getLoaiHoaDon())
                 .bienTheGroups(groups)
                 .build();
     }
@@ -133,6 +135,9 @@ public class SerialSanPhamServiceImpl implements SerialSanPhamService {
 
         List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findByHoaDonId(hoaDonId);
 
+        // Lưu ý: Ở trang xác nhận serial, chỉ cho phép thay đổi serial cho đơn ONLINE
+        // Đơn OFFLINE: serial đã gán từ quầy sẽ bị khóa ở frontend
+        
         for (HoaDonChiTiet chiTiet : chiTiets) {
             Integer hoaDonChiTietId = chiTiet.getId();
             int soLuongMua = chiTiet.getSoLuong() != null ? chiTiet.getSoLuong() : 0;
@@ -163,7 +168,8 @@ public class SerialSanPhamServiceImpl implements SerialSanPhamService {
                         + ") không khớp với số lượng mua (" + soLuongMua + ")");
             }
 
-            LocalDateTime now = LocalDateTime.now();
+            // Gán serial cho hóa đơn chi tiết
+            // KHÔNG đánh dấu DA_BAN ở đây - serial sẽ được đánh dấu DA_BAN khi admin xác nhận đơn hàng
             for (Integer serialId : selectedSerialIds) {
                 SerialSanPham serial = serialSanPhamRepository.findById(serialId)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy serial với ID: " + serialId));
@@ -178,11 +184,9 @@ public class SerialSanPhamServiceImpl implements SerialSanPhamService {
                     throw new RuntimeException("Serial " + serial.getMaSerial() + " không thuộc biến thể sản phẩm này");
                 }
 
-                // Gán serial cho hóa đơn chi tiết
+                // Gán serial cho hóa đơn chi tiết - chỉ gán, KHÔNG đánh dấu DA_BAN
                 serial.setHoaDonChiTiet(chiTiet);
-                serial.setTrangThai(SerialSanPham.TRANG_THAI_DA_BAN);
-                serial.setNgayXuatKho(now);
-                serial.setNgayHetBaoHanh(now.plusMonths(12));
+                // KHÔNG cập nhật trạng thái ở đây - serial vẫn ở TRONG_KHO cho đến khi đơn được xác nhận
                 serialSanPhamRepository.save(serial);
             }
         }
@@ -228,5 +232,10 @@ public class SerialSanPhamServiceImpl implements SerialSanPhamService {
             parts.add("Loại máy: " + lm.getTenLoaiMay().trim());
         }
         return parts.isEmpty() ? null : String.join(" · ", parts);
+    }
+
+    @Override
+    public Optional<SerialSanPham> getSerialById(Integer serialId) {
+        return serialSanPhamRepository.findById(serialId);
     }
 }

@@ -17,6 +17,7 @@ import com.example.watchaura.repository.HoaDonRepository;
 import com.example.watchaura.repository.SanPhamChiTietRepository;
 import com.example.watchaura.service.EmailService;
 import com.example.watchaura.service.GuestOrderService;
+import com.example.watchaura.service.HoaDonService;
 import com.example.watchaura.service.KhuyenMaiService;
 import com.example.watchaura.service.SanPhamChiTietKhuyenMaiService;
 import com.example.watchaura.service.ShippingService;
@@ -54,6 +55,7 @@ public class GuestOrderServiceImpl implements GuestOrderService {
     private final EmailService emailService;
     private final VNPayService vnPayService;
     private final VNPayProperties vnPayProperties;
+    private final HoaDonService hoaDonService;
 
     @Value("${checkout.guest.tracking-secret:watchaura-guest-secret-change-me}")
     private String trackingSecret;
@@ -232,39 +234,10 @@ public class GuestOrderServiceImpl implements GuestOrderService {
             if (vnPayService.verifyReturn(request)) {
                 log.info("[VNPAY] handleVnPayReturn: Payment SUCCESS for maDonHang={}", vnpTxnRef);
 
-                // Atomic check tồn kho: trừ tồn kho cho từng sản phẩm
-                // Nếu bất kỳ sản phẩm nào không đủ -> rollback tất cả và chuyển sang CAN_XU_LY
-                List<HoaDonChiTiet> chiTietList = hoaDon.getChiTietList();
-                StringBuilder loiTonKho = new StringBuilder();
-
-                for (HoaDonChiTiet ct : chiTietList) {
-                    int result = sanPhamChiTietRepository.deductStock(ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
-                    if (result == 0) {
-                        // Rollback các sản phẩm đã trừ ở trên
-                        for (HoaDonChiTiet previous : chiTietList) {
-                            if (previous.equals(ct)) break;
-                            sanPhamChiTietRepository.restoreStock(previous.getSanPhamChiTiet().getId(), previous.getSoLuong());
-                        }
-
-                        // Lấy thông tin sản phẩm để ghi log
-                        SanPhamChiTiet sp = sanPhamChiTietRepository.findById(ct.getSanPhamChiTiet().getId()).orElse(null);
-                        String tenSp = sp != null && sp.getSanPham() != null ? sp.getSanPham().getTenSanPham() : "ID " + ct.getSanPhamChiTiet().getId();
-                        Integer soLuongTon = sp != null && sp.getSoLuongTon() != null ? sp.getSoLuongTon() : 0;
-                        loiTonKho.append(String.format("%s: cần %d, chỉ còn %d; ", tenSp, ct.getSoLuong(), soLuongTon));
-                        log.warn("[VNPAY] Trừ tồn kho thất bại: spctId={}, soLuong={}, soLuongTon={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong(), soLuongTon);
-                        break;
-                    } else {
-                        log.info("[VNPAY] Trừ tồn kho thành công: spctId={}, soLuong={}", ct.getSanPhamChiTiet().getId(), ct.getSoLuong());
-                    }
-                }
-
-                // Nếu có lỗi tồn kho -> chuyển sang CAN_XU_LY
-                if (loiTonKho.length() > 0) {
-                    hoaDon.setGhiChu("Không đủ tồn kho: " + loiTonKho.toString());
-                    hoaDon.setTrangThaiDonHang("CAN_XU_LY");
-                    hoaDonRepository.save(hoaDon);
-                    log.warn("[VNPAY] Don hang {} chuyen sang CAN_XU_LY vi khong du ton kho: {}", vnpTxnRef, loiTonKho);
-                }
+                // Thanh toán VNPay thành công
+                // Trừ số lượng sản phẩm nhưng KHÔNG thay đổi trạng thái đơn hàng
+                // Trạng thái vẫn giữ nguyên CHỜ XÁC NHẬN để admin xác nhận và gán serial
+                hoaDonService.deductStockForVnPay(hoaDon.getId());
 
                 // Gửi email xác nhận
                 try {
