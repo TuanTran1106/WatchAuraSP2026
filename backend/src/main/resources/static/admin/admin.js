@@ -247,9 +247,24 @@
     payload.remove();
   }
 
+  function executeInlineScripts(container) {
+    if (!container) return;
+    var scripts = container.querySelectorAll('script');
+    scripts.forEach(function (oldScript) {
+      var newScript = document.createElement('script');
+      if (oldScript.src) {
+        newScript.src = oldScript.src;
+      } else {
+        newScript.textContent = oldScript.textContent;
+      }
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+  }
+
   function replaceAdminContent(html) {
     if (!adminContent) return;
     adminContent.innerHTML = html;
+    executeInlineScripts(adminContent);
     var toastPayload = adminContent.querySelector('[data-admin-toast-message]');
     var hadSuccessToast =
       toastPayload &&
@@ -270,7 +285,7 @@
     formConfigs.forEach(function(cfg) {
       var formWrapper = adminContent.querySelector(cfg.wrapper);
       if (!formWrapper || !formWrapper.classList.contains('is-collapsed')) return;
-      var hasErrors = formWrapper.querySelector('.form__error') !== null;
+      var hasErrors = formWrapper.querySelector('.form__error, .invalid-feedback') !== null;
       var shouldOpen = hasErrors || hadSuccessToast;
       if (!shouldOpen) return;
       formWrapper.classList.remove('is-collapsed');
@@ -346,12 +361,32 @@
   }
 
   /* -------- Submit handler (AJAX + confirm) -------- */
+  function focusFirstInvalidField(form) {
+    if (!form) return;
+    var firstInvalid = form.querySelector('.is-invalid, [aria-invalid="true"]');
+    if (firstInvalid && firstInvalid.scrollIntoView) {
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try { firstInvalid.focus(); } catch (e) {}
+    }
+  }
+
+  function formLooksInvalid(form) {
+    if (!form) return false;
+    return form.querySelector('.is-invalid, [aria-invalid="true"]') !== null;
+  }
+
   function handleAdminSubmit(e) {
     var form = e.target;
     if (!isAjaxForm(form)) return;
     if (!adminContent) return;
 
     e.preventDefault();
+
+    if (formLooksInvalid(form)) {
+      focusFirstInvalidField(form);
+      showAdminToast('Vui lòng kiểm tra lại các trường dữ liệu bị lỗi.', 'error');
+      return;
+    }
 
     // Confirm modal flow
     if (form.__confirmPending) return;
@@ -390,10 +425,18 @@
       b.disabled = true;
     });
     var body = new FormData(form);
-    body.append('X-Requested-With', 'XMLHttpRequest');
-    var p = loadAdminContent(action, { method: method, body: body });
-    if (p && typeof p.finally === 'function') {
-      p.finally(function () {
+    var p = loadAdminContent(action, {
+      method: method,
+      body: body,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    if (p && typeof p.then === 'function') {
+      p.then(function () {
+        form.__adminSubmitting = false;
+        submitBtns.forEach(function (b) {
+          b.disabled = false;
+        });
+      }).catch(function () {
         form.__adminSubmitting = false;
         submitBtns.forEach(function (b) {
           b.disabled = false;

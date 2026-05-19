@@ -291,7 +291,7 @@ public class VoucherController {
                              Model model,
                              RedirectAttributes redirect,
                              @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
-        voucherService.deactivate(id);
+        String deactivateMsg = voucherService.deactivate(id);
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             Boolean filterTrangThaiBool = parseTrangThai(trangThai);
             Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
@@ -306,10 +306,18 @@ public class VoucherController {
             newVoucher.setTrangThai(true);
             model.addAttribute("voucher", newVoucher);
             model.addAttribute("formAction", "/admin/voucher");
-            model.addAttribute("message", "Đã ngừng hoạt động voucher.");
+            if (deactivateMsg != null) {
+                model.addAttribute("toastError", deactivateMsg);
+            } else {
+                model.addAttribute("message", "Đã ngừng hoạt động voucher.");
+            }
             return "admin/voucher-list :: content";
         }
-        redirect.addFlashAttribute("message", "Đã ngừng hoạt động voucher.");
+        if (deactivateMsg != null) {
+            redirect.addFlashAttribute("toastError", deactivateMsg);
+        } else {
+            redirect.addFlashAttribute("message", "Đã ngừng hoạt động voucher.");
+        }
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);
@@ -324,6 +332,15 @@ public class VoucherController {
                                   RedirectAttributes redirect,
                                   @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         String toggleErr = voucherService.toggleTrangThai(id);
+
+        String successMsg = null;
+        if (toggleErr == null) {
+            Voucher v = voucherService.findById(id);
+            successMsg = (v != null && Boolean.TRUE.equals(v.getTrangThai()))
+                    ? "Đã kích hoạt voucher."
+                    : "Đã ngừng hoạt động voucher.";
+        }
+
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             Boolean filterTrangThaiBool = parseTrangThai(trangThai);
             Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
@@ -341,14 +358,14 @@ public class VoucherController {
             if (toggleErr != null) {
                 model.addAttribute("toastError", toggleErr);
             } else {
-                model.addAttribute("message", "Đã cập nhật trạng thái.");
+                model.addAttribute("message", successMsg);
             }
             return "admin/voucher-list :: content";
         }
         if (toggleErr != null) {
             redirect.addFlashAttribute("toastError", toggleErr);
         } else {
-            redirect.addFlashAttribute("message", "Đã cập nhật trạng thái.");
+            redirect.addFlashAttribute("message", successMsg);
         }
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);

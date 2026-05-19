@@ -143,7 +143,6 @@ public class SanPhamChiTietKhuyenMaiServiceImpl implements SanPhamChiTietKhuyenM
                         : KhuyenMai.PhamViApDung.ALL;
                 switch (scope) {
                     case SKU -> {
-                        // SKU phải có link trực tiếp SPCT; không lấy từ catalog chung để tránh apply sai SKU.
                     }
                     case CATEGORY -> {
                         if (appliesToDanhMucApDung(km, tenDm)) {
@@ -155,16 +154,17 @@ public class SanPhamChiTietKhuyenMaiServiceImpl implements SanPhamChiTietKhuyenM
             }
         }
 
-        Map<Integer, KhuyenMai> pickedTier = !skuCandidates.isEmpty()
-                ? skuCandidates
-                : (!categoryCandidates.isEmpty() ? categoryCandidates : allCandidates);
+        Map<Integer, KhuyenMai> allAvailableCandidates = new LinkedHashMap<>();
+        allAvailableCandidates.putAll(skuCandidates);
+        allAvailableCandidates.putAll(categoryCandidates);
+        allAvailableCandidates.putAll(allCandidates);
 
-        if (pickedTier.isEmpty()) {
+        if (allAvailableCandidates.isEmpty()) {
             return KhuyenMaiPriceResult.none(giaBanNiemyet);
         }
 
-        // Ưu tiên theo phạm vi: SKU > CATEGORY > ALL, sau đó mới chọn best price trong tier.
-        return pickedTier.values().stream()
+        // Chọn khuyến mãi có giá tốt nhất cho khách hàng (best price wins).
+        return allAvailableCandidates.values().stream()
                 .filter(km -> (km.getTrangThai() == null || Boolean.TRUE.equals(km.getTrangThai())))
                 .filter(km -> (km.getNgayBatDau() == null || !km.getNgayBatDau().isAfter(now)))
                 .filter(km -> (km.getNgayKetThuc() == null || !km.getNgayKetThuc().isBefore(now)))
@@ -197,17 +197,9 @@ public class SanPhamChiTietKhuyenMaiServiceImpl implements SanPhamChiTietKhuyenM
         String tenDm = resolveTenDanhMucSanPham(spct);
         KhuyenMaiPriceResult fromVariant = resolveForSanPhamChiTiet(spct.getId(), base, catalog, tenDm);
         KhuyenMaiPriceResult fromProduct = SanPhamKhuyenMaiPricing.compute(spct.getSanPham(), base, t);
-        KhuyenMaiPriceResult picked = KhuyenMaiPricePick.pickBetter(fromVariant, fromProduct, base);
-        return KhuyenMaiPricing.sanitizeMisappliedFlatPromo(picked);
+        return KhuyenMaiPricePick.pickBetter(fromVariant, fromProduct, base);
     }
 
-    /**
-     * Ưu tiên phạm vi áp dụng theo enum:
-     * - ALL: áp toàn bộ
-     * - CATEGORY: khớp theo danh mục áp dụng
-     * - SKU: chỉ áp khi có link trực tiếp ở bảng SanPhamChiTietKhuyenMai
-     *   (hàm này dùng cho catalog-level nên trả false cho SKU)
-     */
     private static boolean appliesToDanhMucApDung(KhuyenMai km, String tenDanhMucSanPham) {
         KhuyenMai.PhamViApDung scope = km.getPhamViApDung();
         if (scope == null) {

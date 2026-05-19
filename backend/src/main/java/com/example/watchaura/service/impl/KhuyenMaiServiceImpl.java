@@ -88,12 +88,10 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
                             : KhuyenMai.PhamViApDung.ALL
             );
         }
-        if (khuyenMai.getDonToiThieu() == null) {
-            khuyenMai.setDonToiThieu(java.math.BigDecimal.ZERO);
-        }
-        if (khuyenMai.getSoLuotDaDung() == null || khuyenMai.getSoLuotDaDung() < 0) {
-            khuyenMai.setSoLuotDaDung(0);
-        }
+        khuyenMai.setGiamToiDa(null);
+        khuyenMai.setDonToiThieu(null);
+        khuyenMai.setSoLuotDaDung(null);
+        khuyenMai.setGioiHanLuotDung(null);
         return khuyenMaiRepository.save(khuyenMai);
     }
 
@@ -113,8 +111,8 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         existing.setDanhMucApDung(khuyenMai.getDanhMucApDung() != null ? khuyenMai.getDanhMucApDung().trim() : "");
         existing.setLoaiGiam(khuyenMai.getLoaiGiam());
         existing.setGiaTriGiam(khuyenMai.getGiaTriGiam());
-        existing.setGiamToiDa(khuyenMai.getGiamToiDa());
-        existing.setDonToiThieu(khuyenMai.getDonToiThieu());
+        existing.setGiamToiDa(null);
+        existing.setDonToiThieu(null);
         existing.setPhamViApDung(khuyenMai.getPhamViApDung());
         // Form datetime-local đôi khi gửi rỗng / không bind → null; DB cột NOT NULL → không được xóa ngày cũ.
         if (khuyenMai.getNgayBatDau() != null) {
@@ -123,7 +121,6 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         if (khuyenMai.getNgayKetThuc() != null) {
             existing.setNgayKetThuc(khuyenMai.getNgayKetThuc());
         }
-        existing.setDonToiThieu(khuyenMai.getDonToiThieu());
         existing.setTrangThai(khuyenMai.getTrangThai());
         if (existing.getTrangThai() == null) {
             existing.setTrangThai(Boolean.FALSE);
@@ -153,12 +150,10 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         if (existing.getPhamViApDung() == null) {
             existing.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
         }
-        if (existing.getDonToiThieu() == null) {
-            existing.setDonToiThieu(java.math.BigDecimal.ZERO);
-        }
-        if (existing.getSoLuotDaDung() == null || existing.getSoLuotDaDung() < 0) {
-            existing.setSoLuotDaDung(0);
-        }
+        existing.setGiamToiDa(null);
+        existing.setDonToiThieu(null);
+        existing.setSoLuotDaDung(null);
+        existing.setGioiHanLuotDung(null);
         existing.setNgayCapNhat(LocalDateTime.now());
 
         return khuyenMaiRepository.save(existing);
@@ -171,16 +166,14 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         if (km.getPhamViApDung() == null) {
             km.setPhamViApDung(KhuyenMai.PhamViApDung.ALL);
         }
-        if (km.getDonToiThieu() == null || km.getDonToiThieu().compareTo(java.math.BigDecimal.ZERO) < 0) {
-            km.setDonToiThieu(java.math.BigDecimal.ZERO);
-        }
-        if (km.getSoLuotDaDung() == null || km.getSoLuotDaDung() < 0) {
-            km.setSoLuotDaDung(0);
-        }
+        km.setGiamToiDa(null);
+        km.setDonToiThieu(null);
+        km.setSoLuotDaDung(null);
+        km.setGioiHanLuotDung(null);
     }
 
     /**
-     * Chuẩn hóa {@code PHAN_TRAM}/{@code TIEN}; tắt {@code giamToiDa} khi giảm tiền; mặc định trạng thái.
+     * Chuẩn hóa theo hướng refactor: khuyến mãi sản phẩm chỉ còn giảm theo %.
      */
     private static void chuanHoaTruocKhiLuu(KhuyenMai km) {
         if (km == null) {
@@ -190,8 +183,9 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
         if (canon != null) {
             km.setLoaiGiam(canon);
         }
-        if (KhuyenMaiPricing.phanLoai(km.getLoaiGiam()) == KhuyenMaiPricing.LoaiGiamTinh.TIEN) {
-            km.setGiamToiDa(null);
+        String kind = KhuyenMaiPricing.chuanHoaMaLuu(km.getLoaiGiam());
+        if (kind == null || !"PHAN_TRAM".equals(kind)) {
+            km.setLoaiGiam("PHAN_TRAM");
         }
     }
 
@@ -203,23 +197,38 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
-    public void deactivate(Integer id) {
+    public String deactivate(Integer id) {
         KhuyenMai km = khuyenMaiRepository.findById(id).orElse(null);
-        if (km != null) {
-            km.setTrangThai(Boolean.FALSE);
-            km.setNgayCapNhat(LocalDateTime.now());
-            khuyenMaiRepository.save(km);
+        if (km == null) {
+            return "Không tìm thấy khuyến mãi.";
         }
+        if (Boolean.FALSE.equals(km.getTrangThai())) {
+            return "Khuyến mãi đã ngừng hoạt động.";
+        }
+        km.setTrangThai(Boolean.FALSE);
+        km.setNgayCapNhat(LocalDateTime.now());
+        khuyenMaiRepository.save(km);
+        return null;
     }
 
     @Override
-    public void toggleTrangThai(Integer id) {
+    public String toggleTrangThai(Integer id) {
         KhuyenMai km = khuyenMaiRepository.findById(id).orElse(null);
-        if (km != null) {
-            km.setTrangThai(Boolean.TRUE.equals(km.getTrangThai()) ? Boolean.FALSE : Boolean.TRUE);
-            km.setNgayCapNhat(LocalDateTime.now());
-            khuyenMaiRepository.save(km);
+        if (km == null) {
+            return "Không tìm thấy khuyến mãi.";
         }
+        boolean wasActive = Boolean.TRUE.equals(km.getTrangThai());
+        boolean turningOn = !wasActive;
+        if (turningOn) {
+            LocalDateTime now = LocalDateTime.now();
+            if (km.getNgayKetThuc() != null && km.getNgayKetThuc().isBefore(now)) {
+                return "Không thể bật khuyến mãi đã hết hạn.";
+            }
+        }
+        km.setTrangThai(!wasActive);
+        km.setNgayCapNhat(LocalDateTime.now());
+        khuyenMaiRepository.save(km);
+        return null;
     }
 
     @Override

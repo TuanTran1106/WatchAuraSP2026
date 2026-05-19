@@ -59,6 +59,10 @@
                         <input type="hidden" name="filterTrangThai"
                             th:value="${filterTrangThai != null ? filterTrangThai : ''}" />
                         <input th:if="${khuyenMai != null and khuyenMai.id != null}" type="hidden" th:field="*{id}" />
+                        <div class="alert alert-warning mb-3" th:if="${error != null and !#strings.isEmpty(error)}" th:text="${error}"></div>
+                        <div class="alert alert-warning mb-3" th:if="${#fields.hasGlobalErrors()}">
+                            <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+                        </div>
                         <div class="form__grid">
                             <div class="form__section" aria-hidden="true">Thông tin cơ bản</div>
                             <div class="form__group">
@@ -69,79 +73,65 @@
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Tên chương trình</label>
-                                <input class="form__input" type="text" th:field="*{tenChuongTrinh}" required
-                                    placeholder="Tên chương trình" />
+                                <input class="form__input" th:classappend="${#fields.hasErrors('tenChuongTrinh')} ? ' is-invalid'" type="text" th:field="*{tenChuongTrinh}" required
+                                    placeholder="Tên chương trình" id="tenChuongTrinhInput" />
+                                <div class="invalid-feedback" data-field-error="tenChuongTrinh" th:if="${#fields.hasErrors('tenChuongTrinh')}" th:errors="*{tenChuongTrinh}"></div>
                             </div>
                             <div class="form__group form__group--full">
                                 <label class="form__label">Mô tả</label>
-                                <textarea class="form__input form__textarea" th:field="*{moTa}"
+                                <textarea class="form__input form__textarea" th:classappend="${#fields.hasErrors('moTa')} ? ' is-invalid'" th:field="*{moTa}"
                                     placeholder="Mô tả"></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('moTa')}" th:errors="*{moTa}"></div>
                             </div>
                             <div class="form__section" aria-hidden="true">Cài đặt giảm giá</div>
                             <div class="form__group">
                                 <label class="form__label">Loại giảm</label>
-                                <select class="form__input form__select" id="loaiGiamSelect" th:field="*{loaiGiam}"
+                                <select class="form__input form__select" th:classappend="${#fields.hasErrors('loaiGiam')} ? ' is-invalid'" id="loaiGiamSelect" th:field="*{loaiGiam}"
                                     required>
                                     <option value="">-- Chọn loại giảm --</option>
                                     <option value="PHAN_TRAM">Giảm theo % trên giá niêm yết</option>
-                                    <option value="TIEN">Giảm số tiền cố định (VNĐ)</option>
                                 </select>
-                                <span class="form__error" th:if="${#fields.hasErrors('loaiGiam')}"
-                                    th:errors="*{loaiGiam}"></span>
+                                <div class="invalid-feedback" data-field-error="loaiGiam" th:if="${#fields.hasErrors('loaiGiam')}"
+                                    th:errors="*{loaiGiam}"></div>
                             </div>
                             <div class="form__group">
                                 <label class="form__label" id="labelGiaTriGiam">Giá trị giảm</label>
                                 <input class="form__input" th:classappend="${#fields.hasErrors('giaTriGiam')} ? ' is-invalid'" type="number" step="0.01" min="0.01" th:field="*{giaTriGiam}"
                                     id="giaTriGiamInput" required placeholder="0.01" />
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('giaTriGiam')}" th:errors="*{giaTriGiam}"></div>
+                                <div class="invalid-feedback" data-field-error="giaTriGiam" th:if="${#fields.hasErrors('giaTriGiam')}" th:errors="*{giaTriGiam}"></div>
                                 <small class="form__hint" id="hintGiaTriGiam"
                                     style="display:block;color:#64748b;font-size:0.82rem;margin-top:4px;">
                                     Chọn loại giảm ở trên để hiển thị đúng đơn vị ( % hoặc ₫ ).
                                 </small>
                             </div>
-                            <div class="form__group" id="giamToiDaGroup">
-                                <label class="form__label">Trần tiền giảm (VNĐ)</label>
-                                <input class="form__input" th:classappend="${#fields.hasErrors('giamToiDa')} ? ' is-invalid'" type="number" step="0.01" min="0" th:field="*{giamToiDa}"
-                                    id="giamToiDaInput" placeholder="Để trống = không giới hạn" />
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('giamToiDa')}" th:errors="*{giamToiDa}"></div>
-                                <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Chỉ áp khi
-                                    loại là <strong>giảm %</strong>: giới hạn tối đa số tiền được trừ (ví dụ giảm 50%
-                                    nhưng không quá 500.000₫).</small>
-                            </div>
-                            <div class="form__group">
-                                <label class="form__label">Đơn tối thiểu (VNĐ)</label>
-                                <input class="form__input" th:classappend="${#fields.hasErrors('donToiThieu')} ? ' is-invalid'" type="number" step="0.01" min="0" th:field="*{donToiThieu}"
-                                    placeholder="0 = không yêu cầu" />
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('donToiThieu')}" th:errors="*{donToiThieu}"></div>
-                                <small style="color:#64748b;font-size:0.82rem;display:block;margin-top:4px;">Chỉ áp dụng khi giá trị đơn đạt ngưỡng này.</small>
-                            </div>
                             <div class="form__section" aria-hidden="true">Thời gian & phạm vi</div>
                             <div class="form__group">
                                 <label class="form__label">Ngày bắt đầu</label>
-                                <input class="form__input" type="datetime-local" th:field="*{ngayBatDau}"
+                                <input class="form__input" th:classappend="${#fields.hasErrors('ngayBatDau')} ? ' is-invalid'" type="datetime-local" th:field="*{ngayBatDau}"
                                     id="ngayBatDau" />
-                                <span class="form__error" th:if="${#fields.hasErrors('ngayBatDau')}"
-                                    th:errors="*{ngayBatDau}"></span>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('ngayBatDau')}"
+                                    th:errors="*{ngayBatDau}"></div>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Ngày kết thúc</label>
-                                <input class="form__input" type="datetime-local" th:field="*{ngayKetThuc}"
+                                <input class="form__input" th:classappend="${#fields.hasErrors('ngayKetThuc')} ? ' is-invalid'" type="datetime-local" th:field="*{ngayKetThuc}"
                                     id="ngayKetThuc" />
                                 <div id="ngayRangeWarning" class="km-date-warning">Ngày kết thúc phải lớn hơn ngày bắt đầu.</div>
-                                <span class="form__error" th:if="${#fields.hasErrors('ngayKetThuc')}"
-                                    th:errors="*{ngayKetThuc}"></span>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('ngayKetThuc')}"
+                                    th:errors="*{ngayKetThuc}"></div>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Trạng thái</label>
-                                <select class="form__input form__select" th:field="*{trangThai}">
+                                <select class="form__input form__select" th:classappend="${#fields.hasErrors('trangThai')} ? ' is-invalid'" th:field="*{trangThai}">
                                     <option value="">-- Chọn trạng thái --</option>
                                     <option value="false">Không Hoạt Động</option>
                                     <option value="true">Đang Hoạt Động</option>
                                 </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('trangThai')}" th:errors="*{trangThai}"></div>
                             </div>
                             <div class="form__group">
                                 <label class="form__label">Danh mục áp dụng</label>
-                                <select class="form__input form__select" th:field="*{danhMucApDung}">
+                                <select class="form__input form__select" th:classappend="${#fields.hasErrors('danhMucApDung')} ? ' is-invalid'" th:field="*{danhMucApDung}">
                                     <option value="">— Tất cả danh mục —</option>
                                     <option
                                         th:if="${khuyenMai != null and khuyenMai.danhMucApDung != null and !#strings.isEmpty(khuyenMai.danhMucApDung) and (tenDanhMucList == null or !#lists.contains(tenDanhMucList, khuyenMai.danhMucApDung))}"
@@ -151,6 +141,7 @@
                                     <option th:each="dm : ${danhMucList}" th:value="${dm.tenDanhMuc}"
                                         th:text="${dm.tenDanhMuc}">Danh mục</option>
                                 </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('danhMucApDung')}" th:errors="*{danhMucApDung}"></div>
                                 <small style="color: #666; font-size: 0.85rem;">Chọn “Tất cả” để áp dụng mọi danh mục.
                                     Chọn một danh mục để giới hạn theo tên đã khai báo trong hệ thống.</small>
                             </div>
@@ -220,8 +211,6 @@
                         <th>Tên chương trình</th>
                         <th>Loại giảm</th>
                         <th class="km-num-col">Giá trị giảm</th>
-                        <th class="km-num-col">Đơn tối thiểu</th>
-                        <th class="km-num-col">Trần tiền giảm</th>
                         <th>Danh mục áp dụng</th>
                         <th>Ngày bắt đầu</th>
                         <th>Ngày kết thúc</th>
@@ -264,12 +253,6 @@
                                     th:text="${#numbers.formatDecimal(item.giaTriGiam, 1, 'POINT', 0, 'COMMA')}">0</span>
                             </th:block>
                             <th:block th:if="${item.giaTriGiam == null}">—</th:block>
-                        </td>
-                        <td class="km-num-cell"
-                            th:text="${item.donToiThieu != null ? (#numbers.formatDecimal(item.donToiThieu, 1, 'POINT', 0, 'COMMA') + ' ₫') : '—'}">
-                        </td>
-                        <td class="km-num-cell">
-                            <span th:text="${item.giamToiDa != null ? (#numbers.formatDecimal(item.giamToiDa, 1, 'POINT', 0, 'COMMA') + ' ₫') : '—'}">—</span>
                         </td>
                         <td th:text="${item.danhMucApDung != null && !#strings.isEmpty(item.danhMucApDung) ? item.danhMucApDung : 'Tất cả'}">Tất cả</td>
                         <td
@@ -347,11 +330,77 @@
                 var giamToiDaInput = document.getElementById('giamToiDaInput');
                 var hintGiaTri = document.getElementById('hintGiaTriGiam');
                 var giaTriInput = document.getElementById('giaTriGiamInput');
+                var tenChuongTrinhInput = form.querySelector('input[name="tenChuongTrinh"]');
+                var tenChuongTrinhError = form.querySelector('[data-field-error="tenChuongTrinh"]');
+                var loaiGiamError = form.querySelector('[data-field-error="loaiGiam"]');
+                var giaTriGiamError = form.querySelector('[data-field-error="giaTriGiam"]');
+
                 function getLoaiGiamCanon() {
                     var raw = loai ? loai.value : '';
                     var canon = String(raw || '').trim().toUpperCase();
                     return canon === 'PERCENT' ? 'PHAN_TRAM' : ((canon === 'FIXED' || canon === 'TIEN_MAT') ? 'TIEN' : canon);
                 }
+
+                function setFieldError(inputEl, errorEl, message) {
+                    if (!inputEl) return;
+                    if (message) {
+                        inputEl.classList.add('is-invalid');
+                        if (errorEl) {
+                            errorEl.textContent = message;
+                            errorEl.style.display = 'block';
+                        }
+                    } else {
+                        inputEl.classList.remove('is-invalid');
+                        if (errorEl) {
+                            errorEl.textContent = '';
+                            errorEl.style.display = 'none';
+                        }
+                    }
+                }
+
+                function validateTenChuongTrinh() {
+                    var value = tenChuongTrinhInput ? String(tenChuongTrinhInput.value || '').trim() : '';
+                    if (!value) {
+                        setFieldError(tenChuongTrinhInput, tenChuongTrinhError, 'Tên chương trình không được để trống.');
+                        return false;
+                    }
+                    setFieldError(tenChuongTrinhInput, tenChuongTrinhError, '');
+                    return true;
+                }
+
+                function validateLoaiGiam() {
+                    var v = getLoaiGiamCanon();
+                    if (!v) {
+                        setFieldError(loai, loaiGiamError, 'Vui lòng chọn loại giảm.');
+                        return false;
+                    }
+                    if (v !== 'PHAN_TRAM') {
+                        setFieldError(loai, loaiGiamError, 'Khuyến mãi sản phẩm chỉ hỗ trợ giảm theo %.');
+                        return false;
+                    }
+                    setFieldError(loai, loaiGiamError, '');
+                    return true;
+                }
+
+                function validateGiaTriGiam() {
+                    var raw = giaTriInput ? String(giaTriInput.value || '').trim() : '';
+                    if (!raw) {
+                        setFieldError(giaTriInput, giaTriGiamError, 'Giá trị giảm không được để trống.');
+                        return false;
+                    }
+                    var n = Number(raw);
+                    if (!Number.isFinite(n)) {
+                        setFieldError(giaTriInput, giaTriGiamError, 'Giá trị giảm không hợp lệ.');
+                        return false;
+                    }
+                    if (n <= 0 || n > 100) {
+                        setFieldError(giaTriInput, giaTriGiamError, 'Giảm theo % phải lớn hơn 0 và không quá 100%.');
+                        return false;
+                    }
+                    setFieldError(giaTriInput, giaTriGiamError, '');
+                    return true;
+                }
+
                 function normalizePercentInput() {
                     if (!giaTriInput || getLoaiGiamCanon() !== 'PHAN_TRAM') return;
                     var raw = giaTriInput.value;
@@ -383,17 +432,54 @@
                         if (giaTriInput) giaTriInput.removeAttribute('max');
                     }
                 }
+                function runAllClientValidations() {
+                    var ok1 = validateTenChuongTrinh();
+                    var ok2 = validateLoaiGiam();
+                    var ok3 = validateGiaTriGiam();
+                    var ok4 = validateNgayRangeRealtime();
+                    return ok1 && ok2 && ok3 && ok4;
+                }
+
+                function focusFirstInvalidField() {
+                    var firstInvalid = form.querySelector('.is-invalid, [aria-invalid="true"]');
+                    if (firstInvalid && firstInvalid.scrollIntoView) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        try { firstInvalid.focus(); } catch (e) {}
+                    }
+                }
+
+                if (tenChuongTrinhInput) {
+                    tenChuongTrinhInput.addEventListener('input', function () {
+                        validateTenChuongTrinh();
+                    });
+                    tenChuongTrinhInput.addEventListener('blur', validateTenChuongTrinh);
+                }
                 if (loai) {
                     loai.addEventListener('change', function () {
                         syncLoaiGiamUi();
                         normalizePercentInput();
+                        validateLoaiGiam();
                     });
+                    loai.addEventListener('blur', validateLoaiGiam);
                     syncLoaiGiamUi();
                     normalizePercentInput();
                 }
                 if (giaTriInput) {
-                    giaTriInput.addEventListener('blur', normalizePercentInput);
+                    giaTriInput.addEventListener('input', function () {
+                        validateGiaTriGiam();
+                    });
+                    giaTriInput.addEventListener('blur', function () {
+                        normalizePercentInput();
+                        validateGiaTriGiam();
+                    });
                 }
+                form.addEventListener('submit', function (ev) {
+                    if (!runAllClientValidations()) {
+                        ev.preventDefault();
+                        ev.stopImmediatePropagation();
+                        focusFirstInvalidField();
+                    }
+                }, true);
                 form.querySelectorAll('.form__input.is-invalid, .form__textarea.is-invalid, .form__select.is-invalid').forEach(function (el) {
                     var clearInvalid = function () {
                         el.classList.remove('is-invalid');
@@ -401,6 +487,19 @@
                     el.addEventListener('input', clearInvalid);
                     el.addEventListener('change', clearInvalid);
                 });
+                var initialValidate = function () {
+                    var hasServerErrors = form.querySelector('.invalid-feedback[style], .invalid-feedback:not([style])');
+                    var hasInvalidClass = form.querySelector('.is-invalid');
+                    if (!hasServerErrors && !hasInvalidClass) return;
+                    validateTenChuongTrinh();
+                    validateLoaiGiam();
+                    validateGiaTriGiam();
+                    validateNgayRangeRealtime();
+                    if (form.querySelector('.is-invalid')) {
+                        focusFirstInvalidField();
+                    }
+                };
+                initialValidate();
                 var ngayBatDau = document.getElementById('ngayBatDau');
                 var ngayKetThuc = document.getElementById('ngayKetThuc');
                 if (!ngayBatDau || !ngayKetThuc) return;
@@ -425,9 +524,11 @@
                     if (invalid) {
                         ngayKetThuc.classList.add('is-invalid');
                         if (ngayRangeWarning) ngayRangeWarning.style.display = 'block';
+                        return false;
                     } else {
                         ngayKetThuc.classList.remove('is-invalid');
                         if (ngayRangeWarning) ngayRangeWarning.style.display = 'none';
+                        return true;
                     }
                 }
                 setNgayKetThucMin();

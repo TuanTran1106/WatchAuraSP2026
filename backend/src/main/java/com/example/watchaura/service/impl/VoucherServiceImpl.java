@@ -121,14 +121,18 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
-    public void deactivate(Integer id) {
+    public String deactivate(Integer id) {
         Voucher v = voucherRepository.findById(id).orElse(null);
         if (v == null) {
-            return;
+            return "Không tìm thấy voucher.";
+        }
+        if (Boolean.FALSE.equals(v.getTrangThai())) {
+            return "Voucher đã ngừng hoạt động.";
         }
         v.setTrangThai(false);
         v.setNgayCapNhat(LocalDateTime.now());
         voucherRepository.save(v);
+        return null;
     }
 
     @Override

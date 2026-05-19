@@ -17,6 +17,7 @@
         #formVoucherWrapper .form__textarea{min-height:76px;height:auto;padding:10px 11px;resize:vertical}
         #formVoucherWrapper .form__input:focus,#formVoucherWrapper .form__select:focus,#formVoucherWrapper .form__textarea:focus,#listVoucher .toolbar__input:focus,#listVoucher .toolbar__select:focus{border-color:#7F77DD;box-shadow:0 0 0 3px rgba(127,119,221,.12);background:#fff}
         #formVoucherWrapper .form__error{display:block;margin-top:5px;color:#C2410C;font-size:12px;line-height:1.35}
+        #formVoucherWrapper .form__input.is-invalid,#formVoucherWrapper .form__select.is-invalid,#formVoucherWrapper .form__textarea.is-invalid{border-color:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.15);background-image:none;padding-right:11px}
         #formVoucherWrapper .text-muted{display:block;margin-top:5px;color:var(--wa-muted);font-size:12px}
         #formVoucherWrapper input[type="checkbox"]{width:16px;height:16px;accent-color:var(--wa-primary)}
         #formVoucherWrapper .form__actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid #F0F0F0}
@@ -66,12 +67,12 @@
                 <div class="form__section" aria-hidden="true">Thông tin cơ bản</div>
                 <div class="form__group">
                     <label class="form__label">Mã voucher</label>
-                    <input class="form__input" type="text" th:field="*{maVoucher}" required placeholder="VD: VC001" autocomplete="off" maxlength="50" />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('maVoucher')} ? ' is-invalid'" type="text" th:field="*{maVoucher}" required placeholder="VD: VC001" autocomplete="off" maxlength="50" />
                     <span class="form__error" th:if="${#fields.hasErrors('maVoucher')}" th:errors="*{maVoucher}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Tên voucher</label>
-                    <input class="form__input" type="text" th:field="*{tenVoucher}" required placeholder="Tên voucher" maxlength="255" />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('tenVoucher')} ? ' is-invalid'" type="text" th:field="*{tenVoucher}" required placeholder="Tên voucher" maxlength="255" />
                     <span class="form__error" th:if="${#fields.hasErrors('tenVoucher')}" th:errors="*{tenVoucher}"></span>
                 </div>
                 <div class="form__group form__group--full">
@@ -81,7 +82,7 @@
                 <div class="form__section" aria-hidden="true">Cài đặt giảm giá</div>
                 <div class="form__group">
                     <label class="form__label">Loại voucher</label>
-                    <select class="form__input form__select" id="voucherLoai" th:field="*{loaiVoucher}" required>
+                    <select class="form__input form__select" th:classappend="${#fields.hasErrors('loaiVoucher') or #fields.hasErrors('loaiVoucherHopLe')} ? ' is-invalid'" id="voucherLoai" th:field="*{loaiVoucher}" required>
                         <option value="">-- Chọn loại --</option>
                         <option value="PHAN_TRAM">Giảm theo %</option>
                         <option value="TIEN">Giảm theo tiền</option>
@@ -91,20 +92,21 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Giá trị</label>
-                    <input class="form__input" type="number" step="0.01" min="0.01" th:field="*{giaTri}" required />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('giaTri') or #fields.hasErrors('giaTriPhanTramHopLe') or #fields.hasErrors('giaTriTienTrongNguong')} ? ' is-invalid'" type="number" step="0.01" min="0.01" th:field="*{giaTri}" required />
                     <span class="form__error" th:if="${#fields.hasErrors('giaTri')}" th:errors="*{giaTri}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('giaTriPhanTramHopLe')}" th:errors="*{giaTriPhanTramHopLe}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('giaTriTienTrongNguong')}" th:errors="*{giaTriTienTrongNguong}"></span>
                 </div>
                 <div class="form__group" id="voucherGroupGiaTriToiDa">
                     <label class="form__label">Giá trị tối đa (₫)</label>
-                    <input class="form__input" type="number" step="0.01" min="0.01" th:field="*{giaTriToiDa}" placeholder="Bắt buộc khi giảm %" />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('giaTriToiDa') or #fields.hasErrors('giaTriToiDaKhiPhanTram')} ? ' is-invalid'" type="number" step="0.01" min="0.01" th:field="*{giaTriToiDa}" placeholder="Bắt buộc khi giảm %" />
                     <small class="text-muted">Chỉ áp dụng khi loại là giảm %</small>
                     <span class="form__error" th:if="${#fields.hasErrors('giaTriToiDa')}" th:errors="*{giaTriToiDa}"></span>
+                    <span class="form__error" th:if="${#fields.hasErrors('giaTriToiDaKhiPhanTram')}" th:errors="*{giaTriToiDaKhiPhanTram}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Đơn hàng tối thiểu (₫)</label>
-                    <input class="form__input" type="number" step="0.01" min="0.01" th:field="*{donHangToiThieu}" placeholder="Để trống = không yêu cầu" />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('donHangToiThieu') or #fields.hasErrors('donHangToiThieuHopLe')} ? ' is-invalid'" type="number" step="0.01" min="0.01" th:field="*{donHangToiThieu}" placeholder="Để trống = không yêu cầu" />
                     <span class="form__error" th:if="${#fields.hasErrors('donHangToiThieu')}" th:errors="*{donHangToiThieu}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('donHangToiThieuHopLe')}" th:errors="*{donHangToiThieuHopLe}"></span>
                 </div>
@@ -118,13 +120,13 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày bắt đầu</label>
-                    <input class="form__input" type="datetime-local" id="voucherNgayBatDau" th:field="*{ngayBatDau}" />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('ngayBatDau') or #fields.hasErrors('ngayBatDauHopLeKhiTao')} ? ' is-invalid'" type="datetime-local" id="voucherNgayBatDau" th:field="*{ngayBatDau}" required />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayBatDau')}" th:errors="*{ngayBatDau}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('ngayBatDauHopLeKhiTao')}" th:errors="*{ngayBatDauHopLeKhiTao}"></span>
                 </div>
                 <div class="form__group">
                     <label class="form__label">Ngày kết thúc</label>
-                    <input class="form__input" type="datetime-local" id="voucherNgayKetThuc" th:field="*{ngayKetThuc}" />
+                    <input class="form__input" th:classappend="${#fields.hasErrors('ngayKetThuc') or #fields.hasErrors('ngayKetThucHopLeKhiTao') or #fields.hasErrors('ngayKetThucSauNgayBatDau') or #fields.hasErrors('trangThaiKhongMoKhiHetHan')} ? ' is-invalid'" type="datetime-local" id="voucherNgayKetThuc" th:field="*{ngayKetThuc}" required />
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThuc')}" th:errors="*{ngayKetThuc}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThucHopLeKhiTao')}" th:errors="*{ngayKetThucHopLeKhiTao}"></span>
                     <span class="form__error" th:if="${#fields.hasErrors('ngayKetThucSauNgayBatDau')}" th:errors="*{ngayKetThucSauNgayBatDau}"></span>
@@ -132,7 +134,7 @@
                 </div>
                 <div class="form__group">
                     <label class="form__label">Trạng thái</label>
-                    <select class="form__input form__select" th:field="*{trangThai}">
+                    <select class="form__input form__select" th:classappend="${#fields.hasErrors('trangThai')} ? ' is-invalid'" th:field="*{trangThai}">
                         <option th:value="true">Đang hoạt động</option>
                         <option th:value="false">Không hoạt động</option>
                     </select>
@@ -266,32 +268,150 @@
             var loai = document.getElementById('voucherLoai');
             var grpMax = document.getElementById('voucherGroupGiaTriToiDa');
             var cancel = document.getElementById('voucherFormCancel');
-
             var inputMax = grpMax ? grpMax.querySelector('input[type="number"]') : null;
+            var giaTriInput = form.querySelector('input[name="giaTri"]');
+            var maVoucherInput = form.querySelector('input[name="maVoucher"]');
+            var tenVoucherInput = form.querySelector('input[name="tenVoucher"]');
+
+            function findErrorSpan(input) {
+                if (!input) return null;
+                var group = input.closest('.form__group');
+                if (!group) return null;
+                var spans = group.querySelectorAll('.form__error');
+                return spans.length > 0 ? spans[0] : null;
+            }
+
+            function setFieldError(input, message) {
+                if (!input) return;
+                var group = input.closest('.form__group');
+                if (!group) return;
+                var errorSpan = findErrorSpan(input);
+                if (message) {
+                    input.classList.add('is-invalid');
+                    if (!errorSpan) {
+                        errorSpan = document.createElement('span');
+                        errorSpan.className = 'form__error';
+                        group.appendChild(errorSpan);
+                    }
+                    errorSpan.textContent = message;
+                    errorSpan.style.display = 'block';
+                } else {
+                    input.classList.remove('is-invalid');
+                    if (errorSpan) {
+                        errorSpan.textContent = '';
+                        errorSpan.style.display = 'none';
+                    }
+                }
+            }
+
+            function validateMaVoucher() {
+                if (!maVoucherInput) return true;
+                var v = (maVoucherInput.value || '').trim();
+                if (!v) { setFieldError(maVoucherInput, 'Mã voucher không được để trống'); return false; }
+                if (!/^[A-Z0-9]{1,50}$/.test(v.toUpperCase())) { setFieldError(maVoucherInput, 'Mã chỉ gồm chữ in hoa A–Z và số 0–9, không khoảng trắng'); return false; }
+                setFieldError(maVoucherInput, ''); return true;
+            }
+
+            function validateTenVoucher() {
+                if (!tenVoucherInput) return true;
+                var v = (tenVoucherInput.value || '').trim();
+                if (!v) { setFieldError(tenVoucherInput, 'Tên voucher không được để trống'); return false; }
+                setFieldError(tenVoucherInput, ''); return true;
+            }
+
+            function validateLoaiVoucher() {
+                if (!loai) return true;
+                var v = (loai.value || '').trim().toUpperCase();
+                if (!v) { setFieldError(loai, 'Vui lòng chọn loại voucher'); return false; }
+                if (v !== 'PHAN_TRAM' && v !== 'PERCENT' && v !== 'TIEN') { setFieldError(loai, 'Loại voucher không hợp lệ'); return false; }
+                setFieldError(loai, ''); return true;
+            }
+
+            function validateGiaTri() {
+                if (!giaTriInput) return true;
+                var raw = (giaTriInput.value || '').trim();
+                if (!raw) { setFieldError(giaTriInput, 'Giá trị không được để trống'); return false; }
+                var n = Number(raw);
+                if (!Number.isFinite(n) || n <= 0) { setFieldError(giaTriInput, 'Giá trị phải lớn hơn 0'); return false; }
+                var lv = loai ? (loai.value || '').trim().toUpperCase() : '';
+                if ((lv === 'PHAN_TRAM' || lv === 'PERCENT') && n > 100) { setFieldError(giaTriInput, 'Giá trị % phải từ 0,01 đến 100'); return false; }
+                setFieldError(giaTriInput, ''); return true;
+            }
+
+            function validateGiaTriToiDa() {
+                if (!inputMax) return true;
+                var lv = loai ? (loai.value || '').trim().toUpperCase() : '';
+                if (lv !== 'PHAN_TRAM' && lv !== 'PERCENT') { setFieldError(inputMax, ''); return true; }
+                var raw = (inputMax.value || '').trim();
+                if (!raw) { setFieldError(inputMax, 'Khi giảm theo %, phải nhập giá trị tối đa (₫) lớn hơn 0'); return false; }
+                var n = Number(raw);
+                if (!Number.isFinite(n) || n <= 0) { setFieldError(inputMax, 'Giá trị tối đa phải lớn hơn 0'); return false; }
+                setFieldError(inputMax, ''); return true;
+            }
+
+            function validateNgayBatDau() {
+                if (!ngayBatDau) return true;
+                if (!ngayBatDau.value) { setFieldError(ngayBatDau, 'Ngày bắt đầu không được để trống'); return false; }
+                setFieldError(ngayBatDau, ''); return true;
+            }
+
+            function validateNgayKetThuc() {
+                if (!ngayKetThuc) return true;
+                if (!ngayKetThuc.value) { setFieldError(ngayKetThuc, 'Ngày kết thúc không được để trống'); return false; }
+                if (ngayBatDau && ngayBatDau.value && ngayKetThuc.value) {
+                    if (new Date(ngayKetThuc.value) <= new Date(ngayBatDau.value)) {
+                        setFieldError(ngayKetThuc, 'Ngày kết thúc phải sau ngày bắt đầu'); return false;
+                    }
+                }
+                setFieldError(ngayKetThuc, ''); return true;
+            }
+
+            function runAllValidations() {
+                var ok1 = validateMaVoucher();
+                var ok2 = validateTenVoucher();
+                var ok3 = validateLoaiVoucher();
+                var ok4 = validateGiaTri();
+                var ok5 = validateGiaTriToiDa();
+                var ok6 = validateNgayBatDau();
+                var ok7 = validateNgayKetThuc();
+                return ok1 && ok2 && ok3 && ok4 && ok5 && ok6 && ok7;
+            }
+
+            function focusFirstInvalid() {
+                var el = form.querySelector('.is-invalid');
+                if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); try { el.focus(); } catch(e){} }
+            }
+
+            form.addEventListener('submit', function(ev) {
+                if (!runAllValidations()) {
+                    ev.preventDefault();
+                    ev.stopImmediatePropagation();
+                    focusFirstInvalid();
+                }
+            }, true);
+
+            if (maVoucherInput) { maVoucherInput.addEventListener('blur', validateMaVoucher); maVoucherInput.addEventListener('input', function() { maVoucherInput.classList.remove('is-invalid'); }); }
+            if (tenVoucherInput) { tenVoucherInput.addEventListener('blur', validateTenVoucher); tenVoucherInput.addEventListener('input', function() { tenVoucherInput.classList.remove('is-invalid'); }); }
+            if (loai) { loai.addEventListener('change', function() { validateLoaiVoucher(); validateGiaTri(); validateGiaTriToiDa(); }); }
+            if (giaTriInput) { giaTriInput.addEventListener('blur', validateGiaTri); giaTriInput.addEventListener('input', function() { giaTriInput.classList.remove('is-invalid'); }); }
+            if (inputMax) { inputMax.addEventListener('blur', validateGiaTriToiDa); inputMax.addEventListener('input', function() { inputMax.classList.remove('is-invalid'); }); }
+            if (ngayBatDau) { ngayBatDau.addEventListener('change', function() { validateNgayBatDau(); validateNgayKetThuc(); }); }
+            if (ngayKetThuc) { ngayKetThuc.addEventListener('change', validateNgayKetThuc); }
 
             function syncMaxGroup() {
                 if (!loai || !grpMax) return;
                 var v = loai.value || '';
                 if (v === 'TIEN') {
                     grpMax.style.display = 'none';
-                    if (inputMax) {
-                        inputMax.disabled = true;
-                    }
+                    if (inputMax) { inputMax.disabled = true; }
                 } else {
                     grpMax.style.display = '';
-                    if (inputMax) {
-                        inputMax.disabled = false;
-                    }
+                    if (inputMax) { inputMax.disabled = false; }
                 }
             }
             if (loai) {
                 loai.addEventListener('change', syncMaxGroup);
                 syncMaxGroup();
-            }
-            if (form) {
-                form.addEventListener('submit', function() {
-                    syncMaxGroup();
-                });
             }
 
             if (ngayBatDau && ngayKetThuc) {
@@ -321,6 +441,9 @@
                     }
                 });
             }
+
+            var hasServerErrors = form.querySelector('.form__error:not(:empty), .is-invalid');
+            if (hasServerErrors) { focusFirstInvalid(); }
         })();
     </script>
 </div>

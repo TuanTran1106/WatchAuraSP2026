@@ -60,15 +60,23 @@ public class KhuyenMai {
     @Column(name = "gia_tri_giam", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriGiam;
 
+    /**
+     * Các field bên dưới đang được giữ lại để tương thích dữ liệu cũ.
+     * Nghiệp vụ mới sẽ ưu tiên tách voucher sang entity `Voucher`.
+     */
+    @Deprecated
     @Column(name = "giam_toi_da", precision = 18, scale = 2)
     private BigDecimal giamToiDa;
 
+    @Deprecated
     @Column(name = "don_toi_thieu", precision = 18, scale = 2)
     private BigDecimal donToiThieu;
 
+    @Deprecated
     @Column(name = "gioi_han_luot_dung")
     private Integer gioiHanLuotDung;
 
+    @Deprecated
     @Column(name = "so_luot_da_dung")
     private Integer soLuotDaDung;
 

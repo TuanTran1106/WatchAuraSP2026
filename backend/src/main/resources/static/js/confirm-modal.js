@@ -164,6 +164,11 @@ function setTone(modal, tone) {
     var opts = getConfirmOptionsFromEl(submitter) || getConfirmOptionsFromEl(form);
     if (!opts) return;
 
+    // Let native validation block invalid forms before showing confirm modal.
+    if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+      return;
+    }
+
     // Avoid double-confirm loops
     if (form.__confirmBypassedOnce) {
       form.__confirmBypassedOnce = false;

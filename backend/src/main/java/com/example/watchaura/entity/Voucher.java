@@ -84,10 +84,12 @@ public class Voucher {
     @Column(name = "gioi_han_moi_user")
     private Boolean gioiHanMoiUser;
 
+    @NotNull(message = "Ngày bắt đầu không được để trống")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @Column(name = "ngay_bat_dau")
     private LocalDateTime ngayBatDau;
 
+    @NotNull(message = "Ngày kết thúc không được để trống")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @Column(name = "ngay_ket_thuc")
     private LocalDateTime ngayKetThuc;

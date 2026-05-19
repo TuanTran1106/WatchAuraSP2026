@@ -76,7 +76,7 @@ public class KhuyenMaiController {
                                LocalDate fromDate,
                                LocalDate toDate,
                                String phamViApDung) {
-        model.addAttribute("title", "Khuyến mãi");
+        model.addAttribute("title", "Khuyến mãi sản phẩm");
         model.addAttribute("content", "admin/khuyenmai-list");
         model.addAttribute("list", pageResult.getContent());
         model.addAttribute("page", pageResult);
@@ -125,10 +125,12 @@ public class KhuyenMaiController {
         km.setDanhMucApDung(req.getDanhMucApDung());
         km.setLoaiGiam(req.getLoaiGiam());
         km.setGiaTriGiam(req.getGiaTriGiam());
-        km.setGiamToiDa(req.getGiamToiDa());
+        km.setGiamToiDa(null);
         km.setNgayBatDau(req.getNgayBatDau());
         km.setNgayKetThuc(req.getNgayKetThuc());
-        km.setDonToiThieu(req.getDonToiThieu());
+        km.setDonToiThieu(null);
+        km.setGioiHanLuotDung(null);
+        km.setSoLuotDaDung(null);
         KhuyenMai.PhamViApDung phamVi = req.getPhamViApDung();
         String danhMuc = req.getDanhMucApDung() != null ? req.getDanhMucApDung().trim() : "";
         if (phamVi == null) {
@@ -149,10 +151,8 @@ public class KhuyenMaiController {
         req.setDanhMucApDung(km.getDanhMucApDung());
         req.setLoaiGiam(km.getLoaiGiam());
         req.setGiaTriGiam(km.getGiaTriGiam());
-        req.setGiamToiDa(km.getGiamToiDa());
         req.setNgayBatDau(km.getNgayBatDau());
         req.setNgayKetThuc(km.getNgayKetThuc());
-        req.setDonToiThieu(km.getDonToiThieu());
         req.setPhamViApDung(km.getPhamViApDung());
         req.setTrangThai(km.getTrangThai());
         return req;
@@ -217,6 +217,12 @@ public class KhuyenMaiController {
         if (khuyenMai.getMaKhuyenMai() != null) {
             khuyenMai.setMaKhuyenMai(khuyenMai.getMaKhuyenMai().trim());
         }
+        if (khuyenMai.getTenChuongTrinh() != null) {
+            khuyenMai.setTenChuongTrinh(khuyenMai.getTenChuongTrinh().trim());
+        }
+        if (khuyenMai.getMoTa() != null) {
+            khuyenMai.setMoTa(khuyenMai.getMoTa().trim());
+        }
 
         khuyenMaiValidator.validate(khuyenMai, result);
         if (khuyenMai.getMaKhuyenMai() != null && !khuyenMai.getMaKhuyenMai().isBlank()
@@ -229,6 +235,7 @@ public class KhuyenMaiController {
             Page<KhuyenMai> pageResult = khuyenMaiService.searchPage(q, filterTrangThaiBool, fromDateParsed, toDateParsed, filterPhamVi, pageable);
             fillListModel(model, pageResult, q, filterTrangThai, fromDateParsed, toDateParsed, phamViApDung);
             model.addAttribute("formAction", "/admin/khuyen-mai");
+            model.addAttribute("error", "Vui lòng kiểm tra các trường bắt buộc và các thông tin không hợp lệ.");
             attachDanhMucList(model);
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 return "admin/khuyenmai-list :: content";
@@ -277,6 +284,12 @@ public class KhuyenMaiController {
         if (khuyenMai.getMaKhuyenMai() != null) {
             khuyenMai.setMaKhuyenMai(khuyenMai.getMaKhuyenMai().trim());
         }
+        if (khuyenMai.getTenChuongTrinh() != null) {
+            khuyenMai.setTenChuongTrinh(khuyenMai.getTenChuongTrinh().trim());
+        }
+        if (khuyenMai.getMoTa() != null) {
+            khuyenMai.setMoTa(khuyenMai.getMoTa().trim());
+        }
 
         khuyenMaiValidator.validate(khuyenMai, result);
         if (khuyenMai.getMaKhuyenMai() != null && !khuyenMai.getMaKhuyenMai().isBlank()
@@ -296,6 +309,7 @@ public class KhuyenMaiController {
             if (toDateParsed != null) formAction += "&toDate=" + URLEncoder.encode(toDateParsed.toString(), StandardCharsets.UTF_8);
             if (phamViApDung != null && !phamViApDung.isBlank()) formAction += "&phamViApDung=" + URLEncoder.encode(phamViApDung, StandardCharsets.UTF_8);
             model.addAttribute("formAction", formAction);
+            model.addAttribute("error", "Vui lòng kiểm tra các trường bắt buộc và các thông tin không hợp lệ.");
             attachDanhMucList(model);
             if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
                 return "admin/khuyenmai-list :: content";
@@ -340,7 +354,7 @@ public class KhuyenMaiController {
         KhuyenMai.PhamViApDung filterPhamVi = parsePhamViApDung(phamViApDung);
         Boolean filterTrangThaiBool = parseTrangThai(trangThai);
 
-        khuyenMaiService.deactivate(id);
+        String deactivateMsg = khuyenMaiService.deactivate(id);
 
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
@@ -348,12 +362,20 @@ public class KhuyenMaiController {
             fillListModel(model, pageResult, q, trangThai, fromDateParsed, toDateParsed, phamViApDung);
             model.addAttribute("khuyenMai", new KhuyenMaiRequest());
             model.addAttribute("formAction", "/admin/khuyen-mai");
-            model.addAttribute("message", "Đã ngừng kích hoạt khuyến mãi.");
+            if (deactivateMsg != null) {
+                model.addAttribute("warning", deactivateMsg);
+            } else {
+                model.addAttribute("message", "Đã ngừng hoạt động khuyến mãi.");
+            }
             attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
 
-        redirect.addFlashAttribute("message", "Đã ngừng kích hoạt khuyến mãi.");
+        if (deactivateMsg != null) {
+            redirect.addFlashAttribute("warning", deactivateMsg);
+        } else {
+            redirect.addFlashAttribute("message", "Đã ngừng hoạt động khuyến mãi.");
+        }
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);
@@ -379,7 +401,15 @@ public class KhuyenMaiController {
         KhuyenMai.PhamViApDung filterPhamVi = parsePhamViApDung(phamViApDung);
         Boolean filterTrangThaiBool = parseTrangThai(trangThai);
 
-        khuyenMaiService.toggleTrangThai(id);
+        String toggleErr = khuyenMaiService.toggleTrangThai(id);
+
+        String successMsg = null;
+        if (toggleErr == null) {
+            KhuyenMai km = khuyenMaiService.findById(id);
+            successMsg = (km != null && Boolean.TRUE.equals(km.getTrangThai()))
+                    ? "Đã kích hoạt khuyến mãi."
+                    : "Đã ngừng hoạt động khuyến mãi.";
+        }
 
         Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("id").descending());
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
@@ -387,12 +417,20 @@ public class KhuyenMaiController {
             fillListModel(model, pageResult, q, trangThai, fromDateParsed, toDateParsed, phamViApDung);
             model.addAttribute("khuyenMai", new KhuyenMaiRequest());
             model.addAttribute("formAction", "/admin/khuyen-mai");
-            model.addAttribute("message", "Đã cập nhật trạng thái.");
+            if (toggleErr != null) {
+                model.addAttribute("error", toggleErr);
+            } else {
+                model.addAttribute("message", successMsg);
+            }
             attachDanhMucList(model);
             return "admin/khuyenmai-list :: content";
         }
 
-        redirect.addFlashAttribute("message", "Đã cập nhật trạng thái.");
+        if (toggleErr != null) {
+            redirect.addFlashAttribute("error", toggleErr);
+        } else {
+            redirect.addFlashAttribute("message", successMsg);
+        }
         redirect.addAttribute("page", page);
         if (q != null && !q.isBlank()) redirect.addAttribute("q", q);
         if (trangThai != null && !trangThai.isBlank()) redirect.addAttribute("trangThai", trangThai);

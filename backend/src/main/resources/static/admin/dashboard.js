@@ -151,6 +151,15 @@
       var rawVal = kpiNumericRaw(data);
       setKpi(item[0], item[2](rawVal), cmp.compareText, subtitle, cmp.pct);
     });
+
+    // Revenue method breakdown subtitle
+    var revenueCard = qs('dashKpiRevenue');
+    if (revenueCard && kpi.revenue && kpi.revenue.methodSubtitle) {
+      var methodEl = revenueCard.querySelector('[data-kpi-method]');
+      if (methodEl) {
+        methodEl.textContent = kpi.revenue.methodSubtitle;
+      }
+    }
   }
 
   function renderLowStockList(items, emptyText) {
@@ -347,7 +356,8 @@
       type: 'bar',
       data: {
         labels: topRows.map(function (x) {
-          return x.name;
+          var rank = x.rank ? '#' + x.rank + ' ' : '';
+          return rank + x.name;
         }),
         datasets: [
           {
@@ -356,6 +366,14 @@
               return x.revenue;
             }),
             backgroundColor: '#0f766e'
+          },
+          {
+            label: 'Số lượng bán',
+            data: topRows.map(function (x) {
+              return x.quantity;
+            }),
+            backgroundColor: '#2563eb',
+            hidden: true
           }
         ]
       },
@@ -363,7 +381,19 @@
         responsive: true,
         maintainAspectRatio: false,
         indexAxis: 'y',
-        plugins: { legend: { display: false } }
+        plugins: {
+          legend: { display: true, position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              afterBody: function (context) {
+                var idx = context[0].dataIndex;
+                var item = topRows[idx];
+                if (!item) return '';
+                return 'SL: ' + (item.quantity || 0) + ' · Tỷ trọng: ' + (item.sharePercent ? item.sharePercent.toFixed(1) : '0') + '%';
+              }
+            }
+          }
+        }
       }
     });
   }

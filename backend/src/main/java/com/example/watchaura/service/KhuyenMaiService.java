@@ -32,9 +32,9 @@ public interface KhuyenMaiService {
 
     void delete(Integer id);
 
-    void toggleTrangThai(Integer id);
+    String toggleTrangThai(Integer id);
 
-    void deactivate(Integer id);
+    String deactivate(Integer id);
 
     boolean existsByMaKhuyenMai(String maKhuyenMai);
 

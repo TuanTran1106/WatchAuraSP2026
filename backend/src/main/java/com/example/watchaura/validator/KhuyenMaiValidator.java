@@ -3,6 +3,7 @@ package com.example.watchaura.validator;
 import com.example.watchaura.dto.KhuyenMaiRequest;
 import com.example.watchaura.util.KhuyenMaiPricing;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -24,23 +25,18 @@ public class KhuyenMaiValidator implements Validator {
         String loaiCanon = KhuyenMaiPricing.chuanHoaMaLuu(req.getLoaiGiam());
         if (loaiCanon == null) {
             errors.rejectValue("loaiGiam", "invalid", "Loại giảm không hợp lệ.");
+            return;
         }
 
-        if ("PHAN_TRAM".equals(loaiCanon) && req.getGiaTriGiam() != null) {
+        if (!"PHAN_TRAM".equals(loaiCanon)) {
+            errors.rejectValue("loaiGiam", "invalid", "Khuyến mãi sản phẩm chỉ hỗ trợ giảm theo %.");
+            return;
+        }
+
+        if (req.getGiaTriGiam() != null) {
             BigDecimal value = req.getGiaTriGiam();
             if (value.compareTo(BigDecimal.ZERO) <= 0 || value.compareTo(BigDecimal.valueOf(100)) > 0) {
                 errors.rejectValue("giaTriGiam", "range", "Giảm theo % phải lớn hơn 0 và không quá 100%.");
-            }
-        }
-
-        if ("TIEN".equals(loaiCanon) && req.getGiaTriGiam() != null) {
-            if (req.getGiaTriGiam().compareTo(BigDecimal.ZERO) <= 0) {
-                errors.rejectValue("giaTriGiam", "range", "Giảm theo tiền phải lớn hơn 0.");
-            }
-            if (req.getDonToiThieu() != null
-                    && req.getDonToiThieu().compareTo(BigDecimal.ZERO) > 0
-                    && req.getGiaTriGiam().compareTo(req.getDonToiThieu()) >= 0) {
-                errors.rejectValue("giaTriGiam", "range", "Giảm tiền phải nhỏ hơn đơn tối thiểu.");
             }
         }
 
@@ -49,10 +45,14 @@ public class KhuyenMaiValidator implements Validator {
             errors.rejectValue("ngayKetThuc", "date_order", "Ngày kết thúc phải sau ngày bắt đầu.");
         }
 
-        if (req.getDonToiThieu() != null && req.getDonToiThieu().compareTo(BigDecimal.ZERO) < 0) {
-            errors.rejectValue("donToiThieu", "range", "Đơn tối thiểu phải lớn hơn hoặc bằng 0.");
+        if (req.getId() == null && req.getNgayBatDau() != null
+                && req.getNgayBatDau().isBefore(LocalDateTime.now())) {
+            errors.rejectValue("ngayBatDau", "past", "Ngày bắt đầu không được trong quá khứ khi tạo mới.");
         }
 
-        // Phạm vi áp dụng có thể để trống từ form cũ; service sẽ mặc định ALL để tương thích dữ liệu hiện có.
+        if (req.getId() == null && req.getNgayKetThuc() != null
+                && req.getNgayKetThuc().isBefore(LocalDateTime.now())) {
+            errors.rejectValue("ngayKetThuc", "past", "Ngày kết thúc không được trong quá khứ khi tạo mới.");
+        }
     }
 }

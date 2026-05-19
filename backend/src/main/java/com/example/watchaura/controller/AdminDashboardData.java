@@ -260,6 +260,49 @@ final class AdminDashboardData {
                 ? Map.of("label", minLabel, "value", minVal.doubleValue())
                 : null;
 
+        // --- Revenue by payment method ---
+        Map<String, BigDecimal> revenueByMethodMap = new HashMap<>();
+        BigDecimal totalDiscountKhuyenMai = BigDecimal.ZERO;
+        BigDecimal totalDiscountVoucher = BigDecimal.ZERO;
+        long vouchersUsedCount = 0L;
+        BigDecimal revenueAfterDiscount = BigDecimal.ZERO;
+
+        for (HoaDonDTO order : orders) {
+            if (order == null || order.getNgayDat() == null) continue;
+            if (!isPaidForDashboardRevenue(order)) continue;
+            LocalDate orderDate = order.getNgayDat().toLocalDate();
+            if (orderDate.isBefore(chartFrom) || orderDate.isAfter(chartTo)) continue;
+
+            BigDecimal grossOrder = grossMerchandiseAndShip(order);
+            String method = order.getPhuongThucThanhToan();
+            if (method == null || method.isBlank()) method = "KHAC";
+            revenueByMethodMap.merge(method.trim().toUpperCase(Locale.ROOT), grossOrder, BigDecimal::add);
+
+            if (order.getTongTienGiamKhuyenMai() != null && order.getTongTienGiamKhuyenMai().compareTo(BigDecimal.ZERO) > 0) {
+                totalDiscountKhuyenMai = totalDiscountKhuyenMai.add(order.getTongTienGiamKhuyenMai());
+            }
+            if (order.getTienGiam() != null && order.getTienGiam().compareTo(BigDecimal.ZERO) > 0) {
+                totalDiscountVoucher = totalDiscountVoucher.add(order.getTienGiam());
+            }
+            if (order.getVoucherId() != null) {
+                vouchersUsedCount++;
+            }
+            if (order.getTongTienThanhToan() != null) {
+                revenueAfterDiscount = revenueAfterDiscount.add(order.getTongTienThanhToan());
+            }
+        }
+
+        BigDecimal revenueCOD = revenueByMethodMap.getOrDefault("COD", BigDecimal.ZERO);
+        BigDecimal revenueVNPAY = revenueByMethodMap.getOrDefault("VNPAY", BigDecimal.ZERO);
+        BigDecimal revenueTienMat = revenueByMethodMap.getOrDefault("TIEN_MAT", BigDecimal.ZERO);
+        BigDecimal revenueChuyenKhoan = revenueByMethodMap.getOrDefault("CHUYEN_KHOAN", BigDecimal.ZERO);
+        BigDecimal revenueOther = revenueByMethodMap.entrySet().stream()
+                .filter(e -> !"COD".equals(e.getKey()) && !"VNPAY".equals(e.getKey())
+                        && !"TIEN_MAT".equals(e.getKey()) && !"CHUYEN_KHOAN".equals(e.getKey()))
+                .map(Map.Entry::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal revenueMethodTotal = revenueCOD.add(revenueVNPAY).add(revenueTienMat).add(revenueChuyenKhoan).add(revenueOther);
+
         long totalOrdersRange = orderProcessingCount + orderDeliveredCount + orderCanceledCount;
         Map<String, Object> orderStatus = new HashMap<>();
         orderStatus.put("totalOrders", totalOrdersRange);
@@ -297,6 +340,10 @@ final class AdminDashboardData {
                 })
                 .limit(5)
                 .collect(Collectors.toList());
+
+        for (int i = 0; i < topProducts.size(); i++) {
+            topProducts.get(i).put("rank", i + 1);
+        }
 
         List<Map<String, Object>> warnings = new ArrayList<>();
         List<Map<String, Object>> insights = new ArrayList<>();
@@ -442,9 +489,15 @@ final class AdminDashboardData {
         revenueMap.put("grossValue", grossInRange.doubleValue());
         revenueMap.put("returnsValue", refundsInRange.doubleValue());
         revenueMap.put("netValue", netInRange.doubleValue());
+        revenueMap.put("revenueTienMat", revenueTienMat.doubleValue());
+        revenueMap.put("revenueChuyenKhoan", revenueChuyenKhoan.doubleValue());
+        revenueMap.put("revenueCOD", revenueCOD.doubleValue());
+        revenueMap.put("revenueVNPAY", revenueVNPAY.doubleValue());
+        revenueMap.put("revenueOther", revenueOther.doubleValue());
         revenueMap.put("subtitle",
                 "Thu gộp " + formatMoneyInsight(grossInRange) + " · Hoàn trả " + formatMoneyInsight(refundsInRange) + " · Thực thu "
                         + formatMoneyInsight(netInRange));
+        revenueMap.put("methodSubtitle", buildMethodSubtitle(revenueTienMat, revenueChuyenKhoan, revenueCOD, revenueVNPAY, revenueOther, revenueMethodTotal));
         revenueMap.put("dayCompare", compareBlockMoney(netEndDay, netPrevDay, revenueDayPct, "So với ngày trước (cuối kỳ)"));
         revenueMap.put("periodCompare", compareBlockMoney(netInRange, netPrevPeriod, revenuePeriodPct, "So với kỳ trước"));
         kpi.put("revenue", revenueMap);
@@ -539,9 +592,24 @@ final class AdminDashboardData {
         response.put("revenuePrimaryLabel", revenuePrimaryLabelVi);
         response.put("revenueScopeText", revenueScopeText);
 
+        long promotionsCount = khuyenMaiRepository.findAll().size();
+        long vouchersCount = voucherRepository.findAll().size();
+        BigDecimal totalDiscount = totalDiscountKhuyenMai.add(totalDiscountVoucher);
+
         kpi.put("lowStock", Map.of("value", lowStockTotal, "subtitle", "Tồn kho dưới 10"));
-        kpi.put("promotions", Map.of("value", khuyenMaiRepository.findAll().size(), "subtitle", "Khuyến mãi"));
-        kpi.put("vouchers", Map.of("value", voucherRepository.findAll().size(), "subtitle", "Voucher"));
+
+        Map<String, Object> promotionsMap = new HashMap<>();
+        promotionsMap.put("value", promotionsCount);
+        promotionsMap.put("totalDiscount", totalDiscountKhuyenMai.doubleValue());
+        promotionsMap.put("subtitle", "Tổng giảm KM: " + formatMoneyInsight(totalDiscountKhuyenMai));
+        kpi.put("promotions", promotionsMap);
+
+        Map<String, Object> vouchersMap = new HashMap<>();
+        vouchersMap.put("value", vouchersCount);
+        vouchersMap.put("usedCount", vouchersUsedCount);
+        vouchersMap.put("totalDiscount", totalDiscountVoucher.doubleValue());
+        vouchersMap.put("subtitle", "Đã dùng: " + vouchersUsedCount + " · Giảm: " + formatMoneyInsight(totalDiscountVoucher));
+        kpi.put("vouchers", vouchersMap);
 
         response.put("kpi", kpi);
         response.put("revenueSeries", revenueSeries);
@@ -556,6 +624,24 @@ final class AdminDashboardData {
         response.put("recentOrders", recentOrders);
         response.put("recentCustomers", recentCustomers);
         response.put("expiringCampaigns", expiringCampaigns);
+
+        Map<String, Object> revenueByMethod = new LinkedHashMap<>();
+        revenueByMethod.put("TIEN_MAT", methodEntry(revenueTienMat, revenueMethodTotal, "Tiền mặt (tại quầy)"));
+        revenueByMethod.put("CHUYEN_KHOAN", methodEntry(revenueChuyenKhoan, revenueMethodTotal, "Chuyển khoản (tại quầy)"));
+        revenueByMethod.put("COD", methodEntry(revenueCOD, revenueMethodTotal, "COD (online)"));
+        revenueByMethod.put("VNPAY", methodEntry(revenueVNPAY, revenueMethodTotal, "VNPay (online)"));
+        if (revenueOther.compareTo(BigDecimal.ZERO) > 0) {
+            revenueByMethod.put("KHAC", methodEntry(revenueOther, revenueMethodTotal, "Khác"));
+        }
+        response.put("revenueByMethod", revenueByMethod);
+
+        Map<String, Object> discountSummary = new HashMap<>();
+        discountSummary.put("totalDiscountKhuyenMai", totalDiscountKhuyenMai.doubleValue());
+        discountSummary.put("totalDiscountVoucher", totalDiscountVoucher.doubleValue());
+        discountSummary.put("totalDiscount", totalDiscount.doubleValue());
+        discountSummary.put("vouchersUsedCount", vouchersUsedCount);
+        discountSummary.put("revenueAfterDiscount", revenueAfterDiscount.doubleValue());
+        response.put("discountSummary", discountSummary);
 
         return response;
     }
@@ -713,26 +799,33 @@ final class AdminDashboardData {
             }
             return out;
         }
+
+        // Pre-build daily maps (O(n) single pass) for day and week granularities
+        Map<LocalDate, BigDecimal> grossMap = new HashMap<>();
+        Map<LocalDate, BigDecimal> refundMap = new HashMap<>();
+        for (HoaDonDTO order : orders) {
+            if (order == null || order.getNgayDat() == null) continue;
+            if (!isPaidForDashboardRevenue(order)) continue;
+            LocalDate d = order.getNgayDat().toLocalDate();
+            if (d.isBefore(chartFrom) || d.isAfter(chartTo)) continue;
+            grossMap.merge(d, grossMerchandiseAndShip(order), BigDecimal::add);
+        }
+        for (HoanTraDTO ht : hoanTraList) {
+            if (ht == null || !isCompletedRefundHoanTra(ht)) continue;
+            LocalDateTime ev = refundOccurredAt(ht);
+            if (ev == null) continue;
+            LocalDate d = ev.toLocalDate();
+            if (d.isBefore(chartFrom) || d.isAfter(chartTo)) continue;
+            refundMap.merge(d, refundAmount(ht), BigDecimal::add);
+        }
+
         if ("week".equals(granularity)) {
             Map<LocalDate, BigDecimal> weekNet = new TreeMap<>();
             for (LocalDate d = chartFrom; !d.isAfter(chartTo); d = d.plusDays(1)) {
-                BigDecimal dg = BigDecimal.ZERO;
-                BigDecimal dr = BigDecimal.ZERO;
-                for (HoaDonDTO order : orders) {
-                    if (order == null || order.getNgayDat() == null) continue;
-                    if (!isPaidForDashboardRevenue(order)) continue;
-                    if (!order.getNgayDat().toLocalDate().equals(d)) continue;
-                    dg = dg.add(grossMerchandiseAndShip(order));
-                }
-                for (HoanTraDTO ht : hoanTraList) {
-                    if (ht == null || !isCompletedRefundHoanTra(ht)) continue;
-                    LocalDateTime ev = refundOccurredAt(ht);
-                    if (ev == null || !ev.toLocalDate().equals(d)) continue;
-                    dr = dr.add(refundAmount(ht));
-                }
+                BigDecimal dg = grossMap.getOrDefault(d, BigDecimal.ZERO);
+                BigDecimal dr = refundMap.getOrDefault(d, BigDecimal.ZERO);
                 LocalDate wk = d.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-                BigDecimal dayNet = dg.subtract(dr);
-                weekNet.merge(wk, dayNet, BigDecimal::add);
+                weekNet.merge(wk, dg.subtract(dr), BigDecimal::add);
             }
             java.time.format.DateTimeFormatter df = java.time.format.DateTimeFormatter.ofPattern("dd/MM");
             for (Map.Entry<LocalDate, BigDecimal> e : weekNet.entrySet()) {
@@ -748,24 +841,14 @@ final class AdminDashboardData {
             }
             return out;
         }
-        // day
+
+        // day granularity — iterate each day, lookup from pre-built maps
+        java.time.format.DateTimeFormatter dayFmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM");
         for (LocalDate d = chartFrom; !d.isAfter(chartTo); d = d.plusDays(1)) {
-            BigDecimal dg = BigDecimal.ZERO;
-            BigDecimal dr = BigDecimal.ZERO;
-            for (HoaDonDTO order : orders) {
-                if (order == null || order.getNgayDat() == null) continue;
-                if (!isPaidForDashboardRevenue(order)) continue;
-                if (!order.getNgayDat().toLocalDate().equals(d)) continue;
-                dg = dg.add(grossMerchandiseAndShip(order));
-            }
-            for (HoanTraDTO ht : hoanTraList) {
-                if (ht == null || !isCompletedRefundHoanTra(ht)) continue;
-                LocalDateTime ev = refundOccurredAt(ht);
-                if (ev == null || !ev.toLocalDate().equals(d)) continue;
-                dr = dr.add(refundAmount(ht));
-            }
+            BigDecimal dg = grossMap.getOrDefault(d, BigDecimal.ZERO);
+            BigDecimal dr = refundMap.getOrDefault(d, BigDecimal.ZERO);
             Map<String, Object> row = new HashMap<>();
-            row.put("label", d.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")));
+            row.put("label", d.format(dayFmt));
             row.put("value", dg.subtract(dr).doubleValue());
             row.put("date", d.toString());
             row.put("bucket", "day");
@@ -992,5 +1075,32 @@ final class AdminDashboardData {
     private static final class ProductAgg {
         private long quantity = 0L;
         private BigDecimal revenue = BigDecimal.ZERO;
+    }
+
+    private static Map<String, Object> methodEntry(BigDecimal amount, BigDecimal total, String label) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("amount", amount.doubleValue());
+        m.put("label", label);
+        double pct = (total.compareTo(BigDecimal.ZERO) == 0)
+                ? 0d
+                : amount.doubleValue() * 100.0d / total.doubleValue();
+        m.put("percent", Math.round(pct * 10.0d) / 10.0d);
+        return m;
+    }
+
+    private static String buildMethodSubtitle(
+            BigDecimal tienMat, BigDecimal chuyenKhoan,
+            BigDecimal cod, BigDecimal vnpay,
+            BigDecimal other, BigDecimal total
+    ) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("TM: ").append(formatMoneyInsight(tienMat));
+        sb.append(" · CK: ").append(formatMoneyInsight(chuyenKhoan));
+        sb.append(" · COD: ").append(formatMoneyInsight(cod));
+        sb.append(" · VNPay: ").append(formatMoneyInsight(vnpay));
+        if (other.compareTo(BigDecimal.ZERO) > 0) {
+            sb.append(" · Khác: ").append(formatMoneyInsight(other));
+        }
+        return sb.toString();
     }
 }

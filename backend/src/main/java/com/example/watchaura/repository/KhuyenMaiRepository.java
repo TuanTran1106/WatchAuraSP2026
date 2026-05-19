@@ -37,6 +37,8 @@ public interface KhuyenMaiRepository extends JpaRepository<KhuyenMai, Integer> {
 
     /** Khuyến mãi đang diễn ra (trạng thái bật, trong khoảng ngày) */
     @Query("SELECT km FROM KhuyenMai km WHERE km.trangThai = true " +
-            "AND km.ngayBatDau <= :now AND km.ngayKetThuc >= :now ORDER BY km.ngayKetThuc ASC")
+            "AND (km.ngayBatDau IS NULL OR km.ngayBatDau <= :now) " +
+            "AND (km.ngayKetThuc IS NULL OR km.ngayKetThuc >= :now) " +
+            "ORDER BY km.ngayKetThuc ASC")
     List<KhuyenMai> findActivePromotions(@Param("now") LocalDateTime now);
 }
